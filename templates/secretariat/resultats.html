@@ -1,0 +1,59 @@
+{% extends 'secretariat/action.html' %}
+{% load static %}
+{% block body %}
+<table class="accueil"><tr><td>Classe / Matière / Semaines</td></tr></table>
+<form method="post">
+{% csrf_token %}
+<table class="tableausimple">
+	<tr>
+		<th>Classe</th>
+		<td>{{form.classe.errors}}{{form.classe}}</td>
+		<th>Matière</th>
+		<td>{{form.matiere.errors}}{{form.matiere}}</td>
+	</tr>
+	<tr>
+		<td>Semaine</td>
+		<td>{{form.semin.errors}}{{form.semin}}</td>
+		<td>à</td>
+		<td>{{form.semax.errors}}{{form.semax}}</td>
+	</tr>
+	<tr>
+		<td colspan="4"><input type="submit", value = "Envoyer"/></td>
+	</tr>
+</table>
+</form>
+
+{% if classe %}
+<table class="accueil"><tr><td>Résultats de la classe {{classe}} en {{matiere}}</td></tr></table>
+<table class="tableausimple"><tr><td><a href="{% url 'resultatcsv_secret' classe.pk matiere.pk semin.pk semax.pk %}"><img src="{% static 'images/csv.png' %}"></img></a></td></tr></table>
+<table class="tableausimple">
+	<tr class="entete">
+		<td>Élève</td>
+		<td>Rang</td>
+		<td>Moyenne</td>
+	{% for semaine in semaines %}
+		<td>S{{semaine.numero}}</td>
+	{% endfor %}
+	</tr>
+	{% for note in notes%}
+	<tr {% cycle "" "class=plusclair"%}>
+		<td>{{note.eleve}}</td>
+		{% if note.rang %}
+		<td>{{note.rang}}{{note.rang|pluralize:"<sup>er</sup>,<sup>&egrave;me</sup>"|safe}}</td>
+		{% else %}
+		<td></td>
+		{% endif %}
+		<td>{% if note.moyenne %}{{note.moyenne|floatformat:1}}{% endif %}</td>
+		{% for note in note.semaine %}
+		<td>{% for value in note %}{% if not forloop.first %};{% endif %}{% if value.note == 22 %}Abs{% elif value.note == 21 %}n.n.{% else %}{{value.note}}{% endif %}{% endfor %}
+		</td>
+		{% endfor %}
+	</tr>
+	{% endfor %}
+</table>
+{% endif %}
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/tex2html.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML'%}"></script>
+{% endblock %}

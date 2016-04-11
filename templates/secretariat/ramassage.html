@@ -1,0 +1,33 @@
+{% extends 'secretariat/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil"><tr><td>Effectuer un ramassage</td></tr></table>
+<form method="post">
+	<table class="tableausimple">
+{% csrf_token %}
+	{{ form.as_table }}
+	<tr><td colspan="2"><input type="submit"/></td></tr>
+</table>
+</form>
+<table class="accueil"><tr><td>Ramassages effectués</td></tr></table>
+<table class="tableausimple" id="suppr">
+	<tr class="entete">
+		<td>De</td>
+		<td>à</td>
+		<td>Supprimer</td>
+		<td>PDF</td>
+	</tr>
+	{% for ramassage in ramassages %}
+	<tr>
+		<td>{{ramassage.moisDebut|date:"E Y"}}</td>
+		<td>{{ramassage.moisFin|date:"E Y"}}</td>
+		<td><a href="{% url 'ramassagesuppr' ramassage.pk %}">Supprimer</a></td>
+		<td><a href="{% url 'ramassagepdf' ramassage.pk %}"><img src="{% static 'images/iconePDF.png' %}"></img></a></td>
+	</tr>
+	{% endfor %}
+</table>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+{% endblock %}

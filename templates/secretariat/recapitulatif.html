@@ -1,0 +1,56 @@
+{% extends 'secretariat/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil"><tr><td>Récapitulatif des heures</td></tr></table>
+<form method="post">
+	{% csrf_token %}
+	<table class="tableausimple">
+	<tr>
+		<td>De</td>
+		<td>{{form.moisMin.errors}}{{form.moisMin}}</td>
+		<td>à</td>
+		<td>{{form.moisMax.errors}}{{form.moisMax}}</td>
+		<td><input type="submit"/></td>
+	</tr>
+</table>
+</form>
+<table class="tableausimple">
+	<tr class="entete">
+		<td>Matière</td>
+		<td>Établissement</td>
+		<td>Grade</td>
+		<td>Colleur</td>
+		{% for annee, effectif in effectifs %}
+		<td>{{annee}}<sup>&egrave;{{annee|pluralize:"re,me"}}</sup> année<br>
+		{{effectif}}</td>
+		{% endfor %}
+	</tr>
+	{% for matiere, listeEtabs, nbEtabs in decompte %}
+	<tr {% cycle '' 'class="plusclair"' as couleur %} >
+		<td rowspan="{{nbEtabs}}">{{matiere}}</td>
+		{% for etablissement, listeGrades, nbGrades in listeEtabs %}
+		{% if not forloop.first %}
+	<tr {{couleur}}>
+		{% endif %}
+		<td rowspan="{{nbGrades}}">{{etablissement}}</td>
+			{% for grade, listeColleurs, nbColleurs in listeGrades %}
+			{% if not forloop.first %}
+	<tr {{couleur}}>
+			{% endif %}
+		<td rowspan="{{nbColleurs}}">{{grade}}</td>
+				{% for colleur,decompte in listeColleurs %}
+				{% if not forloop.first %}
+	<tr {{couleur}}>
+				{% endif %}
+		<td>{{colleur}}</td>
+					{% for heures in decompte %}
+		<td>{{heures|heurecolle:matiere.temps}}</td>
+					{% endfor %}
+	</tr>
+				{% endfor %}
+			{% endfor %}
+		{% endfor %}
+	{% endfor %}
+</table>
+{% endblock %}

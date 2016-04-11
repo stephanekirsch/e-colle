@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav %}
+<div id="nav"> 
+	<ul id="menu">
+		<li><a href="{% url 'recapitulatif' %}" title="Récapitulatif des heures de colle">Récapitulatif</a></li>
+		<li><a href="{% url 'ramassage' %}" title="Ramassage des heures de colle">Ramassage</a></li>
+		<li><a href="{% url 'resultats_secret'%}">Résultats</a>
+		<li><a href="#">Colloscopes</a>
+			<ul>
+		{% for classe in classes %}
+				<li><a href="{% url 'colloscope_secret' classe.pk %}">{{classe.nom}}</a></li>
+		{% endfor %}
+			</ul>
+		</li>
+	</ul>
+</div>
+{% endblock %}
