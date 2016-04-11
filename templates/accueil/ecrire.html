@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block body %}
+
+<table class="accueil"><tr><td>Nouveau message</td></tr></table>
+
+<form method="post">
+	{% csrf_token %}
+	<table class="tableausimple">
+		<tr >
+			<th rowspan="{{form.rowspan}}">Destinataires</th>
+			{% for classe, prof, profs, colleur, colleurs, groupe, groupes in form.champs %}
+			<td {% if forloop.last and form.reste %} colspan="2" {% endif %}>
+			<b>Classe de {{classe.nom}}</b><br/><br/>
+			{% with prof as formprof %}
+				{% if formprof %}
+				<div>{{ formprof.errors}}
+				{{ formprof }} <b>{{formprof.label_tag}}</b></div>
+				{{ profs.errors}}
+				{{ profs}}
+				{% endif %}
+			{% endwith %}
+			{% if colleurs %}
+			<div>{{ colleur.errors }}
+			{{ colleur }} <b>{{colleur.label_tag}}</b></div>
+			<div id="id_divmatiere_{{classe.pk}}">
+			{% for matiere,colleur in colleurs %}
+			<div>{{ matiere.errors}}
+			{{ matiere }} {{matiere.label_tag}}</div>
+			{{ colleur.errors }}
+			{{ colleur }}
+			{% endfor %}
+			</div>
+			{% endif %}
+			<div>{{ groupe.errors}}
+			{{ groupe }} <b>{{groupe.label_tag}}</b></div>
+			{{ groupes.errors }}
+			{{ groupes }}
+			</td> {% if not forloop.last %}{% cycle '' "</tr><tr>" %}{% endif %}
+			{% endfor %}
+		</tr>
+		<tr>
+			<th>{{form.titre.label_tag}}</th>
+			<td colspan="{{form.colspan}}">{{form.titre.errors}}{{form.titre}}</td>
+		</tr>
+		<tr>
+			<th>{{form.corps.label_tag}}</th>
+			<td colspan="{{form.colspan}}">{{form.corps.errors}}{{form.corps}}</td>
+		</tr>
+		<tr>
+			<td colspan="{{form.colspansubmit}}"><input type="submit" , value="Envoyer" /></td>
+		</tr>
+	</table>
+</form>
+
+<table class="accueil"><tr><td><a href="{% url 'messages' %}">Retour</a></td></tr></table>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/ecrire.js' %}"></script>
+{% endblock %}
