@@ -1,0 +1,45 @@
+{% extends 'administrateur/action.html' %}{% load static %}
+{% load static %}
+{% block body %}
+	<table class="accueil"><tr><td>Liste des classes</td></tr></table>
+	<table class="tableausimple" id="suppr">
+		<tr class="entete">
+			<td>Nom</td>
+			<td>Année</td>
+			<td>Matières</td>
+			<td>Modifier</td>
+			<td>Supprimer</td>
+		</tr>
+		{% for classe in classes %}
+		<tr>
+			<td>{{ classe.nom|upper}}</td>
+			<td>{{ classe.annee }}<sup>&egrave;{{classe.annee|pluralize:"r,m"}}e</sup></td>
+			<td>{% for matiere in classe.matieres.all %}{{ matiere.nom|title }}<br />{% endfor %}</td>
+			<td><a class="bouton" href="{% url 'modif_classe' classe.pk %}">Modifier</a></td>
+			<td><a class="bouton" href="{% url 'suppr_classe' classe.pk %}">Supprimer</a></td>
+		</tr>
+		{% endfor %}
+	</table>
+	<table class="accueil"><tr><td>Ajouter une classe</td></tr></table>
+	<form method="post">
+	{% csrf_token %}
+	<table class="tableausimple">
+		<tr>
+			<th> {{ form.nom.label_tag }} </th>
+			<td> {{ form.nom.errors }} {{form.nom}}</td>
+		</tr>
+		<tr>
+			<th> {{ form.annee.label_tag }} </th>
+			<td> {{ form.annee.errors }} {{form.annee}}</td>
+		</tr>
+		<tr>
+			<th> {{ form.matieres.label_tag }} </th>
+			<td colspan="4"> {{ form.matieres.errors }} {% for widget in form.matieres %} {{widget}}{% cycle '' '' '<br />'%}{% endfor %}</td>
+		</tr>
+		<tr><td colspan="4"><input type="submit"/></td></tr>
+	</table>
+	</form>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+{% endblock %}

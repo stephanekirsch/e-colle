@@ -1,0 +1,22 @@
+{% extends 'administrateur/action.html' %}
+{% block body %}
+	<table class="accueil"><tr><td>Modification de la classe {{classe.nom}}</td></tr></table>
+	<form method="post">
+	{% csrf_token %}
+	<table class="tableausimple">
+		<tr>
+			<th> {{ form.nom.label_tag }} </th>
+			<td> {{ form.nom.errors }} {{form.nom}}</td>
+		</tr>
+		<tr>
+			<th> {{ form.annee.label_tag }} </th>
+			<td> {{ form.annee.errors }} {{form.annee}}</td>
+		</tr>
+		<tr>
+			<th> {{ form.matieres.label_tag }} </th>
+			<td colspan="4"> {{ form.matieres.errors }} {% for widget in form.matieres %} {{widget}}{% cycle '' '' '<br />'%}{% endfor %}</td>
+		</tr>
+		<tr><td colspan="4"><input type="submit"/></td></tr>
+	</table>
+	</form>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'administrateur/action.html' %}
+{% load static %}
+{% block body %}
+<table class="accueil"><tr><td id="titre">Ajout d'élèves</td></tr></table>
+	<form method="post" id="formajout" enctype="multipart/form-data" action="{% url 'ajout_eleve' %}">
+	{% csrf_token %}
+	{{ formset.management_form }}
+	<table class="tableausimple" id="ajouttab">
+		{% for form in formset %}
+		<tr><th colspan="4">Nouvel Élève</th></tr>
+		{% include "administrateur/eleve_form.html" %}
+		{% endfor %}
+		<tr><td colspan="4"><input type="submit" value="Valider"/> ou <input type="submit" value="ajouter un élève" id="ajout"/></td></tr>
+	</table>
+	</form>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/multiajout.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/motdepasse.js' %}"></script>
+{% endblock %}

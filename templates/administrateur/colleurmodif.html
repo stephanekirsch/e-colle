@@ -1,0 +1,20 @@
+{% extends 'administrateur/action.html' %}
+{% load static %}
+{% block body %}
+	<table class="accueil"><tr><td id="titre">Modification de colleurs</td></tr></table>
+	<form method="post">
+	{% csrf_token %}
+	{{ formset.management_form }}
+	<table class="tableausimple">
+	<tr><td colspan="4">(Mot de passe inchangé si non renseigné)</td></tr>
+		{% for form in formset %}
+		<tr><th colspan="4">{{ form.prenom.value|title}} {{form.nom.value|upper}}</th></tr>
+		{% include "administrateur/colleur_form.html" %}
+		{% endfor %}
+		<tr><td colspan="4"><input type="submit"/></td></tr>
+	</table>
+	</form>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/motdepasse.js' %}"></script>
+{% endblock %}

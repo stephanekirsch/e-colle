@@ -1,0 +1,33 @@
+{% extends 'administrateur/action.html' %}
+{% load static %}
+{% block body %}
+	<table class="accueil"><tr><td>Liste des matières</td></tr></table>
+	<table class="tableausimple" id ="suppr">
+		<tr class="entete">
+			<td>Nom</td>
+			<td>Minutes/colle/élève</td>
+			<td>Modifier</td>
+			<td>Supprimer</td>
+		</tr>
+		{% for matiere in matieres %}
+		<tr>
+			<td style="background-color:{{matiere.couleur}}">{{ matiere.nom|title}}</td>
+			<td>{{matiere.temps}}</td>
+			<td><a class="bouton" href="{% url 'modif_matiere' matiere.pk %}">Modifier</a></td>
+			<td><a class="bouton" href="{% url 'suppr_matiere' matiere.pk %}">Supprimer</a></td>
+		</tr>
+		{% endfor %}
+	</table>
+	<table class="accueil"><tr><td>Ajouter une matiere</td></tr></table>
+	<form method="post">
+	{% csrf_token %}
+	<table class="tableausimple">
+		{{ form.as_table }}
+		<tr><td colspan="2"><input type="submit"/></td></tr>
+	</table>
+	</form>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/matiere.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+{% endblock %}

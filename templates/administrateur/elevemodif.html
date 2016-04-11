@@ -1,0 +1,20 @@
+{% extends 'administrateur/action.html' %}
+{% load static %}
+{% block body %}
+	<table class="accueil"><tr><td id="titre">Modification d'élèves</td></tr></table>
+	<form method="post" enctype="multipart/form-data">
+	{% csrf_token %}
+	{{ formset.management_form }}
+	<table class="tableausimple">
+	<tr><td colspan="4">(Mot de passe inchangé si non renseigné)</td></tr>
+		{% for form in formset %}
+		<tr><th colspan="4">{{ form.initial.prenom|title}} {{form.initial.nom|upper}} {% with form.initial.photo as photo %}{% if photo %}<img alt="photo élève" class="photo" src="{{ photo.url }}"/>{% endif %}{% endwith %}</th></tr>
+		{% include "administrateur/eleve_form.html" %}
+		{% endfor %}
+		<tr><td colspan="4"><input type="submit"/></td></tr>
+	</table>
+	</form>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/motdepasse.js' %}"></script>
+{% endblock %}

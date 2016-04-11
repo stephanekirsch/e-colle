@@ -1,0 +1,25 @@
+{% extends 'administrateur/action.html' %}
+{% load static %}
+{% block body %}
+	<table class="accueil"><tr><td>Liste des professeurs des classes</td></tr></table>
+	{% for classe, prof in profs%}
+	<table class="accueil"><tr></tr></table>
+	<table class="tableausimple">
+		<tr class="entete">
+			<td rowspan="2">{{classe.nom|upper}}</td>
+			{% for dic in prof %}
+				<td>{{dic.nom_matiere|title}}</td>
+			{% endfor %}
+			<td>Professeur principal</td>
+			<td>Modifier</td>
+		</tr>
+		<tr>
+			{% for dic in prof %}
+			<td>{% with dic.nom as nom %}{% if nom %}{{dic.prenom|title}} {{nom|upper}}{% endif %}{% endwith %}</td>
+			{% endfor %}
+			<td>{% with classe.profprincipal as profprincipal %}{% if profprincipal %}{{profprincipal}}{% endif%}{% endwith %} </td>
+			<td><a href="{% url 'modif_prof' classe.pk %}">Modifier</a></td>
+		</tr>
+		{% endfor %}
+	</table>
+{% endblock %}
