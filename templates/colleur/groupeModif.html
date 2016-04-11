@@ -1,0 +1,11 @@
+{% extends 'colleur/action.html' %}
+{% block body %}
+	<table class="accueil"><tr><td>Modification d'un groupes de {{groupe.classe}}</td></tr></table>
+	<form method="POST">
+	{% csrf_token %}
+	<table class="tableausimple">
+		{{ form.as_table }}
+		<tr><td colspan="2"><input type="submit"/></td></tr>
+	</table>
+	</form>
+{% endblock %}

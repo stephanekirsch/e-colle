@@ -1,0 +1,21 @@
+{% extends 'colleur/action.html' %}
+{% block body %}
+<form method="post">
+<table class="tableausimple">
+	<tr class="entete"><td colspan="4">Notation: {% if note.eleve %} {{note.eleve}} {% else %} "Élève fictif" {% endif %} ({{note.classe}})</td></tr>
+	{% csrf_token %}
+	<tr>
+	{% for field in form %}
+	{% if field.label != "Commentaire(facultatif)" and field.label != "Date de rattrapage" %}
+        <td>
+            {{ field.errors }}
+            {{ field.label_tag }} {{ field }}
+        </td>
+    {% endif %}
+    {% endfor %}
+	</tr>
+	<tr><td colspan="4">{{form.commentaire.errors}}{{ form.commentaire.label_tag }} {{ form.commentaire }}</td></tr>
+	<tr><td colspan="4"><input type="submit"/></td></tr>
+</table>
+</form>
+{% endblock %}

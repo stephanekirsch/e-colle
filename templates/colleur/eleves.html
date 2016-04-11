@@ -1,0 +1,57 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% block body %}
+<form method="POST">
+{% csrf_token %}
+<table class="tableausimple">
+<tr>
+	<td>Semaine</td>
+	<td>{{form2.semin.erros}}{{form2.semin}}</td>
+	<td>à</td>
+	<td>{{form2.semax.erros}}{{form2.semax}}</td>
+	<td><input type="submit" name='semaines' value="Valider"/></td>
+</tr>
+</table>
+</form>
+
+<form method="POST">
+{% csrf_token %}
+<table class="tableausimple">
+{{ form.as_table }}
+<tr><td colspan="2"><input type = "submit", name ="eleveselect" value = "Valider"/></td></tr>
+</table>
+</form>
+
+{% if eleve and semin and semax %}
+<table class="accueil"><tr><td>Résultats de l'élève {{eleve}} en {{eleve.classe}}</td></tr></table>
+<table class="tableausimple">
+	<tr>
+		<th>Matière</th>
+		<th>Moyenne</th>
+		<th>Rang</th>
+		{% for semaine in semaines %}
+		<th>S{{semaine.semaine__numero}}</th>
+		{% endfor %}
+	</tr>
+{% for matiere, moyenne, rang, notes in matierenote %}
+	<tr {% cycle '' 'class="plusclair"'%}>
+		<td>{{matiere.nom|title}}</td>
+		<td>{{moyenne.moy|floatformat:1}}</td>
+		<td>{{rang}}</td>
+		{% for note in notes %}
+		{% with note as notew %}
+		<td>
+		{% for value in notew %}{% if not forloop.first %};{% endif %}{% if value.note == 22 %}Abs{% elif value.note == 21 %}n.n.{% else %}{{value.note}}{% endif %}{% endfor %}
+		{% if notew %}<div class="popup">{% for value in notew %}{{value.colleur}}:{% if value.commentaire %}<br/> {{ value.commentaire|linebreaksbr }}<br/>{% endif %}{% endfor  %}</div>{% endif %}
+		</td>
+		{% endwith %}
+		{% endfor %}
+	</tr>
+{% endfor %}
+</table>
+{% endif %}
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/tex2html.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML'%}"></script>
+{% endblock %}

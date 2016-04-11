@@ -1,0 +1,70 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% block body %}
+<table class="accueil"><tr><td>Résultats de la classe {{classe}}</td></tr></table>
+<form method="POST">
+{% csrf_token %}
+<table class="tableausimple">
+<tr>
+	<td>Semaine</td>
+	<td>{{form.semin.erros}}{{form.semin}}</td>
+	<td>à</td>
+	<td>{{form.semax.erros}}{{form.semax}}</td>
+	<td><input type="submit"/></td>
+	{%  if isprof %}<td><a href="{% url 'resultatcsv_colleur' classe.pk semin.pk semax.pk %}"><img src="{% static 'images/csv.png' %}" alt="icone csv"/></a></td>{% endif %}
+</tr>
+</table>
+</form>
+<table class="tableausimple">
+	<tr class="entete">
+		<td>Élève</td>
+		<td>Rang</td>
+		<td>Moyenne</td>
+	{% for semaine in semaines %}
+		<td>S{{semaine.numero}}</td>
+	{% endfor %}
+	</tr>
+	{% for note in notes%}
+	<tr {% cycle "" "class=plusclair"%}>
+		<td>{{note.eleve}}</td>
+		{% if note.rang %}
+		<td>{{note.rang}}{{note.rang|pluralize:"<sup>er</sup>,<sup>&egrave;me</sup>"|safe}}</td>
+		{% else %}
+		<td></td>
+		{% endif %}
+		<td>{% if note.moyenne %}{{note.moyenne|floatformat:1}}{% endif %}</td>
+		{% for note in note.semaine %}
+		<td>{% for value in note %}{% if not forloop.first %};{% endif %}{% if value.note == 22 %}Abs{% elif value.note == 21 %}n.n.{% else %}{{value.note}}{% endif %}{% endfor %}
+		{% if note %}<div class="popup">{% for value in note %}{{value.colleur__user__first_name|title}} {{value.colleur__user__last_name|upper}}:{% if value.commentaire %}<br/> {{ value.commentaire|linebreaksbr }}<br/>{% endif %}{% endfor  %}</div>{% endif %}
+		</td>
+		{% endfor %}
+	</tr>
+	{% endfor %}
+</table>
+{% if isprof %}
+<table class="accueil"><tr><td>Moyenne des colleurs:</td></tr></table>
+<table class="tableausimple">
+<tr class="entete">
+	<td>Colleur</td>
+	<td>Moyenne</td>
+	<td>Min</td>
+	<td>Max</td>
+	<td>&sigma;</td>
+</tr>
+{% for value in stats %}
+<tr {% cycle '' 'class="plusclair"'%} >
+	<td>{{value.colleur__user__first_name|title}} {{value.colleur__user__last_name|upper}}</td>
+	<td>{{value.moy|floatformat:1}}</td>
+	<td>{{value.minimum}}</td>
+	<td>{{value.maximum}}</td>
+	<td>{{value.ecarttype|floatformat:1}}</td>
+</tr>
+{% endfor %}
+</table>
+{% endif %}
+{% endblock %}
+{% block javascript %}
+{% if latex %}
+{% include "mathjax.html" %}
+{% endif %}
+{% endblock %}

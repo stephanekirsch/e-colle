@@ -1,0 +1,88 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil"><tr><td>Notation de la classe de {{classe}}</td></tr></table>
+{% if groupes %}
+<table class="tableausimple">
+	<tr class="entete">
+		<td>Groupe</td>
+		<td>Élève n°1</td>
+		<td>Élève n°2</td>
+		<td>Élève n°3</td>
+	</tr>
+	{% for groupe in groupes %}
+	<tr {% cycle '' "class=plusclair" %}>
+		<td><a href="{% url 'notegroupe_colleur' groupe.1 %}">{{groupe.0}}</a></td>
+		{% for eleve in groupe.3 %}
+		<td><a href="{% url 'noteeleve_colleur' eleve.1 classe.pk %}">{{eleve.0}}</a></td>
+		{% endfor %}
+		{% if groupe.2 < 3 %}<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td>
+		{% if groupe.2 < 2 %}<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td>
+		{% endif %}
+		{% endif %}
+	</tr>
+	{% endfor %}
+</table>
+{% endif %}
+{% if eleves %}
+<table class="tableausimple">
+	<tr class="entete"><td colspan="3">Élèves sans groupe</td></tr>
+	{% for eleve in eleves %}
+	{% cycle '<tr><td>' '<td>' '<td>' %}<a href="{% url 'noteeleve_colleur' eleve.pk classe.pk %}">{{eleve.user__first_name|title}} {{eleve.user__last_name|upper}}</a>{% cycle '</td>' '</td>' '</td></tr>' %}
+	{% endfor %}
+	{% if modulo == 1 %}
+		<td></td><td></td></tr>
+	{% elif modulo == 2 %}
+	<td></td></tr>
+	{% endif %}
+</table>
+{% endif %}
+<table class="tableausimple" id="suppr">
+	<tr class="entete">
+		<td>Semaine</td>
+		<td>Programme</td>
+		<td>Date</td>
+		<td>Heure</td>
+		<td>Élève</td>
+		<td>Note</td>
+		<td>Commentaire</td>
+		<td>Modifier</td>
+		<td>Supprimer</td>
+	</tr>
+	{% for listeDates, semaine, titre, detail, nbDates in notes %}
+	<tr {% cycle '' 'class="plusclair"' as couleur %} >
+		<td rowspan="{{nbDates}}">Semaine n°{{semaine}}</td>
+		<td rowspan="{{nbDates}}">{% if titre %}{{titre}}{% endif %}{% if detail %}<div class="popup">{{detail|linebreaksbr}}</div>{% endif %}</td>
+		{% for listeHeures, dateColle, nbHeures in listeDates %}
+		{% if not forloop.first %}
+	<tr {{couleur}}>
+		{% endif %}
+		<td rowspan="{{nbHeures}}">{{dateColle|date:"l j F"}}</td>
+			{% for colles, heure, nbColles in listeHeures %}
+			{% if not forloop.first %}
+	<tr {{couleur}}>
+			{% endif %}
+		<td rowspan="{{nbColles}}">{{heure|heure}}</td>
+				{% for colle in colles %}
+				{% if not forloop.first %}
+	<tr {{couleur}}>
+				{% endif %}
+		<td>{% if colle.0 %}{{colle.0}}{% else %}Élève fictif{% endif %}</td>
+		<td>{% if colle.1 == 22 %}Abs.{% elif colle.1 == 21 %}n.n.{% else %}{{colle.1}}{% endif %}</td>
+		<td>{% if colle.2 %}Lire<div class="popup">{{colle.2|linebreaksbr}}</div>{% endif %}</td>
+		<td><a href="{% url 'notemodif_colleur' colle.3 %}">Modifier</a></td>
+		<td><a href="{% url 'notesuppr_colleur' colle.3 %}">Supprimer</a></td>
+	</tr>
+				{% endfor %}
+			{% endfor %}
+		{% endfor %}
+	{% endfor %}
+</table>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+{% if latex %}
+{% include "mathjax.html" %}
+{% endif %}
+{% endblock %}

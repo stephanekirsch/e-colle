@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav %}
+<div id="nav"> 
+	<ul id="menu">
+		<li><a href="#">Notes</a>
+			<ul>
+		{% for classe in user.colleur.classes.all %}
+				<li><a href="{% url 'note_colleur' classe.pk %}">{{classe.nom}}</a></li>
+		{% endfor %}
+			</ul>
+		</li>
+		<li><a href="#">Résultats</a>
+			<ul>
+		{% for classe in user.colleur.classes.all %}
+				<li><a href="{% url 'resultat_colleur' classe.pk %}">{{classe.nom}}</a></li>
+		{% endfor %}
+			</ul>
+		</li>
+		<li><a href="#">Programme</a>
+			<ul>
+		{% for classe in user.colleur.classes.all %}
+				<li><a href="{%  url 'programme_colleur' classe.pk %}">{{classe.nom}}</a></li>
+		{% endfor %}
+			</ul>
+		</li>
+		<li><a href="#">Colloscope</a>
+			<ul>
+		{% for classe in user.colleur.classes.all %}
+				<li><a href="{% url 'colloscope_colleur' classe.pk %}">{{classe.nom}}</a></li>
+		{% endfor %}
+			</ul>
+		</li>
+		<li><a href="{% url 'agenda_colleur' %}">Agenda</a></li>
+		<li><a href="{% url 'decompte_colleur' %}">Décompte</a></li>
+		{% if user.colleur.modifgroupe %}
+		<li><a href="#">Groupes</a>
+			<ul>
+		{% for prof in user.colleur.allprofs.all %}
+			{% if prof.modifgroupe or prof.classe.profprincipal == user.colleur %}
+			<li><a href="{% url 'groupe_colleur' prof.classe.pk %}">{{prof.classe.nom}}</a></li>
+			{% endif %}
+		{% endfor %}
+			</ul>
+		</li>
+		{% endif %}
+		{% with user.colleur.classeprofprincipal.all as classes %}
+		{% if classes %}
+		<li><a href="#">Élèves</a>
+			<ul>
+			{% for classe in classes %}
+				<li><a href="{% url 'eleves_colleur' classe.pk %}">{{classe}}</a></li>
+			{% endfor %}
+			</ul>
+		</li>
+		{% endif %}
+		{% endwith %}
+	</ul>
+</div>
+{% endblock %}

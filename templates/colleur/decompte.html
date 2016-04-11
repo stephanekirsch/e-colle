@@ -1,0 +1,28 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil"><tr><td>Décompte</td></tr></table>
+{% for matiere,listeclasses,listemois in listematieres %}
+<table class="accueil"><tr><td>{{matiere}}</td></tr></table>
+<table class="tableausimple">
+	<tr class="entete">
+		<td>Classe</td>
+	{% for mois in listemois %}
+		<td>{{mois|date:"E Y"}}</td>
+	{% endfor %}
+		<td>Total</td>
+	</tr>
+	{% for classe,nbcolles,total in listeclasses %}
+	<tr {% cycle '' 'class="plusclair"'%}>
+		<td>{{classe}}</td>
+		{% for nb in nbcolles %}
+		<td>{{nb.nb|heurecolle:matiere.temps}}</td>
+		{% endfor %}
+		<td>{{total.nb|heurecolle:matiere.temps}}</td>
+	</tr>
+	{% endfor %}
+</table>
+
+{% endfor %}
+{% endblock %}

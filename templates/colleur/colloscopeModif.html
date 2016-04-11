@@ -1,0 +1,132 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil">
+	<tr>
+		<td>Colloscope de la classe de {{classe}}</td>
+		<td><a href="{% url 'colloscope_colleur' classe.pk %}">Arrêter les modifications</a></td>
+	</tr>
+</table>
+<form method="POST">
+{% csrf_token %}
+<table class="tableausimple">
+<tr>
+	<td>Semaine</td>
+	<td>{{form1.semin.erros}}{{form1.semin}}</td>
+	<td>à</td>
+	<td>{{form1.semax.erros}}{{form1.semax}}</td>
+	<td><input type="submit"/></td>
+</tr>
+</table>
+</form>
+<table class="accueil">
+	<tr>
+		<td><a id="compat" href="{% url 'ajaxcompat_colleur' classe.pk %}">Vérifier compatibilité</a></td>
+	</tr>
+</table>
+<form method="POST">
+{% csrf_token %}
+	<table class="tableausimple">
+		<tr>
+			<td class="entete">{% if creneau %}Modifier creneau{% else %}Nouveau créneau{% endif %}</td>
+			{% for field in form %}
+			<td>{{field.label_tag}}{{field}}</td>
+			{% endfor %}
+			<td><input type="submit" name="submit" value="{% if creneau %}Modifier{% else %}Valider{% endif %}"/></td>
+			{% if creneau %}
+			<td><a href="{% url 'colloscopemodif_colleur' classe.pk semin.pk semax.pk %}">Annuler</a></td>
+			{% endif %}
+		</tr>
+	</table>
+</form>
+<table class="tableausimple" id="colloscope">
+	<tr class="entete">
+		<td>Jour</td>
+		{% for jour in jours %}
+		<td colspan="{{jour.nb}}">{{listejours|lookup:jour.jour}}</td>
+		{% endfor %}
+	</tr>
+	<tr class="plusclair" id="suppr">
+		<td>Supprimer</td>
+		{% for creneau in creneaux %}
+		<td><a href="{% url 'creneausuppr_colleur' creneau.pk semin.pk semax.pk %}">S</a></td>
+		{% endfor %}
+	</tr>
+	<tr class="plusclair">
+		<td>Dupliquer</td>
+		{% for creneau in creneaux %}
+		<td><a href="{% url 'creneaudupli_colleur' creneau.pk semin.pk semax.pk %}">D</a></td>
+		{% endfor %}
+	</tr>
+	<tr class="plusclair">
+		<td>Modifier</td>
+		{% for creneau in creneaux %}
+		<td><a href="{% url 'creneaumodif_colleur' creneau.pk semin.pk semax.pk %}">M</a></td>
+		{% endfor %}
+	</tr>
+	<tr class="plusclair">
+		<td>Heure</td>
+		{% for creneau in creneaux %}
+		<td>{{creneau.heure|heure}}</td>
+		{% endfor %}
+	</tr>
+	<tr class="plusclair">
+		<td>Salle</td>
+		{% for creneau in creneaux %}
+		<td>{% if creneau.salle %}{{creneau.salle|truncatechars:5}}{% endif %}</td>
+		{% endfor %}
+	</tr>
+	{% for semaine, colles in collesemaine %}
+	<tr>
+		<td style="min-width:100px">S{{semaine}}</td>
+		{% for colle in colles %}
+		{% if colle.ferie %}
+		<td style="background-color:rgba(0,0,0,.4);"><div class="popup">{{colle.ferie}}</div></td>
+		{% else %}
+		<td class="matiere">
+			<ul>
+				<li class="niveau1" {% if colle.id_col %}style="background-color:{{colle.couleur}}">{{colle.login}}:{{colle.nomgroupe}}{% else %}>:{% endif %}</li>
+		 		<li class="niveau1bis" id="{{semaine.pk}}_{{colle.id_cr}}"></li>
+		 	</ul>
+		</td>
+		{% endif %}
+		{% endfor %}
+	</tr>
+	{% endfor %}
+</table>
+<ul id="niveau2">
+	<li><a id="creneaux" href="false" style="background-color:#888888">creneaux multiples</a></li>
+	<li><a href="{% url 'ajaxeffacer_colleur' 'semaine' 'creneau' %}">Effacer</a></li>
+{% for matiere,colleurs in matieres %}
+	<li style="background-color:{{matiere.2}}">{{matiere.1|title}}
+		<ul class="niveau3">
+		{% for colleur in colleurs %}
+			<li style="background-color:{{matiere.2}}">{{colleur.2|title}} {{colleur.3|upper}} ({{colleur.1}})
+				<ul class="niveau4">
+				{% for groupe in groupes %}
+					<li><a href="{% url 'ajax_colleur' matiere.0 colleur.0 groupe.pk 'semaine' 'creneau' %}">G{{groupe}}</a></li>
+				{% endfor %}
+				</ul>
+			</li>
+		{% endfor %}
+		</ul>
+	</li>
+{% endfor %}
+</ul>
+<div style="width:{{largeur}};height:{{hauteur}}"></div>
+<div id="grise">
+	<form method="POST" action="{% url 'ajaxmulti_colleur' 'matiere' 'kolleur' 'groupe' 'semaine' 'creneau' 'duree' 'frequence' 'permu' %}">
+	<table class="reservation">
+		{{form2.as_table}}
+		<tr><td colspan="2"><input type="submit" name="submit" value="Valider"/></td></tr>
+		<tr><td colspan="2"><a href="" id="annul">Annuler</a></td></tr>
+	</table>
+	<input id="ajaxcolleur" type="hidden" value="{% url 'ajaxmaj_colleur' 'matiere' classe.pk %}"/>
+</form>
+</div>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/colloscope.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+{% endblock %}

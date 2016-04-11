@@ -1,0 +1,50 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+{% if form %}
+<table class="accueil"><tr><td>Ajouter un programme de colle</td></tr></table>
+<form method="post" enctype="multipart/form-data">
+	{% csrf_token %}
+	<table class="tableausimple">
+		{{ form.as_table }}
+		<tr><td colspan="2"><input type="submit"/></td></tr>
+	</table>
+</form>
+{% endif %}
+<table class="accueil"><tr><td>Programmes de la classe {{classe}}</td></tr></table>
+<table class="tableausimple" id="suppr">
+	<tr class="entete">
+		<td>Semaine</td>
+		<td>Titre</td>
+		<td>Détails</td>
+		<td>Fichier</td>
+		{% if isprof %}
+		<td>Modifier</td>
+		<td>Supprimer</td>
+		{% endif %}
+	</tr>
+	{% for programme in programmes %}
+	<tr>
+		<td>{{programme.semaine}}</td>
+		<td>{{programme.titre}}</td>
+		<td class="prog_colle">{{programme.detail|linebreaksbr}}</td>
+		{% if programme.fichier %}
+		<td style="height:200px;width:150px">{% if jpeg %}<a class="image" href="{{programme.fichier.url}}"><img src="{{programme.fichier.url|image}}" alt="mini jpeg programme"/></a>{% else %}<a href="{{programme.fichier.url}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a>{% endif %}</td>
+		{% else %}
+		<td></td>
+		{% endif %}
+		{% if isprof %}
+		<td><a href="{% url 'programmemodif_colleur' programme.pk %}">Modifier</a></td>
+		<td><a href="{% url 'programmesuppr_colleur' programme.pk %}">Supprimer</a></td>
+		{% endif %}
+	</tr>
+	{% endfor %}
+</table>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+{% if latex %}
+{% include "mathjax.html" %}
+{% endif %}
+{% endblock %}

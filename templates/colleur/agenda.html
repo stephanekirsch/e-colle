@@ -1,0 +1,35 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil"><tr><td>Agenda</td></tr></table>
+<table class="tableausimple">
+<tr class="entete">
+	<td>Date</td>
+	<td>Heure</td>
+	<td>Matiere</td>
+	<td>Classe</td>
+	<td>Programme</td>
+	<td>Groupe</td>
+	<td>Salle</td>
+	<td>Noter</td>
+</tr>
+{% for colle in colles %}
+<tr>
+	<td>{{colle.lundi|addtime:colle.jour|date:"l j F"}}</td>
+	<td>{{colle.heure|heure}}</td>
+	<td style="background-color:{% if colle.lundi < semaine or colle.lundi == semaine and colle.jour <= jour.weekday %}grey{% else %}{{colle.couleur}}{% endif %}">{{colle.nom_matiere}}</td>
+	<td>{{colle.nom_classe}}</td>
+	<td>{% if colle.fichier != None and colle.fichier != "" %}<a href="{{media_url}}{{colle.fichier}}">{% if colle.titre %}{{colle.titre}}{% endif %}</a>{% elif colle.titre %}{{ colle.titre }}{% endif %}{% if colle.detail %}<div class="popup">{{colle.detail|linebreaksbr}}</div>{% endif %}</td>
+	<td>{{colle.nom_groupe}}<div class="popup">{{ groupes|lookup:colle.id_groupe }}</div></td>
+	<td>{% if colle.salle %}{{colle.salle}}{% endif %}</td>
+	<td>{% if colle.lundi < semaine or colle.lundi == semaine and colle.jour <= jour.weekday %}{% if colle.nbnotes == 0 %}<a href="{% url 'collenote_colleur' colle.pk %}">Noter</a>{% endif %}{% endif %}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}
+{% block javascript %}
+{% if latex %}
+{% include "mathjax.html" %}
+{% endif %}
+{% endblock %}
