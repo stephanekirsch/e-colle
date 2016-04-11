@@ -1,0 +1,64 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="utf-8"/>
+	<link rel="icon" href="{% static 'images/calendar-48px.png' %}">
+	<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+	<title>e-colle v1.0</title>
+{% load customfilter %}
+</head>
+<body id="body">
+	<div id="bloc">
+		<div class="cote">
+			{% if user.is_authenticated %}
+			{% if user.colleur %}
+			<ul class="accueil">
+				<li>{{user.first_name|title}}<br>{{user.last_name|upper}}</li>
+				{% for matiere in user.colleur.matieres.all %}<li> {% ifnotequal request.session.matiere matiere.pk %}<a href="{% url 'changemat_colleur' matiere.pk %}">{{matiere.nom|title}}</a>{% else %}{{matiere.nom|title}}{% endifnotequal %}</li>{% endfor %}
+			</ul>
+			{% elif user.eleve %}
+			<ul class="accueil">
+				<li>{{user.first_name|title}}<br>{{user.last_name|upper}}</li>
+				<li>{{user.eleve.classe.nom}}</li>
+			</ul>
+			{% elif user.username == 'admin' %}
+			<ul class="accueil">
+				<li>Administrateur</li>
+			</ul>
+			{% elif user.username == 'Secrétariat' %}
+			<ul class="accueil">
+				<li>Secrétariat</li>
+			</ul>
+			{% endif %}
+			{% endif %}
+		</div>
+		<div id="bloc_page">
+			<div id="header"><h1>Gestionnaire de colles<br/><!-- nom établissement -->{{0|nometab}}</h1></div>
+			{% block nav%}
+			{% endblock %}
+			{% block message %}
+			{% if messages %}
+    		{% for message in messages %}
+  			  <div {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|linebreaksbr}}</div>
+			{% endfor %}
+			{% endif %}	
+			{% endblock %}
+			{% block body %}
+			{% endblock %}
+		</div>
+		<div class="cote">
+			<ul class="accueil">
+				{% if user.is_authenticated %}
+				<li><a href="{% url 'deconnexion' %}">Déconnexion</a></li>
+				<li><a href="{% url 'profil' %}">Modifier profil</a></li>
+				<li><a {% if user.messagesnonlus %} style="{% for i in 'xxxx' %} background: {% cycle '' '-moz-' '-o-' '-webkit-'%}linear-gradient(top, #FF0000,  #0f0f0f) ;{% endfor %}" {% endif %} href="{% url 'messages' %}">Messages({{user.messagesnonlus}}/{{user.totalmessages}})</a></li>
+				{% endif %}
+			</ul>
+		</div>
+	</div>
+{% block javascript %}
+{% endblock %}
+</body>
+</html>
