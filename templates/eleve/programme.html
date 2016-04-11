@@ -1,0 +1,44 @@
+{% extends 'eleve/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil"><tr><td>Liste des programmes de colle</td></tr></table>
+<form method="POST">
+	{% csrf_token %}
+	<table class="tableausimple">
+		{{ form.as_table }}
+		<tr><td colspan="2"><input type="submit"/></td></tr>
+	</table>
+</form>
+<table class="tableausimple">
+<tr class="entete">
+	{% if not matiere %}
+	<td>Matière</td>
+	{% endif %}
+	<td>Semaine</td>
+	<td>Titre</td>
+	<td>Fichier</td>
+	<td>Programme</td>
+</tr>
+{% for programme in programmes %}
+	<tr>
+		{% if not matiere %}
+		<td style="background-color:{{programme.matiere__couleur}}">{{programme.matiere__nom|title}}</td>
+		{% endif %}
+		<td>n°{{programme.semaine__numero}}</td>
+		<td>{{programme.titre|title}}</td>
+		{% if programme.fichier %}
+		<td style="height:200px;width:150px">{% if jpeg %}<a class="image" href="{{media_url}}{{programme.fichier}}"><img src="{{media_url}}{{programme.fichier|image}}" alt="mini jpeg programme"/></a>{% else %}<a href="{{media_url}}{{programme.fichier}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a>{% endif %}</td>
+		{% else %}
+		<td></td>
+		{% endif %}
+		<td class="prog_colle"><p>{{programme.detail|linebreaksbr}}</p></td>
+	</tr>
+{% endfor %}
+</table>
+{% endblock %}
+{% block javascript %}
+{% if latex %}
+{% include "mathjax.html" %}
+{% endif %}
+{% endblock %}

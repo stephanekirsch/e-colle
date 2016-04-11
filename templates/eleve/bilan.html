@@ -1,0 +1,45 @@
+{% extends 'eleve/action.html' %}
+{% load static %}
+{% block body %}
+<table class="accueil"><tr><td>Résumé des notes</td></tr></table>
+<form method="POST">
+{% csrf_token %}
+<table class="tableausimple">
+<tr>
+	<td>Semaine</td>
+	<td>{{form.semin.erros}}{{form.semin}}</td>
+	<td>à</td>
+	<td>{{form.semax.erros}}{{form.semax}}</td>
+	<td><input type="submit"/></td>
+</tr>
+</table>
+</form>
+<table class="tableausimple">
+<tr class="entete">
+	<td>Matière</td>
+	<td>Rang</td>
+	<td>Moyenne</td>
+	<td>Moyenne de classe</td>
+	<td>Min</td>
+	<td>Max</td>
+	<td>Nb de notes</td>
+	<td>&sigma;</td>
+</tr>
+{% for moyenne,moyenneclasse,rang in moyennes %}
+	<tr>
+		<td style="background-color:{{moyenne.matiere__couleur}}">{{moyenne.matiere__nom|title}}</td>
+		{% if rang %}
+		<td>{{rang}}{{rang|pluralize:"<sup>er</sup>,<sup>&egrave;me</sup>"|safe}}</td>
+		{% else %}
+		<td></td>
+		{% endif %}
+		<td>{{moyenne.note__avg|floatformat:"1"}}</td>
+		<td>{{moyenneclasse.note__avg|floatformat:"1"}}</td>
+		<td>{{moyenne.note__min}}</td>
+		<td>{{moyenne.note__max}}</td>
+		<td>{{moyenne.note__count}}</td>
+		<td>{{moyenne.note__stddev|floatformat:"1"}}</td>
+	</tr>
+{% endfor %}
+</table>
+{% endblock %}

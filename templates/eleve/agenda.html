@@ -1,0 +1,31 @@
+{% extends 'eleve/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil"><tr><td>Agenda</td></tr></table>
+<table class="tableausimple">
+<tr class="entete">
+	<td>Date</td>
+	<td>Heure</td>
+	<td>Matiere</td>
+	<td>Colleur</td>
+	<td>Programme</td>
+	<td>Salle</td>
+</tr>
+{% for colle in colles %}
+<tr>
+	<td>{{colle.lundi|addtime:colle.jour|date:"l j F"}}</td>
+	<td>{{colle.heure|heure}}</td>
+	<td style="background-color:{% if colle.lundi < semaine or colle.lundi == semaine and colle.jour < jour.weekday %}grey{% else %}{{colle.couleur}}{% endif %}">{{colle.nom_matiere}}</td>
+	<td>{{colle.prenom|title}} {{colle.nom|upper}}</td>
+	<td>{% if colle.fichier %}<a href="{{media_url}}{{colle.fichier}}">{{colle.titre|title}}</a>{% else %}{% if colle.titre %}{{ colle.titre|title}}{% endif %}{% endif %}{% if colle.detail %}<div class="popup">{{colle.detail|linebreaksbr}}</div>{% endif %}</td>
+	<td>{% if colle.salle %}{{colle.salle}}{% endif %}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}
+{% block javascript %}
+{% if latex %}
+{% include "mathjax.html" %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav %}
+<div id="nav"> 
+	<ul id="menu">
+		<li><a href="{% url 'bilan_eleve' %}">Bilan</a></li>
+		<li><a href="{% url 'note_eleve' %}">Notes</a></li>
+		<li><a href="{% url 'programme_eleve' %}">Programme</a></li>
+		<li><a href="{% url 'colloscope_eleve' %}">Colloscope</a></li>
+		<li><a href="{% url 'agenda_eleve' %}">Agenda</a></li>
+	</ul>
+</div>
+{% endblock %}

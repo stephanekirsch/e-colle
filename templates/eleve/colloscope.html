@@ -1,0 +1,54 @@
+{% extends 'eleve/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil"><tr><td>Colloscope de la classe de {{classe}}</td></tr></table>
+<form method="POST">
+{% csrf_token %}
+<table class="tableausimple">
+<tr>
+	<td>Semaine</td>
+	<td>{{form.semin.erros}}{{form.semin}}</td>
+	<td>à</td>
+	<td>{{form.semax.erros}}{{form.semax}}</td>
+	<td><input type="submit"/></td>
+	<td><a href="{% url 'colloscopepdf_eleve' semin.pk semax.pk %}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a></td>
+</tr>
+</table>
+</form>
+<table class="tableausimple">
+	<tr class="entete">
+		<td>Jour</td>
+		{% for jour in jours %}
+		<td colspan="{{jour.nb}}">{{listejours|lookup:jour.jour}}</td>
+		{% endfor %}
+	</tr>
+	<tr class="plusclair">
+		<td>Heure</td>
+		{% for creneau in creneaux %}
+		<td>{{creneau.heure|heure}}</td>
+		{% endfor %}
+	</tr>
+	<tr class="plusclair">
+		<td>Salle</td>
+		{% for creneau in creneaux %}
+		<td>{% if creneau.salle %}{{creneau.salle}}{% endif %}</td>
+		{% endfor %}
+	</tr>
+	{% for semaine, colles in collesemaine %}
+	<tr>
+		<td style="min-width:100px">S{{semaine}}</td>
+		{% for colle in colles %}
+		{% if colle.id_col %}<td class="colloscope" style="background-color:{{colle.couleur}}">{{colle.login}}:{{listegroupes|lookup:colle.groupe|lookup:0}}
+		<div class="colle"><p>Date: {{colle.jourbis|date:"j/n"}} à {{colle.heure|heure}}<br/>
+		Colleur: {{colle.prenom|title}} {{colle.nom|upper}}<br/>
+		Matière: {{colle.nom_matiere}}<br/>
+		Groupe {{colle.nomgroupe}}: {{listegroupes|lookup:colle.groupe|lookup:1}}<br/>
+		{% if colle.salle %}Salle: {{colle.salle}}{% endif %}
+		</p></div>
+		</td>{% elif colle.ferie %}<td style="background-color:rgba(0,0,0,.4);"><div class="popup">{{colle.ferie}}</div></td>{% else %}<td></td>{% endif %}
+		{% endfor %}
+	</tr>
+	{% endfor %}
+</table>
+{% endblock %}

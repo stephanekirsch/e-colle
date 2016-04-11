@@ -1,0 +1,41 @@
+{% extends 'eleve/action.html' %}
+{% load static %}
+{% block body %}
+<table class="accueil"><tr><td>Liste des notes</td></tr></table>
+<form method="POST">
+	{% csrf_token %}
+	<table class="tableausimple">
+		{{ form.as_table }}
+		<tr><td colspan="2"><input type="submit"/></td></tr>
+	</table>
+</form>
+<table class="tableausimple">
+<tr class="entete">
+	{% if not matiere %}
+	<td>Matière</td>
+	{% endif %}
+	<td>Date</td>
+	<td>Colleur</td>
+	<td>Programme</td>
+	<td>Note</td>
+	<td>Commentaire</td>
+</tr>
+{% for note in notes %}
+	<tr>
+		{% if not matiere %}
+		<td style="background-color:{{note.couleur}}">{{note.nom_matiere|title}}</td>
+		{% endif %}
+		<td>{{note.date_colle|date:"l j F"}}</td>
+		<td>{{note.prenom|title}} {{note.nom|upper}}</td>
+		<td>{% if note.titre != None %}{{note.titre|title}}<div class="popup">{{note.programme|linebreaksbr}}</div>{% endif %}</td>
+		<td>{% ifequal note.note 21 %}n.n{% else %}{% ifequal note.note 22 %}Abs{% else %}{{note.note}}{% endifequal %}{% endifequal %}</td>
+		<td>{% if note.commentaire %}lire<div class="popup">{{note.commentaire|linebreaksbr}}</div>{% endif %}</td>
+	</tr>
+{% endfor %}
+</table>
+{% endblock %}
+{% block javascript %}
+{% if latex %}
+{% include "mathjax.html" %}
+{% endif %}
+{% endblock %}
