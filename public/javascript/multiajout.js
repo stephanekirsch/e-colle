@@ -11,6 +11,11 @@ function maj(tableau,num) // mise à jour des id/for du nouveau tableau
 	for (var i = tablabel.length - 1; i >= 0; i--) {
 		tablabel[i].htmlFor=tablabel[i].htmlFor.replace(/form-\d+-/ ,"form-"+String(num)+"-");
 	};
+	var tabselect = tableau.getElementsByTagName("select"); // on récupère les selects du tableau
+	for (var i = tabselect.length - 1; i >= 0; i--) {
+		tabselect[i].id=tabselect[i].id.replace(/form-\d+-/ ,"form-"+String(num)+"-");
+		tabselect[i].name=tabselect[i].name.replace(/form-\d+-/ ,"form-"+String(num)+"-");
+	};
 	var tabul= tableau.getElementsByTagName("ul"); // on récupère les éventuels messages d'erreur et on les supprime
 	for (var i = tabul.length - 1; i >= 0; i--) {
 		tabul[i].parentNode.removeChild(tabul[i]);
