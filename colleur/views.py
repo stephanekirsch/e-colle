@@ -460,7 +460,7 @@ def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, id_semaine, id_cr
 	groupe=get_object_or_404(Groupe,pk=id_groupe)
 	semaine=get_object_or_404(Semaine,pk=id_semaine)
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
-	if not modifcolloscope(request.user.colleur,creneau.classe):
+	if not modifcolloscope(request.user.colleur,creneau.classe) or matiere not in colleur.matieres.all() or matiere not in creneau.classe.matieres.all():
 		return HttpResponseForbidden("Accès non autorisé")
 	Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
 	feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
@@ -492,7 +492,7 @@ def ajaxcolloscopemulti(request, id_matiere, id_colleur, id_groupe, id_semaine, 
 	groupe=get_object_or_404(Groupe,pk=id_groupe)
 	semaine=get_object_or_404(Semaine,pk=id_semaine)
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
-	if not modifcolloscope(request.user.colleur,creneau.classe) or matiere not in colleur.matieres.all():
+	if not modifcolloscope(request.user.colleur,creneau.classe) or matiere not in colleur.matieres.all() or matiere not in creneau.classe.matieres.all():
 		return HttpResponseForbidden("Accès non autorisé")
 	frequence = int(frequence)
 	modulo = int(semaine.numero)%frequence
@@ -514,7 +514,7 @@ def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_se
 	groupe=get_object_or_404(Groupe,pk=id_groupe)
 	semaine=get_object_or_404(Semaine,pk=id_semaine)
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
-	if not modifcolloscope(request.user.colleur,creneau.classe) or matiere not in colleur.matieres.all():
+	if not modifcolloscope(request.user.colleur,creneau.classe) or matiere not in colleur.matieres.all() or matiere not in creneau.classe.matieres.all():
 		return HttpResponseForbidden("Accès non autorisé")
 	numsemaine=semaine.numero
 	groupes=list(Groupe.objects.filter(classe=creneau.classe).order_by('nom'))
