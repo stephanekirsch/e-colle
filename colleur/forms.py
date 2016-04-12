@@ -148,7 +148,7 @@ class SemaineForm(forms.Form):
 class ColleForm(forms.Form):
 	def __init__(self,classe, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		query1=Matiere.objects.all()
+		query1=classe.matieres.all()
 		query2=Colleur.objects.none()
 		query3=Groupe.objects.filter(classe=classe).order_by('nom')
 		try:
