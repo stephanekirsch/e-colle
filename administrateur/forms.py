@@ -4,7 +4,10 @@ from accueil.models import Classe, Matiere, Etablissement, Semaine, Colleur, Ele
 from django.forms.extras.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
-from ecolle.settings import DEFAULT_MODIF_COLLOSCOPE, DEFAULT_MODIF_GROUPE
+from ecolle.settings import DEFAULT_MODIF_COLLOSCOPE, DEFAULT_MODIF_GROUPE, RESOURCES_ROOT
+from lxml import etree
+from random import choice
+from django.db.models import Func, F
 
 class ColleurFormSetMdp(forms.BaseFormSet):
 	def clean(self):
@@ -87,11 +90,49 @@ class AdminConnexionForm(forms.Form):
 	username = forms.CharField(label="identifiant")
 	password = forms.CharField(label="Mot de passe",widget=forms.PasswordInput)
 
+
 class ClasseForm(forms.ModelForm):
 	class Meta:
 		model = Classe
 		fields=['nom','annee','matieres']
 		widgets = {'matieres':forms.CheckboxSelectMultiple}
+
+class ClasseGabaritForm(forms.ModelForm):
+	gabarit=forms.BooleanField(label="gabarit",required=False)
+	tree=etree.parse(RESOURCES_ROOT+'classes.xml')
+	types={x.get("type")+'_'+x.get("annee") for x in tree.xpath("/classes/classe")}
+	types = list(types)
+	types.sort()
+	LISTE_CLASSES=[]
+	for typ in types:
+		style,annee=typ.split("_")
+		LISTE_CLASSES.append((style+" "+annee+"è"+("r" if annee=="1" else "m")+"e année",sorted((lambda y,z:[(x.get("nom")+"_"+x.get("annee"),x.get("nom")) for x in z.xpath("/classes/classe") if [x.get("type"),x.get("annee")] == y.split("_")])(typ,tree))))
+	classe = forms.ChoiceField(label="classe",choices=LISTE_CLASSES)
+	class Meta:
+		model = Classe
+		fields=['nom','annee','matieres']
+		widgets = {'matieres':forms.CheckboxSelectMultiple}
+
+	def save(self):
+		if self.cleaned_data['gabarit']: # si on crée une classe via gabarit
+			nom,annee=self.cleaned_data['classe'].split("_")
+			annee=int(annee)
+			# on passe en revue les matières, si elles existent, on les associe, sinon on les crée
+			classe=self.tree.xpath("/classes/classe[@nom='{}'][@annee='{}']".format(nom,annee)).pop()
+			nouvelleClasse = Classe(nom=self.cleaned_data['nom'],annee=classe.get("annee")) #On crée la classe
+			nouvelleClasse.save() # on la sauvegarde
+			listeMatieres=[]
+			for matiere in list(classe):# on parcourt les matières du gabarit de la classe
+				query = Matiere.objects.annotate(nom_lower=Func(F('nom'), function='LOWER')).filter(nom_lower=matiere.get('nom').lower(),temps=int(matiere.get("temps")))
+				if query.exists():
+					matiere = query[0]
+				else:
+					matiere = Matiere(nom=matiere.get("nom"),temps=matiere.get("temps"),couleur=choice(list(zip(*Matiere.LISTE_COULEURS))[0]))
+					matiere.save()
+				listeMatieres.append(matiere)
+			nouvelleClasse.matieres.add(*listeMatieres)
+		else:
+			super().save()
 
 class MatiereForm(forms.ModelForm):
 	class Meta:

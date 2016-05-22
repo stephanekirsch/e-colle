@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
-from administrateur.forms import ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm
+from administrateur.forms import ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
@@ -78,7 +78,7 @@ def action(request):
 @ip_filter
 def classe(request):
 	"""Renvoie la vue de la page de gestion des classes"""
-	form = ClasseForm(request.POST or None)
+	form = ClasseGabaritForm(request.POST or None)
 	if form.is_valid():
 		form.save()
 		return redirect('gestion_classe')

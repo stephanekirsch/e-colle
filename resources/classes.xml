@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classes>
+	<classe nom="PCSI" annee="1" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Français/Philo" temps="30"></matiere>
+		<matiere nom="Chimie" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="S.I.I." temps="20"></matiere>
+	</classe>
+
+	<classe nom="PTSI" annee="1" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Français/Philo" temps="30"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="S.I.I." temps="20"></matiere>
+	</classe>
+
+	<classe nom="TSI" annee="1" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Français/Philo" temps="30"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="S.I.I." temps="20"></matiere>
+	</classe>
+
+	<classe nom="TPC" annee="1" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Français/Philo" temps="30"></matiere>
+		<matiere nom="Chimie" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+	</classe>
+
+	<classe nom="MPSI" annee="1" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Français/Philo" temps="30"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+	</classe>
+
+	<classe nom="BCPST" annee="1" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Chimie" temps="20"></matiere>
+		<matiere nom="S.V.T." temps="20"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+	</classe>
+
+	<classe nom="TB" annee="1" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Biotechnologies" temps="20"></matiere>
+		<matiere nom="S.V.T." temps="20"></matiere>
+		<matiere nom="Géographie" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+	</classe>
+
+	<classe nom="PSI" annee="2" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Français/Philo" temps="30"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="S.I.I." temps="20"></matiere>
+	</classe>
+
+	<classe nom="PT" annee="2" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Français/Philo" temps="30"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="S.I.I." temps="20"></matiere>
+	</classe>
+
+	<classe nom="TSI" annee="2" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Français/Philo" temps="30"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="S.I.I." temps="20"></matiere>
+	</classe>
+
+	<classe nom="ATS" annee="2" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Français/Philo" temps="30"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="S.I.I." temps="20"></matiere>
+	</classe>
+
+	<classe nom="PC" annee="2" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Français/Philo" temps="30"></matiere>
+		<matiere nom="Chimie" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+	</classe>
+
+	<classe nom="MP" annee="2" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Français/Philo" temps="30"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+	</classe>
+
+	<classe nom="TPC" annee="2" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Français/Philo" temps="30"></matiere>
+		<matiere nom="Chimie" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+	</classe>
+
+	<classe nom="BCPST" annee="2" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Chimie" temps="20"></matiere>
+		<matiere nom="S.V.T." temps="20"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Géographie" temps="20"></matiere>
+	</classe>
+
+	<classe nom="TB" annee="2" type="Scientifique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Biotechnologies" temps="20"></matiere>
+		<matiere nom="S.V.T." temps="20"></matiere>
+		<matiere nom="Géographie" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+	</classe>
+
+	<classe nom="ECS" annee="1" type="Économique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Culture gé." temps="20"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="H.G.E." temps="20"></matiere>
+	</classe>
+
+	<classe nom="ECS" annee="2" type="Économique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Culture gé." temps="20"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="H.G.E." temps="20"></matiere>
+	</classe>
+
+	<classe nom="ECE" annee="1" type="Économique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Culture gé." temps="20"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="A.E.H.S.C." temps="20"></matiere>
+	</classe>
+
+	<classe nom="ECE" annee="2" type="Économique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Culture gé." temps="20"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="A.E.H.S.C." temps="20"></matiere>
+	</classe>
+
+	<classe nom="ECT" annee="1" type="Économique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Culture gé." temps="20"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Économie" temps="20"></matiere>
+		<matiere nom="Manag/gestion" temps="20"></matiere>
+		<matiere nom="Droit" temps="20"></matiere>
+	</classe>
+
+	<classe nom="ECT" annee="2" type="Économique">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Culture gé." temps="20"></matiere>
+		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Économie" temps="20"></matiere>
+		<matiere nom="Manag/gestion" temps="20"></matiere>
+		<matiere nom="Droit" temps="20"></matiere>
+	</classe>
+
+	<classe nom="Hypokhâgne" annee="1" type="Littéraire">
+		<matiere nom="Philosophie" temps="30"></matiere>
+		<matiere nom="Français" temps="30"></matiere>
+		<matiere nom="Latin" temps="30"></matiere>
+		<matiere nom="Grec" temps="30"></matiere>
+		<matiere nom="Anglais" temps="30"></matiere>
+		<matiere nom="Histoire" temps="30"></matiere>
+		<matiere nom="Géographie" temps="30"></matiere>
+	</classe>
+
+	<classe nom="Khâgne" annee="2" type="Littéraire">
+		<matiere nom="Philosophie" temps="30"></matiere>
+		<matiere nom="Français" temps="30"></matiere>
+		<matiere nom="Latin" temps="30"></matiere>
+		<matiere nom="Grec" temps="30"></matiere>
+		<matiere nom="Anglais" temps="30"></matiere>
+		<matiere nom="Histoire" temps="30"></matiere>
+		<matiere nom="Géographie" temps="30"></matiere>
+	</classe>
+
+	<classe nom="Hypokhâgne B/L" annee="1" type="Littéraire">
+		<matiere nom="Philosophie" temps="30"></matiere>
+		<matiere nom="Français" temps="30"></matiere>
+		<matiere nom="Latin" temps="30"></matiere>
+		<matiere nom="Grec" temps="30"></matiere>
+		<matiere nom="Anglais" temps="30"></matiere>
+		<matiere nom="Histoire" temps="30"></matiere>
+		<matiere nom="Géographie" temps="30"></matiere>
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="S.E.S." temps="20"></matiere>
+	</classe>
+
+	<classe nom="Khâgne B/L" annee="2" type="Littéraire">
+		<matiere nom="Philosophie" temps="30"></matiere>
+		<matiere nom="Français" temps="30"></matiere>
+		<matiere nom="Latin" temps="30"></matiere>
+		<matiere nom="Grec" temps="30"></matiere>
+		<matiere nom="Anglais" temps="30"></matiere>
+		<matiere nom="Histoire" temps="30"></matiere>
+		<matiere nom="Géographie" temps="30"></matiere>
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="S.E.S." temps="20"></matiere>
+	</classe>
+
+</classes>
