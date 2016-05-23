@@ -133,7 +133,6 @@ if (cible.nodeName.toLowerCase()=='a' && cible.parentNode.nodeName.toLowerCase()
 	} else {
 		casedepart=caseparent.parentNode.parentNode.parentNode.parentNode.firstElementChild;
 		couleur=cible.parentNode.parentNode.parentNode.style.backgroundColor;
-		var groupe= cible.innerHTML.substring(1);
 	}
 	xhr=new XMLHttpRequest;
 	xhr.onreadystatechange = function() {
@@ -153,7 +152,7 @@ if (cible.nodeName.toLowerCase()=='a' && cible.parentNode.nodeName.toLowerCase()
 				else
 				{
 					casedepart.style.backgroundColor=couleur;
-					casedepart.innerHTML= reponse + ':' +groupe;
+					casedepart.innerHTML= reponse;
 				}
 			}
 			else

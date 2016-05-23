@@ -171,10 +171,10 @@ class ColleurForm(forms.Form):
 	# validation du mot de passe
 	def clean_motdepasse(self):
 		user=User()
-		if 'first_name' in self.cleaned_data:
-			user.first_name=self.cleaned_data['first_name']
-		if 'last_name' in self.cleaned_data:
-			user.last_name=self.cleaned_data['last_name']
+		if 'prenom' in self.cleaned_data:
+			user.first_name=self.cleaned_data['prenom']
+		if 'nom' in self.cleaned_data:
+			user.last_name=self.cleaned_data['nom']
 		data = self.cleaned_data['motdepasse']
 		if data:
 			validate_password(data,user)
@@ -188,7 +188,7 @@ class ColleurFormMdp(forms.Form):
 	motdepasse = forms.CharField(label="Mot de passe",max_length=30,required=True)
 	email = forms.EmailField(label="email(facultatif)",max_length=50,required=False)
 	grade = forms.ChoiceField(choices=LISTE_GRADE)
-	etablissement = forms.ModelChoiceField(queryset=Etablissement.objects.order_by('nom'),empty_label="inconnu")
+	etablissement = forms.ModelChoiceField(queryset=Etablissement.objects.order_by('nom'),empty_label="inconnu",required=False)
 	matiere = forms.ModelMultipleChoiceField(label="Matière(s)",queryset=Matiere.objects.order_by('nom'))
 	classe = forms.ModelMultipleChoiceField(label="Classe(s)",queryset=Classe.objects.order_by('annee','nom'),required=False)
 
@@ -222,6 +222,17 @@ class EleveForm(forms.Form):
 	photo = forms.ImageField(label="photo(jpg/png, 300x400)",required=False)
 	classe = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
 
+	def clean_motdepasse(self):
+		user=User()
+		if 'prenom' in self.cleaned_data:
+			user.first_name=self.cleaned_data['prenom']
+		if 'nom' in self.cleaned_data:
+			user.last_name=self.cleaned_data['nom']
+		data = self.cleaned_data['motdepasse']
+		if data:
+			validate_password(data,user)
+		return data
+
 class EleveFormMdp(forms.Form):
 	nom = forms.CharField(label="Nom",max_length=30)
 	prenom = forms.CharField(label="Prénom",max_length=30)
@@ -229,6 +240,16 @@ class EleveFormMdp(forms.Form):
 	email = forms.EmailField(label="Email(Facultatif)",max_length=50,required=False)
 	photo = forms.ImageField(label="photo(jpg/png, 300x400)",required=False)
 	classe = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
+
+	def clean_motdepasse(self):
+		user=User()
+		if 'prenom' in self.cleaned_data:
+			user.first_name=self.cleaned_data['prenom']
+		if 'nom' in self.cleaned_data:
+			user.last_name=self.cleaned_data['nom']
+		data = self.cleaned_data['motdepasse']
+		validate_password(data,user)
+		return data
 
 class ProfForm(forms.Form):
 	def __init__(self,classe, *args, **kwargs):

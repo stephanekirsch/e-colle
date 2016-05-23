@@ -455,7 +455,7 @@ td.matiere ul ul li:hover
 td.matiere ul ul ul li:hover ul.niveau4
 {
 	display:block;
-	width:50px;
+	width:200px;
 	line-height:25px;
 }
 td.matiere ul ul ul ul
@@ -469,6 +469,7 @@ td.matiere ul ul ul ul
 td.matiere ul ul ul ul li
 {
 	padding:0;
+	width:200px;
 }
 td.matiere ul ul a
 {
@@ -484,7 +485,7 @@ td.matiere ul ul ul ul a
 {
 	display:block;
 	color:white;
-	width:48px;
+	width:198px;
 	margin:auto;
 	line-height:25px;
 	margin:0;

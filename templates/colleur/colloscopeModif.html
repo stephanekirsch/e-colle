@@ -86,7 +86,7 @@
 		{% else %}
 		<td class="matiere">
 			<ul>
-				<li class="niveau1" {% if colle.id_col %}style="background-color:{{colle.couleur}}">{{colle.login}}:{{colle.nomgroupe}}{% else %}>:{% endif %}</li>
+				<li class="niveau1" {% if colle.id_col %}style="background-color:{{colle.couleur}}">{{colle.login}}:{% if colle.temps == 20%}{{colle.nomgroupe}}{% elif colle.temps == 30%}{{colle.prenom_eleve.0}}{{colle.nom_eleve.0}}{% endif %}{% else %}>:{% endif %}</li>
 		 		<li class="niveau1bis" id="{{semaine.pk}}_{{colle.id_cr}}"></li>
 		 	</ul>
 		</td>
@@ -103,10 +103,17 @@
 		<ul class="niveau3">
 		{% for colleur in colleurs %}
 			<li style="background-color:{{matiere.2}}">{{colleur.2|title}} {{colleur.3|upper}} ({{colleur.1}})
+				{% if matiere.3 == 20 %}
 				<ul class="niveau4">
 				{% for groupe in groupes %}
 					<li><a href="{% url 'ajax_colleur' matiere.0 colleur.0 groupe.pk 'semaine' 'creneau' %}">G{{groupe}}</a></li>
 				{% endfor %}
+				{% elif matiere.3 == 30 %}
+				<ul class="niveau4">
+				{% for eleve in listeEleves %}
+					<li><a href="{% url 'ajax_colleur_eleve' matiere.0 colleur.0 eleve.pk 'semaine' 'creneau' %}">{{eleve}}</a></li>
+				{% endfor %}
+				{% endif %}
 				</ul>
 			</li>
 		{% endfor %}

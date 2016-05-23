@@ -57,7 +57,7 @@ class Matiere(models.Model):
 		('#1E90FF',"Bleu toile"),('#B0C4DE',"Bleu acier clair"),('#6495ED',"Bleuet"),('#4682B4',"Bleu acier"),('#4169E1',"Bleu royal"),('#0000FF',"Bleu"),('#0000CD',"Bleu moyen"),('#00008B',"Bleu foncé"),('#000080',"Bleu marin"),('#191970',"Bleu de minuit"),)
 	nom = models.CharField(max_length = 30, unique=True)
 	couleur = models.CharField(max_length = 7, choices=LISTE_COULEURS, default='#696969')
-	CHOIX_TEMPS = ((20,'20 min'),(30,'30 min'))
+	CHOIX_TEMPS = ((20,'20 min'),(30,'30 min'),(60,'60 min (informatique)'))
 	temps = models.PositiveSmallIntegerField(choices=CHOIX_TEMPS,verbose_name="minutes/colle/élève",default=20)
 	class Meta:
 		ordering=['nom']
@@ -99,7 +99,7 @@ class Colleur(models.Model):
 	matieres = models.ManyToManyField(Matiere, verbose_name="Matière(s)")
 	classes = models.ManyToManyField(Classe, verbose_name="Classe(s)")
 	grade = models.PositiveSmallIntegerField(choices=LISTE_GRADES, default=3)
-	etablissement = models.ForeignKey(Etablissement, verbose_name="Établissement", null=True, on_delete=models.PROTECT)
+	etablissement = models.ForeignKey(Etablissement, verbose_name="Établissement", null=True,blank=True, on_delete=models.PROTECT)
 
 	def allprofs(self):
 		return self.colleurprof.prefetch_related('classe')
@@ -364,7 +364,7 @@ class ColleManager(models.Manager):
 			jours = jours.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi))
 			creneaux = creneaux.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi)).annotate(nb=Count('colle')).filter(nb__gt=0)
 		jours = jours.values('jour').annotate(nb=Count('id',distinct=True)).order_by('jour')			
-		requete="SELECT {} cr.id id_cr, c2.id id_col, jf.nom ferie, u.username login, m.id id_matiere, m.nom nom_matiere, m.couleur couleur, g.nom nomgroupe, cr.jour jour, cr.heure heure, cr.salle salle, cr.id, s.lundi lundi {} \
+		requete="SELECT {} cr.id id_cr, c2.id id_col, jf.nom ferie, u.username login, m.id id_matiere, m.nom nom_matiere, m.couleur couleur, m.temps temps, g.nom nomgroupe, cr.jour jour, cr.heure heure, cr.salle salle, cr.id, s.lundi lundi, u2.first_name prenom_eleve,u2.last_name nom_eleve {} \
 						FROM accueil_creneau cr \
 						CROSS JOIN accueil_semaine s\
 						{}\
@@ -376,6 +376,10 @@ class ColleManager(models.Manager):
 						ON c2.matiere_id=m.id \
 						LEFT JOIN accueil_groupe g \
 						ON g.id=c2.groupe_id \
+						LEFT JOIN accueil_eleve e\
+						ON e.id=c2.eleve_id\
+						LEFT JOIN accueil_user u2\
+						ON u2.eleve_id = e.id\
 						LEFT JOIN accueil_jourferie jf \
 						ON jf.date = {}\
 						WHERE cr.classe_id=%s AND s.lundi BETWEEN %s AND %s \
@@ -458,13 +462,11 @@ class Colle(models.Model):
 	creneau = models.ForeignKey(Creneau,on_delete=models.PROTECT)
 	colleur = models.ForeignKey(Colleur,on_delete=models.PROTECT)
 	matiere = models.ForeignKey(Matiere,on_delete=models.PROTECT)
-	groupe = models.ForeignKey(Groupe,on_delete=models.PROTECT)
+	groupe = models.ForeignKey(Groupe,on_delete=models.PROTECT,null=True)
+	eleve = models.ForeignKey(Eleve,on_delete=models.PROTECT,null=True)
+	classe = models.ForeignKey(Classe,on_delete=models.PROTECT,null=True)
 	semaine = models.ForeignKey(Semaine,on_delete=models.PROTECT)
 	objects = ColleManager()
-
-	def __str__(self):
-		return "semaine:{}, colleur:{} classe:{} groupe:{} creneau:{}h{:02d}".format(self.semaine.numero,self.colleur.user.last_name.upper(),self.creneau.classe.nom,self.groupe.nom,
-		self.creneau.heure//4,15*(self.creneau.heure%4))
 
 def mois():
 	"""Renvoie les mois min et max des semaines de colle. Renvoie le mois courant en double si aucune semaine n'est définie"""

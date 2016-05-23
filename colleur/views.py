@@ -375,17 +375,18 @@ def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):
 			else:
 				form.save()
 		return redirect('colloscopemodif_colleur',classe.pk,semin.pk,semax.pk)
-	matieres = list(classe.matieres.filter(colleur__classes=classe).values_list('pk','nom','couleur').annotate(nb=Count("colleur")))
+	matieres = list(classe.matieres.filter(colleur__classes=classe).values_list('pk','nom','couleur','temps').annotate(nb=Count("colleur")))
 	colleurs = list(Classe.objects.filter(pk=classe.pk,matieres__colleur__classes=classe).values_list('matieres__colleur__pk','matieres__colleur__user__username','matieres__colleur__user__first_name','matieres__colleur__user__last_name').order_by("matieres__nom","matieres__colleur__user__last_name","matieres__colleur__user__first_name"))
 	listeColleurs = []
 	for x in matieres:
-		listeColleurs.append(colleurs[:x[3]])
-		del colleurs[:x[3]]
+		listeColleurs.append(colleurs[:x[4]])
+		del colleurs[:x[4]]
 	groupes = Groupe.objects.filter(classe=classe)
-	largeur=str(500+42*creneaux.count())+'px'
-	hauteur=str(27*(len(matieres)+groupes.count()+Colleur.objects.filter(classes=classe).count()))+'px'
+	largeur=str(650+42*creneaux.count())+'px'
+	hauteur=str(27*(len(matieres)+classe.classeeleve.count()+Colleur.objects.filter(classes=classe).count()))+'px'
 	return render(request,'colleur/colloscopeModif.html',
-	{'semin':semin,'semax':semax,'form1':form1,'form':form,'form2':form2,'largeur':largeur,'hauteur':hauteur,'groupes':groupes,'matieres':zip(matieres,listeColleurs),'creneau':creneaumodif,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles)})
+	{'semin':semin,'semax':semax,'form1':form1,'form':form,'form2':form2,'largeur':largeur,'hauteur':hauteur,'groupes':groupes,'matieres':zip(matieres,listeColleurs),'creneau':creneaumodif\
+	,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'listeEleves':Eleve.objects.all().select_related('user')})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def creneauSuppr(request,id_creneau,id_semin,id_semax):
@@ -467,7 +468,25 @@ def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, id_semaine, id_cr
 	if semaine.lundi+timedelta(days=creneau.jour) in feries:
 		return HttpResponse("jour férié")
 	Colle(semaine=semaine,creneau=creneau,groupe=groupe,colleur=colleur,matiere=matiere).save()
-	return HttpResponse(colleur.user.username)
+	return HttpResponse(colleur.user.username+':'+groupe.nom)
+
+@user_passes_test(is_colleur, login_url='accueil')
+def ajaxcolloscopeeleve(request, id_matiere, id_colleur, id_eleve, id_semaine, id_creneau):
+	"""Ajoute la colle propre au quintuplet (matière,colleur,eleve,semaine,créneau) et renvoie le username du colleur
+	en effaçant au préalable toute colle déjà existante sur ce couple créneau/semaine"""
+	matiere=get_object_or_404(Matiere,pk=id_matiere)
+	colleur=get_object_or_404(Colleur,pk=id_colleur)
+	eleve=get_object_or_404(Eleve,pk=id_eleve)
+	semaine=get_object_or_404(Semaine,pk=id_semaine)
+	creneau=get_object_or_404(Creneau,pk=id_creneau)
+	if not modifcolloscope(request.user.colleur,creneau.classe) or matiere not in colleur.matieres.all() or matiere not in creneau.classe.matieres.all():
+		return HttpResponseForbidden("Accès non autorisé")
+	Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
+	feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
+	if semaine.lundi+timedelta(days=creneau.jour) in feries:
+		return HttpResponse("jour férié")
+	Colle(semaine=semaine,creneau=creneau,eleve=eleve,colleur=colleur,matiere=matiere).save()
+	return HttpResponse(colleur.user.username+':'+eleve.user.first_name[0]+eleve.user.last_name[0])
 
 @user_passes_test(is_colleur, login_url='accueil')
 def ajaxcolloscopeeffacer(request,id_semaine, id_creneau):
