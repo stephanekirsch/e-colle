@@ -175,7 +175,7 @@ class ColleForm(forms.Form):
 class EleveForm(forms.Form):
 	def __init__(self,classe,*args,**kwargs):
 		super().__init__(*args,**kwargs)
-		self.fields['eleve'] = forms.ModelChoiceField(label = "Élève",queryset=Eleve.objects.filter(classe=classe))
+		self.fields['eleve'] = forms.ModelChoiceField(label = "Élève",queryset=Eleve.objects.filter(classe=classe),empty_label=None)
 
 
 

@@ -109,6 +109,37 @@ class Classe(models.Model):
 		self.dictAttrEleves = dictEleves
 		return dictEleves
 
+	def loginsColleurs(self,semin,semax):
+		"""renvoie la liste des logins des colleurs de la classe, qui ont des colles entre les semaines semin et semax, ordonnés par ordre alphabétique"""
+		if hasattr(self,'listeLoginsColleurs_{}_{}'.format(semin.pk,semax.pk)):
+			return getattr(self,'listeLoginsColleurs_{}_{}'.format(semin.pk,semax.pk))
+		colleurs = self.colleur_set.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi)).distinct().order_by('user__last_name','user__first_name')
+		listeLogins = []
+		lastlogin = False
+		indice=1
+		for colleur in colleurs:
+			login = colleur.user.first_name[0].upper()+colleur.user.last_name[0].upper()
+			if login == lastlogin:
+				if indice==1:
+					listeLogins[-1]+="1"
+				indice+=1
+				listeLogins.append("{}{}".format(login,indice))
+			else:
+				indice=1
+				listeLogins.append(login)
+			lastlogin=login
+		setattr(self,'listeLoginsColleurs_{}_{}'.format(semin.pk,semax.pk),list(zip(colleurs,listeLogins)))
+		return getattr(self,'listeLoginsColleurs_{}_{}'.format(semin.pk,semax.pk))
+
+	def dictColleurs(self,semin,semax):
+		"""renvoie un dictionnaire dont les clés sont les id des colleurs de la classe, et les valeurs le login correspondant"""
+		if hasattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk)):
+			return getattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk))
+		dictColleurs={}
+		for colleur,login in self.loginsColleurs(semin,semax):
+			dictColleurs[colleur.pk]=login
+		setattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk),dictColleurs)
+		return getattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk))
 
 
 class Etablissement(models.Model):
@@ -503,7 +534,7 @@ class Colle(models.Model):
 	matiere = models.ForeignKey(Matiere,on_delete=models.PROTECT)
 	groupe = models.ForeignKey(Groupe,on_delete=models.PROTECT,null=True)
 	eleve = models.ForeignKey(Eleve,on_delete=models.PROTECT,null=True)
-	classe = models.ForeignKey(Classe,on_delete=models.PROTECT,null=True)
+	classe = models.ForeignKey(Classe,on_delete=models.PROTECT,null=True) # dans l'éventualité où on note un élève fictif.
 	semaine = models.ForeignKey(Semaine,on_delete=models.PROTECT)
 	objects = ColleManager()
 
