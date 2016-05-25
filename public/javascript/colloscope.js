@@ -10,7 +10,10 @@ var annul=document.getElementById('annul');
 annul.onclick=function(){return false};
 var compat=document.getElementById('compat');
 compat.onclick=function(){return false};
+var treleve = document.getElementById('id_eleve').parentNode.parentNode;
+var trgroupe = document.getElementById('id_groupe').parentNode.parentNode;
 var matieres = new Object();
+var temps = new Object();
 function videColleur()
 {
 	var option = colleurs.firstElementChild;
@@ -32,6 +35,7 @@ function majColleur()
 				if (xhr3.status==200) 
 				{
 					var reponsejson=eval('('+xhr3.responseText+')');
+					temps[matiere]=reponsejson.splice(0,1)[0];
 					matieres[matiere]=reponsejson;
 					for (var i = 0; i < reponsejson.length; i++)
 					{
@@ -40,11 +44,21 @@ function majColleur()
 						opt.value=reponsejson[i]['id'];
 						colleurs.appendChild(opt);
 					}
+					if (temps[matiere] == '20')
+					{
+						treleve.style.display="none";
+						trgroupe.style.display="table-row";
+					}
+					else if (temps[matiere] == '30')
+					{
+						trgroupe.style.display="none";
+						treleve.style.display="table-row";
+					}
 				}
 				else
 				{
 					alert('erreur du serveur');
-				} 
+				}
 			} 
 		}		
 		xhr3.open('GET' , lienajax3,true);
@@ -58,6 +72,16 @@ function majColleur()
 			opt.innerHTML=matieres[matiere][i]['nom'];
 			opt.value=matieres[matiere][i]['id'];
 			colleurs.appendChild(opt);
+		}
+		if (temps[matiere] == '20')
+		{
+			treleve.style.display="none";
+			trgroupe.style.display="table-row";
+		}
+		else if (temps[matiere] == '30')
+		{
+			trgroupe.style.display="none";
+			treleve.style.display="table-row";
 		}
 	}
 }
@@ -173,6 +197,7 @@ grise.firstElementChild.addEventListener('submit',function(e)
 	lienajax=lienajax.replace('matiere',document.getElementById('id_matiere').value);
 	lienajax=lienajax.replace('kolleur',document.getElementById('id_colleur').value);
 	lienajax=lienajax.replace('groupe',document.getElementById('id_groupe').value);
+	lienajax=lienajax.replace('eleve',document.getElementById('id_eleve').value);
 	lienajax=lienajax.replace('duree',document.getElementById('id_duree').value);
 	lienajax=lienajax.replace('frequence',document.getElementById('id_frequence').value);
 	lienajax=lienajax.replace('permu',document.getElementById('id_permutation').value);

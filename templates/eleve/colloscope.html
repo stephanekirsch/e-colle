@@ -37,13 +37,17 @@
 	</tr>
 	{% for semaine, colles in collesemaine %}
 	<tr>
-		<td style="min-width:100px">S{{semaine}}</td>
+		<td style="min-width:100px;">S{{semaine}}</td>
 		{% for colle in colles %}
-		{% if colle.id_col %}<td class="colloscope" style="background-color:{{colle.couleur}}">{{colle.login}}:{{listegroupes|lookup:colle.groupe|lookup:0}}
+		{% if colle.id_col %}<td class="colloscope" style="background-color:{{colle.couleur}}">{{colle.login}}:{% if colle.temps == 20 %}{{listegroupes|lookup:colle.groupe|lookup:0}}{% elif colle.temps == 30%}{% with colle.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}
 		<div class="colle"><p>Date: {{colle.jourbis|date:"j/n"}} à {{colle.heure|heure}}<br/>
 		Colleur: {{colle.prenom|title}} {{colle.nom|upper}}<br/>
 		Matière: {{colle.nom_matiere}}<br/>
+		{% if colle.temps == 20 %}
 		Groupe {{colle.nomgroupe}}: {{listegroupes|lookup:colle.groupe|lookup:1}}<br/>
+		{% elif colle.temps == 30 %}
+		Élève: {{colle.prenom_eleve|title}} {{colle.nom_eleve|upper}}<br/>
+		{% endif %}
 		{% if colle.salle %}Salle: {{colle.salle}}{% endif %}
 		</p></div>
 		</td>{% elif colle.ferie %}<td style="background-color:rgba(0,0,0,.4);"><div class="popup">{{colle.ferie}}</div></td>{% else %}<td></td>{% endif %}

@@ -77,6 +77,40 @@ class Classe(models.Model):
 	def __str__(self):
 		return self.nom
 
+	def loginsEleves(self):
+		"""renvoie la liste des logins des élèves de la classe ordonnés par ordre alphabétique"""
+		if hasattr(self,'listeLoginsEleves'):
+			return self.listeLoginsEleves
+		eleves = self.classeeleve.all().select_related('user')
+		listeLogins = []
+		lastlogin = False
+		indice=1
+		for eleve in eleves:
+			login = eleve.user.first_name[0].lower()+eleve.user.last_name[0].lower()
+			if login == lastlogin:
+				if indice==1:
+					listeLogins[-1]+="1"
+				indice+=1
+				listeLogins.append("{}{}".format(login,indice))
+			else:
+				indice=1
+				listeLogins.append(login)
+			lastlogin=login
+		self.listeLoginsEleves = list(zip(eleves,listeLogins))
+		return self.listeLoginsEleves
+
+	def dictEleves(self):
+		"""renvoie un dictionnaire dont les clés sont les id des élèves de la classe, et les valeurs le login correspondant"""
+		if hasattr(self,'dictAttrEleves'):
+			return self.dictAttrEleves
+		dictEleves={}
+		for eleve,login in self.loginsEleves():
+			dictEleves[eleve.pk]=login
+		self.dictAttrEleves = dictEleves
+		return dictEleves
+
+
+
 class Etablissement(models.Model):
 	nom = models.CharField(max_length = 50, unique=True,)
 
@@ -364,23 +398,23 @@ class ColleManager(models.Manager):
 			jours = jours.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi))
 			creneaux = creneaux.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi)).annotate(nb=Count('colle')).filter(nb__gt=0)
 		jours = jours.values('jour').annotate(nb=Count('id',distinct=True)).order_by('jour')			
-		requete="SELECT {} cr.id id_cr, c2.id id_col, jf.nom ferie, u.username login, m.id id_matiere, m.nom nom_matiere, m.couleur couleur, m.temps temps, g.nom nomgroupe, cr.jour jour, cr.heure heure, cr.salle salle, cr.id, s.lundi lundi, u2.first_name prenom_eleve,u2.last_name nom_eleve {} \
+		requete="SELECT {} cr.id id_cr, c2.id id_col, jf.nom ferie, u.username login, m.id id_matiere, m.nom nom_matiere, m.couleur couleur, m.temps temps, g.nom nomgroupe, cr.jour jour, cr.heure heure, cr.salle salle, cr.id, s.lundi lundi, e.id id_eleve, u2.first_name prenom_eleve,u2.last_name nom_eleve {} \
 						FROM accueil_creneau cr \
 						CROSS JOIN accueil_semaine s\
 						{}\
-						LEFT JOIN accueil_colle c2 \
+						LEFT OUTER JOIN accueil_colle c2 \
 						ON (c2.creneau_id=cr.id AND c2.semaine_id=s.id) \
-						LEFT JOIN accueil_user u \
+						LEFT OUTER JOIN accueil_user u \
 						ON u.colleur_id=c2.colleur_id \
-						LEFT JOIN accueil_matiere m \
+						LEFT OUTER JOIN accueil_matiere m \
 						ON c2.matiere_id=m.id \
-						LEFT JOIN accueil_groupe g \
+						LEFT OUTER JOIN accueil_groupe g \
 						ON g.id=c2.groupe_id \
-						LEFT JOIN accueil_eleve e\
+						LEFT OUTER JOIN accueil_eleve e\
 						ON e.id=c2.eleve_id\
-						LEFT JOIN accueil_user u2\
+						LEFT OUTER JOIN accueil_user u2\
 						ON u2.eleve_id = e.id\
-						LEFT JOIN accueil_jourferie jf \
+						LEFT OUTER JOIN accueil_jourferie jf \
 						ON jf.date = {}\
 						WHERE cr.classe_id=%s AND s.lundi BETWEEN %s AND %s \
 						ORDER BY s.lundi, cr.jour, cr.heure, cr.salle, cr.id".format("" if modif else "DISTINCT","" if modif else ", g.id groupe, u.last_name nom, u.first_name prenom, {} jourbis".format(date_plus_jour('s.lundi','cr.jour')),"" if modif else "INNER JOIN accueil_colle c \
@@ -396,7 +430,7 @@ class ColleManager(models.Manager):
 		return jours,creneaux,colles,semaines
 
 	def agenda(self,colleur,semainemin):
-		requete = "SELECT DISTINCT COUNT(n.id) nbnotes, co.id pk, g.nom nom_groupe, g.id id_groupe, cl.nom nom_classe, s.lundi lundi, s.id, cr.jour jour,cr.heure heure, cr.salle salle, m.id, m.nom nom_matiere, m.couleur couleur, u.first_name prenom, u.last_name nom, p.titre titre, p.detail detail, p.fichier fichier\
+		requete = "SELECT DISTINCT COUNT(n.id) nbnotes, co.id pk, g.nom nom_groupe, g.id id_groupe, cl.nom nom_classe, s.lundi lundi, s.id, cr.jour jour,cr.heure heure, cr.salle salle, m.id, m.nom nom_matiere, m.couleur couleur, m.temps temps, u.first_name prenom, u.last_name nom, u2.first_name prenom_eleve, u2.last_name nom_eleve, p.titre titre, p.detail detail, p.fichier fichier\
 				   FROM accueil_colle co\
 				   INNER JOIN accueil_creneau cr\
 				   ON co.creneau_id = cr.id\
@@ -408,22 +442,27 @@ class ColleManager(models.Manager):
 				   ON co.colleur_id=c.id\
 				   INNER JOIN accueil_user u\
 				   ON u.colleur_id=c.id\
-				   INNER JOIN accueil_groupe g\
+				   LEFT OUTER JOIN accueil_groupe g\
 				   ON co.groupe_id = g.id\
-				   INNER JOIN accueil_eleve e\
-				   ON e.groupe_id = g.id\
-				   INNER JOIN accueil_classe cl\
-				   ON e.classe_id = cl.id\
+				   LEFT OUTER JOIN accueil_eleve e\
+				   ON co.eleve_id = e.id\
+				   LEFT OUTER JOIN accueil_classe cl2\
+				   ON g.classe_id = cl2.id\
+				   LEFT OUTER JOIN accueil_user u2\
+				   ON u2.eleve_id = e.id\
+				   LEFT OUTER JOIN accueil_classe cl\
+				   ON g.classe_id = cl.id\
 				   LEFT OUTER JOIN accueil_programme p\
 				   ON (p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = cl.id)\
 				   LEFT OUTER JOIN accueil_note n\
 				   ON n.matiere_id = m.id AND n.colleur_id = c.id AND n.semaine_id=s.id AND n.jour = cr.jour AND n.heure = cr.heure AND n.semaine_id = s.id\
 				   WHERE c.id=%s AND s.lundi >= %s\
-				   GROUP BY co.id, g.nom, g.id, cl.nom, s.lundi, s.id, cr.jour, cr.heure, cr.salle, m.id, m.nom, m.couleur, u.first_name, u.last_name, p.titre, p.detail, p.fichier\
+				   GROUP BY co.id, g.nom, g.id, cl.nom, s.lundi, s.id, cr.jour, cr.heure, cr.salle, m.id, m.nom, m.couleur, u.first_name, u.last_name, u2.first_name, u2.last_name, p.titre, p.detail, p.fichier\
 				   ORDER BY s.lundi,cr.jour,cr.heure"
 		with connection.cursor() as cursor:
 			cursor.execute(requete,(colleur.pk,semainemin))
 			colles = dictfetchall(cursor)
+			print(colles)
 		groupesnb = self.filter(colleur=colleur,semaine__lundi__gte=semainemin).values('groupe').annotate(nb=Count('groupe__groupeeleve',distinct=True)).order_by('groupe__pk')
 		groupeseleve = list(self.filter(colleur=colleur,semaine__lundi__gte=semainemin).values('groupe__groupeeleve__user__first_name','groupe__groupeeleve__user__last_name').distinct().order_by('groupe__pk','groupe__groupeeleve__user__last_name','groupe__groupeeleve__user__first_name'))
 		groupes = dict()
@@ -445,10 +484,10 @@ class ColleManager(models.Manager):
 				   ON co.colleur_id=c.id\
 				   INNER JOIN accueil_user u\
 				   ON u.colleur_id=c.id\
-				   INNER JOIN accueil_groupe g\
+				   LEFT OUTER JOIN accueil_groupe g\
 				   ON co.groupe_id = g.id\
 				   INNER JOIN accueil_eleve e\
-				   ON e.groupe_id = g.id\
+				   ON (e.groupe_id = g.id OR e.id=co.eleve_id)\
 				   LEFT OUTER JOIN accueil_programme p\
 				   ON (p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = %s)\
 				   WHERE e.id=%s AND s.lundi >= %s\

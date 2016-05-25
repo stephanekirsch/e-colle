@@ -122,7 +122,7 @@ def Pdf(classe,semin,semax):
 			data[2][0]="Salle"
 			for cren in range(nbCreneauxLoc):
 				heure = creneaux[indcreneau+cren].heure
-				data[1][cren+1] = "{}h{}0".format(heure//2,3*(heure%2))
+				data[1][cren+1] = "{}h{:02d}".format(heure//4,15*(heure%4))
 				data[2][cren+1] = creneaux[indcreneau+cren].salle
 			#on places les colles dans le tableau, ainsi que les bonnes couleurs
 			for icren in range(indcreneau,indcreneau+nbCreneauxLoc):
@@ -131,7 +131,10 @@ def Pdf(classe,semin,semax):
 					data[3+isem-indsemaine][0]="S"+str(semaines[isem])
 					colle=colles[isem][icren]
 					if colle['id_col']:
-						data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(colle['login'],colle['nomgroupe'])
+						if colle['temps']==20:
+							data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(colle['login'],colle['nomgroupe'])
+						elif colle['temps']==30:
+							data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(colle['login'],classe.dictEleves()[colle['id_eleve']])
 						LIST_STYLE.add('BACKGROUND',(1+icren-indcreneau,3+isem-indsemaine),(1+icren-indcreneau,3+isem-indsemaine),couleurs[colle['id_matiere']])
 			t=Table(data,colWidths=[70]+nbCreneauxLoc*[largeurcel],rowHeights=(3+nbSemainesLoc)*[hauteurcel])
 			t.setStyle(LIST_STYLE)
@@ -153,7 +156,7 @@ def Pdf(classe,semin,semax):
 			ieleve=0
 			for eleve in groupes[iGroupe].groupeeleve.all():
 				ieleve+=1
-				data[ieleve][iGroupe-indGroupe]="{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper())
+				data[ieleve][iGroupe-indGroupe]="{} {} ({})".format(eleve.user.first_name.title(),eleve.user.last_name.upper(),classe.dictEleves()[eleve.id])
 		LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
 										,('VALIGN',(0,0),(-1,-1),'MIDDLE')
 										,('ALIGN',(0,0),(-1,-1),'CENTRE')

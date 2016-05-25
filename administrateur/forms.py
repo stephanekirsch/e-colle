@@ -7,7 +7,6 @@ from django.contrib.auth.password_validation import validate_password
 from ecolle.settings import DEFAULT_MODIF_COLLOSCOPE, DEFAULT_MODIF_GROUPE, RESOURCES_ROOT
 from lxml import etree
 from random import choice
-from django.db.models import Func, F
 
 class ColleurFormSetMdp(forms.BaseFormSet):
 	def clean(self):
@@ -123,7 +122,7 @@ class ClasseGabaritForm(forms.ModelForm):
 			nouvelleClasse.save() # on la sauvegarde
 			listeMatieres=[]
 			for matiere in list(classe):# on parcourt les matières du gabarit de la classe
-				query = Matiere.objects.annotate(nom_lower=Func(F('nom'), function='LOWER')).filter(nom_lower=matiere.get('nom').lower(),temps=int(matiere.get("temps")))
+				query = Matiere.objects.filter(nom__iexact=matiere.get('nom'),temps=int(matiere.get("temps")))
 				if query.exists():
 					matiere = query[0]
 				else:
