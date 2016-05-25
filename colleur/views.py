@@ -439,7 +439,6 @@ def ajaxcompat(request,id_classe):
 	groupes=Colle.objects.filter(groupe__classe=classe).values('groupe__nom','matiere__nom','semaine__numero').annotate(nbcolles = Count('pk',distinct=True)).filter(nbcolles__gt=1).order_by('semaine__numero','matiere__nom','groupe__nom')
 	groupes = "\n".join(["le groupe {} a {} colles de {} en semaine {}".format(valeur['groupe__nom'].title(),valeur['nbcolles'],valeur['matiere__nom'].title(),valeur['semaine__numero']) for valeur in groupes])
 	reponse=colleurs+eleves+groupes
-	print(reponse)
 	if not reponse:
 		reponse="aucune incompatibilité dans le colloscope"
 	return HttpResponse(reponse)

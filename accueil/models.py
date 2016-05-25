@@ -493,7 +493,6 @@ class ColleManager(models.Manager):
 		with connection.cursor() as cursor:
 			cursor.execute(requete,(colleur.pk,semainemin))
 			colles = dictfetchall(cursor)
-			print(colles)
 		groupesnb = self.filter(colleur=colleur,semaine__lundi__gte=semainemin).values('groupe').annotate(nb=Count('groupe__groupeeleve',distinct=True)).order_by('groupe__pk')
 		groupeseleve = list(self.filter(colleur=colleur,semaine__lundi__gte=semainemin).values('groupe__groupeeleve__user__first_name','groupe__groupeeleve__user__last_name').distinct().order_by('groupe__pk','groupe__groupeeleve__user__last_name','groupe__groupeeleve__user__first_name'))
 		groupes = dict()

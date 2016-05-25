@@ -121,7 +121,6 @@ def colloscope(request):
 		elevegroupe="; ".join([eleve['user__first_name'].title()+' '+eleve['user__last_name'].upper() for eleve in groupe.groupeeleve.values('user__first_name','user__last_name')])
 		listegroupes[groupe.pk] = [groupe.nom,elevegroupe]
 	jours,creneaux,colles,semaines = Colle.objects.classe2colloscope(classe,semin,semax)
-	print(classe.dictColleurs(semin,semax))
 	return render(request,'eleve/colloscope.html',
 	{'semin':semin,'semax':semax,'form':form,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'listegroupes':listegroupes})
 
