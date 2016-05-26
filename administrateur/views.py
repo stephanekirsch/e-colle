@@ -17,7 +17,7 @@ import re
 from django.core.urlresolvers import reverse
 
 def random_string():
-	"""renvoie une chaine de caractères aléatoires contenant des lettres en minuscule ou des chiffres"""
+	"""renvoie une chaine de caractères aléatoires contenant des lettres ou des chiffres ou un des symboles _+-.@"""
 	return "".join([choice("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_+-.@0123456789") for i in range (30)])
 
 def is_admin(user):

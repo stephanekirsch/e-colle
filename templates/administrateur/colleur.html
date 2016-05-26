@@ -23,7 +23,6 @@
 			<td>Sélectionner{{form2.colleur.errors}}</td>
 			<td>Nom</td>
 			<td>Prénom</td>
-			<td>Identifiant</td>
 			<td>Email</td>
 			<td>Actif</td>
 			<td>Grade</td>
@@ -38,7 +37,6 @@
 			<td>{{widget}}</td>
 			<td>{{colleur.user.last_name|upper}}</td>
 			<td>{{colleur.user.first_name|title}}</td>
-			<td>{{colleur.user.username}}</td>
 			<td>{{colleur.user.email}}</td>
 			{% if colleur.user.is_active %}<td>✓</td> {% else %}<td style="color:red;">❌</td>{% endif %}
 			<td>{{listegrades| lookup:colleur.grade}}</td>

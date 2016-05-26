@@ -5,28 +5,22 @@
 	<td> {{ form.prenom.errors }} {{form.prenom}}</td>
 </tr>
 <tr>
-	<th> {{ form.identifiant.label_tag }} </th>
-	<td> {{ form.identifiant.errors }} {{form.identifiant}}</td>
 	<th> {{ form.motdepasse.label_tag }} </th>
 	<td> {{ form.motdepasse.errors }} {{form.motdepasse}}</td>
-</tr>
-<tr>
 	<th> {{ form.email.label_tag }} </th>
 	<td> {{ form.email.errors }} {{form.email}}</td>
+</tr>
+<tr>
+
 	<th> {{ form.grade.label_tag }} </th>
 	<td> {{ form.grade.errors }} {{form.grade}}</td>
+	<th> {{ form.etablissement.label_tag }} </th>
+	<td> {{ form.etablissement.errors }} {{form.etablissement}}</td>
 </tr>
 {% if form.active %}
 <tr>
-	<th> {{ form.etablissement.label_tag }} </th>
-	<td> {{ form.etablissement.errors }} {{form.etablissement}}</td>
 	<th> {{ form.active.label_tag }} </th>
-	<td> {{ form.active.errors }} {{form.active}}</td>
-</tr>
-{% else %}
-<tr>
-	<th> {{ form.etablissement.label_tag }} </th>
-	<td colspan="3"> {{ form.etablissement.errors }} {{form.etablissement}}</td>
+	<td colspan="3"> {{ form.active.errors }} {{form.active}}</td>
 </tr>
 {% endif %}
 <tr>
