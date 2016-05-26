@@ -7,30 +7,12 @@ from django.contrib.auth.password_validation import validate_password
 from ecolle.settings import DEFAULT_MODIF_COLLOSCOPE, DEFAULT_MODIF_GROUPE, RESOURCES_ROOT
 from lxml import etree
 from random import choice
-from django.db.models import Func, F
+
+def random_string():
+	"""renvoie une chaine de caractères aléatoires contenant des lettres ou des chiffres ou un des symboles _+-.@"""
+	return "".join([choice("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_+-.@0123456789") for i in range (30)])
 
 class ColleurFormSetMdp(forms.BaseFormSet):
-	def clean(self):
-		""""Vérifie, dans le cas où les formulaires valident individuellement, que 2 colleurs n'ont pas le même identifiant 
-		et insère les erreurs individuellement dans les champs identifiant"""
-		if any(self.errors):
-			# s'il y a déjà des erreurs de validation individuelles, on ne fait rien.
-			return None
-		identifiants = dict() # dictionnaire des identifiant successifs avec en valeur leur rang dans le formulaire
-		errors=False
-		for i,form in enumerate(self.forms):
-			identifiant = form.cleaned_data['identifiant'] # on récupère l'identifiant
-			if identifiant in identifiants: # s'il est déjà présent dans le formulaire, on indique l'erreur dans le champ.
-				errors=True
-				form._errors['identifiant']=forms.utils.ErrorList(['Identifiant déjà présent dans le formulaire'])
-				if identifiants[identifiant] !=-1: # on indique l'erreur dans le premier champs présentant le doublon d'identifiant si ce n'est pas déjà fait
-					self.forms[identifiants[identifiant]]._errors['identifiant']=forms.utils.ErrorList(['Identifiant déjà présent dans le formulaire'])
-					identifiants[identifiant]=-1 # on passe le rang à -1 pour ne pas remettre une erreur inutilement par la suite.
-			else:
-				identifiants[identifiant]=i # on rajoute le couple {identifiant: rang} dans le dictionnaire identifiants
-		if errors:
-			raise ValidationError("Un même identifiant ne peut apparaître plusieurs fois dans le formulaire",code="uniqueness violation")
-
 	def save(self):
 		"""Sauvegarde en BDD les colleurs/users du formulaire"""
 		# on ne peut pas utiliser bulk_create ici, puisqu'on a besoin des pk pour les relation un-un et many-many
@@ -41,7 +23,7 @@ class ColleurFormSetMdp(forms.BaseFormSet):
 			colleur.matieres=form.cleaned_data['matiere']
 			colleur.classes=form.cleaned_data['classe']
 			# on crée le user
-			user = User(username=form.cleaned_data['identifiant'],first_name=form.cleaned_data['prenom'],last_name=form.cleaned_data['nom'],email=form.cleaned_data['email'],colleur=colleur)
+			user = User(username=random_string(),first_name=form.cleaned_data['prenom'],last_name=form.cleaned_data['nom'],email=form.cleaned_data['email'],colleur=colleur)
 			user.set_password(form.cleaned_data['motdepasse'])
 			user.save()		
 
@@ -49,25 +31,6 @@ class ColleurFormSet(ColleurFormSetMdp): # ColleurFormSet hérite de ColleurForm
 	def __init__(self,chaine_colleurs=[],*args,**kwargs):
 		super().__init__(*args,**kwargs)
 		self.chaine_colleurs=chaine_colleurs
-
-	def clean(self):
-		""""Vérifie, dans le cas où les formulaires valident individuellement, que 2 colleurs n'ont pas le même identifiant 
-		et insère les erreurs individuellement dans les champs identifiant. Dans ce cas une ValidationError est levée.
-		Si aucun erreur n'est rencontrée, vérifie ensuite s'il n'y a pas de doublon avec la base de donnée"""
-		super().clean() # on vérifie qu'il n'y pas de doublon d'identifiant dans le formulaire
-		# on vérifie maintenant qu'il ne va pas y avoir de doublons d'identifiants en BDD
-		users=set() # la liste des pk des utilisateurs dont l'identifiant est modifié
-		for colleur,form in zip(self.chaine_colleurs,self.forms):
-			if form.cleaned_data['identifiant']!= colleur.user.username: # si l'identifiant change, on vérifie qu'il n'est pas déjà en base de donnée après enregistrement des colleurs précédents
-				try: # on cherche si un utilisateur avec le même identifiant existe déjà en BDD
-					user=User.objects.get(username=form.cleaned_data['identifiant']) 
-				except Exception: # si on n'en trouve pas il n'y a pas de problème (il ne peut y en avoir un identique dans un formulaire précédent sans que super().clean(self) lève une exception)
-					pass
-				else: # sinon on regarde si cet identifiant va être modifié par un des formulaires précédents
-					if user.pk not in users: # si ce n'est pas le cas, on insère une erreur
-						form._errors['identifiant']=forms.utils.ErrorList(['Identifiant déjà pris par un autre colleur'])
-				finally:
-					users.add(colleur.user.pk) # on rajoute l'identifiant de l'utilisateur courant dans le set users
 				
 	def save(self):
 		"""Sauvegarde (mise à jour) en BDD les colleurs/users du formulaire"""
@@ -78,7 +41,7 @@ class ColleurFormSet(ColleurFormSetMdp): # ColleurFormSet hérite de ColleurForm
 			colleur.matieres=form.cleaned_data['matiere']
 			colleur.save()
 			user=colleur.user
-			user.username=form.cleaned_data['identifiant']
+			user.username=random_string()
 			user.first_name=form.cleaned_data['prenom']
 			user.last_name=form.cleaned_data['nom']
 			user.email=form.cleaned_data['email']
@@ -123,7 +86,7 @@ class ClasseGabaritForm(forms.ModelForm):
 			nouvelleClasse.save() # on la sauvegarde
 			listeMatieres=[]
 			for matiere in list(classe):# on parcourt les matières du gabarit de la classe
-				query = Matiere.objects.annotate(nom_lower=Func(F('nom'), function='LOWER')).filter(nom_lower=matiere.get('nom').lower(),temps=int(matiere.get("temps")))
+				query = Matiere.objects.filter(nom__iexact=matiere.get('nom'),temps=int(matiere.get("temps")))
 				if query.exists():
 					matiere = query[0]
 				else:
@@ -159,7 +122,6 @@ class ColleurForm(forms.Form):
 	LISTE_GRADE=((0,"autre"),(1,"certifié"),(2,"bi-admissible"),(3,"agrégé"),(4,"chaire supérieure"))
 	nom = forms.CharField(max_length=30)
 	prenom = forms.CharField(label="Prénom",max_length=30)
-	identifiant = forms.CharField(max_length=30)
 	motdepasse = forms.CharField(label="Mot de passe",max_length=30,required=False)
 	active = forms.BooleanField(label="actif",required=False)
 	email = forms.EmailField(label="email(facultatif)",max_length=50,required=False)
@@ -171,10 +133,10 @@ class ColleurForm(forms.Form):
 	# validation du mot de passe
 	def clean_motdepasse(self):
 		user=User()
-		if 'first_name' in self.cleaned_data:
-			user.first_name=self.cleaned_data['first_name']
-		if 'last_name' in self.cleaned_data:
-			user.last_name=self.cleaned_data['last_name']
+		if 'prenom' in self.cleaned_data:
+			user.first_name=self.cleaned_data['prenom']
+		if 'nom' in self.cleaned_data:
+			user.last_name=self.cleaned_data['nom']
 		data = self.cleaned_data['motdepasse']
 		if data:
 			validate_password(data,user)
@@ -184,11 +146,10 @@ class ColleurFormMdp(forms.Form):
 	LISTE_GRADE=enumerate(["autre","certifié","bi-admissible","agrégé","chaire supérieure"])
 	nom = forms.CharField(max_length=30)
 	prenom = forms.CharField(label="Prénom",max_length=30)
-	identifiant = forms.CharField(max_length=30)
 	motdepasse = forms.CharField(label="Mot de passe",max_length=30,required=True)
 	email = forms.EmailField(label="email(facultatif)",max_length=50,required=False)
 	grade = forms.ChoiceField(choices=LISTE_GRADE)
-	etablissement = forms.ModelChoiceField(queryset=Etablissement.objects.order_by('nom'),empty_label="inconnu")
+	etablissement = forms.ModelChoiceField(queryset=Etablissement.objects.order_by('nom'),empty_label="inconnu",required=False)
 	matiere = forms.ModelMultipleChoiceField(label="Matière(s)",queryset=Matiere.objects.order_by('nom'))
 	classe = forms.ModelMultipleChoiceField(label="Classe(s)",queryset=Classe.objects.order_by('annee','nom'),required=False)
 
@@ -203,17 +164,6 @@ class ColleurFormMdp(forms.Form):
 		validate_password(data,user)
 		return data
 
-	# validation de l'unicité de l'identifiant (pour éviter une erreur lors de l'enregistrement)
-	def clean_identifiant(self):
-		data = self.cleaned_data['identifiant']
-		if User.objects.filter(username=data).exists():
-			raise ValidationError(
-    		"l'identifiant %(value)s est déjà pris",
-    		code='uniqueness violation',
-    		params={'value': data},
-			)
-		return data
-
 class EleveForm(forms.Form):
 	nom = forms.CharField(label="Nom",max_length=30)
 	prenom = forms.CharField(label="Prénom",max_length=30)
@@ -222,6 +172,17 @@ class EleveForm(forms.Form):
 	photo = forms.ImageField(label="photo(jpg/png, 300x400)",required=False)
 	classe = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
 
+	def clean_motdepasse(self):
+		user=User()
+		if 'prenom' in self.cleaned_data:
+			user.first_name=self.cleaned_data['prenom']
+		if 'nom' in self.cleaned_data:
+			user.last_name=self.cleaned_data['nom']
+		data = self.cleaned_data['motdepasse']
+		if data:
+			validate_password(data,user)
+		return data
+
 class EleveFormMdp(forms.Form):
 	nom = forms.CharField(label="Nom",max_length=30)
 	prenom = forms.CharField(label="Prénom",max_length=30)
@@ -229,6 +190,16 @@ class EleveFormMdp(forms.Form):
 	email = forms.EmailField(label="Email(Facultatif)",max_length=50,required=False)
 	photo = forms.ImageField(label="photo(jpg/png, 300x400)",required=False)
 	classe = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
+
+	def clean_motdepasse(self):
+		user=User()
+		if 'prenom' in self.cleaned_data:
+			user.first_name=self.cleaned_data['prenom']
+		if 'nom' in self.cleaned_data:
+			user.last_name=self.cleaned_data['nom']
+		data = self.cleaned_data['motdepasse']
+		validate_password(data,user)
+		return data
 
 class ProfForm(forms.Form):
 	def __init__(self,classe, *args, **kwargs):

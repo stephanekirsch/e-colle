@@ -151,6 +151,7 @@ class ColleForm(forms.Form):
 		query1=classe.matieres.all()
 		query2=Colleur.objects.none()
 		query3=Groupe.objects.filter(classe=classe).order_by('nom')
+		query4=Eleve.objects.all()
 		try:
 			self.fields['matiere']=forms.ModelChoiceField(queryset=query1,empty_label=None,initial=query1[0])
 		except Exception:
@@ -160,6 +161,10 @@ class ColleForm(forms.Form):
 			self.fields['groupe']=forms.ModelChoiceField(queryset=query3,empty_label=None,initial=query3[0])
 		except Exception:
 			self.fields['groupe']=forms.ModelChoiceField(queryset=query3,empty_label=None)
+		try:
+			self.fields['eleve']=forms.ModelChoiceField(queryset=query4,empty_label=None,initial=query4[0])
+		except Exception:
+			self.fields['eleve']=forms.ModelChoiceField(queryset=query4,empty_label=None)
 		DUREE=[(1,"1 semaine")]+list(zip(range(2,31),["{} semaines".format(i) for i in range (2,31)]))
 		PERMUTATION=[(i,"de {} en {}".format(i,i)) for i in range(1,21)]
 		FREQUENCE=[(i,"une semaine sur {}".format(i)) for i in (1,2,3,4,8)]
@@ -170,7 +175,7 @@ class ColleForm(forms.Form):
 class EleveForm(forms.Form):
 	def __init__(self,classe,*args,**kwargs):
 		super().__init__(*args,**kwargs)
-		self.fields['eleve'] = forms.ModelChoiceField(label = "Élève",queryset=Eleve.objects.filter(classe=classe))
+		self.fields['eleve'] = forms.ModelChoiceField(label = "Élève",queryset=Eleve.objects.filter(classe=classe),empty_label=None)
 
 
 

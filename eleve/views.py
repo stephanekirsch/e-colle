@@ -116,17 +116,13 @@ def colloscope(request):
 	if form.is_valid():
 		semin=form.cleaned_data['semin']
 		semax=form.cleaned_data['semax']
-	groupes = Groupe.objects.filter(classe=classe)
 	listegroupes = dict()
-	for groupe in groupes:
-		elevegroupe=': '
-		for eleve in groupe.groupeeleve.values('user__first_name','user__last_name'):
-			elevegroupe+=eleve['user__first_name'].title()+' '+eleve['user__last_name'].upper()+'; '
-		elevegroupe = elevegroupe[:-2]
+	for groupe in Groupe.objects.filter(classe=classe):
+		elevegroupe="; ".join([eleve['user__first_name'].title()+' '+eleve['user__last_name'].upper() for eleve in groupe.groupeeleve.values('user__first_name','user__last_name')])
 		listegroupes[groupe.pk] = [groupe.nom,elevegroupe]
 	jours,creneaux,colles,semaines = Colle.objects.classe2colloscope(classe,semin,semax)
 	return render(request,'eleve/colloscope.html',
-	{'semin':semin,'semax':semax,'form':form,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'listegroupes':listegroupes})
+	{'semin':semin,'semax':semax,'form':form,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'listegroupes':listegroupes,'dictColleurs':classe.dictColleurs(semin,semax)})
 
 @user_passes_test(is_eleve, login_url='accueil')
 def agenda(request):

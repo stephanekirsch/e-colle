@@ -9,7 +9,7 @@ import os
 from ecolle.settings import MEDIA_ROOT, IMAGEMAGICK, BDD
 from django.core.files import File
 from PIL import Image
-from django.db.models import Count, Avg, Min, Max, F 
+from django.db.models import Count, Avg, Min, Max, F
 
 semaine = ["lundi", "mardi","mercredi","jeudi","vendredi","samedi","dimanche"]
 
@@ -57,7 +57,7 @@ class Matiere(models.Model):
 		('#1E90FF',"Bleu toile"),('#B0C4DE',"Bleu acier clair"),('#6495ED',"Bleuet"),('#4682B4',"Bleu acier"),('#4169E1',"Bleu royal"),('#0000FF',"Bleu"),('#0000CD',"Bleu moyen"),('#00008B',"Bleu foncé"),('#000080',"Bleu marin"),('#191970',"Bleu de minuit"),)
 	nom = models.CharField(max_length = 30, unique=True)
 	couleur = models.CharField(max_length = 7, choices=LISTE_COULEURS, default='#696969')
-	CHOIX_TEMPS = ((20,'20 min'),(30,'30 min'))
+	CHOIX_TEMPS = ((20,'20 min'),(30,'30 min'),(60,'60 min (informatique)'))
 	temps = models.PositiveSmallIntegerField(choices=CHOIX_TEMPS,verbose_name="minutes/colle/élève",default=20)
 	class Meta:
 		ordering=['nom']
@@ -76,6 +76,91 @@ class Classe(models.Model):
 
 	def __str__(self):
 		return self.nom
+
+	def loginsEleves(self):
+		"""renvoie la liste des logins des élèves de la classe ordonnés par ordre alphabétique"""
+		if hasattr(self,'listeLoginsEleves'):
+			return self.listeLoginsEleves
+		eleves = self.classeeleve.all().select_related('user')
+		listeLogins = []
+		lastlogin = False
+		indice=1
+		for eleve in eleves:
+			login = eleve.user.first_name[0].lower()+eleve.user.last_name[0].lower()
+			if login == lastlogin:
+				if indice==1:
+					listeLogins[-1]+="1"
+				indice+=1
+				listeLogins.append("{}{}".format(login,indice))
+			else:
+				indice=1
+				listeLogins.append(login)
+			lastlogin=login
+		self.listeLoginsEleves = list(zip(eleves,listeLogins))
+		return self.listeLoginsEleves
+
+	def dictEleves(self):
+		"""renvoie un dictionnaire dont les clés sont les id des élèves de la classe, et les valeurs le login correspondant"""
+		if hasattr(self,'dictAttrEleves'):
+			return self.dictAttrEleves
+		dictEleves={}
+		for eleve,login in self.loginsEleves():
+			dictEleves[eleve.pk]=login
+		self.dictAttrEleves = dictEleves
+		return dictEleves
+
+	def loginsColleurs(self,semin=None,semax=None):
+		"""renvoie la liste des logins des colleurs de la classe, qui ont des colles entre les semaines semin et semax, ordonnés par ordre alphabétique"""
+		if semin is None or semax is None:
+			if hasattr(self,'listeLoginsColleurs'):
+				return getattr(self,'listeLoginsColleurs')
+			colleurs = self.colleur_set.order_by('user__last_name','user__first_name')
+		else:
+			if hasattr(self,'listeLoginsColleurs_{}_{}'.format(semin.pk,semax.pk)):
+				return getattr(self,'listeLoginsColleurs_{}_{}'.format(semin.pk,semax.pk))
+			colleurs = self.colleur_set.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi)).distinct().order_by('user__last_name','user__first_name')
+		listeLogins = []
+		lastlogin = False
+		indice=1
+		listeLogins = []
+		lastlogin = False
+		indice=1
+		for colleur in colleurs:
+			login = colleur.user.first_name[0].upper()+colleur.user.last_name[0].upper()
+			if login == lastlogin:
+				if indice==1:
+					listeLogins[-1]+="1"
+				indice+=1
+				listeLogins.append("{}{}".format(login,indice))
+			else:
+				indice=1
+				listeLogins.append(login)
+			lastlogin=login
+		if semin is None or semax is None:
+			setattr(self,'listeLoginsColleurs',list(zip(colleurs,listeLogins)))
+			return getattr(self,'listeLoginsColleurs')
+		else:
+			setattr(self,'listeLoginsColleurs_{}_{}'.format(semin.pk,semax.pk),list(zip(colleurs,listeLogins)))
+			return getattr(self,'listeLoginsColleurs_{}_{}'.format(semin.pk,semax.pk))
+
+	def dictColleurs(self,semin=None,semax=None):
+		"""renvoie un dictionnaire dont les clés sont les id des colleurs de la classe, et les valeurs le login correspondant"""
+		if semin is None or semax is None:
+			if hasattr(self,'dictAttrColleurs'):
+				return getattr(self,'dictAttrColleurs')
+		else:
+			if hasattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk)):
+				return getattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk))
+		dictColleurs={}
+		for colleur,login in self.loginsColleurs(semin,semax):
+			dictColleurs[colleur.pk]=login
+		if semin is None or semax is None:
+			setattr(self,'dictAttrColleurs',dictColleurs)
+			return getattr(self,'dictAttrColleurs')
+		else:
+			setattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk),dictColleurs)
+			return getattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk))
+
 
 class Etablissement(models.Model):
 	nom = models.CharField(max_length = 50, unique=True,)
@@ -99,7 +184,7 @@ class Colleur(models.Model):
 	matieres = models.ManyToManyField(Matiere, verbose_name="Matière(s)")
 	classes = models.ManyToManyField(Classe, verbose_name="Classe(s)")
 	grade = models.PositiveSmallIntegerField(choices=LISTE_GRADES, default=3)
-	etablissement = models.ForeignKey(Etablissement, verbose_name="Établissement", null=True, on_delete=models.PROTECT)
+	etablissement = models.ForeignKey(Etablissement, verbose_name="Établissement", null=True,blank=True, on_delete=models.PROTECT)
 
 	def allprofs(self):
 		return self.colleurprof.prefetch_related('classe')
@@ -364,19 +449,23 @@ class ColleManager(models.Manager):
 			jours = jours.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi))
 			creneaux = creneaux.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi)).annotate(nb=Count('colle')).filter(nb__gt=0)
 		jours = jours.values('jour').annotate(nb=Count('id',distinct=True)).order_by('jour')			
-		requete="SELECT {} cr.id id_cr, c2.id id_col, jf.nom ferie, u.username login, m.id id_matiere, m.nom nom_matiere, m.couleur couleur, g.nom nomgroupe, cr.jour jour, cr.heure heure, cr.salle salle, cr.id, s.lundi lundi {} \
+		requete="SELECT {} cr.id id_cr, c2.id id_col, c2.colleur_id id_colleur, jf.nom ferie, u.username login, m.id id_matiere, m.nom nom_matiere, m.couleur couleur, m.temps temps, g.nom nomgroupe, cr.jour jour, cr.heure heure, cr.salle salle, cr.id, s.lundi lundi, e.id id_eleve, u2.first_name prenom_eleve,u2.last_name nom_eleve {} \
 						FROM accueil_creneau cr \
 						CROSS JOIN accueil_semaine s\
 						{}\
-						LEFT JOIN accueil_colle c2 \
+						LEFT OUTER JOIN accueil_colle c2 \
 						ON (c2.creneau_id=cr.id AND c2.semaine_id=s.id) \
-						LEFT JOIN accueil_user u \
+						LEFT OUTER JOIN accueil_user u \
 						ON u.colleur_id=c2.colleur_id \
-						LEFT JOIN accueil_matiere m \
+						LEFT OUTER JOIN accueil_matiere m \
 						ON c2.matiere_id=m.id \
-						LEFT JOIN accueil_groupe g \
+						LEFT OUTER JOIN accueil_groupe g \
 						ON g.id=c2.groupe_id \
-						LEFT JOIN accueil_jourferie jf \
+						LEFT OUTER JOIN accueil_eleve e\
+						ON e.id=c2.eleve_id\
+						LEFT OUTER JOIN accueil_user u2\
+						ON u2.eleve_id = e.id\
+						LEFT OUTER JOIN accueil_jourferie jf \
 						ON jf.date = {}\
 						WHERE cr.classe_id=%s AND s.lundi BETWEEN %s AND %s \
 						ORDER BY s.lundi, cr.jour, cr.heure, cr.salle, cr.id".format("" if modif else "DISTINCT","" if modif else ", g.id groupe, u.last_name nom, u.first_name prenom, {} jourbis".format(date_plus_jour('s.lundi','cr.jour')),"" if modif else "INNER JOIN accueil_colle c \
@@ -392,7 +481,7 @@ class ColleManager(models.Manager):
 		return jours,creneaux,colles,semaines
 
 	def agenda(self,colleur,semainemin):
-		requete = "SELECT DISTINCT COUNT(n.id) nbnotes, co.id pk, g.nom nom_groupe, g.id id_groupe, cl.nom nom_classe, s.lundi lundi, s.id, cr.jour jour,cr.heure heure, cr.salle salle, m.id, m.nom nom_matiere, m.couleur couleur, u.first_name prenom, u.last_name nom, p.titre titre, p.detail detail, p.fichier fichier\
+		requete = "SELECT DISTINCT COUNT(n.id) nbnotes, co.id pk, g.nom nom_groupe, g.id id_groupe, cl.nom nom_classe, cl2.nom nom_classebis, s.lundi lundi, s.id, cr.jour jour,cr.heure heure, cr.salle salle, m.id, m.nom nom_matiere, m.couleur couleur, m.temps temps, u.first_name prenom, u.last_name nom, u2.first_name prenom_eleve, u2.last_name nom_eleve, p.titre titre, p.detail detail, p.fichier fichier\
 				   FROM accueil_colle co\
 				   INNER JOIN accueil_creneau cr\
 				   ON co.creneau_id = cr.id\
@@ -404,18 +493,22 @@ class ColleManager(models.Manager):
 				   ON co.colleur_id=c.id\
 				   INNER JOIN accueil_user u\
 				   ON u.colleur_id=c.id\
-				   INNER JOIN accueil_groupe g\
+				   LEFT OUTER JOIN accueil_groupe g\
 				   ON co.groupe_id = g.id\
-				   INNER JOIN accueil_eleve e\
-				   ON e.groupe_id = g.id\
-				   INNER JOIN accueil_classe cl\
-				   ON e.classe_id = cl.id\
+				   LEFT OUTER JOIN accueil_eleve e\
+				   ON co.eleve_id = e.id\
+				   LEFT OUTER JOIN accueil_classe cl2\
+				   ON e.classe_id = cl2.id\
+				   LEFT OUTER JOIN accueil_user u2\
+				   ON u2.eleve_id = e.id\
+				   LEFT OUTER JOIN accueil_classe cl\
+				   ON g.classe_id = cl.id\
 				   LEFT OUTER JOIN accueil_programme p\
 				   ON (p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = cl.id)\
 				   LEFT OUTER JOIN accueil_note n\
 				   ON n.matiere_id = m.id AND n.colleur_id = c.id AND n.semaine_id=s.id AND n.jour = cr.jour AND n.heure = cr.heure AND n.semaine_id = s.id\
 				   WHERE c.id=%s AND s.lundi >= %s\
-				   GROUP BY co.id, g.nom, g.id, cl.nom, s.lundi, s.id, cr.jour, cr.heure, cr.salle, m.id, m.nom, m.couleur, u.first_name, u.last_name, p.titre, p.detail, p.fichier\
+				   GROUP BY co.id, g.nom, g.id, cl.nom, cl2.nom, s.lundi, s.id, cr.jour, cr.heure, cr.salle, m.id, m.nom, m.couleur, u.first_name, u.last_name, u2.first_name, u2.last_name, p.titre, p.detail, p.fichier\
 				   ORDER BY s.lundi,cr.jour,cr.heure"
 		with connection.cursor() as cursor:
 			cursor.execute(requete,(colleur.pk,semainemin))
@@ -441,10 +534,10 @@ class ColleManager(models.Manager):
 				   ON co.colleur_id=c.id\
 				   INNER JOIN accueil_user u\
 				   ON u.colleur_id=c.id\
-				   INNER JOIN accueil_groupe g\
+				   LEFT OUTER JOIN accueil_groupe g\
 				   ON co.groupe_id = g.id\
 				   INNER JOIN accueil_eleve e\
-				   ON e.groupe_id = g.id\
+				   ON (e.groupe_id = g.id OR e.id=co.eleve_id)\
 				   LEFT OUTER JOIN accueil_programme p\
 				   ON (p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = %s)\
 				   WHERE e.id=%s AND s.lundi >= %s\
@@ -454,17 +547,36 @@ class ColleManager(models.Manager):
 			colles = dictfetchall(cursor)
 		return colles
 
+	def compatEleve(self,id_classe):
+		requete = "SELECT COUNT(DISTINCT co.id) nbColles, COUNT(g.id), s.numero numero, cr.jour jour, cr.heure heure, u.first_name prenom, u.last_name nom\
+		FROM accueil_colle co\
+		LEFT OUTER JOIN accueil_groupe g\
+		ON co.groupe_id = g.id\
+		LEFT OUTER JOIN accueil_eleve e\
+		ON (e.id = co.eleve_id OR e.groupe_id = g.id)\
+		INNER JOIN accueil_semaine s\
+		ON co.semaine_id = s.id\
+		INNER JOIN accueil_user u\
+		ON u.eleve_id = e.id\
+		INNER JOIN accueil_creneau cr\
+		ON co.creneau_id = cr.id\
+		GROUP BY s.numero, cr.jour, cr.heure, u.first_name, u.last_name\
+		HAVING COUNT(DISTINCT co.id) > 1 AND COUNT(g.id) < COUNT(DISTINCT co.id)\
+		ORDER BY s.numero, cr.jour, cr.heure, u.first_name, u.last_name"
+		with connection.cursor() as cursor:
+			cursor.execute(requete,(id_classe,))
+			incompat = dictfetchall(cursor)
+		return incompat
+
 class Colle(models.Model):
 	creneau = models.ForeignKey(Creneau,on_delete=models.PROTECT)
 	colleur = models.ForeignKey(Colleur,on_delete=models.PROTECT)
 	matiere = models.ForeignKey(Matiere,on_delete=models.PROTECT)
-	groupe = models.ForeignKey(Groupe,on_delete=models.PROTECT)
+	groupe = models.ForeignKey(Groupe,on_delete=models.PROTECT,null=True)
+	eleve = models.ForeignKey(Eleve,on_delete=models.PROTECT,null=True)
+	classe = models.ForeignKey(Classe,on_delete=models.PROTECT,null=True) # dans l'éventualité où on note un élève fictif.
 	semaine = models.ForeignKey(Semaine,on_delete=models.PROTECT)
 	objects = ColleManager()
-
-	def __str__(self):
-		return "semaine:{}, colleur:{} classe:{} groupe:{} creneau:{}h{:02d}".format(self.semaine.numero,self.colleur.user.last_name.upper(),self.creneau.classe.nom,self.groupe.nom,
-		self.creneau.heure//4,15*(self.creneau.heure%4))
 
 def mois():
 	"""Renvoie les mois min et max des semaines de colle. Renvoie le mois courant en double si aucune semaine n'est définie"""

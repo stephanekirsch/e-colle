@@ -79,14 +79,14 @@
 	</tr>
 	{% for semaine, colles in collesemaine %}
 	<tr>
-		<td style="min-width:100px">S{{semaine}}</td>
+		<td style="min-width:100px;">S{{semaine}}</td>
 		{% for colle in colles %}
 		{% if colle.ferie %}
 		<td style="background-color:rgba(0,0,0,.4);"><div class="popup">{{colle.ferie}}</div></td>
 		{% else %}
 		<td class="matiere">
 			<ul>
-				<li class="niveau1" {% if colle.id_col %}style="background-color:{{colle.couleur}}">{{colle.login}}:{{colle.nomgroupe}}{% else %}>:{% endif %}</li>
+				<li class="niveau1" {% if colle.id_col %}style="background-color:{{colle.couleur}}">{{dictColleurs|lookup:colle.id_colleur}}:{% if colle.temps == 20%}{{colle.nomgroupe}}{% elif colle.temps == 30%}{% with colle.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}{% else %}>:{% endif %}</li>
 		 		<li class="niveau1bis" id="{{semaine.pk}}_{{colle.id_cr}}"></li>
 		 	</ul>
 		</td>
@@ -102,11 +102,18 @@
 	<li style="background-color:{{matiere.2}}">{{matiere.1|title}}
 		<ul class="niveau3">
 		{% for colleur in colleurs %}
-			<li style="background-color:{{matiere.2}}">{{colleur.2|title}} {{colleur.3|upper}} ({{colleur.1}})
+			<li style="background-color:{{matiere.2}}">{{colleur.2|title}} {{colleur.3|upper}} ({{classe.dictColleurs|lookup:colleur.0}})
+				{% if matiere.3 == 20 %}
 				<ul class="niveau4">
 				{% for groupe in groupes %}
 					<li><a href="{% url 'ajax_colleur' matiere.0 colleur.0 groupe.pk 'semaine' 'creneau' %}">G{{groupe}}</a></li>
 				{% endfor %}
+				{% elif matiere.3 == 30 %}
+				<ul class="niveau4">
+				{% for eleve,login in classe.loginsEleves %}
+					<li><a href="{% url 'ajax_colleur_eleve' matiere.0 colleur.0 eleve.pk 'semaine' 'creneau' login %}">{{eleve}} ({{login}})</a></li>
+				{% endfor %}
+				{% endif %}
 				</ul>
 			</li>
 		{% endfor %}
@@ -116,7 +123,7 @@
 </ul>
 <div style="width:{{largeur}};height:{{hauteur}}"></div>
 <div id="grise">
-	<form method="POST" action="{% url 'ajaxmulti_colleur' 'matiere' 'kolleur' 'groupe' 'semaine' 'creneau' 'duree' 'frequence' 'permu' %}">
+	<form method="POST" action="{% url 'ajaxmulti_colleur' 'matiere' 'kolleur' 'groupe' 'eleve' 'semaine' 'creneau' 'duree' 'frequence' 'permu' %}">
 	<table class="reservation">
 		{{form2.as_table}}
 		<tr><td colspan="2"><input type="submit" name="submit" value="Valider"/></td></tr>
