@@ -19,7 +19,7 @@
 	<td>{{colle.lundi|addtime:colle.jour|date:"l j F"}}</td>
 	<td>{{colle.heure|heure}}</td>
 	<td style="background-color:{% if colle.lundi < semaine or colle.lundi == semaine and colle.jour <= jour.weekday %}grey{% else %}{{colle.couleur}}{% endif %}">{{colle.nom_matiere}}</td>
-	<td>{{colle.nom_classe}}</td>
+	<td>{% firstof colle.nom_classe colle.nom_classebis %}</td>
 	<td>{% if colle.fichier != None and colle.fichier != "" %}<a href="{{media_url}}{{colle.fichier}}">{% if colle.titre %}{{colle.titre}}{% endif %}</a>{% elif colle.titre %}{{ colle.titre }}{% endif %}{% if colle.detail %}<div class="popup">{{colle.detail|linebreaksbr}}</div>{% endif %}</td>
 	{% if colle.temps == 20 %}
 	<td>{{colle.nom_groupe}}<div class="popup">{{ groupes|lookup:colle.id_groupe }}</div></td>

@@ -349,7 +349,7 @@ def colloscope2(request,id_classe,id_semin,id_semax):
 	listegroupes = dict(nom_groupes)
 	jours,creneaux,colles,semaines=Colle.objects.classe2colloscope(classe,semin,semax)
 	return render(request,'colleur/colloscope.html',
-	{'semin':semin,'semax':semax,'form':form,'isprof':modifcolloscope(request.user.colleur,classe),'classe':classe,'jours':jours,'listegroupes':listegroupes,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles)})
+	{'semin':semin,'semax':semax,'form':form,'isprof':modifcolloscope(request.user.colleur,classe),'classe':classe,'jours':jours,'listegroupes':listegroupes,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'dictColleurs':classe.dictColleurs(semin,semax)})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):
@@ -389,7 +389,7 @@ def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):
 	hauteur=str(27*(len(matieres)+classe.classeeleve.count()+Colleur.objects.filter(classes=classe).count()))+'px'
 	return render(request,'colleur/colloscopeModif.html',
 	{'semin':semin,'semax':semax,'form1':form1,'form':form,'form2':form2,'largeur':largeur,'hauteur':hauteur,'groupes':groupes,'matieres':zip(matieres,listeColleurs),'creneau':creneaumodif\
-	,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles)})
+	,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'dictColleurs':classe.dictColleurs(semin,semax)})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def creneauSuppr(request,id_creneau,id_semin,id_semax):
@@ -430,15 +430,13 @@ def ajaxcompat(request,id_classe):
 	classe=get_object_or_404(Classe,pk=id_classe)
 	colleurs = Colle.objects.filter(groupe__classe=classe).values('colleur__user__first_name','colleur__user__last_name','semaine__numero','creneau__jour','creneau__heure').annotate(nbcolles = Count('pk',distinct=True)).filter(nbcolles__gt=1).order_by('semaine__numero','creneau__jour','creneau__heure','colleur__user__last_name','colleur__user__first_name')
 	colleurs="\n".join(["le colleur {} {} a {} colles en semaine {} le {} à {}h{:02d}".format(valeur['colleur__user__first_name'].title(),valeur['colleur__user__last_name'].upper(),valeur['nbcolles'],valeur['semaine__numero'],LISTE_JOURS[valeur['creneau__jour']],valeur['creneau__heure']//4,15*(valeur['creneau__heure']%4)) for valeur in colleurs])
-	if colleurs:
-		colleurs+="\n\n"
 	eleves = Colle.objects.filter(groupe__classe=classe).values('groupe__nom','semaine__numero','creneau__jour','creneau__heure').annotate(nbcolles = Count('pk',distinct=True)).filter(nbcolles__gt=1).order_by('semaine__numero','creneau__jour','creneau__heure','groupe__nom')
 	eleves="\n".join(["le groupe {} a {} colles en semaine {} le {} à {}h{:02d}".format(valeur['groupe__nom'].title(),valeur['nbcolles'],valeur['semaine__numero'],LISTE_JOURS[valeur['creneau__jour']],valeur['creneau__heure']//4,15*(valeur['creneau__heure']%4)) for valeur in eleves])
-	if eleves:
-		eleves+="\n\n"
+	elevesolo = Colle.objects.compatEleve(id_classe)
+	elevesolo = "\n".join(["l'élève {} {} a {} colles en semaine {} le {} à {}h{:02d}".format(valeur['prenom'].title(),valeur['nom'].upper(),valeur['nbcolles'],valeur['numero'],LISTE_JOURS[valeur['jour']],valeur['heure']//4,15*(valeur['heure']%4)) for valeur in elevesolo])
 	groupes=Colle.objects.filter(groupe__classe=classe).values('groupe__nom','matiere__nom','semaine__numero').annotate(nbcolles = Count('pk',distinct=True)).filter(nbcolles__gt=1).order_by('semaine__numero','matiere__nom','groupe__nom')
 	groupes = "\n".join(["le groupe {} a {} colles de {} en semaine {}".format(valeur['groupe__nom'].title(),valeur['nbcolles'],valeur['matiere__nom'].title(),valeur['semaine__numero']) for valeur in groupes])
-	reponse=colleurs+eleves+groupes
+	reponse=colleurs+"\n\n"*int(bool(colleurs))+eleves+"\n\n"*int(bool(eleves))+elevesolo+"\n\n"*int(bool(elevesolo))+groupes
 	if not reponse:
 		reponse="aucune incompatibilité dans le colloscope"
 	return HttpResponse(reponse)
@@ -451,7 +449,7 @@ def ajaxmajcolleur(request, id_matiere, id_classe):
 	if not modifcolloscope(request.user.colleur,classe):
 		return HttpResponseForbidden("Accès non autorisé")
 	colleurs=Colleur.objects.filter(matieres=matiere,classes=classe).values('id','user__first_name','user__last_name','user__username').order_by('user__first_name','user__last_name')
-	colleurs=[{'nom': value['user__first_name'].title()+" "+value['user__last_name'].upper()+' ('+value['user__username']+')','id':value['id']} for value in colleurs]
+	colleurs=[{'nom': value['user__first_name'].title()+" "+value['user__last_name'].upper()+' ('+classe.dictColleurs()[value['id']]+')','id':value['id']} for value in colleurs]
 	return HttpResponse(json.dumps([matiere.temps]+colleurs))
 
 @user_passes_test(is_colleur, login_url='accueil')

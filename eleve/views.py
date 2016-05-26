@@ -122,7 +122,7 @@ def colloscope(request):
 		listegroupes[groupe.pk] = [groupe.nom,elevegroupe]
 	jours,creneaux,colles,semaines = Colle.objects.classe2colloscope(classe,semin,semax)
 	return render(request,'eleve/colloscope.html',
-	{'semin':semin,'semax':semax,'form':form,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'listegroupes':listegroupes})
+	{'semin':semin,'semax':semax,'form':form,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'listegroupes':listegroupes,'dictColleurs':classe.dictColleurs(semin,semax)})
 
 @user_passes_test(is_eleve, login_url='accueil')
 def agenda(request):
