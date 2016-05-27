@@ -169,7 +169,7 @@ def recapitulatif(request):
 	if form.is_valid():
 		moisMin=form.cleaned_data['moisMin']
 		moisMax=form.cleaned_data['moisMax']
-	listeDecompte,effectifs=ramassage2decompte(moisMin,moisMax)
+	listeDecompte,effectifs=Ramassage.objects.decompte(moisMin,moisMax)
 	return render(request,"secretariat/recapitulatif.html",{'form':form,'decompte':listeDecompte,'classes':Classe.objects.all(),'effectifs':effectifs})
 
 @user_passes_test(is_secret, login_url='login_secret')
@@ -197,7 +197,7 @@ def ramassagePdf(request,id_ramassage):
 	response = HttpResponse(content_type='application/pdf')
 	debut=ramassage.moisDebut
 	fin=ramassage.moisFin
-	listeDecompte,effectifs=ramassage2decompte(debut,fin)
+	listeDecompte,effectifs=Ramassage.objetcs.decompte(debut,fin)
 	nomfichier="ramassage{}_{}-{}_{}.pdf".format(debut.month,debut.year,fin.month,fin.year)
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
 	pdf = easyPdf(titre="Ramassage des colles de {} {} à {} {}".format(LISTE_MOIS[debut.month],debut.year,LISTE_MOIS[fin.month],fin.year),marge_x=30,marge_y=30)
@@ -271,49 +271,3 @@ def ramassagePdf(request,id_ramassage):
 	pdf.buffer.close()
 	response.write(fichier)
 	return response
-
-def ramassage2decompte(moisMin,moisMax):
-	"""Renvoie la liste des colleurs avec leur nombre d'heures de colle entre les mois moisMin et moisMax, trié par année/effectif de classe"""
-	LISTE_GRADES=["inconnu","certifié","bi-admissible","agrégé","chaire sup"]
-	matieres=Matiere.objects.filter(note__date_colle__range=(moisMin,moisMax)).distinct()
-	listeDecompte=list()
-	effectif_classe = [False]*6
-	plage = [(0,19),(20,35),(36,100)]
-	classes = Classe.objects.annotate(eleve_compte=Count('classeeleve'))
-	for classe in classes:
-		effectif_classe[int(20<=classe.eleve_compte<=35)+2*int(35<classe.eleve_compte)+3*classe.annee-3]=True
-	nb_decompte = sum([int(value) for value in effectif_classe])
-	for matiere in matieres:
-		etablissements=Etablissement.objects.filter(colleur__matieres=matiere,colleur__note__date_colle__range=(moisMin,moisMax)).distinct().annotate(Count('colleur__id'))
-		listeEtablissements=list()
-		nbEtabs=0
-		for etablissement in etablissements:
-			grades=Etablissement.objects.filter(colleur__matieres=matiere,colleur__note__date_colle__range=(moisMin,moisMax),colleur__etablissement=etablissement).values('colleur__grade').distinct()
-			listeGrades=list()
-			nbGrades=0
-			for grade in grades:
-				colleurs=Colleur.objects.filter(matieres=matiere,note__date_colle__range=(moisMin,moisMax),grade=grade['colleur__grade'],etablissement=etablissement).distinct()
-				listeColleurs=list()
-				nbColleurs=0
-				for colleur in colleurs:
-					indice=0
-					decompte=[0]*nb_decompte
-					for i,boolean in enumerate(effectif_classe):
-						if boolean:
-							decompte[indice]=Note.objects.filter(classe__annee=1+i//3,colleur=colleur,matiere=matiere,date_colle__range=(moisMin,moisMax)).annotate(eleve_compte=Count('classe__classeeleve')).filter(eleve_compte__range=plage[i%3]).count()
-							indice+=1
-					if sum(decompte)>0:
-						nbColleurs+=1
-						listeColleurs.append((colleur,decompte))
-				nbGrades+=nbColleurs
-				if nbColleurs>0:
-					listeGrades.append((LISTE_GRADES[grade['colleur__grade']],listeColleurs,nbColleurs))
-			nbEtabs+=nbGrades
-			if nbGrades>0:
-				listeEtablissements.append((etablissement,listeGrades,nbGrades))
-		if nbEtabs>0:
-			listeDecompte.append((matiere,listeEtablissements,nbEtabs))
-	effectifs= list(zip([1]*3+[2]*3,["eff<20","20≤eff≤35","eff>35"]*2))
-	effectifs = [x for x,boolean in zip(effectifs,effectif_classe) if boolean]
-	return listeDecompte,effectifs
-

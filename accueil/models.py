@@ -320,7 +320,7 @@ class NoteManager(models.Manager):
 				   LEFT OUTER JOIN accueil_programme p\
 				   ON p.semaine_id = s.id AND p.classe_id=%s AND p.matiere_id = %s\
 				   WHERE n.classe_id = %s AND n.colleur_id= %s\
-				   ORDER BY s.numero DESC, n.jour DESC, n.heure DESC"
+				   ORDER BY s.numero DESC, n.date_colle DESC, n.heure DESC"
 		with connection.cursor() as cursor:
 			cursor.execute(requete,(classe.pk,matiere.pk,classe.pk,colleur.pk))
 			notes = dictfetchall(cursor)
@@ -591,6 +591,52 @@ def mois():
 		moisMin=moisMax=date(hui.year,hui.month,1)
 	return moisMin,moisMax
 
+class RamassageManager(models.Manager):
+	def decompte(self,moisMin,moisMax):
+		"""Renvoie la liste des colleurs avec leur nombre d'heures de colle entre les mois moisMin et moisMax, trié par année/effectif de classe"""
+		LISTE_GRADES=["inconnu","certifié","bi-admissible","agrégé","chaire sup"]
+		matieres=Matiere.objects.filter(note__date_colle__range=(moisMin,moisMax)).distinct()
+		listeDecompte=list()
+		effectif_classe = [False]*6
+		plage = [(0,19),(20,35),(36,1000)]
+		classes = Classe.objects.annotate(eleve_compte=Count('classeeleve'))
+		for classe in classes:
+			effectif_classe[int(20<=classe.eleve_compte<=35)+2*int(35<classe.eleve_compte)+3*classe.annee-3]=True
+		nb_decompte = sum([int(value) for value in effectif_classe])
+		for matiere in matieres:
+			etablissements=Etablissement.objects.filter(colleur__matieres=matiere,colleur__note__date_colle__range=(moisMin,moisMax)).distinct().annotate(Count('colleur__id'))
+			listeEtablissements=list()
+			nbEtabs=0
+			for etablissement in etablissements:
+				grades=Etablissement.objects.filter(colleur__matieres=matiere,colleur__note__date_colle__range=(moisMin,moisMax),colleur__etablissement=etablissement).values('colleur__grade').distinct()
+				listeGrades=list()
+				nbGrades=0
+				for grade in grades:
+					colleurs=Colleur.objects.filter(matieres=matiere,note__date_colle__range=(moisMin,moisMax),grade=grade['colleur__grade'],etablissement=etablissement).distinct()
+					listeColleurs=list()
+					nbColleurs=0
+					for colleur in colleurs:
+						indice=0
+						decompte=[0]*nb_decompte
+						for i,boolean in enumerate(effectif_classe):
+							if boolean:
+								decompte[indice]=Note.objects.filter(classe__annee=1+i//3,colleur=colleur,matiere=matiere,date_colle__range=(moisMin,moisMax)).annotate(eleve_compte=Count('classe__classeeleve')).filter(eleve_compte__range=plage[i%3]).count()
+								indice+=1
+						if sum(decompte)>0:
+							nbColleurs+=1
+							listeColleurs.append((colleur,decompte))
+					nbGrades+=nbColleurs
+					if nbColleurs>0:
+						listeGrades.append((LISTE_GRADES[grade['colleur__grade']],listeColleurs,nbColleurs))
+				nbEtabs+=nbGrades
+				if nbGrades>0:
+					listeEtablissements.append((etablissement,listeGrades,nbGrades))
+			if nbEtabs>0:
+				listeDecompte.append((matiere,listeEtablissements,nbEtabs))
+		effectifs= list(zip([1]*3+[2]*3,["eff<20","20≤eff≤35","eff>35"]*2))
+		effectifs = [x for x,boolean in zip(effectifs,effectif_classe) if boolean]
+		return listeDecompte,effectifs
+
 class Ramassage(models.Model):
 	def incremente_mois(moment):
 		"""ajoute un mois à moment"""
@@ -604,6 +650,7 @@ class Ramassage(models.Model):
 	LISTE_MOIS=[(x,x.strftime('%B %Y')) for x in LISTE_MOIS]
 	moisDebut = models.DateField(verbose_name='Début',choices=LISTE_MOIS)
 	moisFin = models.DateField(verbose_name='Fin',choices=LISTE_MOIS)
+	objects = RamassageManager()
 
 	class Meta:
 		unique_together=('moisDebut','moisFin')

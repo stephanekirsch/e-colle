@@ -608,7 +608,7 @@ def decompte(request):
 			nbcolles=list()
 			for mois in listemois:
 				finmois=date(mois.year + mois.month//12,mois.month%12+1,1)-timedelta(days=1)
-				nbcolles.append(Note.objects.filter(colleur=colleur,matiere=matiere,classe=classe,date_colle__range=(mois,finmois)).aggregate(nb=Count('id',distinct=True)))
+				nbcolles.append(Note.objects.filter(colleur=colleur,matiere=matiere,classe=classe,date_colle__range=(mois,finmois)).aggregate(temps=F(Count('id',distinct=True))*2))
 			total=Note.objects.filter(colleur=colleur,matiere=matiere,classe=classe).aggregate(nb=Count('id',distinct=True))
 			listeclasses.append((classe,nbcolles,total))
 		listematieres.append((matiere,listeclasses,listemois))
