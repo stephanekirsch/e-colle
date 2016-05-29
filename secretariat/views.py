@@ -197,7 +197,7 @@ def ramassagePdf(request,id_ramassage):
 	response = HttpResponse(content_type='application/pdf')
 	debut=ramassage.moisDebut
 	fin=ramassage.moisFin
-	listeDecompte,effectifs=Ramassage.objetcs.decompte(debut,fin)
+	listeDecompte,effectifs=Ramassage.objects.decompte(debut,fin)
 	nomfichier="ramassage{}_{}-{}_{}.pdf".format(debut.month,debut.year,fin.month,fin.year)
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
 	pdf = easyPdf(titre="Ramassage des colles de {} {} à {} {}".format(LISTE_MOIS[debut.month],debut.year,LISTE_MOIS[fin.month],fin.year),marge_x=30,marge_y=30)
@@ -216,12 +216,12 @@ def ramassagePdf(request,id_ramassage):
 	ligneMat=ligneEtab=ligneGrade=ligneColleur=1
 	resteMat=resteEtab=resteGrade=0
 	for matiere, listeEtabs, nbEtabs in listeDecompte:
-		data[ligneMat][0]=matiere.nom.title()
+		data[ligneMat][0]=matiere.title()
 		if nbEtabs>1:
 			LIST_STYLE.add('SPAN',(0,ligneMat),(0,min(ligneMat+nbEtabs-1,23)))
 		ligneMat+=nbEtabs
 		for etablissement, listeGrades, nbGrades in listeEtabs:
-			data[ligneEtab][1]=etablissement.nom.title()
+			data[ligneEtab][1]='Inconnu' if not etablissement else etablissement.title()
 			if nbGrades>1:
 				LIST_STYLE.add('SPAN',(1,ligneEtab),(1,min(ligneEtab+nbGrades-1,23)))
 			ligneEtab+=nbGrades
@@ -233,7 +233,7 @@ def ramassagePdf(request,id_ramassage):
 				for colleur, decomptes in listeColleurs:
 					data[ligneColleur][3]=colleur
 					for i in range(len(effectifs)):
-						data[ligneColleur][i+4]="{}h{}0".format(decomptes[i]*matiere.temps//60,(decomptes[i]*matiere.temps%60)//10)
+						data[ligneColleur][i+4]="{}h{:02d}".format(decomptes[i]//60,decomptes[i]%60)
 					ligneColleur+=1
 					if ligneColleur==24: # si le tableau prend toute une page, on termine la page et on recommence un autre tableau
 						t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel]+[largeurcel]*len(effectifs),rowHeights=min((1+nbKolleurs),24)*[hauteurcel])

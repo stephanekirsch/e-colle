@@ -28,12 +28,12 @@
 	</tr>
 	{% for matiere, listeEtabs, nbEtabs in decompte %}
 	<tr {% cycle '' 'class="plusclair"' as couleur %} >
-		<td rowspan="{{nbEtabs}}">{{matiere}}</td>
+		<td rowspan="{{nbEtabs}}">{{matiere|title}}</td>
 		{% for etablissement, listeGrades, nbGrades in listeEtabs %}
 		{% if not forloop.first %}
 	<tr {{couleur}}>
 		{% endif %}
-		<td rowspan="{{nbGrades}}">{{etablissement}}</td>
+		<td rowspan="{{nbGrades}}">{% firstof etablissement 'Inconnu' %}</td>
 			{% for grade, listeColleurs, nbColleurs in listeGrades %}
 			{% if not forloop.first %}
 	<tr {{couleur}}>
@@ -45,7 +45,7 @@
 				{% endif %}
 		<td>{{colleur}}</td>
 					{% for heures in decompte %}
-		<td>{{heures|heurecolle:matiere.temps}}</td>
+		<td>{{heures|heurecolle}}</td>
 					{% endfor %}
 	</tr>
 				{% endfor %}

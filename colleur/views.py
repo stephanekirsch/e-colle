@@ -600,16 +600,16 @@ def decompte(request):
 	colleur=request.user.colleur
 	matieres=colleur.matieres.all()
 	classes=colleur.classes.all()
-	listematieres=list()
+	listematieres=[]
 	for matiere in matieres:
 		listemois = Note.objects.filter(colleur=colleur,matiere=matiere).dates('date_colle','month').distinct()
-		listeclasses=list()
+		listeclasses=[]
 		for classe in classes:
-			nbcolles=list()
+			nbcolles=[]
 			for mois in listemois:
 				finmois=date(mois.year + mois.month//12,mois.month%12+1,1)-timedelta(days=1)
-				nbcolles.append(Note.objects.filter(colleur=colleur,matiere=matiere,classe=classe,date_colle__range=(mois,finmois)).aggregate(temps=F(Count('id',distinct=True))*2))
-			total=Note.objects.filter(colleur=colleur,matiere=matiere,classe=classe).aggregate(nb=Count('id',distinct=True))
+				nbcolles.append(Note.objects.filter(colleur=colleur,matiere=matiere,classe=classe,date_colle__range=(mois,finmois)).aggregate(temps=Count('id',distinct=True)*matiere.temps))
+			total=Note.objects.filter(colleur=colleur,matiere=matiere,classe=classe).aggregate(temps=Count('id',distinct=True)*matiere.temps)
 			listeclasses.append((classe,nbcolles,total))
 		listematieres.append((matiere,listeclasses,listemois))
 	return render(request,"colleur/decompte.html",{'listematieres':listematieres})

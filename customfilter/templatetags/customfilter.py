@@ -22,8 +22,8 @@ def addtime(temps, ajout):
     return temps+timedelta(days=ajout)
 
 @register.filter
-def heurecolle(nb,temps):
-	return "{}h{:02d}".format(nb*temps//60,(nb*temps)%60)
+def heurecolle(temps):
+	return "{}h{:02d}".format(temps//60,temps%60)
 
 @register.filter
 def heure(heure):

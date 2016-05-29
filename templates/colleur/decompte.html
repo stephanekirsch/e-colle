@@ -17,9 +17,9 @@
 	<tr {% cycle '' 'class="plusclair"'%}>
 		<td>{{classe}}</td>
 		{% for nb in nbcolles %}
-		<td>{{nb.nb|heurecolle:matiere.temps}}</td>
+		<td>{{nb.temps|heurecolle}}</td>
 		{% endfor %}
-		<td>{{total.nb|heurecolle:matiere.temps}}</td>
+		<td>{{total.temps|heurecolle}}</td>
 	</tr>
 	{% endfor %}
 </table>
