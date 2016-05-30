@@ -100,7 +100,7 @@ class ClasseGabaritForm(forms.ModelForm):
 class MatiereForm(forms.ModelForm):
 	class Meta:
 		model = Matiere
-		fields=['nom','couleur','temps']
+		fields=['nom','precision','couleur','temps']
 
 class EtabForm(forms.ModelForm):
 	class Meta:

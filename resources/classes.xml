@@ -5,7 +5,7 @@
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
 		<matiere nom="Chimie" temps="20"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="S.I.I." temps="20"></matiere>
 	</classe>
 
@@ -13,7 +13,7 @@
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="S.I.I." temps="20"></matiere>
 	</classe>
 
@@ -21,7 +21,7 @@
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="S.I.I." temps="20"></matiere>
 	</classe>
 
@@ -30,14 +30,14 @@
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
 		<matiere nom="Chimie" temps="20"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 	</classe>
 
 	<classe nom="MPSI" annee="1" type="Scientifique">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 	</classe>
 
 	<classe nom="BCPST" annee="1" type="Scientifique">
@@ -45,7 +45,7 @@
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Chimie" temps="20"></matiere>
 		<matiere nom="S.V.T." temps="20"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 	</classe>
 
 	<classe nom="TB" annee="1" type="Scientifique">
@@ -54,14 +54,14 @@
 		<matiere nom="Biotechnologies" temps="20"></matiere>
 		<matiere nom="S.V.T." temps="20"></matiere>
 		<matiere nom="Géographie" temps="20"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 	</classe>
 
 	<classe nom="PSI" annee="2" type="Scientifique">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="S.I.I." temps="20"></matiere>
 	</classe>
 
@@ -69,7 +69,7 @@
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="S.I.I." temps="20"></matiere>
 	</classe>
 
@@ -77,7 +77,7 @@
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="S.I.I." temps="20"></matiere>
 	</classe>
 
@@ -85,7 +85,7 @@
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="S.I.I." temps="20"></matiere>
 	</classe>
 
@@ -94,14 +94,14 @@
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
 		<matiere nom="Chimie" temps="20"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 	</classe>
 
 	<classe nom="MP" annee="2" type="Scientifique">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 	</classe>
 
 	<classe nom="TPC" annee="2" type="Scientifique">
@@ -109,7 +109,7 @@
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
 		<matiere nom="Chimie" temps="20"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 	</classe>
 
 	<classe nom="BCPST" annee="2" type="Scientifique">
@@ -117,7 +117,7 @@
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Chimie" temps="20"></matiere>
 		<matiere nom="S.V.T." temps="20"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="Géographie" temps="20"></matiere>
 	</classe>
 
@@ -127,41 +127,42 @@
 		<matiere nom="Biotechnologies" temps="20"></matiere>
 		<matiere nom="S.V.T." temps="20"></matiere>
 		<matiere nom="Géographie" temps="20"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 	</classe>
 
 	<classe nom="ECS" annee="1" type="Économique">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="H.G.E." temps="20"></matiere>
 	</classe>
 
 	<classe nom="ECS" annee="2" type="Économique">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="H.G.E." temps="20"></matiere>
 	</classe>
 
 	<classe nom="ECE" annee="1" type="Économique">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="A.E.H.S.C." temps="20"></matiere>
 	</classe>
 
 	<classe nom="ECE" annee="2" type="Économique">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="A.E.H.S.C." temps="20"></matiere>
 	</classe>
 
 	<classe nom="ECT" annee="1" type="Économique">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV2"></matiere>
 		<matiere nom="Économie" temps="20"></matiere>
 		<matiere nom="Manag/gestion" temps="20"></matiere>
 		<matiere nom="Droit" temps="20"></matiere>
@@ -170,7 +171,8 @@
 	<classe nom="ECT" annee="2" type="Économique">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
-		<matiere nom="Anglais" temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
+		<matiere nom="Anglais" temps="20" precision="G-LV2"></matiere>
 		<matiere nom="Économie" temps="20"></matiere>
 		<matiere nom="Manag/gestion" temps="20"></matiere>
 		<matiere nom="Droit" temps="20"></matiere>
@@ -181,7 +183,8 @@
 		<matiere nom="Français" temps="30"></matiere>
 		<matiere nom="Latin" temps="30"></matiere>
 		<matiere nom="Grec" temps="30"></matiere>
-		<matiere nom="Anglais" temps="30"></matiere>
+		<matiere nom="Anglais" temps="30" precision="S-LV1"></matiere>
+		<matiere nom="Anglais" temps="30" precision="S-LV2"></matiere>
 		<matiere nom="Histoire" temps="30"></matiere>
 		<matiere nom="Géographie" temps="30"></matiere>
 	</classe>
@@ -191,7 +194,8 @@
 		<matiere nom="Français" temps="30"></matiere>
 		<matiere nom="Latin" temps="30"></matiere>
 		<matiere nom="Grec" temps="30"></matiere>
-		<matiere nom="Anglais" temps="30"></matiere>
+		<matiere nom="Anglais" temps="30" precision="S-LV1"></matiere>
+		<matiere nom="Anglais" temps="30" precision="S-LV2"></matiere>
 		<matiere nom="Histoire" temps="30"></matiere>
 		<matiere nom="Géographie" temps="30"></matiere>
 	</classe>
@@ -201,7 +205,8 @@
 		<matiere nom="Français" temps="30"></matiere>
 		<matiere nom="Latin" temps="30"></matiere>
 		<matiere nom="Grec" temps="30"></matiere>
-		<matiere nom="Anglais" temps="30"></matiere>
+		<matiere nom="Anglais" temps="30" precision="S-LV1"></matiere>
+		<matiere nom="Anglais" temps="30" precision="S-LV2"></matiere>
 		<matiere nom="Histoire" temps="30"></matiere>
 		<matiere nom="Géographie" temps="30"></matiere>
 		<matiere nom="Mathématiques" temps="20"></matiere>
@@ -213,7 +218,8 @@
 		<matiere nom="Français" temps="30"></matiere>
 		<matiere nom="Latin" temps="30"></matiere>
 		<matiere nom="Grec" temps="30"></matiere>
-		<matiere nom="Anglais" temps="30"></matiere>
+		<matiere nom="Anglais" temps="30" precision="S-LV1"></matiere>
+		<matiere nom="Anglais" temps="30" precision="S-LV2"></matiere>
 		<matiere nom="Histoire" temps="30"></matiere>
 		<matiere nom="Géographie" temps="30"></matiere>
 		<matiere nom="Mathématiques" temps="20"></matiere>

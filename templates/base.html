@@ -16,7 +16,7 @@
 			{% if user.colleur %}
 			<ul class="accueil">
 				<li>{{user.first_name|title}}<br>{{user.last_name|upper}}</li>
-				{% for matiere in user.colleur.matieres.all %}<li> {% ifnotequal request.session.matiere matiere.pk %}<a href="{% url 'changemat_colleur' matiere.pk %}">{{matiere.nom|title}}</a>{% else %}{{matiere.nom|title}}{% endifnotequal %}</li>{% endfor %}
+				{% for matiere in user.colleur.matieres.all %}<li> {% ifnotequal request.session.matiere matiere.pk %}<a href="{% url 'changemat_colleur' matiere.pk %}">{{matiere}}</a>{% else %}{{matiere}}{% endifnotequal %}</li>{% endfor %}
 			</ul>
 			{% elif user.eleve %}
 			<ul class="accueil">

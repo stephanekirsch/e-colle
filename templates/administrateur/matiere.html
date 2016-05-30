@@ -5,6 +5,7 @@
 	<table class="tableausimple" id ="suppr">
 		<tr class="entete">
 			<td>Nom</td>
+			<td>Précision</td>>
 			<td>Minutes/colle/élève</td>
 			<td>Modifier</td>
 			<td>Supprimer</td>
@@ -12,6 +13,7 @@
 		{% for matiere in matieres %}
 		<tr>
 			<td style="background-color:{{matiere.couleur}}">{{ matiere.nom|title}}</td>
+			<td>{% if matiere.precision %}{{matiere.precision}}{% endif %}</td>
 			<td>{{matiere.temps}}</td>
 			<td><a class="bouton" href="{% url 'modif_matiere' matiere.pk %}">Modifier</a></td>
 			<td><a class="bouton" href="{% url 'suppr_matiere' matiere.pk %}">Supprimer</a></td>

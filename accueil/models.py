@@ -56,15 +56,17 @@ class Matiere(models.Model):
 		('#778899',"Gris aroise clair"),('#708090',"Gris ardoise"),('#2F4F4F',"Gris ardoise foncé"),('#7FFFD4',"Aigue-marine"),('#66CDAA',"Aigue-marine moyen"),('#00FFFF',"Cyan"),('#40E0D0',"Turquoise"),('#48D1CC',"Turquoise moyen"),('#00CED1',"Turquoise foncé"),
 		('#20B2AA',"Vert marin clair"),('#008B8B',"Cyan foncé"),('#008080',"Vert sarcelle"),('#5F9EA0',"Bleu pétrole"),('#B0E0E6',"Bleu poudre"),('#ADD8E6',"Bleu clair"),('#87CEFA',"Bleu azur clair"),('#87CEEB',"Bleu azur"),('#00BFFF',"Bleu azur profond"),
 		('#1E90FF',"Bleu toile"),('#B0C4DE',"Bleu acier clair"),('#6495ED',"Bleuet"),('#4682B4',"Bleu acier"),('#4169E1',"Bleu royal"),('#0000FF',"Bleu"),('#0000CD',"Bleu moyen"),('#00008B',"Bleu foncé"),('#000080',"Bleu marin"),('#191970',"Bleu de minuit"),)
-	nom = models.CharField(max_length = 30, unique=True)
+	nom = models.CharField(max_length = 20)
 	couleur = models.CharField(max_length = 7, choices=LISTE_COULEURS, default='#696969')
 	CHOIX_TEMPS = ((20,'20 min'),(30,'30 min'),(60,'60 min (informatique)'))
 	temps = models.PositiveSmallIntegerField(choices=CHOIX_TEMPS,verbose_name="minutes/colle/élève",default=20)
+	precision = models.CharField(verbose_name="Précision(facultatif)",max_length=10,null=True,blank=True)
 	class Meta:
-		ordering=['nom']
+		ordering=['nom','precision']
+		unique_together=(('nom','precision'))
 
 	def __str__(self):
-		return self.nom
+		return self.nom.title() + ('' if not self.precision else "({})".format(self.precision)) 
 
 class Classe(models.Model):
 	ANNEE_PREPA = ((1,"1ère année"),(2,"2ème année"),)
@@ -319,11 +321,11 @@ class NoteManager(models.Manager):
 				   INNER JOIN accueil_semaine s\
 				   ON n.semaine_id=s.id\
 				   LEFT OUTER JOIN accueil_programme p\
-				   ON p.semaine_id = s.id AND p.classe_id=%s AND p.matiere_id = %s\
-				   WHERE n.classe_id = %s AND n.colleur_id= %s\
+				   ON p.semaine_id = s.id AND p.classe_id= %s AND p.matiere_id = %s\
+				   WHERE n.classe_id = %s AND n.colleur_id= %s AND n.matiere_id = %s\
 				   ORDER BY s.numero DESC, n.date_colle DESC, n.heure DESC"
 		with connection.cursor() as cursor:
-			cursor.execute(requete,(classe.pk,matiere.pk,classe.pk,colleur.pk))
+			cursor.execute(requete,(classe.pk,matiere.pk,classe.pk,colleur.pk,matiere.pk))
 			notes = dictfetchall(cursor)
 		listeNotes = []
 		listeDates = []
