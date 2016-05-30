@@ -596,26 +596,7 @@ class RamassageManager(models.Manager):
 	def decompte(self,moisMin,moisMax):
 		"""Renvoie la liste des colleurs avec leur nombre d'heures de colle entre les mois moisMin et moisMax, trié par année/effectif de classe"""
 		LISTE_GRADES=["inconnu","certifié","bi-admissible","agrégé","chaire sup"]
-		requete = "SELECT cl.id, m.nom nom_matiere, et.nom etab, co.grade grade, co.id id, u.first_name prenom, u.last_name nom, SUM(m.temps) tempscolle\
-				   FROM accueil_note n\
-				   INNER JOIN accueil_colleur co\
-				   ON co.id=n.colleur_id\
-				   LEFT JOIN accueil_etablissement et\
-				   ON co.etablissement_id = et.id\
-				   INNER JOIN accueil_matiere m\
-				   ON n.matiere_id = m.id\
-				   INNER JOIN accueil_user u\
-				   ON u.colleur_id = co.id\
-				   INNER JOIN accueil_classe cl\
-				   ON n.classe_id = cl.id\
-				   WHERE n.date_colle BETWEEN %s AND %s\
-				   GROUP BY m.nom, et.nom, co.grade, co.id, u.first_name, u.last_name, cl.id\
-				   ORDER BY m.nom, et.nom, co.grade, co.id, u.first_name, u.last_name"
-		with connection.cursor() as cursor:
-			cursor.execute(requete,(moisMin,moisMax))
-			compte=cursor.fetchall()
 		compte = Note.objects.filter(date_colle__range=(moisMin,moisMax)).annotate(nom_matiere=Lower('matiere__nom')).values_list('nom_matiere','colleur__etablissement__nom','colleur__grade','colleur__user__last_name','colleur__user__first_name','classe__id').order_by('nom_matiere','colleur__etablissement__nom','colleur__grade','colleur__user__last_name','colleur__user__first_name').annotate(temps=Sum('matiere__temps'))
-		# matieres=Matiere.objects.filter(note__date_colle__range=(moisMin,moisMax)).distinct()
 		classes = Classe.objects.annotate(eleve_compte=Count('classeeleve'))
 		effectif_classe = [False]*6
 		for classe in classes:
@@ -627,68 +608,41 @@ class RamassageManager(models.Manager):
 				effectif_classe[i]=j
 				j+=1
 		effectifs_classe = {classe.pk:effectif_classe[int(20<=classe.eleve_compte<=35)+2*int(35<classe.eleve_compte)+3*classe.annee-3] for classe in classes}
-		print(effectifs_classe)
 		lastMatiere = lastEtab = lastGrade = lastColleur = False
 		nbEtabs=nbGrades=nbColleurs=0
 		listeDecompte, listeEtablissements, listeGrades, listeColleurs, listeTemps= [], [], [], [], [0]*nb_decompte
 		for matiere, etab, grade, nom, prenom, classe, temps in compte:
-			if lastMatiere and matiere!=lastMatiere or lastEtab is not False and etab!=lastEtab or lastGrade and grade!=lastGrade or lastColleur and colleur!=lastColleur:
+			if lastMatiere and matiere!=lastMatiere: # si on change de matière
+				listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),listeTemps))
+				listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
+				listeEtablissements.append((lastEtab,listeGrades,nbGrades))
+				listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
+				listeTemps,listeColleurs,listeGrades,listeEtablissements=[0]*nb_decompte,[],[],[]
+				nbColleurs=nbGrades=nbEtabs=0
+			elif lastEtab is not False and etab!=lastEtab: # si on change d'établissement mais pas de matière
+				listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),listeTemps))
+				listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
+				listeEtablissements.append((lastEtab,listeGrades,nbGrades))
+				listeTemps,listeColleurs,listeGrades=[0]*nb_decompte,[],[]
+				nbColleurs=nbGrades=0	
+			elif lastGrade and lastGrade!=grade: # si on change de grade, mais pas d'établissement ni de matière
+				listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),listeTemps))
+				listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
+				listeTemps,listeColleurs=[0]*nb_decompte,[]
+				nbColleurs=0		
+			elif lastColleur and (nom,prenom)!=lastColleur: # si on change de colleur, mais pas de grade, ni d'établissement, ni de matière
 				listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),listeTemps))
 				listeTemps=[0]*nb_decompte
-			if lastMatiere and matiere!=lastMatiere or lastEtab is not False and etab!=lastEtab or lastGrade and grade!=lastGrade:
-				listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
-				listeColleurs=[]
-				nbColleurs=0			
-			if lastMatiere and matiere!=lastMatiere or lastEtab is not False  and etab!=lastEtab:
-				listeEtablissements.append((lastEtab,listeGrades,nbGrades))
-				listeGrades=[]
-				nbGrades=0
-			if lastMatiere and matiere!=lastMatiere:
-				listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
-				listeEtablissements=[]
-				nbEtabs=0
 			listeTemps[effectifs_classe[classe]]+=temps
 			lastColleur, lastGrade, lastEtab, lastMatiere = (nom,prenom), grade, etab, matiere
 			nbColleurs+=1
 			nbGrades+=1
 			nbEtabs+=1
-		listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),listeTemps))
-		listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
-		listeEtablissements.append((lastEtab,listeGrades,nbGrades))
-		listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
-
-
-		# plage = [(0,19),(20,35),(36,1000)]
-		# for matiere in matieres:
-		# 	etablissements=Etablissement.objects.filter(colleur__matieres=matiere,colleur__note__date_colle__range=(moisMin,moisMax)).distinct().annotate(Count('colleur__id'))
-		# 	listeEtablissements=list()
-		# 	nbEtabs=0
-		# 	for etablissement in etablissements:
-		# 		grades=Etablissement.objects.filter(colleur__matieres=matiere,colleur__note__date_colle__range=(moisMin,moisMax),colleur__etablissement=etablissement).values('colleur__grade').distinct()
-		# 		listeGrades=list()
-		# 		nbGrades=0
-		# 		for grade in grades:
-		# 			colleurs=Colleur.objects.filter(matieres=matiere,note__date_colle__range=(moisMin,moisMax),grade=grade['colleur__grade'],etablissement=etablissement).distinct()
-		# 			listeColleurs=list()
-		# 			nbColleurs=0
-		# 			for colleur in colleurs:
-		# 				indice=0
-		# 				decompte=[0]*nb_decompte
-		# 				for i,boolean in enumerate(effectif_classe):
-		# 					if boolean:
-		# 						decompte[indice]=Note.objects.filter(classe__annee=1+i//3,colleur=colleur,matiere=matiere,date_colle__range=(moisMin,moisMax)).annotate(eleve_compte=Count('classe__classeeleve')).filter(eleve_compte__range=plage[i%3]).count()
-		# 						indice+=1
-		# 				if sum(decompte)>0:
-		# 					nbColleurs+=1
-		# 					listeColleurs.append((colleur,decompte))
-		# 			nbGrades+=nbColleurs
-		# 			if nbColleurs>0:
-		# 				listeGrades.append((LISTE_GRADES[grade['colleur__grade']],listeColleurs,nbColleurs))
-		# 		nbEtabs+=nbGrades
-		# 		if nbGrades>0:
-		# 			listeEtablissements.append((etablissement,listeGrades,nbGrades))
-		# 	if nbEtabs>0:
-		# 		listeDecompte.append((matiere,listeEtablissements,nbEtabs))
+		if lastColleur:
+			listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),listeTemps))
+			listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
+			listeEtablissements.append((lastEtab,listeGrades,nbGrades))
+			listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
 		effectifs= list(zip([1]*3+[2]*3,["eff<20","20≤eff≤35","eff>35"]*2))
 		effectifs = [x for x,boolean in zip(effectifs,effectif_classe) if boolean is not False]
 		return listeDecompte,effectifs
@@ -696,7 +650,7 @@ class RamassageManager(models.Manager):
 class Ramassage(models.Model):
 	def incremente_mois(moment):
 		"""ajoute un mois à moment"""
-		return date(moment.year+moment.month//12 ,moment.month%12+1,1)
+		return date(moment.year+moment.month//12,moment.month%12+1,1)
 	moisMin,moisMax=mois()
 	LISTE_MOIS =[]
 	moiscourant=moisMin
