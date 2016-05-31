@@ -80,7 +80,7 @@ def note(request,id_classe):
 	classe=get_object_or_404(Classe,pk=id_classe)
 	colleur=request.user.colleur
 	matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=request.user.colleur)
-	if classe not in colleur.classes.all():
+	if classe not in colleur.classes.all() or matiere.pk not in classe.matierespk():
 		raise Http404
 	groupes = Groupe.objects.filter(classe=classe).values('nom','pk').annotate(nb=Count('groupeeleve'))
 	nom_groupes = []
@@ -101,13 +101,15 @@ def noteEleve(request,id_eleve,id_classe,colle=None):
 	except Exception:
 		eleve=None
 	colleur=request.user.colleur
+	matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
 	if eleve is not None and eleve.classe not in colleur.classes.all():
 		raise Http404
 	try:
 		classe=eleve.classe
 	except Exception:
 		classe=Classe.objects.get(pk=id_classe)
-	matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
+	if matiere.pk not in eleve.classe.matierespk():
+		raise Http404
 	note=Note(matiere=matiere,colleur=colleur,eleve=eleve,classe=classe)
 	if colle:
 		note.semaine=colle.semaine
@@ -117,7 +119,7 @@ def noteEleve(request,id_eleve,id_classe,colle=None):
 	if form.is_valid():
 		form.save()
 		return redirect('note_colleur',classe.pk)
-	return render(request,"colleur/noteEleve.html",{'eleve':eleve,'form':form,'classe':classe})
+	return render(request,"colleur/noteEleve.html",{'eleve':eleve,'form':form,'classe':classe,'matiere':matiere})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def noteGroupe(request,id_groupe,colle=None):
@@ -127,6 +129,7 @@ def noteGroupe(request,id_groupe,colle=None):
 	colleur=request.user.colleur
 	if groupe.classe not in colleur.classes.all():
 		raise Http404
+	print(request.session['matiere'],groupe.classe.matierespk())
 	if colle:
 		matiere=colle.matiere
 		form=NoteGroupeForm(groupe,matiere,colleur,request.POST or None, initial={'semaine':colle.semaine,'jour':colle.creneau.jour,'heure':colle.creneau.heure})
@@ -155,7 +158,7 @@ def noteModif(request,id_note):
 	if form.is_valid():
 		form.save()
 		return redirect('note_colleur', note.classe.pk)
-	return render(request,"colleur/noteEleve.html",{'eleve':note.eleve,'form':form,'classe':note.classe})
+	return render(request,"colleur/noteEleve.html",{'eleve':note.eleve,'form':form,'classe':note.classe,'matiere':note.matiere})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def noteSuppr(request,id_note):
@@ -201,12 +204,14 @@ def resultat2(request,id_classe,id_semin,id_semax):
 	semaines = next(generateur)
 	isprof = is_prof(request.user,matiere,classe)
 	stat_colleurs = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).exclude(note__gt=20).values('colleur__user__first_name','colleur__user__last_name').distinct().annotate(moy=Avg('note'),minimum=Min('note'),maximum=Max('note'),ecarttype=StdDev('note')) if isprof else False
-	return render(request,"colleur/resultat.html",{'form':form,'classe':classe,'semaines':semaines,'notes':generateur,'isprof':isprof,'semin':semin,'semax':semax,'stats':stat_colleurs,'latex':MATHJAX})
+	return render(request,"colleur/resultat.html",{'form':form,'classe':classe,'semaines':semaines,'matiere':matiere,'notes':generateur,'isprof':isprof,'semin':semin,'semax':semax,'stats':stat_colleurs,'latex':MATHJAX})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def resultatcsv(request,id_classe,id_semin,id_semax):
 	"""Renvoie le fichier csv des résultats de la classe dont l'id est id_classe, entre les semaine dont l'id est id_semin et id_semax"""
 	classe=get_object_or_404(Classe,pk=id_classe)
+	if classe not in request.user.colleur.classes.all():
+		raise Http404
 	semin=get_object_or_404(Semaine,pk=id_semin)
 	semax=get_object_or_404(Semaine,pk=id_semax)
 	matiere = get_object_or_404(Matiere,pk=request.session['matiere'])
@@ -228,9 +233,9 @@ def programme(request,id_classe):
 	"""Renvoie la vue de la page de gestion des programmes de la classe dont l'id est id_classe"""
 	classe=get_object_or_404(Classe,pk=id_classe)
 	colleur=request.user.colleur
-	if classe not in request.user.colleur.classes.all():
-		raise Http404
 	matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
+	if classe not in request.user.colleur.classes.all() or matiere.pk not in classe.matierespk():
+		raise Http404
 	programmes=Programme.objects.filter(classe=classe,matiere=matiere).select_related('semaine').order_by('-semaine__lundi')
 	isprof=False
 	if is_prof(request.user,matiere,classe):
@@ -242,7 +247,7 @@ def programme(request,id_classe):
 			return redirect('programme_colleur',classe.pk)
 	else:
 		form=False
-	return render(request,"colleur/programme.html",{'programmes':programmes,'classe':classe,'form':form,'isprof':isprof,'latex':MATHJAX,'jpeg':IMAGEMAGICK})
+	return render(request,"colleur/programme.html",{'programmes':programmes,'classe':classe,'matiere':matiere,'form':form,'isprof':isprof,'latex':MATHJAX,'jpeg':IMAGEMAGICK})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def programmeSuppr(request,id_programme):
@@ -585,13 +590,15 @@ def agenda(request):
 @user_passes_test(is_colleur, login_url='accueil')
 def colleNote(request,id_colle):
 	"""Récupère la colle dont l'id est id_colle puis redirige vers la page de notation des groupes sur la colle concernée"""
-	colle=get_object_or_404(Colle,pk=id_colle,colleur=request.user.colleur)
+	colle=get_object_or_404(Colle,pk=id_colle,colleur=request.user.colleur,matiere__in=request.user.colleur.matieres.all()) # on récupère la colle
+	request.session['matiere']=colle.matiere.pk # on met à jour la matière courante
 	return noteGroupe(request,colle.groupe.pk,colle)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def colleNoteEleve(request,id_colle):
 	"""Récupère la colle dont l'id est id_colle puis redirige vers la page de notation de l'élève sur la colle concernée"""
-	colle=get_object_or_404(Colle,pk=id_colle,colleur=request.user.colleur)
+	colle=get_object_or_404(Colle,pk=id_colle,colleur=request.user.colleur,matiere__in=request.user.colleur.matieres.all())
+	request.session['matiere']=colle.matiere.pk # on met à jour la matière courante
 	return noteEleve(request,colle.eleve.pk,colle.eleve.classe.pk,colle)
 
 @user_passes_test(is_colleur, login_url='accueil')

@@ -86,11 +86,11 @@ class ClasseGabaritForm(forms.ModelForm):
 			nouvelleClasse.save() # on la sauvegarde
 			listeMatieres=[]
 			for matiere in list(classe):# on parcourt les matières du gabarit de la classe
-				query = Matiere.objects.filter(nom__iexact=matiere.get('nom'),temps=int(matiere.get("temps")))
+				query = Matiere.objects.filter(nom__iexact=matiere.get('nom'),temps=int(matiere.get("temps")),precision=matiere.get('precision'))
 				if query.exists():
 					matiere = query[0]
 				else:
-					matiere = Matiere(nom=matiere.get("nom"),temps=matiere.get("temps"),couleur=choice(list(zip(*Matiere.LISTE_COULEURS))[0]))
+					matiere = Matiere(nom=matiere.get("nom"),temps=matiere.get("temps"),precision=matiere.get('precision'),couleur=choice(list(zip(*Matiere.LISTE_COULEURS))[0]))
 					matiere.save()
 				listeMatieres.append(matiere)
 			nouvelleClasse.matieres.add(*listeMatieres)
@@ -101,6 +101,11 @@ class MatiereForm(forms.ModelForm):
 	class Meta:
 		model = Matiere
 		fields=['nom','precision','couleur','temps']
+
+	def save(self):
+		if self.cleaned_data['precision'].strip() == "": # si pas de précision on veut NULL et non une chaîne vide.
+			self.instance.precision=None
+		super().save()
 
 class EtabForm(forms.ModelForm):
 	class Meta:

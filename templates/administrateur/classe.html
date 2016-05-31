@@ -12,9 +12,9 @@
 		</tr>
 		{% for classe in classes %}
 		<tr>
-			<td>{{ classe.nom|upper}}</td>
+			<td>{{ classe}}</td>
 			<td>{{ classe.annee }}<sup>&egrave;{{classe.annee|pluralize:"r,m"}}e</sup></td>
-			<td>{% for matiere in classe.matieres.all %}{{ matiere.nom|title }}<br />{% endfor %}</td>
+			<td>{% for matiere in classe.matieres.all %}{{ matiere }}<br />{% endfor %}</td>
 			<td><a class="bouton" href="{% url 'modif_classe' classe.pk %}">Modifier</a></td>
 			<td><a class="bouton" href="{% url 'suppr_classe' classe.pk %}">Supprimer</a></td>
 		</tr>

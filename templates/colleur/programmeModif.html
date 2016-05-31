@@ -1,7 +1,7 @@
 {% extends 'colleur/action.html' %}
 {% load static %}
 {% block body %}
-<table class="accueil"><tr><td>Modifier un programme de colle de {{programme.classe}}</td></tr></table>
+<table class="accueil"><tr><td>Modifier un programme de colle de {{programme.classe}} en {{programme.matiere}}</td></tr></table>
 <form method="post" enctype="multipart/form-data">
 	<table class="tableausimple">
 		{% csrf_token %}

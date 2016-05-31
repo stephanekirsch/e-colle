@@ -1,7 +1,7 @@
 {% extends 'colleur/action.html' %}
 {% load static %}
 {% block body %}
-<table class="accueil"><tr><td>Résultats de la classe {{classe}}</td></tr></table>
+<table class="accueil"><tr><td>Résultats de la classe {{classe}} en {{matiere}}</td></tr></table>
 <form method="POST">
 {% csrf_token %}
 <table class="tableausimple">

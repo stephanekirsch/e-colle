@@ -77,6 +77,12 @@ class Classe(models.Model):
 	class Meta:
 		ordering=['annee','nom']
 
+	def matierespk(self):
+		if hasattr(self,'listeMatieres'): # si l'attribut existe déjà, on le renvoie
+			return self.listeMatieres
+		self.listeMatieres = self.matieres.values_list('pk',flat=True) # pour éviter de faire la requête plusieurs fois, on garde le résultat en cache dans un attribut
+		return self.listeMatieres
+
 	def __str__(self):
 		return self.nom
 
@@ -484,7 +490,7 @@ class ColleManager(models.Manager):
 		return jours,creneaux,colles,semaines
 
 	def agenda(self,colleur,semainemin):
-		requete = "SELECT DISTINCT COUNT(n.id) nbnotes, co.id pk, g.nom nom_groupe, g.id id_groupe, cl.nom nom_classe, cl2.nom nom_classebis, s.lundi lundi, s.id, cr.jour jour,cr.heure heure, cr.salle salle, m.id, m.nom nom_matiere, m.couleur couleur, m.temps temps, u.first_name prenom, u.last_name nom, u2.first_name prenom_eleve, u2.last_name nom_eleve, p.titre titre, p.detail detail, p.fichier fichier\
+		requete = "SELECT DISTINCT COUNT(n.id) nbnotes, co.id pk, g.nom nom_groupe, g.id id_groupe, cl.nom nom_classe, cl2.nom nom_classebis, s.lundi lundi, s.id, cr.jour jour,cr.heure heure, cr.salle salle, m.id, m.nom nom_matiere, m.couleur couleur, m.precision prec, m.temps temps, u.first_name prenom, u.last_name nom, u2.first_name prenom_eleve, u2.last_name nom_eleve, p.titre titre, p.detail detail, p.fichier fichier\
 				   FROM accueil_colle co\
 				   INNER JOIN accueil_creneau cr\
 				   ON co.creneau_id = cr.id\

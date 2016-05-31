@@ -6,21 +6,27 @@
 		<li><a href="#">Notes</a>
 			<ul>
 		{% for classe in user.colleur.classes.all %}
+			{% if request.session.matiere in classe.matierespk %}
 				<li><a href="{% url 'note_colleur' classe.pk %}">{{classe.nom}}</a></li>
+			{% endif %}
 		{% endfor %}
 			</ul>
 		</li>
 		<li><a href="#">Résultats</a>
 			<ul>
 		{% for classe in user.colleur.classes.all %}
+			{% if request.session.matiere in classe.matierespk %}
 				<li><a href="{% url 'resultat_colleur' classe.pk %}">{{classe.nom}}</a></li>
+			{% endif %}
 		{% endfor %}
 			</ul>
 		</li>
 		<li><a href="#">Programme</a>
 			<ul>
 		{% for classe in user.colleur.classes.all %}
+			{% if request.session.matiere in classe.matierespk %}
 				<li><a href="{%  url 'programme_colleur' classe.pk %}">{{classe.nom}}</a></li>
+			{% endif %}
 		{% endfor %}
 			</ul>
 		</li>

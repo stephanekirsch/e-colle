@@ -2,7 +2,7 @@
 {% block body %}
 <form method="post">
 <table class="tableausimple">
-	<tr class="entete"><td colspan="4">Notation: {% if note.eleve %} {{note.eleve}} {% else %} "Élève fictif" {% endif %} ({{note.classe}})</td></tr>
+	<tr class="entete"><td colspan="4">Notation: {% if note.eleve %} {{note.eleve}} {% else %} "Élève fictif" {% endif %} ({{note.classe}}) en {{matiere}}</td></tr>
 	{% csrf_token %}
 	<tr>
 	{% for field in form %}
