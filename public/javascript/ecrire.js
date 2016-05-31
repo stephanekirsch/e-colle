@@ -19,7 +19,6 @@ for(var i=-1,l=objcolleurs.length;++i!==l;listeNiveau2[i]=objcolleurs[i]); // on
 var objdivcolleurs = document.querySelectorAll("div[id^=id_divmatiere]");
 var listeColleursMatiere = new Array();
 for(var i=-1,l=objdivcolleurs.length;++i!==l;listeColleursMatiere[i]=objdivcolleurs[i]); // on met les div englobant les matieres/colleurs d'une classe dans listeColleursMatiere
-
 var tailles = new Array();
 var nbcoches = new Array();
 
@@ -104,7 +103,7 @@ function coche(i,majParent=false) // sélectionne ou désélectionne tous les co
 		}
 	}
 	var j = listeColleursMatiere.indexOf(listeUser[i].parentNode)
-	if (majParent)
+	if (majParent && j != -1)
 	{
 		majCheckColleur(j);
 	}

@@ -617,6 +617,7 @@ def decompte(request):
 			total=Note.objects.filter(colleur=colleur,matiere__nom__iexact=matiere,classe=classe).aggregate(temps=Sum('matiere__temps'))
 			listeclasses.append((classe,nbcolles,total))
 		listematieres.append((matiere,listeclasses,listemois))
+		listematieres.sort(key=lambda x:x[0])
 	return render(request,"colleur/decompte.html",{'listematieres':listematieres})
 
 @user_passes_test(is_colleur, login_url='accueil')
