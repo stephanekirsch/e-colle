@@ -5,7 +5,7 @@ from colleur.forms import ColleurConnexionForm, NoteForm, ProgrammeForm, GroupeF
 from accueil.models import Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, JourFerie
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
-from django.db.models import F, Count, Avg, Min, Max, StdDev
+from django.db.models import F, Count, Avg, Min, Max, StdDev, Sum
 from datetime import date, timedelta
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from copy import copy
@@ -129,7 +129,6 @@ def noteGroupe(request,id_groupe,colle=None):
 	colleur=request.user.colleur
 	if groupe.classe not in colleur.classes.all():
 		raise Http404
-	print(request.session['matiere'],groupe.classe.matierespk())
 	if colle:
 		matiere=colle.matiere
 		form=NoteGroupeForm(groupe,matiere,colleur,request.POST or None, initial={'semaine':colle.semaine,'jour':colle.creneau.jour,'heure':colle.creneau.heure})
@@ -605,18 +604,17 @@ def colleNoteEleve(request,id_colle):
 def decompte(request):
 	"""Renvoie la vue de la page du décompte des colles"""
 	colleur=request.user.colleur
-	matieres=colleur.matieres.all()
+	matieres=colleur.matieres.order_by().values_list('nom',flat=True).distinct()
 	classes=colleur.classes.all()
 	listematieres=[]
 	for matiere in matieres:
-		listemois = Note.objects.filter(colleur=colleur,matiere=matiere).dates('date_colle','month').distinct()
+		listemois = Note.objects.filter(colleur=colleur,matiere__nom__iexact=matiere).dates('date_colle','month').distinct()
 		listeclasses=[]
 		for classe in classes:
 			nbcolles=[]
 			for mois in listemois:
-				finmois=date(mois.year + mois.month//12,mois.month%12+1,1)-timedelta(days=1)
-				nbcolles.append(Note.objects.filter(colleur=colleur,matiere=matiere,classe=classe,date_colle__range=(mois,finmois)).aggregate(temps=Count('id',distinct=True)*matiere.temps))
-			total=Note.objects.filter(colleur=colleur,matiere=matiere,classe=classe).aggregate(temps=Count('id',distinct=True)*matiere.temps)
+				nbcolles.append(Note.objects.filter(colleur=colleur,matiere__nom__iexact=matiere,classe=classe,date_colle__month=mois.month,date_colle__year=mois.year).aggregate(temps=Sum('matiere__temps')))
+			total=Note.objects.filter(colleur=colleur,matiere__nom__iexact=matiere,classe=classe).aggregate(temps=Sum('matiere__temps'))
 			listeclasses.append((classe,nbcolles,total))
 		listematieres.append((matiere,listeclasses,listemois))
 	return render(request,"colleur/decompte.html",{'listematieres':listematieres})

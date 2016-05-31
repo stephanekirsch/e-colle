@@ -23,6 +23,7 @@ def addtime(temps, ajout):
 
 @register.filter
 def heurecolle(temps):
+	temps = temps or 0 # (car une somme sur un ensemble vide peut renvoyer None)
 	return "{}h{:02d}".format(temps//60,temps%60)
 
 @register.filter

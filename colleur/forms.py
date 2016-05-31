@@ -19,20 +19,22 @@ class NoteForm(forms.ModelForm):
 		fields=['semaine','jour','heure','note','commentaire','rattrapee','date_colle']
 		widgets = {'date_colle':SelectDateWidget(years=[date.today().year+i-1 for i in range(10)])}
 
-		def clean(self):
-			"""Vérifie que le colleur n'a pas déjà 3 notes sur ce créneau et qu'il n'a pas déjà collé l'élève cette semaine dans cette matière"""
-			colleur = self.instance.colleur
-			if not self.cleaned_data['rattrapee']:
-				self.cleaned_data['date_colle']=self.instance.cleaned_data['semaine'].lundi+timedelta(days=int(self.cleaned_data['jour']))
-			nbNotesColleur=Note.objects.filter(date_colle=self.cleaned_data['date_colle'],colleur=self.cleaned_data['colleur'],heure=self.cleaned_data['heure'])
-			if self.instance.pk: # si c'est une modification, on ne prend pas en compte la colle courante
-				nbNotesColleur = nbNotesColleur.exclude(pk=self.instance.pk)
-			nbNotesColleur=nbNotesColleur.count()
-			if nbNotesColleur>=3:
-				raise ValidationError('Vous avez déjà 3 notes sur ce créneau')
-			nbNotesEleve=Note.objects.filter(semaine=self.cleaned_data['semaine'],matiere=self.cleaned_data['matiere'],colleur=self.cleaned_data['colleur'],eleve=self.cleaned_data['eleve']).count()
-			if nbNotesEleve !=0 and self.cleaned_data['eleve']:
-				raise ValidationError('Vous avez déjà collé cet élève dans cette matière cette semaine')
+	def clean(self):
+		"""Vérifie que le colleur n'a pas déjà 3 notes sur ce créneau et qu'il n'a pas déjà collé l'élève cette semaine dans cette matière"""
+		colleur = self.instance.colleur
+		if not self.cleaned_data['rattrapee']:
+			self.cleaned_data['date_colle']=self.cleaned_data['semaine'].lundi+timedelta(days=int(self.cleaned_data['jour']))
+		nbNotesColleur=Note.objects.filter(date_colle=self.cleaned_data['date_colle'],colleur=colleur,heure=self.cleaned_data['heure'])
+		if self.instance.pk: # si c'est une modification, on ne prend pas en compte la colle courante
+			nbNotesColleur = nbNotesColleur.exclude(pk=self.instance.pk)
+		nbNotesColleur=nbNotesColleur.count()
+		print(nbNotesColleur)
+		if nbNotesColleur>=3:
+			raise ValidationError('Vous avez déjà 3 notes sur ce créneau')
+		nbNotesEleve=Note.objects.filter(semaine=self.cleaned_data['semaine'],matiere=self.cleaned_data['matiere'],colleur=self.cleaned_data['colleur'],eleve=self.cleaned_data['eleve']).count()
+		print(nbNotesEleve)
+		if nbNotesEleve !=0 and self.cleaned_data['eleve']:
+			raise ValidationError('Vous avez déjà collé cet élève dans cette matière cette semaine')
 
 
 class NoteGroupeForm(forms.Form):
@@ -63,7 +65,7 @@ class NoteGroupeForm(forms.Form):
 		"""Vérifie que le colleur n'aura au final pas plus de 3 notes sur ce créneau et qu'il n'a pas déjà collé un des élève cette semaine dans cette matière"""
 		eleves=self.groupe.groupeeleve.all()
 		if not self.cleaned_data['rattrapee']:
-				self.cleaned_data['date_colle']=self.cleaned_data['semaine'].lundi+timedelta(days=int(self.cleaned_data['jour']))
+			self.cleaned_data['date_colle']=self.cleaned_data['semaine'].lundi+timedelta(days=int(self.cleaned_data['jour']))
 		nbNotesColleur=Note.objects.filter(date_colle=self.cleaned_data['date_colle'],colleur=self.colleur,heure=self.cleaned_data['heure']).count()
 		if nbNotesColleur !=0:
 			raise ValidationError("Vous avez déjà des notes sur ce créneau horaire")
