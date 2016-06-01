@@ -46,6 +46,7 @@
 		<matiere nom="Chimie" temps="20"></matiere>
 		<matiere nom="S.V.T." temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
+		<matiere nom="Informatique" temps="60"></matiere>
 	</classe>
 
 	<classe nom="TB" annee="1" type="Scientifique">
@@ -55,6 +56,7 @@
 		<matiere nom="S.V.T." temps="20"></matiere>
 		<matiere nom="Géographie" temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
+		<matiere nom="Informatique" temps="60"></matiere>
 	</classe>
 
 	<classe nom="PSI" annee="2" type="Scientifique">
@@ -87,6 +89,7 @@
 		<matiere nom="Français/Philo" temps="30"></matiere>
 		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="S.I.I." temps="20"></matiere>
+		<matiere nom="Informatique" temps="60"></matiere>
 	</classe>
 
 	<classe nom="PC" annee="2" type="Scientifique">
@@ -119,6 +122,7 @@
 		<matiere nom="S.V.T." temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="Géographie" temps="20"></matiere>
+		<matiere nom="Informatique" temps="60"></matiere>
 	</classe>
 
 	<classe nom="TB" annee="2" type="Scientifique">
@@ -128,6 +132,7 @@
 		<matiere nom="S.V.T." temps="20"></matiere>
 		<matiere nom="Géographie" temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
+		<matiere nom="Informatique" temps="60"></matiere>
 	</classe>
 
 	<classe nom="ECS" annee="1" type="Économique">
@@ -135,6 +140,7 @@
 		<matiere nom="Culture gé." temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" precision="G-LV1"></matiere>
 		<matiere nom="H.G.E." temps="20"></matiere>
+		<matiere nom="Informatique" temps="60"></matiere>
 	</classe>
 
 	<classe nom="ECS" annee="2" type="Économique">

@@ -582,8 +582,8 @@ class Colle(models.Model):
 	colleur = models.ForeignKey(Colleur,on_delete=models.PROTECT)
 	matiere = models.ForeignKey(Matiere,on_delete=models.PROTECT)
 	groupe = models.ForeignKey(Groupe,on_delete=models.PROTECT,null=True)
-	eleve = models.ForeignKey(Eleve,on_delete=models.PROTECT,null=True)
-	classe = models.ForeignKey(Classe,on_delete=models.PROTECT,null=True) # dans l'éventualité où on note un élève fictif.
+	eleve = models.ForeignKey(Eleve,on_delete=models.PROTECT,null=True) # null = True dans l'éventualité où on note un élève fictif pour l'informatique
+	classe = models.ForeignKey(Classe,on_delete=models.PROTECT,null=True) # il est nécessaire de préciser la classe si null=true 
 	semaine = models.ForeignKey(Semaine,on_delete=models.PROTECT)
 	objects = ColleManager()
 
