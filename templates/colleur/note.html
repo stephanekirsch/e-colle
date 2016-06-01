@@ -37,6 +37,13 @@
 	<td></td></tr>
 	{% endif %}
 </table>
+{% elif modulo = 0 %}
+<table class="tableausimple">
+	<tr>
+		<th>Élève fictif</th>
+		<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td>
+	</tr>	
+</table>
 {% endif %}
 <table class="tableausimple" id="suppr">
 	<tr class="entete">

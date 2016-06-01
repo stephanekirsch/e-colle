@@ -12,6 +12,7 @@ var compat=document.getElementById('compat');
 compat.onclick=function(){return false};
 var treleve = document.getElementById('id_eleve').parentNode.parentNode;
 var trgroupe = document.getElementById('id_groupe').parentNode.parentNode;
+var trpermu = document.getElementById('id_permutation').parentNode.parentNode;
 var matieres = new Object();
 var temps = new Object();
 function videColleur()
@@ -48,11 +49,19 @@ function majColleur()
 					{
 						treleve.style.display="none";
 						trgroupe.style.display="table-row";
+						trpermu.style.display="table-row";
 					}
 					else if (temps[matiere] == '30')
 					{
 						trgroupe.style.display="none";
 						treleve.style.display="table-row";
+						trpermu.style.display="table-row";
+					}
+					else if (temps[matiere] == '60')
+					{
+						trgroupe.style.display="none";
+						treleve.style.display="none";
+						trpermu.style.display="none";
 					}
 				}
 				else
@@ -77,11 +86,19 @@ function majColleur()
 		{
 			treleve.style.display="none";
 			trgroupe.style.display="table-row";
+			trpermu.style.display="table-row";
 		}
 		else if (temps[matiere] == '30')
 		{
 			trgroupe.style.display="none";
 			treleve.style.display="table-row";
+			trpermu.style.display="table-row";
+		}
+		else if (temps[matiere] == '60')
+		{
+			trgroupe.style.display="none";
+			treleve.style.display="none";
+			trpermu.style.display="none";
 		}
 	}
 }

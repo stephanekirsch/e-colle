@@ -22,18 +22,18 @@ class NoteForm(forms.ModelForm):
 	def clean(self):
 		"""Vérifie que le colleur n'a pas déjà 3 notes sur ce créneau et qu'il n'a pas déjà collé l'élève cette semaine dans cette matière"""
 		colleur = self.instance.colleur
+		if 'semaine' not in self.cleaned_data:
+			raise ValidationError('Il faut préciser une semaine')
 		if not self.cleaned_data['rattrapee']:
 			self.cleaned_data['date_colle']=self.cleaned_data['semaine'].lundi+timedelta(days=int(self.cleaned_data['jour']))
 		nbNotesColleur=Note.objects.filter(date_colle=self.cleaned_data['date_colle'],colleur=colleur,heure=self.cleaned_data['heure'])
 		if self.instance.pk: # si c'est une modification, on ne prend pas en compte la colle courante
 			nbNotesColleur = nbNotesColleur.exclude(pk=self.instance.pk)
 		nbNotesColleur=nbNotesColleur.count()
-		print(nbNotesColleur)
 		if nbNotesColleur>=3:
 			raise ValidationError('Vous avez déjà 3 notes sur ce créneau')
-		nbNotesEleve=Note.objects.filter(semaine=self.cleaned_data['semaine'],matiere=self.cleaned_data['matiere'],colleur=self.cleaned_data['colleur'],eleve=self.cleaned_data['eleve']).count()
-		print(nbNotesEleve)
-		if nbNotesEleve !=0 and self.cleaned_data['eleve']:
+		nbNotesEleve=Note.objects.filter(semaine=self.cleaned_data['semaine'],matiere=self.instance.matiere,colleur=colleur,eleve=self.instance.eleve).count()
+		if nbNotesEleve !=0 and self.instance.eleve:
 			raise ValidationError('Vous avez déjà collé cet élève dans cette matière cette semaine')
 
 
@@ -43,7 +43,7 @@ class NoteGroupeForm(forms.Form):
 		self.groupe=groupe
 		self.matiere=matiere
 		self.colleur=colleur
-		LISTE_HEURE=[(i,"{}h{:02d}".format(i//4,15*(i%4))) for i in range(28,88)]
+		LISTE_HEURE=[(i,"{}h{:02d}".format(i//4,15*(i%4))) for i in range(24,89)]
 		LISTE_JOUR=enumerate(["lundi","mardi","mercredi","jeudi","vendredi","samedi"])
 		LISTE_NOTE=[('',"---"),(21,"n.n"),(22,"Abs")]
 		LISTE_NOTE.extend(zip(range(21),range(21)))

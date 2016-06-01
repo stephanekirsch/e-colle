@@ -108,7 +108,7 @@ def noteEleve(request,id_eleve,id_classe,colle=None):
 		classe=eleve.classe
 	except Exception:
 		classe=Classe.objects.get(pk=id_classe)
-	if matiere.pk not in eleve.classe.matierespk():
+	if matiere.pk not in classe.matierespk():
 		raise Http404
 	note=Note(matiere=matiere,colleur=colleur,eleve=eleve,classe=classe)
 	if colle:
@@ -472,7 +472,7 @@ def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, id_semaine, id_cr
 	if semaine.lundi+timedelta(days=creneau.jour) in feries:
 		return HttpResponse("jour férié")
 	Colle(semaine=semaine,creneau=creneau,groupe=groupe,colleur=colleur,matiere=matiere).save()
-	return HttpResponse(colleur.user.username+':'+groupe.nom)
+	return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':'+groupe.nom)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def ajaxcolloscopeeleve(request, id_matiere, id_colleur, id_eleve, id_semaine, id_creneau, login):
@@ -480,7 +480,13 @@ def ajaxcolloscopeeleve(request, id_matiere, id_colleur, id_eleve, id_semaine, i
 	en effaçant au préalable toute colle déjà existante sur ce couple créneau/semaine"""
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	colleur=get_object_or_404(Colleur,pk=id_colleur)
-	eleve=get_object_or_404(Eleve,pk=id_eleve)
+	try:
+		eleve = Eleve.objects.get(pk=id_eleve)
+	except Exception:
+		if matiere.temps == 60:
+			eleve = None
+		else:
+			raise Http404
 	semaine=get_object_or_404(Semaine,pk=id_semaine)
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
 	if not modifcolloscope(request.user.colleur,creneau.classe) or matiere not in colleur.matieres.all() or matiere not in creneau.classe.matieres.all():
@@ -489,9 +495,14 @@ def ajaxcolloscopeeleve(request, id_matiere, id_colleur, id_eleve, id_semaine, i
 	feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
 	if semaine.lundi+timedelta(days=creneau.jour) in feries:
 		return HttpResponse("jour férié")
-	Colle(semaine=semaine,creneau=creneau,eleve=eleve,colleur=colleur,matiere=matiere).save()
-	eleves = Eleve.objects.filter(classe=eleve.classe,user__first_name__istartswith=eleve.user.first_name[0],user__last_name__istartswith=eleve.user.last_name[0])
-	return HttpResponse(colleur.user.username+':'+login)
+	colle=Colle(semaine=semaine,creneau=creneau,colleur=colleur,eleve=eleve,matiere=matiere)
+	if eleve is None:
+		colle.classe=creneau.classe
+		colle.save()
+		return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':')
+	else:
+		colle.save()
+		return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':'+login)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def ajaxcolloscopeeffacer(request,id_semaine, id_creneau):

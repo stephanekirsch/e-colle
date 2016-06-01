@@ -41,7 +41,7 @@
 			{% if colleur.user.is_active %}<td>✓</td> {% else %}<td style="color:red;">❌</td>{% endif %}
 			<td>{{listegrades| lookup:colleur.grade}}</td>
 			<td>{% with colleur.etablissement as etab %}{% if etab %}{{colleur.etablissement|title}}{% endif %}{% endwith %}</td>
-			<td>{% for matiere in colleur.matieres.all %}{% if not forloop.first %}<br>{% endif %}{{matiere.nom|title}}{% endfor %}</td>
+			<td>{% for matiere in colleur.matieres.all %}{% if not forloop.first %}<br>{% endif %}{{matiere}}{% endfor %}</td>
 			<td>{% for classe in colleur.classes.all %}{% if not forloop.first %}<br>{% endif %}{{classe.nom}}{% endfor %}</td>
 			<td><a class="bouton" href="{% url 'modif_colleur' colleur.pk %}">Modifier</a></td>
 			<td><a class="bouton" href="{% url 'suppr_colleur' colleur.pk %}">Supprimer</a></td>

@@ -33,7 +33,7 @@ ADMINS = ( # les couples nom/email du (des) administrateur(s) du site
 
 ALLOWED_HOSTS = [] # les nom de domaine autorisés pour accéder à e-colle, démarrer par un '.' pour les sous-domaines (par exemple '.e-colle.fr')
 
-CHEMINVERSECOLLE='/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/e-colle' # chemin absolu vers l'intérieur du répertoire e-colle
+CHEMINVERSECOLLE='/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/e-colle' # chemin absolu vers l'intérieur du répertoire e-colle
 
 SECRET_KEY = 'cg(ip)m3z77z3v!5wo&cl8^4!rk9t0++5wld+@i(kifb!z-k0p' # une clé secrète de 50 caractères. À modifier à la configuration
 

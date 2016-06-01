@@ -113,6 +113,9 @@
 				{% for eleve,login in classe.loginsEleves %}
 					<li><a href="{% url 'ajax_colleur_eleve' matiere.0 colleur.0 eleve.pk 'semaine' 'creneau' login %}">{{eleve}} ({{login}})</a></li>
 				{% endfor %}
+				{% elif matiere.3 == 60 %}
+				<ul class="niveau4">
+				<li><a href="{% url 'ajax_colleur_eleve' matiere.0 colleur.0 0 'semaine' 'creneau' 'no' %}">{{classe}}</a></li>
 				{% endif %}
 				</ul>
 			</li>

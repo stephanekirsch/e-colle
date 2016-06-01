@@ -69,7 +69,7 @@ def Pdf(classe,semin,semax):
 	groupes=Groupe.objects.filter(groupeeleve__classe=classe).distinct()
 	jours,creneaux,colles,semaines=Colle.objects.classe2colloscope(classe,semin,semax)
 	jours=list(jours)
-	matieres=Matiere.objects.filter(matieresclasse=classe,colle__creneau__classe=classe,colle__semaine__lundi__range=(semin.lundi,semax.lundi)).distinct()
+	matieres=Matiere.objects.filter(colle__creneau__classe=classe,colle__semaine__lundi__range=(semin.lundi,semax.lundi)).distinct()
 	couleurs=dict()
 	for matiere in matieres:
 		rouge=int(matiere.couleur[1:3],16)/255
@@ -132,9 +132,11 @@ def Pdf(classe,semin,semax):
 					colle=colles[isem][icren]
 					if colle['id_col']:
 						if colle['temps']==20:
-							data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(colle['login'],colle['nomgroupe'])
+							data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(classe.dictColleurs(semin,semax)[colle['id_colleur']],colle['nomgroupe'])
 						elif colle['temps']==30:
-							data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(colle['login'],classe.dictEleves()[colle['id_eleve']])
+							data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(classe.dictColleurs(semin,semax)[colle['id_colleur']],classe.dictEleves()[colle['id_eleve']])
+						elif colle['temps']==60:
+							data[3+isem-indsemaine][1+icren-indcreneau]="{}".format(classe.dictColleurs(semin,semax)[colle['id_colleur']])
 						LIST_STYLE.add('BACKGROUND',(1+icren-indcreneau,3+isem-indsemaine),(1+icren-indcreneau,3+isem-indsemaine),couleurs[colle['id_matiere']])
 			t=Table(data,colWidths=[70]+nbCreneauxLoc*[largeurcel],rowHeights=(3+nbSemainesLoc)*[hauteurcel])
 			t.setStyle(LIST_STYLE)
@@ -170,7 +172,7 @@ def Pdf(classe,semin,semax):
 		pdf.y-=h+10
 	pdf.finDePage()
 	matieres=Matiere.objects.filter(matieresclasse=classe,colle__creneau__classe=classe,colle__semaine__lundi__range=(semin.lundi,semax.lundi)).distinct()
-	largeurcel=min(150,(pdf.format[0]-2*pdf.marge_x)/max(classe.matieres.count(),1))
+	largeurcel=min(150,(pdf.format[0]-2*pdf.marge_x)/max(matieres.count(),1))
 	hauteurcel=40
 	for matiere in matieres:
 		nbcolleurs=Colle.objects.filter(creneau__classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).values('colleur').distinct().count()
@@ -181,11 +183,11 @@ def Pdf(classe,semin,semax):
 	fontsize=9
 	pdf.setFont("Helvetica-Bold",fontsize)
 	for matiere in matieres:
-		data=[[matiere.nom.upper()]]
+		data=[[matiere]]
 		colleurs=Colle.objects.filter(creneau__classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).values('colleur').distinct()
 		for colleur_id in colleurs:
 			colleur=get_object_or_404(Colleur,pk=colleur_id['colleur'])
-			data+=[["{} {} ({})".format(colleur.user.first_name.title(),colleur.user.last_name.upper(),colleur.user.username)]]
+			data+=[["{}. {} ({})".format(colleur.user.first_name[0].title(),colleur.user.last_name.upper(),classe.dictColleurs(semin,semax)[colleur.pk])]]
 		LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
 										,('VALIGN',(0,0),(-1,-1),'MIDDLE')
 										,('ALIGN',(0,0),(-1,-1),'CENTRE')
