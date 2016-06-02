@@ -3,7 +3,7 @@ from django import forms
 from django.forms.widgets import Input
 from accueil.models import Colleur, Groupe, Matiere, Destinataire, Message, User, Classe, Prof
 from administrateur.forms import CustomMultipleChoiceField
-from django.contrib.auth.password_validation import validate_password
+from administrateur.forms import validate_password
 from django.db.models import Q
 
 class GroupeMultipleChoiceField(forms.ModelMultipleChoiceField):
@@ -40,6 +40,13 @@ class UserProfprincipalForm(forms.Form):
 		for classe in classes:
 			self.fields["{}_groupe".format(classe.pk)] = ColleurMultipleChoiceField(classe,label="Droits de modifier les groupes de {}".format(classe.nom.upper()),queryset=Colleur.objects.filter(colleurprof__classe=classe,user__is_active=True).select_related('user').exclude(pk=colleur.pk),widget=forms.CheckboxSelectMultiple,required=False)
 			self.fields["{}_colloscope".format(classe.pk)] = ColleurMultipleChoiceField(classe,label="Droits de modifier le colloscope de {}".format(classe.nom.upper()),queryset=Colleur.objects.filter(colleurprof__classe=classe,user__is_active=True).select_related('user').exclude(pk=colleur.pk),widget=forms.CheckboxSelectMultiple,required=False)
+
+	def clean_motdepasse(self):
+		data = self.cleaned_data['motdepasse']
+		if data:
+			validate_password(data)
+		return data
+
 
 class SelectMessageForm(forms.Form):
 	def __init__(self,user,recu=True,*args, **kwargs):

@@ -3,10 +3,26 @@ from django import forms
 from accueil.models import Classe, Matiere, Etablissement, Semaine, Colleur, Eleve, JourFerie, User, Prof
 from django.forms.extras.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
-from django.contrib.auth.password_validation import validate_password
-from ecolle.settings import DEFAULT_MODIF_COLLOSCOPE, DEFAULT_MODIF_GROUPE, RESOURCES_ROOT
+from ecolle.settings import DEFAULT_MODIF_COLLOSCOPE, DEFAULT_MODIF_GROUPE, RESOURCES_ROOT, TAILLE_MIN_MDP
 from lxml import etree
 from random import choice
+from difflib import SequenceMatcher
+
+def validate_password(password,user=None):
+	if password.isdigit():
+		raise ValidationError("Ce mot de passe est entièrement numérique",code='password_entirely_numeric')
+	if len(password)<TAILLE_MIN_MDP:
+		raise ValidationError("Ce mot de passe est trop court, il faut un minimum de %(taille)s caractères"\
+			,code='password_too_short',params={'taille':TAILLE_MIN_MDP})
+	if user:
+		if SequenceMatcher(a=password.lower(), b=user.first_name.lower()).quick_ratio() > 0.7:
+			raise ValidationError("Ce mot de passe est trop similaire au prénom"\
+			,code='password_too_similar_first_name')
+		if SequenceMatcher(a=password.lower(), b=user.last_name.lower()).quick_ratio() > 0.7:
+			raise ValidationError("Ce mot de passe est trop similaire au nom"\
+			,code='password_too_similar_last_name')
+
+
 
 def random_string():
 	"""renvoie une chaine de caractères aléatoires contenant des lettres ou des chiffres ou un des symboles _+-.@"""
