@@ -13,7 +13,7 @@ class RamassageForm(forms.ModelForm):
 	def clean(self):
 		"""Vérifie que moisDebut est antérieur à mois Fin"""
 		if self.cleaned_data['moisDebut'] > self.cleaned_data['moisFin']:
-			raise ValidationError('le mois de début doit être antérieur au mois de mois')
+			raise ValidationError('le mois de début doit être antérieur au mois de fin')
 
 class MoisForm(forms.Form):
 	def __init__(self,moisMin,moisMax, *args, **kwargs):
