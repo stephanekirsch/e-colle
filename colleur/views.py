@@ -694,7 +694,7 @@ def eleves(request,id_classe):
 			matierenote.append((matiere,moyenne,rang,notes))
 	else:
 		semaines = matierenote = None
-	return render(request,'colleur/eleves.html',{'eleve':eleve,'semin':semin,'semax':semax,'form':form,'form2':form2,'matierenote':matierenote,'semaines':semaines})
+	return render(request,'colleur/eleves.html',{'eleve':eleve,'semin':semin,'semax':semax,'form':form,'form2':form2,'matierenote':matierenote,'semaines':semaines,'latex':MATHJAX})
 
 
 
