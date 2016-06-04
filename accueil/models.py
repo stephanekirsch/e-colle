@@ -567,6 +567,7 @@ class ColleManager(models.Manager):
 		ON u.eleve_id = e.id\
 		INNER JOIN accueil_creneau cr\
 		ON co.creneau_id = cr.id\
+		WHERE cr.classe_id=%s\
 		GROUP BY s.numero, cr.jour, cr.heure, u.first_name, u.last_name\
 		HAVING COUNT(DISTINCT co.id) > 1 AND COUNT(g.id) < COUNT(DISTINCT co.id)\
 		ORDER BY s.numero, cr.jour, cr.heure, u.first_name, u.last_name"
