@@ -250,7 +250,7 @@ def ramassagePdf(request,id_ramassage):
 						ligneMat-=23
 						ligneColleur=1
 						if ligneMat>1:
-							data[1][0]=matiere.nom.title()
+							data[1][0]=matiere.title()
 							if ligneMat>2:
 								LIST_STYLE.add('SPAN',(0,1),(0,min(ligneMat-1,23)))
 							if ligneEtab>1:

@@ -27,21 +27,19 @@ IMAGEMAGICK= True # True pour faire des images miniatures des pièces jointes de
 
 NOM_ETABLISSEMENT = "" # le nom de l'Établissement, qui apparaît en haut de toutes les pages, ainsi que sur les pdf du colloscope et des ramassages
 
-TAILLE_MIN_MDP = 8 # taille minimale des mots de passe en nombre de caractères
-
 ADMINS = ( # les couples nom/email du (des) administrateur(s) du site
      ('admin', 'admin@example.com'),
 )
 
 ALLOWED_HOSTS = [] # les nom de domaine autorisés pour accéder à e-colle, démarrer par un '.' pour les sous-domaines (par exemple '.e-colle.fr')
 
-CHEMINVERSECOLLE='/xxxxxxxxxxxxxxxxxxxxxxxxxxxxx/e-colle' # chemin absolu vers l'intérieur du répertoire e-colle
+CHEMINVERSECOLLE='/xxxxxxxxxxxxxxxxxxxxxxxx/e-colle' # chemin absolu vers l'intérieur du répertoire e-colle
 
 SECRET_KEY = 'cg(ip)m3z77z3v!5wo&cl8^4!rk9t0++5wld+@i(kifb!z-k0p' # une clé secrète de 50 caractères. À modifier à la configuration
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql', # le SGBD choisi: 'django.db.backends.mysql' si vous utilisez mysql, 'django.db.backends.postgresql_psycopg2' pour postgreSQL, etc ... 
+        'ENGINE': 'django.db.backends.mysql', # le SGBD choisi: 'django.db.backends.mysql' si vous utilisez mysql, 'django.db.backends.postgresql' pour postgreSQL, etc ... 
         'NAME': 'e-colle',               # le nom de la base de données (le chemin vers le fichier + le nom du fichier.db pour sqlite)
         # La suite est à laisser vide si vous utilisez SQlite, puisqu'aucune authentification n'y est nécessaire
         'USER': 'e-colle',               # le nom de l'utilisateur ayant droits sur la base de données.
@@ -93,7 +91,7 @@ MEDIA_URL = '/media/'
 
 STATIC_URL = '/static/'
 
-DEBUG = False
+DEBUG = True
 
 APPEND_SLASH = False
 
