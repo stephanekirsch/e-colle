@@ -47,7 +47,6 @@ class UserProfprincipalForm(forms.Form):
 			validate_password(data)
 		return data
 
-
 class SelectMessageForm(forms.Form):
 	def __init__(self,user,recu=True,*args, **kwargs):
 		super().__init__(*args, **kwargs)
