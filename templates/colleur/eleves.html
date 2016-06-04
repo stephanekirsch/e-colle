@@ -52,6 +52,7 @@
 {% endif %}
 {% endblock %}
 {% block javascript %}
-<script type="text/javascript" src="{% static 'javascript/tex2html.js' %}"></script>
-<script type="text/javascript" src="{% static 'javascript/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML'%}"></script>
+{% if latex %}
+{% include "mathjax.html" %}
+{% endif %}
 {% endblock %}
