@@ -615,7 +615,7 @@ class RamassageManager(models.Manager):
 				j+=1
 		effectifs_classe = {classe.pk:effectif_classe[int(20<=classe.eleve_compte<=35)+2*int(35<classe.eleve_compte)+3*classe.annee-3] for classe in classes}
 		lastMatiere = lastEtab = lastGrade = lastColleur = False
-		nbEtabs=nbGrades=nbColleurs=0
+		nbEtabs=nbGrades=nbColleurs=1
 		listeDecompte, listeEtablissements, listeGrades, listeColleurs, listeTemps= [], [], [], [], [0]*nb_decompte
 		for matiere, etab, grade, nom, prenom, classe, temps in compte:
 			if lastMatiere and matiere!=lastMatiere: # si on change de matière
@@ -624,26 +624,29 @@ class RamassageManager(models.Manager):
 				listeEtablissements.append((lastEtab,listeGrades,nbGrades))
 				listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
 				listeTemps,listeColleurs,listeGrades,listeEtablissements=[0]*nb_decompte,[],[],[]
-				nbColleurs=nbGrades=nbEtabs=0
+				nbColleurs=nbGrades=nbEtabs=1
 			elif lastEtab is not False and etab!=lastEtab: # si on change d'établissement mais pas de matière
 				listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),listeTemps))
 				listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
 				listeEtablissements.append((lastEtab,listeGrades,nbGrades))
 				listeTemps,listeColleurs,listeGrades=[0]*nb_decompte,[],[]
-				nbColleurs=nbGrades=0	
+				nbColleurs=nbGrades=1
+				nbEtabs+=1
 			elif lastGrade and lastGrade!=grade: # si on change de grade, mais pas d'établissement ni de matière
 				listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),listeTemps))
 				listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
 				listeTemps,listeColleurs=[0]*nb_decompte,[]
-				nbColleurs=0		
+				nbColleurs=1
+				nbEtabs+=1
+				nbGrades+=1
 			elif lastColleur and (nom,prenom)!=lastColleur: # si on change de colleur, mais pas de grade, ni d'établissement, ni de matière
 				listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),listeTemps))
 				listeTemps=[0]*nb_decompte
+				nbColleurs+=1
+				nbGrades+=1
+				nbEtabs+=1
 			listeTemps[effectifs_classe[classe]]+=temps
 			lastColleur, lastGrade, lastEtab, lastMatiere = (nom,prenom), grade, etab, matiere
-			nbColleurs+=1
-			nbGrades+=1
-			nbEtabs+=1
 		if lastColleur:
 			listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),listeTemps))
 			listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
