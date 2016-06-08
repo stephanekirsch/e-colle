@@ -1,8 +1,8 @@
 #-*- coding: utf-8 -*-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from colleur.forms import ColleurConnexionForm, NoteForm, ProgrammeForm, GroupeForm, NoteGroupeForm, CreneauForm, SemaineForm, ColleForm, EleveForm
-from accueil.models import Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, JourFerie
+from colleur.forms import ColleurConnexionForm, NoteForm, ProgrammeForm, GroupeForm, NoteGroupeForm, CreneauForm, SemaineForm, ColleForm, EleveForm, MatiereECTSForm
+from accueil.models import Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, JourFerie, MatiereECTS, NoteECTS
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import F, Count, Avg, Min, Max, StdDev, Sum
@@ -696,6 +696,52 @@ def eleves(request,id_classe):
 		semaines = matierenote = None
 	return render(request,'colleur/eleves.html',{'eleve':eleve,'semin':semin,'semax':semax,'form':form,'form2':form2,'matierenote':matierenote,'semaines':semaines,'latex':MATHJAX})
 
+@user_passes_test(is_colleur, login_url='accueil')
+def ectsmatieres(request,id_classe):
+	"""Renvoie la vue de la page de gestion des matières ects de la classe"""
+	classe = get_object_or_404(Classe,pk=id_classe)
+	if not is_profprincipal(request.user,classe):
+		return HttpResponseForbidden("Accès non autorisé")
+	matieresECTS = MatiereECTS.objects.filter(classe=classe).prefetch_related('profs').order_by('nom','precision')
+	newMatiere = MatiereECTS(classe=classe)
+	form = MatiereECTSForm(request.POST or None,instance=newMatiere)
+	form.fields['profs'].queryset=Colleur.objects.filter(classes=classe,colleurprof__classe=classe).order_by('user__last_name','user__first_name')
+	if form.is_valid():
+		form.save()
+		return redirect('ects_matieres',classe.pk)
+	return render(request,'colleur/ectsmatieres.html',{'classe':classe,'matieresECTS':matieresECTS,'form':form})
 
+@user_passes_test(is_colleur, login_url='accueil')
+def ectsmatieremodif(request,id_matiere):
+	"""Renvoie la vue de la page de modification des matières ects de la classe"""
+	matiere = get_object_or_404(MatiereECTS,pk=id_matiere)
+	if not is_profprincipal(request.user,matiere.classe):
+		return HttpResponseForbidden("Accès non autorisé")
+	form = MatiereECTSForm(request.POST or None,instance=matiere)
+	form.fields['profs'].queryset=Colleur.objects.filter(classes=matiere.classe,colleurprof__classe=matiere.classe).order_by('user__last_name','user__first_name')
+	if form.is_valid():
+		form.save()
+		return redirect('ects_matieres',matiere.classe.pk)
+	return render(request,'colleur/ectsmatieremodif.html',{'matiere':matiere,'form':form})
 
+@user_passes_test(is_colleur, login_url='accueil')
+def ectsmatieresuppr(request,id_matiere):
+	"""Renvoie la vue de la page de modification des matières ects de la classe"""
+	matiere = get_object_or_404(MatiereECTS,pk=id_matiere)
+	if not is_profprincipal(request.user,matiere.classe):
+		return HttpResponseForbidden("Accès non autorisé")
+	try:
+		matiere.delete()
+	except Exception:
+		messages.error(request,"Impossible de l'effacer (des élèves y ont des notes)")
+	return redirect('ects_matieres',matiere.classe.pk)
 
+@user_passes_test(is_colleur, login_url='accueil')
+def ectsnotes(request,id_classe):
+	"""Renvoie la vue de la page de gestion des matières ects de la classe"""
+	classe = get_object_or_404(Classe,pk=id_classe)
+	matieres = MatiereECTS.objects.filter(classe=classe,profs=request.user.colleur)
+	if not matieres.exists():
+		return HttpResponseForbidden("Vous n'êtes pas habilité à attribuer des crédits ECTS aux élèves de cette classe")
+	listNotes = list("ABCDEF")
+	return render(request,'colleur/ectsnotes.html',{'classe':classe,'matieres':matieres,'listeNotes':NoteECTS.objects.note(classe,request.user.colleur),'listNotes':listNotes})

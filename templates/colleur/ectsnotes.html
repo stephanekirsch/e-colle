@@ -1,0 +1,31 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+{% if user.colleur.classeprofprincipal.all %}
+{% include "colleur/navects.html" %}
+{% endif %}
+<table class="accueil"><tr><td>Notes ECTS de {{classe}}</td></tr></table>
+
+{% for matiere,notes in listeNotes%}
+
+<table class="tableausimple">
+	<tr class="entete">
+		<td colspan="3">{{matiere}}</td>
+	</tr>
+	<tr class="entete">
+		<td>Élève</td>
+		<td>Semestre 1</td>
+		<td>Semestre 2</td>
+	</tr>
+	{% for note in notes %}
+	<tr>
+		<td>{{note.prenom|title}} {{note.nom|upper}}</td>
+		<td>{% if note.note1 %}{{listNotes|lookup:note.note1}}{% endif %}</td>
+		<td>{% if note.note2 %}{{listNotes|lookup:note.note2}}{% endif %}</td>
+	</tr>
+	{% endfor %}
+</table>
+{% endfor %}
+
+{% endblock %}

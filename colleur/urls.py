@@ -39,4 +39,8 @@ url(r'^action/note/colle/(\d+)$', views.colleNote,name="collenote_colleur"),
 url(r'^action/note/colleeleve/(\d+)$', views.colleNoteEleve,name="collenoteeleve_colleur"),
 url(r'^action/decompte$', views.decompte,name="decompte_colleur"),
 url(r'^action/changemat/(\d+)$', views.changemat,name="changemat_colleur"),
+url(r'^action/ects/matieres/(\d+)$', views.ectsmatieres,name="ects_matieres"),
+url(r'^action/ects/matiere/modif/(\d+)$', views.ectsmatieremodif,name="ects_matiere_modif"),
+url(r'^action/ects/matiere/suppr/(\d+)$', views.ectsmatieresuppr,name="ects_matiere_suppr"),
+url(r'^action/ects/notes/(\d+)$', views.ectsnotes,name="ects_notes"),
 ]

@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Colleur, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe
+from accueil.models import Colleur, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS
 from django.db.models import Q
 from datetime import date, timedelta
 from django.forms.extras.widgets import SelectDateWidget
@@ -180,6 +180,20 @@ class EleveForm(forms.Form):
 		self.fields['eleve'] = forms.ModelChoiceField(label = "Élève",queryset=Eleve.objects.filter(classe=classe),empty_label=None)
 
 
+class MatiereECTSForm(forms.ModelForm):
+	class Meta:
+		model = MatiereECTS
+		fields = ['nom','precision','profs','semestre1','semestre2']
 
+	def clean(self):
+		"""validation du formulaire. On vérifie qu'au moins un des champs semestre1 ou semetre2 est non nul et que le triplet
+		nom/precision, sans compter la casse, est unique"""
+		if self.cleaned_data['semestre1'] is None and self.cleaned_data['semestre2'] is None:
+			raise ValidationError("au moins un des champs de coefficient doit être précisé")
+		query = MatiereECTS.objects.filter(classe=self.instance.classe,nom__iexact=self.cleaned_data['nom'],precision__iexact=self.cleaned_data['precision'])
+		if self.instance.pk: # si le pk existe déjà et donc qu'on procède à une modification
+			query=query.exclude(pk=self.instance.pk)
+		if query.exists():
+			raise ValidationError("le couple nom/précision est unique",code="uniqueness violation")
 
 	

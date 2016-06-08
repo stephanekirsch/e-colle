@@ -247,6 +247,8 @@ class Eleve(models.Model):
 	classe = models.ForeignKey(Classe,related_name="classeeleve",on_delete=models.PROTECT)
 	groupe = models.ForeignKey(Groupe, null=True,related_name="groupeeleve", on_delete=models.SET_NULL)
 	photo = models.ImageField(verbose_name="photo(jpg/png, 300x400)",upload_to=update_photo,null=True,blank=True)
+	ddn = models.DateField(verbose_name="Date de naissance",null=True,blank=True)
+	ine = models.CharField(verbose_name="numéro étudiant (INE)",max_length=11,blank=True)
 
 	class Meta:
 		ordering=['user__last_name','user__first_name']
@@ -789,3 +791,53 @@ def eleve_post_delete_function(sender, instance, **kwargs):
 		fichier=MEDIA_ROOT+instance.photo.name
 		if os.path.isfile(fichier):
 			os.remove(fichier)
+
+class MatiereECTS(models.Model):
+	profs = models.ManyToManyField(Colleur,verbose_name="Professeur", related_name="colleurmatiereECTS",blank=True)
+	classe = models.ForeignKey(Classe,verbose_name="Classe", related_name="classematiereECTS",on_delete =models.CASCADE)
+	nom = models.CharField(max_length=80,verbose_name="Matière")
+	precision = models.CharField(max_length=20,verbose_name="Précision",blank=True) # si plusieurs déclinaisons/coefficients, comme pour les langues, ou les options SI/info/Chimie en MPSI/PCSI
+	semestre1 = models.PositiveSmallIntegerField(verbose_name='coefficient semestre 1',choices=enumerate(range(21)),null=True,blank=True)
+	semestre2 = models.PositiveSmallIntegerField(verbose_name='coefficient semestre 2',choices=enumerate(range(21)),null=True,blank=True)
+
+	class Meta:
+		unique_together=(('classe','nom','precision'))
+
+	def __str__(self):
+		if self.precision:
+			return "{}({})".format(self.nom.title(),self.precision)
+		return self.nom
+
+class NoteECTSManager(models.Manager):
+	def note(self,classe,colleur):
+		listeNotes=[]
+		for matiere in MatiereECTS.objects.filter(classe=classe,profs=colleur):
+			requete="SELECT e.id id_eleve, u.first_name prenom,u.last_name nom, m.nom matiere, m.precision, n1.note note1, n2.note note2\
+		FROM accueil_eleve e\
+		INNER JOIN accueil_user u\
+		ON u.eleve_id=e.id\
+		CROSS JOIN accueil_matiereects m\
+		INNER JOIN accueil_matiereects_profs mp\
+		ON mp.matiereects_id = m.id\
+		LEFT OUTER JOIN accueil_noteects n1\
+		ON n1.matiere_id=m.id AND n1.semestre = 1 AND n1.eleve_id = e.id\
+		LEFT OUTER JOIN accueil_noteects n2\
+		ON n2.matiere_id=m.id AND n2.semestre = 2 AND n1.eleve_id = e.id\
+		WHERE m.classe_id=%s AND e.classe_id=%s AND mp.colleur_id=%s AND m.id=%s\
+		ORDER BY u.last_name,u.first_name"
+			with connection.cursor() as cursor:
+				cursor.execute(requete,(classe.pk,classe.pk,colleur.pk,matiere.pk))
+				notes = dictfetchall(cursor)
+			listeNotes.append((matiere,notes))
+		return listeNotes
+
+
+class NoteECTS(models.Model):
+	eleve = models.ForeignKey(Eleve,verbose_name="Élève",on_delete=models.CASCADE)
+	matiere = models.ForeignKey(MatiereECTS,on_delete=models.CASCADE)
+	semestre = models.PositiveSmallIntegerField(verbose_name="semestre",choices=((1,'1er semestre'),(2,'2ème semestre')))
+	note = models.PositiveSmallIntegerField(choices=enumerate("ABCDEF"))
+	objects=NoteECTSManager()
+
+	class Meta:
+		unique_together=(('eleve','matiere','semestre'))

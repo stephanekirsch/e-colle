@@ -1,0 +1,27 @@
+<div id="nav"> 
+	<ul id="menu">
+	{% with user.colleur.classeprofprincipal.all as classes %}
+		<li><a href="#">Matières ECTS</a>
+			<ul>
+			{% for classe in classes %}
+				<li><a href="{% url 'ects_matieres' classe.pk %}">{{classe}}</a></li>
+			{% endfor %}
+			</ul>
+		</li>
+		<li><a href="#">Notes ECTS</a>
+			<ul>
+			{% for classe in classes %}
+				<li><a href="{% url 'ects_notes' classe.pk %}">{{classe}}</a></li>
+			{% endfor %}
+			</ul>
+		</li>
+		<li><a href="#">Fiches ECTS</a>
+			<ul>
+			{% for classe in classes %}
+				<li><a href="#">{{classe}}</a></li>
+			{% endfor %}
+			</ul>
+		</li>
+	{% endwith %}
+	</ul>
+</div>

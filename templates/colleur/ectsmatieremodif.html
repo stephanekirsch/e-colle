@@ -1,0 +1,15 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+{% include "colleur/navects.html" %}
+<table class="accueil"><tr><td>Modification de la matière {{matière}} en {{matiere.classe}}</td></tr></table>
+<form method="POST">
+{% csrf_token %}
+<table class="tableausimple">
+	{{ form.as_table }}
+	<tr><td colspan="2"><input type="submit"/></td></tr>
+</table>
+</form>
+
+{% endblock %}

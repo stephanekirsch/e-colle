@@ -59,6 +59,13 @@
 			{% endfor %}
 			</ul>
 		</li>
+		<li><a href="#">ECTS</a>
+			<ul>
+			{% for classe in classes %}
+				<li><a href="{% url 'ects_matieres' classe.pk %}">{{classe}}</a></li>
+			{% endfor %}
+			</ul>
+		</li>
 		{% endif %}
 		{% endwith %}
 	</ul>
