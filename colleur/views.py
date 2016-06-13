@@ -12,13 +12,16 @@ from django.forms.formsets import formset_factory
 from copy import copy
 from pdf.pdf import Pdf
 from reportlab.platypus import Table, TableStyle
+from io import BytesIO
+from reportlab.pdfgen.canvas import Canvas
+from reportlab.lib.pagesizes import A4, legal, landscape
 import os
 import json
 import csv
 from ecolle.settings import MEDIA_ROOT, MEDIA_URL, MATHJAX, IMAGEMAGICK
 
 def is_colleur(user):
-	"""Renvoie True si l'utilisateur est authentifié e est un colleur, False sinon"""
+	"""Renvoie True si l'utilisateur est authentifié et est un colleur, False sinon"""
 	if user.is_authenticated() and user.is_active:
 		return bool(user.colleur)
 	return False
@@ -727,8 +730,10 @@ def ectsmatieremodif(request,id_matiere):
 
 @user_passes_test(is_colleur, login_url='accueil')
 def ectsmatieresuppr(request,id_matiere):
-	"""Renvoie la vue de la page de modification des matières ects de la classe"""
+	"""Supprime la matière ects dont l'id est id_matiere puis renvoie la page des matières ECTS"""
 	matiere = get_object_or_404(MatiereECTS,pk=id_matiere)
+	if not is_profprincipal(request.user,matiere.classe):
+		return HttpResponseForbidden("Accès non autorisé")
 	if not is_profprincipal(request.user,matiere.classe):
 		return HttpResponseForbidden("Accès non autorisé")
 	try:
@@ -760,7 +765,7 @@ def ectsnotes(request,id_classe):
 @user_passes_test(is_colleur, login_url='accueil')
 def ectsnotesmodif(request,id_matiere,chaine_eleves):
 	"""Renvoie la vue de la page de modification des notes ECTS des élèves sélectionnés, dont l'id fait partie de chaine_eleves, dans la matiere dont l"id est id_matiere"""
-	matiere = get_object_or_404(MatiereECTS,pk=id_matiere)
+	matiere = get_object_or_404(MatiereECTS,pk=id_matiere,profs=request.user.colleur)
 	listeEleves = Eleve.objects.filter(pk__in=[int(i) for i in chaine_eleves.split("-")],classe=matiere.classe).order_by('user__last_name','user__first_name').select_related('user')
 	NoteEleveformset = formset_factory(NoteEleveForm,extra=0,max_num=listeEleves.count(),formset=NoteEleveFormSet)
 	if request.method == 'POST':
@@ -777,5 +782,22 @@ def ectsnotesmodif(request,id_matiere,chaine_eleves):
 @user_passes_test(is_colleur, login_url='accueil')
 def ectscredits(request,id_classe):
 	classe =get_object_or_404(Classe,pk=id_classe)
+	if not is_profprincipal(request.user,classe):
+		return HttpResponseForbidden("Accès non autorisé")
 	eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name')
 	return render(request,'colleur/ectscredits.html',{'classe':classe,'credits':NoteECTS.objects.credits(classe)})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def ficheectspdf(request,id_eleve):
+	eleve = get_object_or_404(Eleve,pk=id_eleve)
+	if not is_profprincipal(request.user,eleve.classe):
+		return HttpResponseForbidden("Accès non autorisé")
+
+
+@user_passes_test(is_colleur, login_url='accueil')
+def attestationectspdf(request,id_eleve):
+	eleve = get_object_or_404(Eleve,pk=id_eleve)
+	if not is_profprincipal(request.user,eleve.classe):
+		return HttpResponseForbidden("Accès non autorisé")
+
+

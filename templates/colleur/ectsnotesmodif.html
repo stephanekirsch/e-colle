@@ -6,7 +6,16 @@
 {% include "colleur/navects.html" %}
 {% endif %}
 <table class="accueil"><tr><td>Modification des notes de {{matiere}} en {{matiere.classe}}</td></tr></table>
-
+<table class="tableausimple">
+	<tr>
+		<td>A: Très Bien</td>
+		<td>B: Bien</td>
+		<td>C: Assez Bien</td>
+		<td>D: Convenable</td>
+		<td>E: Passable</td>
+		<td>F: Insuffisant (invalide tous les crédits)</td>		
+	</tr>
+</table>
 <form method="post">
 	{% csrf_token %}
 	{{ formset.management_form }}

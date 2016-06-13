@@ -855,7 +855,7 @@ class NoteECTSManager(models.Manager):
 
 	def credits(self,classe):
 		if BDD == 'mysql': # la double jointure externe sur même table semble bugger avec mysql, donc j'ai mis un SUM(CASE ....) pour y remédier.
-			requete = "SELECT u.first_name prenom, u.last_name nom, e.ddn, e.ine, SUM(CASE WHEN ne.semestre = 1 THEN m.semestre1 ELSE 0 END) sem1,\
+			requete = "SELECT u.first_name prenom, u.last_name nom, e.id, e.ddn, e.ine, SUM(CASE WHEN ne.semestre = 1 THEN m.semestre1 ELSE 0 END) sem1,\
 			SUM(CASE WHEN ne.semestre = 2 THEN m.semestre2 ELSE 0 END) sem2\
 			FROM accueil_classe cl\
 			INNER JOIN accueil_eleve e\
@@ -867,10 +867,10 @@ class NoteECTSManager(models.Manager):
 			LEFT OUTER JOIN accueil_matiereects m\
 			ON ne.matiere_id = m.id\
 			WHERE cl.id = %s\
-			GROUP BY u.last_name, u.first_name, e.ddn, e.ine\
+			GROUP BY u.last_name, u.first_name, e.id, e.ddn, e.ine\
 			ORDER BY u.last_name, u.first_name"
 		else: # avec sqlite ou postgresql pas de bug! (probablement avec oracle aussi)
-			requete = "SELECT u.first_name prenom, u.last_name nom, e.ddn, e.ine, SUM(m1.semestre1) sem1, SUM(m2.semestre2) sem2\
+			requete = "SELECT u.first_name prenom, u.last_name nom, e.id, e.ddn, e.ine, SUM(m1.semestre1) sem1, SUM(m2.semestre2) sem2\
 			FROM accueil_classe cl\
 			INNER JOIN accueil_eleve e\
 			ON e.classe_id=cl.id\
@@ -883,7 +883,7 @@ class NoteECTSManager(models.Manager):
 			LEFT OUTER JOIN accueil_matiereects m2\
 			ON ne.matiere_id = m2.id AND ne.semestre = 2\
 			WHERE cl.id = %s\
-			GROUP BY u.last_name, u.first_name, e.ddn, e.ine\
+			GROUP BY u.last_name, u.first_name, e.id, e.ddn, e.ine\
 			ORDER BY u.last_name, u.first_name"
 		with connection.cursor() as cursor:
 			cursor.execute(requete,(classe.pk,))

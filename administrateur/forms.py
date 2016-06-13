@@ -203,6 +203,7 @@ class EleveForm(forms.Form):
 				raise ValidationError("les 10 premiers caractères doivent être des chiffres")
 			if not (65 <= ord(data[-1]) <= 90):
 				raise ValidationError("le dernier caractère est une lettre ASCII majuscule")
+		return data
 
 class EleveFormMdp(forms.Form):
 	nom = forms.CharField(label="Nom",max_length=30)
@@ -237,6 +238,7 @@ class EleveFormMdp(forms.Form):
 				raise ValidationError("les 10 premiers caractères doivent être des chiffres")
 			if not (65 <= ord(data[-1]) <= 90):
 				raise ValidationError("le dernier caractère est une lettre ASCII majuscule")
+		return data
 
 class ProfForm(forms.Form):
 	def __init__(self,classe, *args, **kwargs):
@@ -307,6 +309,8 @@ class MatiereClasseSelectForm(forms.Form):
 class CsvForm(forms.Form):
 	nom = forms.CharField(label="intitulé du champ nom",required=True,max_length=20)
 	prenom = forms.CharField(label="intitulé du champ prénom",required=True,max_length=20)
+	ddn = forms.CharField(label="intitulé du champ date de naissance",required=True,max_length=30)
+	ine = forms.CharField(label="intitulé du champ numéro INE",required=True,max_length=20)
 	fichier = forms.FileField(label="Fichier csv",required=True)
 	classe=forms.ModelChoiceField(label="Classe",queryset=Classe.objects.order_by('nom'), empty_label="Non définie",required=False) 
 

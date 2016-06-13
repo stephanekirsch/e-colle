@@ -24,8 +24,8 @@
 		{% if credit.ine %}<td style="color:green;">✓</td>{% else %}<td style="color:red;">❌</td>{% endif %}
 		{% if credit.sem1 == 30 %}<td style="color:green;">30</td>{% else %}<td style="color:red;">{% firstof credit.sem1 "0" %}</td>{% endif %}
 		{% if credit.sem2 == 30 %}<td style="color:green;">30</td>{% else %}<td style="color:red;">{% firstof credit.sem2 "0" %}</td>{% endif %}
-		<td><a href="#">Aperçu</a><a href="#"><img src="{% static 'images/iconePDF.png' %}"></a></td>
-		<td>{% if credit.semestre1 == 30 and credit.semestre2 == 30 and credit.ddn and credit.ine %}<a href="#"><img src="{% static 'images/iconePDF.png' %}"></a>{% endif %}</td>
+		<td><a href="{% url 'ects_fiche' credit.id %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
+		<td>{% if credit.sem1 == 30 and credit.sem2 == 30 and credit.ddn and credit.ine %}<a href="{% url 'ects_attestation' credit.id %}"><img src="{% static 'images/iconePDF.png' %}"></a>{% endif %}</td>
 	</tr>
 	{% endfor %}
 </table>

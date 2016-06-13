@@ -356,21 +356,26 @@ def eleve(request):
 @ip_filter
 def elevecsv(request):
 	"""Renvoie la vue de la page d'ajout d'élèves via un fichier CSV"""
-	form = CsvForm(request.POST or None, request.FILES or None,initial = {'nom':'Nom','prenom':'Prénom'})
+	form = CsvForm(request.POST or None, request.FILES or None,initial = {'nom':'Nom','prenom':'Prénom', 'ddn': 'Date de naissance', 'ine': 'Numéro INE'})
 	if form.is_valid():
 		try:
 			with TextIOWrapper(form.cleaned_data['fichier'].file,encoding = 'utf8') as fichiercsv:
 				dialect = csv.Sniffer().sniff(fichiercsv.read(4096))
-				nom,prenom=form.cleaned_data['nom'],form.cleaned_data['prenom']
+				nom,prenom,ddn,ine=form.cleaned_data['nom'],form.cleaned_data['prenom'],form.cleaned_data['ddn'],form.cleaned_data['ine']
 				fichiercsv.seek(0)
 				reader = csv.DictReader(fichiercsv, dialect=dialect)
 				ligne = next(reader)
 				if not(nom in ligne and prenom in ligne):
 					messages.error("Les intitulés des champs nom et/ou prénom sont inexacts")
 				else:
-					fichiercsv.seek(0)
-					next(reader)
-					initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'email':"",'classe':form.cleaned_data['classe']} for ligne in reader]
+					if (ddn in ligne and ine in ligne):
+						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':ligne[ddn],'ine':ligne[ine],'email':"",'classe':form.cleaned_data['classe']} for ligne in reader]
+					elif (ddn in ligne):
+						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':ligne[ddn],'ine':'','email':"",'classe':form.cleaned_data['classe']} for ligne in reader]
+					elif (ine in ligne):
+						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':None,'ine':ligne[ine],'email':"",'classe':form.cleaned_data['classe']} for ligne in reader]
+					else:
+						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':None,'ine':'','email':"",'classe':form.cleaned_data['classe']} for ligne in reader]
 					return eleveajout(request,initial=initial)
 		except Exception:
 				messages.error(request,"Le fichier doit être un fichier CSV valide, encodé en UTF-8")
@@ -412,7 +417,7 @@ def elevemodif(request, chaine_eleves):
 				eleve.save()
 			return redirect('gestion_eleve')
 	else:
-		formset = EleveFormSet(initial=[{'nom':eleve.user.last_name,'prenom':eleve.user.first_name,'identifiant':eleve.user.username,'email':eleve.user.email,'classe':eleve.classe,'photo':eleve.photo} for eleve in listeEleves])	
+		formset = EleveFormSet(initial=[{'nom':eleve.user.last_name,'prenom':eleve.user.first_name,'ine':eleve.ine,'ddn':eleve.ddn.strftime('%d/%m/%Y'),'identifiant':eleve.user.username,'email':eleve.user.email,'classe':eleve.classe,'photo':eleve.photo} for eleve in listeEleves])	
 	return render(request,'administrateur/elevemodif.html',{'formset':formset})
 
 @ip_filter
