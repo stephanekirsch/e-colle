@@ -7,25 +7,48 @@
 {% endif %}
 <table class="accueil"><tr><td>Notes ECTS de {{classe}}</td></tr></table>
 
-{% for matiere,notes in listeNotes%}
-
-<table class="tableausimple">
+<form method="post">
+	{% csrf_token %}
+<table class="tableausimple" id="suppr">
 	<tr class="entete">
-		<td colspan="3">{{matiere}}</td>
+		<td rowspan="2">Élève</td>
+		{% for matiere,nbsem in matieres|tzip:nbsemestres %}
+		<td colspan="{{nbsem}}">{{matiere}}</td>
+		{% endfor %}
 	</tr>
 	<tr class="entete">
-		<td>Élève</td>
+	{% for matiere in matieres %}
+		{% if matiere.semestre1 != None %}
 		<td>Semestre 1</td>
+		{% endif %}
+		{% if matiere.semestre2 != None %}
 		<td>Semestre 2</td>
+		{% endif %}
+	{% endfor %}	
 	</tr>
-	{% for note in notes %}
+	{% for notes,widget in listeNotes|tzip:form.eleve %}
 	<tr>
-		<td>{{note.prenom|title}} {{note.nom|upper}}</td>
-		<td>{% if note.note1 %}{{listNotes|lookup:note.note1}}{% endif %}</td>
-		<td>{% if note.note2 %}{{listNotes|lookup:note.note2}}{% endif %}</td>
+		<td>{{widget}}</td>
+		{% for note,matiere in notes|tzip:matieres %}
+		{% if matiere.semestre1 != None %}
+		<td>{% if note.note1 != None %}{{listNotes|lookup:note.note1}}{% endif %}</td>
+		{% endif %}
+		{% if matiere.semestre2 != None %}
+		<td>{% if note.note2 != None %}{{listNotes|lookup:note.note2}}{% endif %}</td>
+		{% endif %}
+		{% endfor %}
 	</tr>
 	{% endfor %}
+	<tr class="plusclair">
+		<td><label for ="check_{{matiere.pk}}">Tout cocher</label><br/><input type="checkbox" id="check"/></td>
+		{% for matiere,nbsem in matieres|tzip:nbsemestres %}
+		<td colspan="{{nbsem}}"><input type="submit" value="Modifier la sélection" name="{{matiere.pk}}"/></td>
+		{% endfor %}
+	</tr>
 </table>
-{% endfor %}
+</form>
+{% endblock %}
 
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/selection.js' %}"></script>
 {% endblock %}

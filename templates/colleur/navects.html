@@ -18,7 +18,7 @@
 		<li><a href="#">Fiches ECTS</a>
 			<ul>
 			{% for classe in classes %}
-				<li><a href="#">{{classe}}</a></li>
+				<li><a href="{% url 'ects_credits' classe.pk %}">{{classe}}</a></li>
 			{% endfor %}
 			</ul>
 		</li>

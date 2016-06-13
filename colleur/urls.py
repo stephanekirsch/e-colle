@@ -43,4 +43,6 @@ url(r'^action/ects/matieres/(\d+)$', views.ectsmatieres,name="ects_matieres"),
 url(r'^action/ects/matiere/modif/(\d+)$', views.ectsmatieremodif,name="ects_matiere_modif"),
 url(r'^action/ects/matiere/suppr/(\d+)$', views.ectsmatieresuppr,name="ects_matiere_suppr"),
 url(r'^action/ects/notes/(\d+)$', views.ectsnotes,name="ects_notes"),
+url(r'^action/ects/notes/modif/(\d+)/(\d+(?:-\d+)*)$', views.ectsnotesmodif,name="ects_notes_modif"),
+url(r'^action/ects/credits/(\d+)$', views.ectscredits,name="ects_credits"),
 ]

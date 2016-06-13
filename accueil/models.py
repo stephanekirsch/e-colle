@@ -248,7 +248,7 @@ class Eleve(models.Model):
 	groupe = models.ForeignKey(Groupe, null=True,related_name="groupeeleve", on_delete=models.SET_NULL)
 	photo = models.ImageField(verbose_name="photo(jpg/png, 300x400)",upload_to=update_photo,null=True,blank=True)
 	ddn = models.DateField(verbose_name="Date de naissance",null=True,blank=True)
-	ine = models.CharField(verbose_name="numéro étudiant (INE)",max_length=11,blank=True)
+	ine = models.CharField(verbose_name="numéro étudiant (INE)",max_length=11,null=True,blank=True)
 
 	class Meta:
 		ordering=['user__last_name','user__first_name']
@@ -515,7 +515,7 @@ class ColleManager(models.Manager):
 				   LEFT OUTER JOIN accueil_programme p\
 				   ON (p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = cl.id)\
 				   LEFT OUTER JOIN accueil_note n\
-				   ON n.matiere_id = m.id AND n.colleur_id = c.id AND n.semaine_id=s.id AND n.jour = cr.jour AND n.heure = cr.heure\
+				   ON n.matiere_id = m.id AND n.colleur_id = c.id AND n.semaine_id=s.id AND n.jour = cr.jour\
 				   WHERE c.id=%s AND s.lundi >= %s\
 				   GROUP BY co.id, g.nom, g.id, cl.nom, s.lundi, s.id, cr.jour, cr.heure, cr.salle, m.id, m.nom, m.couleur, u.first_name, u.last_name, u2.first_name, u2.last_name, p.titre, p.detail, p.fichier\
 				   ORDER BY s.lundi,cr.jour,cr.heure"
@@ -721,7 +721,7 @@ def update_name(programme):
 
 @receiver(post_delete, sender=Programme)
 def programme_post_delete_function(sender, instance, **kwargs):
-	if instance.fichier:
+	if instance.fichier and instance.fichier.name is not None:
 		fichier=MEDIA_ROOT+instance.fichier.name
 		if os.path.isfile(fichier):
 			os.remove(fichier)
@@ -767,6 +767,7 @@ def update_photo(eleve):
 def eleve_post_save_function(sender, instance, **kwargs):
 	if instance.photo:
 		update_photo(instance)
+	if instance.photo: # si l'exécution de update_photo a effacé la photo
 		image=Image.open(MEDIA_ROOT+instance.photo.name)
 		taille=image.size
 		try:
@@ -787,7 +788,7 @@ def eleve_post_save_function(sender, instance, **kwargs):
 
 @receiver(post_delete, sender=Eleve)
 def eleve_post_delete_function(sender, instance, **kwargs):
-	if instance.photo:
+	if instance.photo and instance.photo.name is not None:
 		fichier=MEDIA_ROOT+instance.photo.name
 		if os.path.isfile(fichier):
 			os.remove(fichier)
@@ -809,27 +810,85 @@ class MatiereECTS(models.Model):
 		return self.nom
 
 class NoteECTSManager(models.Manager):
-	def note(self,classe,colleur):
+	def note(self,classe,matieres):
 		listeNotes=[]
-		for matiere in MatiereECTS.objects.filter(classe=classe,profs=colleur):
-			requete="SELECT e.id id_eleve, u.first_name prenom,u.last_name nom, m.nom matiere, m.precision, n1.note note1, n2.note note2\
-		FROM accueil_eleve e\
+		for matiere in matieres:
+			requete="SELECT DISTINCT e.id id_eleve, u.first_name prenom,u.last_name nom, m.nom matiere, m.precision, n1.note note1, n2.note note2\
+			FROM accueil_eleve e\
+			INNER JOIN accueil_user u\
+			ON u.eleve_id=e.id\
+			CROSS JOIN accueil_matiereects m\
+			INNER JOIN accueil_matiereects_profs mp\
+			ON mp.matiereects_id = m.id\
+			LEFT OUTER JOIN accueil_noteects n1\
+			ON n1.matiere_id=m.id AND n1.semestre = 1 AND n1.eleve_id = e.id\
+			LEFT OUTER JOIN accueil_noteects n2\
+			ON n2.matiere_id=m.id AND n2.semestre = 2 AND n2.eleve_id = e.id\
+			WHERE m.classe_id=%s AND e.classe_id=%s AND m.id=%s\
+			ORDER BY u.last_name,u.first_name"
+			with connection.cursor() as cursor:
+				cursor.execute(requete,(classe.pk,classe.pk,matiere.pk))
+				notes = dictfetchall(cursor)
+			listeNotes.append(notes)
+		print(listeNotes)
+		return zip(*[note for note in listeNotes])
+
+	def noteEleves(self,matiere,listeEleves):
+		requete = "SELECT u.first_name prenom, u.last_name nom, ne1.note semestre1, ne2.note semestre2\
+		FROM accueil_matiereects me\
+		INNER JOIN accueil_classe cl\
+		ON me.classe_id = cl.id\
+		INNER JOIN accueil_eleve e\
+		ON e.classe_id=cl.id AND e.id IN %s\
 		INNER JOIN accueil_user u\
 		ON u.eleve_id=e.id\
-		CROSS JOIN accueil_matiereects m\
-		INNER JOIN accueil_matiereects_profs mp\
-		ON mp.matiereects_id = m.id\
-		LEFT OUTER JOIN accueil_noteects n1\
-		ON n1.matiere_id=m.id AND n1.semestre = 1 AND n1.eleve_id = e.id\
-		LEFT OUTER JOIN accueil_noteects n2\
-		ON n2.matiere_id=m.id AND n2.semestre = 2 AND n1.eleve_id = e.id\
-		WHERE m.classe_id=%s AND e.classe_id=%s AND mp.colleur_id=%s AND m.id=%s\
+		LEFT OUTER JOIN accueil_noteects ne1\
+		ON ne1.eleve_id = e.id AND ne1.semestre =1 AND ne1.matiere_id=%s\
+		LEFT OUTER JOIN accueil_noteects ne2\
+		ON ne2.eleve_id = e.id AND ne2.semestre =2 AND ne2.matiere_id=%s\
+		WHERE me.id=%s\
 		ORDER BY u.last_name,u.first_name"
-			with connection.cursor() as cursor:
-				cursor.execute(requete,(classe.pk,classe.pk,colleur.pk,matiere.pk))
-				notes = dictfetchall(cursor)
-			listeNotes.append((matiere,notes))
-		return listeNotes
+		with connection.cursor() as cursor:
+			cursor.execute(requete,(tuple([eleve.pk for eleve in listeEleves]),matiere.pk,matiere.pk,matiere.pk))
+			notes = dictfetchall(cursor)
+		return notes
+
+	def credits(self,classe):
+		if BDD == 'mysql': # la double jointure externe sur même table semble bugger avec mysql, donc j'ai mis un SUM(CASE ....) pour y remédier.
+			requete = "SELECT u.first_name prenom, u.last_name nom, e.ddn, e.ine, SUM(CASE WHEN ne.semestre = 1 THEN m.semestre1 ELSE 0 END) sem1,\
+			SUM(CASE WHEN ne.semestre = 2 THEN m.semestre2 ELSE 0 END) sem2\
+			FROM accueil_classe cl\
+			INNER JOIN accueil_eleve e\
+			ON e.classe_id=cl.id\
+			INNER JOIN accueil_user u\
+			ON u.eleve_id=e.id\
+			LEFT OUTER JOIN accueil_noteects ne\
+			ON ne.eleve_id = e.id AND ne.note != 5\
+			LEFT OUTER JOIN accueil_matiereects m\
+			ON ne.matiere_id = m.id\
+			WHERE cl.id = %s\
+			GROUP BY u.last_name, u.first_name, e.ddn, e.ine\
+			ORDER BY u.last_name, u.first_name"
+		else: # avec sqlite ou postgresql pas de bug! (probablement avec oracle aussi)
+			requete = "SELECT u.first_name prenom, u.last_name nom, e.ddn, e.ine, SUM(m1.semestre1) sem1, SUM(m2.semestre2) sem2\
+			FROM accueil_classe cl\
+			INNER JOIN accueil_eleve e\
+			ON e.classe_id=cl.id\
+			INNER JOIN accueil_user u\
+			ON u.eleve_id=e.id\
+			LEFT OUTER JOIN accueil_noteects ne\
+			ON ne.eleve_id = e.id AND ne.note != 5\
+			LEFT OUTER JOIN accueil_matiereects m1\
+			ON ne.matiere_id = m1.id AND ne.semestre = 1\
+			LEFT OUTER JOIN accueil_matiereects m2\
+			ON ne.matiere_id = m2.id AND ne.semestre = 2\
+			WHERE cl.id = %s\
+			GROUP BY u.last_name, u.first_name, e.ddn, e.ine\
+			ORDER BY u.last_name, u.first_name"
+		with connection.cursor() as cursor:
+			cursor.execute(requete,(classe.pk,))
+			credits = dictfetchall(cursor)
+		return credits
 
 
 class NoteECTS(models.Model):

@@ -406,6 +406,8 @@ def elevemodif(request, chaine_eleves):
 					eleve.photo=form.cleaned_data['photo']
 				elif form.cleaned_data is False:
 					eleve.photo=None
+				eleve.ddn=form.cleaned_data['ddn']
+				eleve.ine=form.cleaned_data['ine']
 				user.save()
 				eleve.save()
 			return redirect('gestion_eleve')
@@ -437,7 +439,7 @@ def eleveajout(request,initial=None):
 					user = User(first_name=form.cleaned_data['prenom'],last_name=form.cleaned_data['nom'],email=form.cleaned_data['email'])
 					user.set_password(form.cleaned_data['motdepasse'])
 					user.username=random_string()
-					eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'])
+					eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'],ddn=form.cleaned_data['ddn'],ine=form.cleaned_data['ine'])
 					eleve.save()
 					user.eleve=eleve
 					user.save()

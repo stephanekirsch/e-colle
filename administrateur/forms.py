@@ -27,7 +27,7 @@ class ColleurFormSetMdp(forms.BaseFormSet):
 			user.set_password(form.cleaned_data['motdepasse'])
 			user.save()		
 
-class ColleurFormSet(ColleurFormSetMdp): # ColleurFormSet hérite de ColleurFormSetMdp pour profiter de sa méthode clean
+class ColleurFormSet(forms.BaseFormSet):
 	def __init__(self,chaine_colleurs=[],*args,**kwargs):
 		super().__init__(*args,**kwargs)
 		self.chaine_colleurs=chaine_colleurs
@@ -173,6 +173,8 @@ class EleveForm(forms.Form):
 	nom = forms.CharField(label="Nom",max_length=30)
 	prenom = forms.CharField(label="Prénom",max_length=30)
 	motdepasse = forms.CharField(label="Mot de passe",max_length=30,required=False)
+	ddn = forms.DateField(label="Date de naissance (pour ECTS, facultatif)", required=False,input_formats=['%d/%m/%Y','%j/%m/%Y','%d/%n/%Y','%j/%n/%Y'],widget=forms.TextInput(attrs={'placeholder': 'jj/mm/aaaa'}))
+	ine = forms.CharField(label="N° étudiant INE (pour ECTS, facultatif)",required=False,max_length=11)
 	email = forms.EmailField(label="Email(Facultatif)",max_length=50,required=False)
 	photo = forms.ImageField(label="photo(jpg/png, 300x400)",required=False)
 	classe = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
@@ -188,11 +190,27 @@ class EleveForm(forms.Form):
 			validate_password(data,user)
 		return data
 
+	def clean_ine(self): # validation du numéro étudiant
+		data = self.cleaned_data['ine']
+		if data:
+			if len(data) != 11:
+				raise ValidationError("le numéro d'étudiant comporte 11 caractères")
+			try:
+				l=int(data[:-1])
+				if l<=0 or not isinstance(l,int):
+					raise ValidationError("les 10 premiers caractères doivent être des chiffres")
+			except Exception:
+				raise ValidationError("les 10 premiers caractères doivent être des chiffres")
+			if not (65 <= ord(data[-1]) <= 90):
+				raise ValidationError("le dernier caractère est une lettre ASCII majuscule")
+
 class EleveFormMdp(forms.Form):
 	nom = forms.CharField(label="Nom",max_length=30)
 	prenom = forms.CharField(label="Prénom",max_length=30)
 	motdepasse = forms.CharField(label="Mot de passe",max_length=30,required=True)
 	email = forms.EmailField(label="Email(Facultatif)",max_length=50,required=False)
+	ddn = forms.DateField(label="Date de naissance (pour ECTS, facultatif)", required=False,input_formats=['%d/%m/%Y','%j/%m/%Y','%d/%n/%Y','%j/%n/%Y'],widget=forms.TextInput(attrs={'placeholder': 'jj/mm/aaaa'}))
+	ine = forms.CharField(label="N° étudiant INE (pour ECTS, facultatif)",required=False,max_length=11)
 	photo = forms.ImageField(label="photo(jpg/png, 300x400)",required=False)
 	classe = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
 
@@ -205,6 +223,20 @@ class EleveFormMdp(forms.Form):
 		data = self.cleaned_data['motdepasse']
 		validate_password(data,user)
 		return data
+
+	def clean_ine(self): # validation du numéro étudiant
+		data = self.cleaned_data['ine']
+		if data:
+			if len(data) != 11:
+				raise ValidationError("le numéro d'étudiant comporte 11 caractères")
+			try:
+				l=int(data[:-1])
+				if l<=0 or not isinstance(l,int):
+					raise ValidationError("les 10 premiers caractères doivent être des chiffres")
+			except Exception:
+				raise ValidationError("les 10 premiers caractères doivent être des chiffres")
+			if not (65 <= ord(data[-1]) <= 90):
+				raise ValidationError("le dernier caractère est une lettre ASCII majuscule")
 
 class ProfForm(forms.Form):
 	def __init__(self,classe, *args, **kwargs):

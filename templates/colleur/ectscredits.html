@@ -1,0 +1,32 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+{% if user.colleur.classeprofprincipal.all %}
+{% include "colleur/navects.html" %}
+{% endif %}
+<table class="accueil"><tr><td>Fiches de crédits ECTS en {{classe}}</td></tr></table>
+
+<table class="tableausimple">
+	<tr class="entete">
+		<td>Élève</td>
+		<td>Date de naissance</td>
+		<td>n° étudiant</td>
+		<td>Crédits semestre 1</td>
+		<td>Crédits semestre 2</td>
+		<td>Fiche de crédits</td>
+		<td>Attestation</td>
+	</tr>
+	{% for credit in credits %}
+	<tr>
+		<td>{{credit.prenom|title}} {{credit.nom|upper}}</td>
+		{% if credit.ddn %}<td style="color:green;">✓</td>{% else %}<td style="color:red;">❌</td>{% endif %}
+		{% if credit.ine %}<td style="color:green;">✓</td>{% else %}<td style="color:red;">❌</td>{% endif %}
+		{% if credit.sem1 == 30 %}<td style="color:green;">30</td>{% else %}<td style="color:red;">{% firstof credit.sem1 "0" %}</td>{% endif %}
+		{% if credit.sem2 == 30 %}<td style="color:green;">30</td>{% else %}<td style="color:red;">{% firstof credit.sem2 "0" %}</td>{% endif %}
+		<td><a href="#">Aperçu</a><a href="#"><img src="{% static 'images/iconePDF.png' %}"></a></td>
+		<td>{% if credit.semestre1 == 30 and credit.semestre2 == 30 %}<a href="#"><img src="{% static 'images/iconePDF.png' %}"></a>{% endif %}</td>
+	</tr>
+	{% endfor %}
+</table>
+{% endblock %}

@@ -38,7 +38,7 @@
 			<td>{{colleur.user.last_name|upper}}</td>
 			<td>{{colleur.user.first_name|title}}</td>
 			<td>{{colleur.user.email}}</td>
-			{% if colleur.user.is_active %}<td>✓</td> {% else %}<td style="color:red;">❌</td>{% endif %}
+			{% if colleur.user.is_active %}<td style="color:green;">✓</td> {% else %}<td style="color:red;">❌</td>{% endif %}
 			<td>{{listegrades| lookup:colleur.grade}}</td>
 			<td>{% with colleur.etablissement as etab %}{% if etab %}{{colleur.etablissement|title}}{% endif %}{% endwith %}</td>
 			<td>{% for matiere in colleur.matieres.all %}{% if not forloop.first %}<br>{% endif %}{{matiere}}{% endfor %}</td>

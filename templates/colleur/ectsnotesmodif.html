@@ -1,0 +1,43 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+{% if user.colleur.classeprofprincipal.all %}
+{% include "colleur/navects.html" %}
+{% endif %}
+<table class="accueil"><tr><td>Modification des notes de {{matiere}} en {{matiere.classe}}</td></tr></table>
+
+<form method="post">
+	{% csrf_token %}
+	{{ formset.management_form }}
+	<table class="tableausimple">
+	{% if formset.non_form_errors %}
+	<tr>
+		<td class="error" colspan="{{nbsemestres}}">{{formset.non_form_errors}}</td>
+	</tr>
+	{% endif %}
+	<tr class="entete">
+		<td>Élève</td>
+		{% if matiere.semestre1 != None %}
+		<td>Semestre 1</td>
+		{% endif %}
+		{% if matiere.semestre2 != None %}
+		<td>Semestre 2</td>
+		{% endif %}
+	</tr>
+		{% for form,eleve in formset|tzip:formset.chaine_eleves %}
+		{{form.non_field_errors}}
+		<tr>
+			<td>{{eleve}}</td>
+			{% if matiere.semestre1 != None %}
+			<td>{{form.semstre1.errors}}{{form.semestre1}}</td>
+			{% endif %}
+			{% if matiere.semestre2 != None %}
+			<td>{{form.semstre2.errors}}{{form.semestre2}}</td>
+			{% endif %}
+		</tr>
+		{% endfor %}
+	<tr class="plusclair"><td colspan="{{nbsemestres}}"><input type="submit"/></td></tr>
+	</table>
+	</form>
+{% endblock %}

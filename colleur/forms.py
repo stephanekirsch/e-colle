@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Colleur, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS
+from accueil.models import Colleur, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS
 from django.db.models import Q
 from datetime import date, timedelta
 from django.forms.extras.widgets import SelectDateWidget
@@ -196,4 +196,34 @@ class MatiereECTSForm(forms.ModelForm):
 		if query.exists():
 			raise ValidationError("le couple nom/précision est unique",code="uniqueness violation")
 
-	
+class SelectEleveForm(forms.Form):
+	def __init__(self,classe,*args, **kwargs):
+		super().__init__(*args, **kwargs)
+		query = Eleve.objects.filter(classe=classe).select_related('user').order_by('user__last_name','user__first_name')
+		self.fields['eleve'] = forms.ModelMultipleChoiceField(queryset=query,required=True,widget = forms.CheckboxSelectMultiple)
+		self.fields['eleve'].empty_label=None
+
+class NoteEleveForm(forms.Form):
+		semestre1 = forms.ChoiceField(choices=[(None,'---')]+list(enumerate("ABCDEF")),required=False)
+		semestre2 = forms.ChoiceField(choices=[(None,'---')]+list(enumerate("ABCDEF")),required=False)
+
+class NoteEleveFormSet(forms.BaseFormSet):
+	def __init__(self,chaine_eleves=[],matiere=None,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		self.chaine_eleves=chaine_eleves
+		self.matiere=matiere
+				
+	def save(self):
+		"""Sauvegarde (mise à jour) en BDD les notes ECTS du formulaire"""
+		for form,eleve in zip(self,self.chaine_eleves):
+			if 'semestre1' in form.cleaned_data:
+				if form.cleaned_data['semestre1'] == "":
+					NoteECTS.objects.filter(semestre=1,matiere=self.matiere,eleve=eleve).delete()
+				elif form.cleaned_data['semestre1'] in "012345":
+					NoteECTS.objects.update_or_create(defaults={'eleve':eleve,'matiere':self.matiere,'semestre':1,'note':form.cleaned_data['semestre1']},semestre=1,matiere=self.matiere,eleve=eleve)
+			if 'semestre2' in form.cleaned_data:
+				if form.cleaned_data['semestre2'] == "":
+					NoteECTS.objects.filter(semestre=2,matiere=self.matiere,eleve=eleve).delete()
+				elif form.cleaned_data['semestre2'] in "012345":
+					NoteECTS.objects.update_or_create(defaults={'eleve':eleve,'matiere':self.matiere,'semestre':2,'note':form.cleaned_data['semestre2']},semestre=2,matiere=self.matiere,eleve=eleve)
+
