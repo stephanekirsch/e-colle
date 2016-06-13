@@ -40,7 +40,7 @@
 			<td>{{eleve.user.last_name|upper}}</td>
 			<td>{{eleve.user.first_name|title}}</td>
 			<td>{{eleve.user.email}}</td>
-			<td>{% if eleve.ddn %}{{eleve.ddn}}{% endif %}</td>
+			<td>{% if eleve.ddn %}{{eleve.ddn|date:'d/m/Y'}}{% endif %}</td>
 			<td>{% if eleve.ine %}{{eleve.ine}}{% endif %}</td>
 			<td>{{eleve.classe.nom}}</td>
 			<td>{% with eleve.photo as photo %}{% if photo %} <img alt="photo élève" class="photo" src="{{ photo.url }}"/>{% endif %} {% endwith %}</td>
