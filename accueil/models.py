@@ -9,7 +9,7 @@ import os
 from ecolle.settings import MEDIA_ROOT, IMAGEMAGICK, BDD
 from django.core.files import File
 from PIL import Image
-from django.db.models import Count, Avg, Min, Max, Sum
+from django.db.models import Count, Avg, Min, Max, Sum, F
 from django.db.models.functions import Lower, Upper, Concat, Substr
 
 semaine = ["lundi", "mardi","mercredi","jeudi","vendredi","samedi","dimanche"]
@@ -852,6 +852,16 @@ class NoteECTSManager(models.Manager):
 			cursor.execute(requete,(tuple([eleve.pk for eleve in listeEleves]),matiere.pk,matiere.pk,matiere.pk))
 			notes = dictfetchall(cursor)
 		return notes
+
+	def notePDF(self,eleve):
+		notes = list(NoteECTS.objects.filter(eleve=eleve).values_list('matiere__nom','matiere__precision','matiere__semestre1','matiere__semestre2','note').order_by('semestre','matiere__nom'))
+		semestre1 = NoteECTS.objects.filter(eleve=eleve,semestre=1).count()
+		return notes[:semestre1],notes[semestre1:]
+
+	def moyenneECTS(self,eleve):
+		somme = NoteECTS.objects.filter(eleve=eleve,semestre=1).annotate(notepond=F('note')*F('matiere__semestre1')).aggregate(sp=Sum('notepond'))['sp']
+		somme += NoteECTS.objects.filter(eleve=eleve,semestre=2).annotate(notepond=F('note')*F('matiere__semestre2')).aggregate(sp=Sum('notepond'))['sp']
+		return int(somme/60+.5)
 
 	def credits(self,classe):
 		if BDD == 'mysql': # la double jointure externe sur même table semble bugger avec mysql, donc j'ai mis un SUM(CASE ....) pour y remédier.

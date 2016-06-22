@@ -2,7 +2,7 @@
 {% load static %}
 {% block nav %}
 <div id="nav"> 
-	<ul id="menu">
+	<ul id="menu" style="position: relative;z-index: 10;">
 		<li><a href="#">Notes</a>
 			<ul>
 		{% for classe in user.colleur.classes.all %}

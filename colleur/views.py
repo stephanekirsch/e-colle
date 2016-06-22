@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from colleur.forms import ColleurConnexionForm, NoteForm, ProgrammeForm, GroupeForm, NoteGroupeForm, CreneauForm, SemaineForm, ColleForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet
+from colleur.forms import ColleurConnexionForm, NoteForm, ProgrammeForm, GroupeForm, NoteGroupeForm, CreneauForm, SemaineForm, ColleForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm
 from accueil.models import Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, JourFerie, MatiereECTS, NoteECTS
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
@@ -10,15 +10,14 @@ from datetime import date, timedelta
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.forms.formsets import formset_factory
 from copy import copy
-from pdf.pdf import Pdf
-from reportlab.platypus import Table, TableStyle
-from io import BytesIO
-from reportlab.pdfgen.canvas import Canvas
-from reportlab.lib.pagesizes import A4, legal, landscape
+from pdf.pdf import Pdf, easyPdf, FlowTextRectangle
+from reportlab.platypus import Table, TableStyle, Image, Frame, Paragraph
+from reportlab.lib.styles import ParagraphStyle
 import os
 import json
 import csv
-from ecolle.settings import MEDIA_ROOT, MEDIA_URL, MATHJAX, IMAGEMAGICK
+from lxml import etree
+from ecolle.settings import MEDIA_ROOT, MEDIA_URL, MATHJAX, IMAGEMAGICK, RESOURCES_ROOT, NOM_ADRESSE_ETABLISSEMENT, VILLE, NOM_ETABLISSEMENT, ACADEMIE
 
 def is_colleur(user):
 	"""Renvoie True si l'utilisateur est authentifié et est un colleur, False sinon"""
@@ -780,18 +779,253 @@ def ectsnotesmodif(request,id_matiere,chaine_eleves):
 	return render(request,'colleur/ectsnotesmodif.html',{'formset':formset,'matiere':matiere,'nbsemestres':nbsemestres})
 
 @user_passes_test(is_colleur, login_url='accueil')
-def ectscredits(request,id_classe):
+def ectscredits(request,id_classe,form=None):
 	classe =get_object_or_404(Classe,pk=id_classe)
 	if not is_profprincipal(request.user,classe):
 		return HttpResponseForbidden("Accès non autorisé")
 	eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name')
-	return render(request,'colleur/ectscredits.html',{'classe':classe,'credits':NoteECTS.objects.credits(classe)})
+	if not form:
+		form=ECTSForm(classe,request.POST or None)
+	return render(request,'colleur/ectscredits.html',{'classe':classe,'credits':NoteECTS.objects.credits(classe),'form':form})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def ficheectspdf(request,id_eleve):
 	eleve = get_object_or_404(Eleve,pk=id_eleve)
 	if not is_profprincipal(request.user,eleve.classe):
 		return HttpResponseForbidden("Accès non autorisé")
+	if request.method=="POST":
+		form=ECTSForm(eleve.classe,request.POST)
+		if form.is_valid():
+			datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
+			filiere,annee = form.cleaned_data['classe'].split("_")
+			signataire = form.cleaned_data['signature']
+			etoile = form.cleaned_data['etoile']
+			tree=etree.parse(RESOURCES_ROOT+'classes.xml')
+			classe=tree.xpath("/classes/classe[@nom='{}'][@annee='{}']".format(filiere,annee)).pop()
+			domaine = classe.get("domaine")
+			branche = classe.get("type").lower()
+			precision = classe.get("precision")
+		else:
+			return ectscredits(request,eleve.classe.pk,form)
+	else:
+		datedujour = date.today().strftime('%d/%m/%Y')
+		filiere = eleve.classe.nom
+		signataire = 'Proviseur'
+		etoile = False
+		domaine = branche = precision = ""
+	LIST_NOTES="ABCDEF"
+	response = HttpResponse(content_type='application/pdf')
+	nomfichier="ECTS_{}_{}_{}.pdf".format(eleve.classe.nom.upper(),eleve.user.first_name,eleve.user.last_name)
+	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
+	pdf = easyPdf()
+	cm = pdf.format[0]/21
+	pdf.marge_x = cm # 1cm de marge gauche/droite
+	pdf.marge_y = 1.5*cm # 1,5cm de marge haut/bas
+	I = Image(RESOURCES_ROOT+'marianne.jpg')
+	I.drawHeight = 1.8*cm
+	I.drawWidth = 3*cm
+	pdf.y = pdf.format[1]-pdf.marge_y-1.8*cm
+	I.drawOn(pdf,9*cm,pdf.y)
+	pdf.y -= 10
+	pdf.setFont("Times-Roman",7)
+	pdf.drawCentredString(10.5*cm,pdf.y, "MINISTÈRE DE L'ÉDUCATION NATIONALE")
+	pdf.y -= 8
+	pdf.drawCentredString(10.5*cm,pdf.y, "DE l'ENSEIGNEMENT SUPÉRIEUR ET DE LA RECHERCHE")
+	pdf.y -= 12
+	pdf.setFont("Helvetica-Bold",11)
+	pdf.drawCentredString(10.5*cm,pdf.y,"CLASSES PRÉPARATOIRES AUX GRANDES ÉCOLES")
+	pdf.y -= 12
+	pdf.setFont("Helvetica",11)
+	pdf.drawCentredString(10.5*cm,pdf.y,"ANNEXE DESCRIPTIVE DE LA FORMATION")
+	style=ParagraphStyle(name='normal',fontSize=9,leading=11,spaceAfter=5)
+	styleResume=ParagraphStyle(name='resume',fontSize=9,leading=11,spaceAfter=0)
+	styleTitre=ParagraphStyle(name='titre',fontSize=12,leading=13,fontName="Helvetica-Bold",borderColor='black',borderPadding=(0,0,2,0),borderWidth=1,backColor='#DDDDDD',spaceAfter=2)
+	story=[]
+	texte="1. Information sur l'étudiant"
+	p=Paragraph(texte,styleTitre)
+	story.append(p)
+	texte="<b><i>1.1. Nom:</i></b> {}<br/><b><i>1.2. Prénom:</i></b> {}<br/><b><i>1.3. Date de Naissance:</i></b> {}<br/><b><i>1.4. N° INE:</i></b> {}".format(eleve.user.last_name.upper(),eleve.user.first_name.title(),"" if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),eleve.ine)
+	p=Paragraph(texte,style)
+	story.append(p)
+	texte="2. Information sur la formation"
+	p=Paragraph(texte,styleTitre)
+	story.append(p)
+	texte="""<b><i>2.1. Nom de la formation:</i></b><br/>
+	Classe préparatoire {} {} {}<br/>
+	<b><i>2.2. Principaux domaines d’étude:</i></b><br/>
+	{}<br/>
+	<b><i>2.3. Nom et statut de l’institution gérant la formation:</i></b><br/>
+	Ministère de l’enseignement supérieur et de la recherche
+	Classes préparatoires aux grandes écoles<br/>
+	<b><i>2.4. Nom et statut de l’établissement dispensant la formation:</i></b><br/>
+	{}<br/>
+	<b><i>2.5. Langue de formation:</i></b> français""".format(branche,filiere,"("+precision+")" if precision else "",domaine,NOM_ADRESSE_ETABLISSEMENT.replace("\n","<br/>").replace("\r","<br/>").replace("<br/><br/>","<br/>"))
+	p=Paragraph(texte,style)
+	story.append(p)
+	texte="3. Information sur le niveau de la formation"
+	p=Paragraph(texte,styleTitre)
+	story.append(p)
+	texte="""<b><i>3.1. Niveau de la formation:</i></b><br/>
+	Située au sein des études menant au grade de licence.<br/>
+	Niveau bac + 2 / 120 crédits ECTS<br/>
+	<b><i>3.2. Durée officielle du programme de formation:</i></b><br/>
+	La durée du programme est de 2 ans.<br/>
+	<b><i>3.3. Conditions d’accès:</i></b><br/>
+	Entrée sélective après le baccalauréat s’effectuant dans le cadre d’une procédure nationale d’admission.<br/>
+	Cf: <a href="http://www.admission-postbac.fr" color="blue">http://www.admission-postbac.fr</a>"""
+	p=Paragraph(texte,style)
+	story.append(p)
+	texte="""4. Information sur les contenus et les résultats obtenus"""
+	p=Paragraph(texte,styleTitre)
+	story.append(p)
+	texte="""<b><i>4.1. Organisation des études:</i></b><br/>
+	Plein temps, contrôle continu écrit et oral<br/>
+	<b><i>4.2. Exigences du programme:</i></b><br/>
+	La formation dispensée a pour objet de donner aux étudiants une compréhension approfondie des disciplines enseignées et une appréhension de leurs caractéristiques générales. Elle prend en compte leurs évolutions, leurs applications et la préparation à des démarches de recherche.
+	Elle est définie par des programmes nationaux.<br/>
+	<b><i>4.3. Précisions sur le programme:</i></b><br/>
+	Voir relevé au verso et catalogue de cours<br/>
+	<b><i>4.4. Échelle d’évaluation:</i></b><br/>
+	L’évaluation prend en compte l’ensemble des travaux des étudiants. La qualité du travail, des résultats obtenus et des compétences acquises est exprimée par une mention conformément au tableau ci-dessous."""
+	p=Paragraph(texte,styleResume)
+	story.append(p)
+	data = [["A","Très Bien","C","Assez Bien","E","Passable"],["B","Bien","D","Convenable","F","Insuffisant"]]
+	LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),.2,(0,0,0))
+										,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+										,('ALIGN',(0,0),(-1,-1),'CENTRE')
+										,('FACE',(0,0),(-1,-1),'Helvetica')
+										,('SIZE',(0,0),(-1,-1),8)
+										,('BACKGROUND',(0,0),(-1,-1),(.9,.9,.9))])
+	t=Table(data,colWidths=[.8*cm,2*cm,.8*cm,2*cm,.8*cm,2*cm],rowHeights=[12]*2)
+	t.setStyle(LIST_STYLE)
+	story.append(t)
+	texte="""<b><i>4.5. Classification de la formation:</i></b><br/>
+	Une mention globale, portant sur l’ensemble du parcours et s’exprimant dans la même échelle qu’en 4.4 figure à la fin du relevé."""
+	p=Paragraph(texte,style)
+	story.append(p)
+	fl = Frame(cm, 1.5*cm, 9*cm, 23*cm , showBoundary=0, leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
+	fl.addFromList(story,pdf)
+	story=[]
+	texte="5. Information sur la fonction de la qualification"
+	p=Paragraph(texte,styleTitre)
+	story.append(p)
+	texte="""<b><i>5.1. Accès à un niveau d’études supérieur:</i></b><br/>
+	Accès par concours aux grandes écoles.<br/>
+	Accès, par validation de parcours, à tout type d’établissement d’enseignement supérieur.<br/>
+	<b><i>5.2. Statut  professionnel (si applicable):</i></b><br/>
+	Sans objet"""
+	p=Paragraph(texte,style)
+	story.append(p)
+	texte="6. Informations complémentaires"
+	p=Paragraph(texte,styleTitre)
+	story.append(p)
+	texte="""<b><i>6.1. Informations complémentaires:</i></b><br/>
+	Catalogue des cours et arrêtés ministériels définissant les programmes consultables sur :<br/>
+	<a href="http://www.enseignementsup-recherche.gouv.fr/" color="blue">http://www.enseignementsup-recherche.gouv.fr/</a><br/>
+	<b><i>6.2. Autres sources d’information:</i></b><br/>
+	Pour toute information sur le dispositif CPGE consulter :<br/>
+	<a href="http://www.enseignementsup-recherche.gouv.fr/" color="blue">http://www.enseignementsup-recherche.gouv.fr/</a>"""
+	p=Paragraph(texte,style)
+	story.append(p)
+	texte="7. Certification de l’attestation"
+	p=Paragraph(texte,styleTitre)
+	story.append(p)
+	texte="""<b><i>7.1. Date:</i></b> {}<br/>
+	<b><i>7.2. Signature:</i></b><br/><br/><br/><br/>
+	<b><i>7.3. Fonction:</i></b> {}<br/>
+	<b><i>7.4. Tampon ou cachet officiel:</i></b><br/><br/><br/><br/><br/><br/>""".format(datedujour,signataire)
+	p=Paragraph(texte,style)
+	story.append(p)
+	texte="8. Informations sur le système national d’enseignement supérieur"
+	p=Paragraph(texte,styleTitre)
+	story.append(p)
+	p=Paragraph("<br/> <br/>",style)
+	story.append(p)
+	data = [["8","D","","Université","",""],["7","D","","Université","",""],["6","D","","Université","",""],\
+	["5","M","","Université ou grande école","",""],["4","M","","Université ou grande école","",""],["3","L","ATS","Université ou grande école","",""],\
+	["2","L","STS-IUT","","Université","CPGE"],["1","L","STS-IUT","","Université","CPGE"],["0","Bac","Enseignement secondaire","","",""]]
+	LIST_STYLE = TableStyle([('GRID',(0,0),(1,4),.8,(0,0,0))
+								,('GRID',(3,0),(5,4),.8,(0,0,0))
+								,('GRID',(0,5),(5,8),.8,(0,0,0))
+								,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+								,('ALIGN',(0,0),(-1,-1),'CENTRE')
+								,('FACE',(0,0),(-1,-1),'Helvetica-Bold')
+								,('SIZE',(0,0),(-1,-1),8)
+								,('BACKGROUND',(0,0),(-1,-1),(1,1,1))
+								,('SPAN',(3,0),(5,0))
+								,('SPAN',(3,1),(5,1))
+								,('SPAN',(3,2),(5,2))
+								,('SPAN',(3,3),(5,3))
+								,('SPAN',(3,4),(5,4))
+								,('SPAN',(3,5),(5,5))
+								,('SPAN',(2,6),(3,6))
+								,('SPAN',(2,7),(3,7))
+								,('SPAN',(2,8),(5,8))
+								,('BACKGROUND',(3,0),(5,2),'#FABF8F')
+								,('BACKGROUND',(3,3),(5,4),'#FBD4B4')
+								,('BACKGROUND',(2,5),(2,5),'#76923C')
+								,('BACKGROUND',(3,5),(5,5),'#FDE9D9')
+								,('BACKGROUND',(4,6),(4,7),'#FDE9D9')
+								,('BACKGROUND',(2,6),(3,7),'#D6E3BC')
+								,('BACKGROUND',(5,6),(5,7),'#FF9900')])
+	t=Table(data,colWidths=[.84*cm,.91*cm,.75*cm,1.4*cm,2.5*cm,2.5*cm],rowHeights=[.8*cm]*9)
+	t.setStyle(LIST_STYLE)
+	story.append(t)
+	fr = Frame(11*cm, 1.5*cm, 9*cm, 23*cm , showBoundary=0, leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
+	fr.addFromList(story,pdf)
+	pdf.showPage()
+	pdf.y = pdf.format[1]-pdf.marge_y-12
+	pdf.setFont('Helvetica-Bold',12)
+	pdf.drawCentredString(10.5*cm,pdf.y,"RELEVÉ DE RÉSULTATS (classe {})".format(filiere + ('*' if etoile and eleve.classe.annee == 2 else '')))
+	sem1,sem2 = NoteECTS.objects.notePDF(eleve)
+	data=[["ENSEIGNEMENTS","Crédits ECTS","Mention"],["Premier semestre","",""]]
+	sp=0 # variable qui va contenir la somme pondérée des notes en vue du calcul de la mention globale
+	coeff = 0 # somme des coeffs pour vérifier si on en a 60 au total
+	for note in sem1:
+		data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[2],LIST_NOTES[note[4]]])
+		sp+=note[2]*note[4]
+		if note[4] !=5:
+			coeff+=note[2]
+	data.append(["Deuxième semestre","",""])
+	for note in sem2:
+		data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[3],LIST_NOTES[note[4]]])
+		sp+=note[3]*note[4]
+		coeff+=note[3]
+	LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),.8,(0,0,0))
+								,('SPAN',(0,1),(2,1))
+								,('SPAN',(0,2+len(sem1)),(2,2+len(sem1)))
+								,('FACE',(0,0),(-1,-1),'Helvetica-Bold')
+								,('SIZE',(0,0),(-1,-1),8)
+								,('SIZE',(0,1),(2,1),9)
+								,('SIZE',(0,2+len(sem1)),(2,2+len(sem1)),9)
+								,('SIZE',(0,0),(2,0),10)
+								,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+								,('ALIGN',(0,2),(0,-1),'LEFT')
+								,('ALIGN',(1,0),(2,-1),'CENTRE')
+								,('ALIGN',(0,0),(2,1),'CENTRE')
+								,('ALIGN',(0,2+len(sem1)),(2,2+len(sem1)),'CENTRE')
+								,('BACKGROUND',(0,1),(2,1),'#DDDDDD')
+								,('BACKGROUND',(0,2+len(sem1)),(2,2+len(sem1)),'#DDDDDD')])
+	t=Table(data,colWidths=[13*cm,2.8*cm,2.5*cm],rowHeights=[.8*cm]*(3+len(sem1)+len(sem2)))
+	t.setStyle(LIST_STYLE)
+	w,h=t.wrapOn(pdf,0,0)
+	pdf.y-=h+5
+	pdf.x=(pdf.format[0]-w)/2
+	t.drawOn(pdf,pdf.x,pdf.y)
+	pdf.y-=20
+	pdf.setFont('Helvetica-Bold',10)
+	if coeff == 60:
+		pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[int(sp/60+.5)]))
+	else:
+		pdf.setFillColor((1,0,0))
+		pdf.drawString(pdf.x,pdf.y,"Pas de mention, il manque {} crédits".format(60-coeff))
+		pdf.setFillColor((0,0,0))
+	pdf.drawRightString(pdf.format[0]-pdf.x-15,pdf.y,"Cachet et signature")
+	pdf.save()
+	fichier = pdf.buffer.getvalue()
+	pdf.buffer.close()
+	response.write(fichier)
+	return response
 
 
 @user_passes_test(is_colleur, login_url='accueil')
@@ -799,5 +1033,99 @@ def attestationectspdf(request,id_eleve):
 	eleve = get_object_or_404(Eleve,pk=id_eleve)
 	if not is_profprincipal(request.user,eleve.classe):
 		return HttpResponseForbidden("Accès non autorisé")
+	if request.method=="POST":
+		form=ECTSForm(eleve.classe,request.POST)
+		if form.is_valid():
+			datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
+			filiere = form.cleaned_data['classe'].split("_")[0]
+			signataire = form.cleaned_data['signature']
+			annee = form.cleaned_data['anneescolaire']
+			etoile = form.cleaned_data['etoile']
+		else:
+			return ectscredits(request,eleve.classe.pk,form)
+	else:
+		datedujour = date.today().strftime('%d/%m/%Y')
+		filiere = eleve.classe.nom
+		signataire = 'Proviseur'
+		annee = date.today().year
+		etoile = False
+	annee = "{}-{}".format(int(annee)-1,annee)
+	LIST_NOTES="ABCDEF"
+	response = HttpResponse(content_type='application/pdf')
+	nomfichier="ATTESTATION_{}_{}_{}.pdf".format(eleve.classe.nom.upper(),eleve.user.first_name,eleve.user.last_name)
+	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
+	pdf = easyPdf()
+	cm = pdf.format[0]/21
+	pdf.marge_x = cm # 1cm de marge gauche/droite
+	pdf.marge_y = 1.5*cm # 1,5cm de marge haut/bas
+	I = Image(MEDIA_ROOT+'../resources/marianne.jpg')
+	I.drawHeight = 1.8*cm
+	I.drawWidth = 3*cm
+	pdf.y = pdf.format[1]-pdf.marge_y-1.8*cm
+	I.drawOn(pdf,9*cm,pdf.y)
+	pdf.y -= 10
+	pdf.setFont("Times-Roman",7)
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y, "MINISTÈRE DE L'ÉDUCATION NATIONALE")
+	pdf.y -= 8
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y, "DE l'ENSEIGNEMENT SUPÉRIEUR ET DE LA RECHERCHE")
+	pdf.y -= 30
+	pdf.setFont('Helvetica-Bold',14)
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y, "ATTESTATION DU PARCOURS DE FORMATION")
+	pdf.y -= 30
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y, "EN")
+	pdf.y -= 30
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y, "CLASSE PRÉPARATOIRE AUX GRANDES ÉCOLES")
+	pdf.y -= 40
+	pdf.setFont("Helvetica-Oblique",11)
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y, "Le recteur de l'académie de {}, Chancelier des universités,".format(ACADEMIE))
+	pdf.y -= 15
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y, "atteste que")
+	pdf.y -= 40
+	pdf.setFont("Helvetica",12)
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y, "{}".format(eleve))
+	pdf.y -= 50
+	pdf.setFont("Helvetica",11)
+	pdf.drawString(2*cm,pdf.y, "né(e) le {}".format(eleve.ddn.strftime('%d/%m/%Y')))
+	pdf.y -= 15
+	pdf.drawString(2*cm,pdf.y, "n° INE: {}".format(eleve.ine))
+	pdf.y -= 50
+	pdf.setFont("Helvetica-Oblique",11)
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y, "a accompli un parcours de formation dans la filière {}".format(filiere + ('*' if etoile and eleve.classe.annee==2 else '')))
+	pdf.y -= 50
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y, "Valeur du parcours en crédits du système ECTS :")
+	pdf.setFont("Helvetica-Bold",16)
+	pdf.drawString(15*cm,pdf.y,"60")
+	pdf.y -= 50
+	pdf.setFont("Helvetica-Oblique",11)
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y, "Mention globale obtenue :")
+	pdf.setFillColor((1,0,0))
+	pdf.setFont("Helvetica-Bold",13)
+	pdf.drawCentredString(13*cm,pdf.y, "ABCDEF"[NoteECTS.objects.moyenneECTS(eleve)])
+	pdf.y -= 50
+	pdf.setFillColor((0,0,0))
+	pdf.setFont("Helvetica",11)
+	pdf.drawString(2*cm,pdf.y,"Année académique: {}".format(annee))
+	pdf.y -= 15
+	pdf.drawString(2*cm,pdf.y,NOM_ETABLISSEMENT)
+	pdf.y -= 30
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y,"Fait à {},".format(VILLE))
+	pdf.y -= 15
+	pdf.drawString(15*cm,pdf.y,"le {}".format(datedujour))
+	pdf.y -= 15
+	pdf.drawString(15*cm,pdf.y,"Pour le recteur,")
+	pdf.y -= 15
+	pdf.drawString(15*cm,pdf.y,"Le {}".format(signataire.lower()))
+	pdf.setFont("Helvetica-Oblique",9)
+	pdf.y=3*cm
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y,"Attestation délivrée en application des dispositions de l’article 8 du décret n° 94-1015")
+	pdf.y-=12
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y,"du 23 novembre 1994 modifié par le décret n° 2007-692 du 3 mai 2007")
+	pdf.y-=12
+	pdf.drawCentredString(pdf.format[0]/2,pdf.y,"Le descriptif de la formation figure dans l’annexe jointe.")
+	pdf.save()
+	fichier = pdf.buffer.getvalue()
+	pdf.buffer.close()
+	response.write(fichier)
+	return response
 
 

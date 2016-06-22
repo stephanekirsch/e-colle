@@ -5,6 +5,8 @@ from django.db.models import Q
 from datetime import date, timedelta
 from django.forms.extras.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
+from lxml import etree
+from ecolle.settings import RESOURCES_ROOT
 
 class ColleurConnexionForm(forms.Form):
 	def __init__(self,matiere, *args, **kwargs):
@@ -187,7 +189,7 @@ class MatiereECTSForm(forms.ModelForm):
 
 	def clean(self):
 		"""validation du formulaire. On vérifie qu'au moins un des champs semestre1 ou semetre2 est non nul et que le triplet
-		nom/precision, sans compter la casse, est unique"""
+		classe/nom/precision, sans compter la casse, est unique"""
 		if self.cleaned_data['semestre1'] is None and self.cleaned_data['semestre2'] is None:
 			raise ValidationError("au moins un des champs de coefficient doit être précisé")
 		query = MatiereECTS.objects.filter(classe=self.instance.classe,nom__iexact=self.cleaned_data['nom'],precision__iexact=self.cleaned_data['precision'])
@@ -227,3 +229,23 @@ class NoteEleveFormSet(forms.BaseFormSet):
 				elif form.cleaned_data['semestre2'] in "012345":
 					NoteECTS.objects.update_or_create(defaults={'eleve':eleve,'matiere':self.matiere,'semestre':2,'note':form.cleaned_data['semestre2']},semestre=2,matiere=self.matiere,eleve=eleve)
 
+class ECTSForm(forms.Form):
+	def __init__(self,classe,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		tree=etree.parse(RESOURCES_ROOT+'classes.xml')
+		types={x.get("type")+'_'+x.get("annee") for x in tree.xpath("/classes/classe")}
+		types = list(types)
+		types.sort()
+		LISTE_CLASSES=[]
+		default = None
+		for typ in types:
+			style,annee=typ.split("_")
+			LISTE_CLASSES.append((style+" "+annee+"è"+("r" if annee=="1" else "m")+"e année",sorted((lambda y,z:[(x.get("nom")+"_"+x.get("annee"),x.get("nom")) for x in z.xpath("/classes/classe") if [x.get("type"),x.get("annee")] == y.split("_")])(typ,tree))))
+		for x in tree.xpath("/classes/classe"):
+			if classe.nom.lower()[:len(x.get("nom"))] == x.get("nom").lower() and classe.annee == int(x.get("annee")):
+				default=x.get("nom")+"_"+x.get("annee")
+		self.fields['classe'] = forms.ChoiceField(label="filière",choices=LISTE_CLASSES,initial=default)
+		self.fields['date'] = forms.DateField(label="Date d'édition",input_formats=['%d/%m/%Y','%j/%m/%Y','%d/%n/%Y','%j/%n/%Y'],widget=forms.TextInput(attrs={'placeholder': 'jj/mm/aaaa'}),initial=date.today().strftime('%d/%m/%Y'))
+		self.fields['signature'] = forms.ChoiceField(label="signature/tampon par:",choices=(['Proviseur']*2,['Proviseur adjoint']*2))
+		self.fields['anneescolaire'] = forms.ChoiceField(label="année scolaire",choices=[(x+1,"{}-{}".format(x,x+1)) for x in range(date.today().year-10,date.today().year+10)],initial=date.today().year)
+		self.fields['etoile'] = forms.BooleanField(label="classe étoile",required=False)

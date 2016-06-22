@@ -25,7 +25,15 @@ MATHJAX = True # True pour utiliser Mathjax afin de mettre en forme du latex, Fa
 
 IMAGEMAGICK= True # True pour faire des images miniatures des pièces jointes de programmes de colle. False sinon.
 
-NOM_ETABLISSEMENT = "" # le nom de l'Établissement, qui apparaît en haut de toutes les pages, ainsi que sur les pdf du colloscope et des ramassages
+NOM_ETABLISSEMENT = "Lycée Damas" # le nom de l'Établissement, qui apparaît en haut de toutes les pages, ainsi que sur les pdf du colloscope et des ramassages
+
+NOM_ADRESSE_ETABLISSEMENT = """Lycée général et technologique Léon Gontran Damas
+Chemin Vidal
+97354 Rémire-Montjoly""" #Le nom complet + adresse de l'établissement, pour les attestations ECTS
+
+VILLE = "Rémire-Montjoly" # Commune de l'établissement
+
+ACADEMIE = "Guyane" # académie de l'établissement
 
 ADMINS = ( # les couples nom/email du (des) administrateur(s) du site
      ('admin', 'admin@example.com'),

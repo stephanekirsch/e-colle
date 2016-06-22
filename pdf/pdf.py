@@ -3,10 +3,35 @@ from io import BytesIO
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.lib.pagesizes import A4, legal, landscape
 from reportlab.platypus import Table, TableStyle
+from reportlab.platypus.flowables import Flowable
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from ecolle.settings import NOM_ETABLISSEMENT
 from accueil.models import Groupe, Colle, Matiere, Colleur
+from reportlab.lib.units import cm
+
+class FlowTextRectangle(Flowable):
+	"""un rectangle avec du texte, flowable, donc qu'on peut insérer facilement dans une Frame"""
+	def __init__(self,texte="",marge=False):
+		self.texte=texte
+		self.fillcolor=(.9,.9,.9)
+		self.size=9*cm
+		self.marge=marge
+
+	def wrap(self, *args):
+		if self.marge:
+			return (0,20)
+		return (0,16)
+
+	def draw(self):
+		canvas = self.canv
+		canvas.setLineWidth(1)
+		canvas.setFillColor(self.fillcolor)
+		canvas.setStrokeColor((0,0,0))
+		canvas.rect(0,0,self.size,16,1,1)
+		canvas.setFont("Helvetica-Bold",12)
+		canvas.setFillColorRGB(0,0,0)
+		canvas.drawString(1,3,self.texte)
 
 class easyPdf(Canvas):
 	"""classe fille de canvas avec des méthodes supplémentaires pour créer le titre et la fin de page"""
