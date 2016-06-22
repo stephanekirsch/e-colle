@@ -97,7 +97,7 @@ MEDIA_URL = '/media/'
 
 STATIC_URL = '/static/'
 
-DEBUG = True
+DEBUG = False
 
 APPEND_SLASH = False
 
