@@ -24,6 +24,15 @@
 		<td>Fiche de crédits</td>
 		<td>Attestation</td>
 	</tr>
+	<tr class="plusclair">
+		<td>Tous</td>
+		<td>{{total.0}}/{{nbeleves}}</td>
+		<td>{{total.1}}/{{nbeleves}}</td>
+		<td>{{total.2}}/{{nbeleves}}</td>
+		<td>{{total.3}}/{{nbeleves}}</td>
+		<td>{{total.4}}/{{nbeleves}}<a href="{% url 'ects_fiche_classe' classe.pk %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
+		<td>{{total.4}}/{{nbeleves}}<a href="{% url 'ects_attestation_classe' classe.pk %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
+	</tr>
 	{% for credit in credits %}
 	<tr>
 		<td>{{credit.prenom|title}} {{credit.nom|upper}}</td>

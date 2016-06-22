@@ -47,4 +47,7 @@ url(r'^action/ects/notes/modif/(\d+)/(\d+(?:-\d+)*)$', views.ectsnotesmodif,name
 url(r'^action/ects/credits/(\d+)$', views.ectscredits,name="ects_credits"),
 url(r'^action/ects/fiche/(\d+)$', views.ficheectspdf,name="ects_fiche"),
 url(r'^action/ects/attestation/(\d+)$', views.attestationectspdf,name="ects_attestation"),
+url(r'^action/ects/fiche/classe/(\d+)$', views.ficheectsclassepdf,name="ects_fiche_classe"),
+url(r'^action/ects/attestation/classe/(\d+)$', views.attestationectsclassepdf,name="ects_attestation_classe"),
+
 ]

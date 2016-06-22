@@ -417,7 +417,7 @@ def elevemodif(request, chaine_eleves):
 				eleve.save()
 			return redirect('gestion_eleve')
 	else:
-		formset = EleveFormSet(initial=[{'nom':eleve.user.last_name,'prenom':eleve.user.first_name,'ine':eleve.ine,'ddn':eleve.ddn.strftime('%d/%m/%Y'),'identifiant':eleve.user.username,'email':eleve.user.email,'classe':eleve.classe,'photo':eleve.photo} for eleve in listeEleves])	
+		formset = EleveFormSet(initial=[{'nom':eleve.user.last_name,'prenom':eleve.user.first_name,'ine':eleve.ine,'ddn': None if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),'identifiant':eleve.user.username,'email':eleve.user.email,'classe':eleve.classe,'photo':eleve.photo} for eleve in listeEleves])	
 	return render(request,'administrateur/elevemodif.html',{'formset':formset})
 
 @ip_filter

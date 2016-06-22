@@ -830,7 +830,6 @@ class NoteECTSManager(models.Manager):
 				cursor.execute(requete,(classe.pk,classe.pk,matiere.pk))
 				notes = dictfetchall(cursor)
 			listeNotes.append(notes)
-		print(listeNotes)
 		return zip(*[note for note in listeNotes])
 
 	def noteEleves(self,matiere,listeEleves):
