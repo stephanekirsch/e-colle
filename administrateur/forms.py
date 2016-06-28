@@ -307,10 +307,11 @@ class MatiereClasseSelectForm(forms.Form):
 	classe=forms.ModelChoiceField(label="Classe",queryset=Classe.objects.order_by('nom'), empty_label="Toutes",required=False)
 
 class CsvForm(forms.Form):
-	nom = forms.CharField(label="intitulé du champ nom",required=True,max_length=20)
-	prenom = forms.CharField(label="intitulé du champ prénom",required=True,max_length=20)
-	ddn = forms.CharField(label="intitulé du champ date de naissance",required=True,max_length=30)
-	ine = forms.CharField(label="intitulé du champ numéro INE",required=True,max_length=20)
+	nom = forms.CharField(label="intitulé du champ nom",required=True,max_length=30)
+	prenom = forms.CharField(label="intitulé du champ prénom",required=True,max_length=30)
+	ddn = forms.CharField(label="intitulé du champ date de naissance (pour ECTS, facultatif)",required=True,max_length=30)
+	ine = forms.CharField(label="intitulé du champ numéro INE (pour ETCS, facultatif)",required=True,max_length=30)
+	email = forms.CharField(label="intitulé du champ email(facultatif)",required=False,max_length=30)
 	fichier = forms.FileField(label="Fichier csv",required=True)
 	classe=forms.ModelChoiceField(label="Classe",queryset=Classe.objects.order_by('nom'), empty_label="Non définie",required=False) 
 

@@ -356,24 +356,32 @@ def eleve(request):
 @ip_filter
 def elevecsv(request):
 	"""Renvoie la vue de la page d'ajout d'élèves via un fichier CSV"""
-	form = CsvForm(request.POST or None, request.FILES or None,initial = {'nom':'Nom','prenom':'Prénom', 'ddn': 'Date de naissance', 'ine': 'Numéro INE'})
+	form = CsvForm(request.POST or None, request.FILES or None,initial = {'nom':'Nom','prenom':'Prénom', 'ddn': 'Date de naissance', 'ine': 'Numéro INE','email':'Adresse mail'})
 	if form.is_valid():
 		try:
 			with TextIOWrapper(form.cleaned_data['fichier'].file,encoding = 'utf8') as fichiercsv:
 				dialect = csv.Sniffer().sniff(fichiercsv.read(4096))
-				nom,prenom,ddn,ine=form.cleaned_data['nom'],form.cleaned_data['prenom'],form.cleaned_data['ddn'],form.cleaned_data['ine']
+				nom,prenom,ddn,ine,email=form.cleaned_data['nom'],form.cleaned_data['prenom'],form.cleaned_data['ddn'],form.cleaned_data['ine'],form.cleaned_data['email']
 				fichiercsv.seek(0)
 				reader = csv.DictReader(fichiercsv, dialect=dialect)
 				ligne = next(reader)
 				if not(nom in ligne and prenom in ligne):
 					messages.error("Les intitulés des champs nom et/ou prénom sont inexacts")
 				else:
-					if (ddn in ligne and ine in ligne):
+					if (ddn and ddn in ligne and ine and ine in ligne and email and email in ligne):
+						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':ligne[ddn],'ine':ligne[ine],'email':ligne[email],'classe':form.cleaned_data['classe']} for ligne in reader]
+					elif (ddn and ddn in ligne and ine and ine in ligne):
 						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':ligne[ddn],'ine':ligne[ine],'email':"",'classe':form.cleaned_data['classe']} for ligne in reader]
-					elif (ddn in ligne):
-						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':ligne[ddn],'ine':'','email':"",'classe':form.cleaned_data['classe']} for ligne in reader]
-					elif (ine in ligne):
+					elif (ddn and ddn in ligne and email and email in ligne):
+						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':ligne[ddn],'ine':'','email':ligne[email],'classe':form.cleaned_data['classe']} for ligne in reader]
+					elif (ine and ine in ligne and email and email in ligne):
+						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':None,'ine':ligne[ine],'email':ligne[email],'classe':form.cleaned_data['classe']} for ligne in reader]
+					elif (ine and ine in ligne):
 						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':None,'ine':ligne[ine],'email':"",'classe':form.cleaned_data['classe']} for ligne in reader]
+					elif (ddn and ddn in ligne):
+						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':ligne[ddn],'ine':'','email':"",'classe':form.cleaned_data['classe']} for ligne in reader]
+					elif (email and email in ligne):
+						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':None,'ine':'','email':ligne[email],'classe':form.cleaned_data['classe']} for ligne in reader]
 					else:
 						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':None,'ine':'','email':"",'classe':form.cleaned_data['classe']} for ligne in reader]
 					return eleveajout(request,initial=initial)
