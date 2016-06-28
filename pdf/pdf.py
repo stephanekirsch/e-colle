@@ -9,9 +9,11 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from ecolle.settings import NOM_ETABLISSEMENT,  RESOURCES_ROOT, NOM_ADRESSE_ETABLISSEMENT, VILLE, NOM_ETABLISSEMENT, ACADEMIE
 from accueil.models import Groupe, Colle, Matiere, Colleur, NoteECTS, Eleve
+from colleur.forms import ECTSForm
 from reportlab.lib.units import cm
 from unidecode import unidecode
 from os.path import isfile
+from lxml import etree
 
 class easyPdf(Canvas):
 	"""classe fille de canvas avec des méthodes supplémentaires pour créer le titre et la fin de page"""
@@ -211,19 +213,39 @@ def Pdf(classe,semin,semax):
 	response.write(fichier)
 	return response
 
-def attestationects(datedujour,filiere,signataire,signature,etoile,annee,elev=None,classe=None):
+def attestationects(request,elev,classe):
 	"""renvoie l'attestation ects pdf de l'élève elev, ou si elev vaut None renvoie les attestations ects pdf de toute la classe classe en un seul fichier"""
+	if request.method=="POST":
+		form=ECTSForm(classe,request.POST)
+		if form.is_valid():
+			datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
+			filiere = form.cleaned_data['classe'].split("_")[0]
+			signataire = form.cleaned_data['signature']
+			annee = form.cleaned_data['anneescolaire']
+			etoile = form.cleaned_data['etoile']
+			signature = False
+			if 'signature' in form.cleaned_data:
+				signature = form.cleaned_data['tampon']
+		else:
+			return ectscredits(request,classe.pk,form)
+	else:
+		datedujour = date.today().strftime('%d/%m/%Y')
+		filiere = classe.nom
+		signataire = 'Proviseur'
+		annee = date.today().year
+		etoile = False
+		signature = False
+	annee = "{}-{}".format(int(annee)-1,annee)
 	LIST_NOTES="ABCDEF"
 	response = HttpResponse(content_type='application/pdf')
 	if elev is None:
 		eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name').select_related('user')
-		nomfichier="ATTESTATIONS_{}.pdf".format(unidecode(classe.nom))
+		nomfichier="ATTESTATIONS_{}.pdf".format(unidecode(classe.nom)).replace(" ","-")
 		credits = NoteECTS.objects.credits(classe)
 	else:
 		eleves=[elev]
 		credits=[False]
-		classe=elev.classe
-		nomfichier=unidecode("ATTESTATION_{}_{}_{}.pdf".format(elev.classe.nom.upper(),elev.user.first_name,elev.user.last_name))
+		nomfichier=unidecode("ATTESTATION_{}_{}_{}.pdf".format(elev.classe.nom.upper(),elev.user.first_name,elev.user.last_name.upper())).replace(" ","-")
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
 	pdf = easyPdf()
 	cm = pdf.format[0]/21
@@ -330,19 +352,42 @@ def attestationects(datedujour,filiere,signataire,signature,etoile,annee,elev=No
 	response.write(fichier)
 	return response
 
-def creditsects(datedujour,filiere,signataire,signature,etoile,domaine,branche,precision=None,elev=None,classe=None):
+def creditsects(request,elev,classe):
 	"""renvoie les crédits ects pdf de l'élève elev, ou si elev vaut None renvoie les crédits ects pdf de toute la classe en un seul fichier"""
+	if request.method=="POST":
+		form=ECTSForm(classe,request.POST)
+		if form.is_valid():
+			datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
+			filiere,annee = form.cleaned_data['classe'].split("_")
+			signataire = form.cleaned_data['signature']
+			etoile = form.cleaned_data['etoile']
+			tree=etree.parse(RESOURCES_ROOT+'classes.xml')
+			classexml=tree.xpath("/classes/classe[@nom='{}'][@annee='{}']".format(filiere,annee)).pop()
+			domaine = classexml.get("domaine")
+			branche = classexml.get("type").lower()
+			precision = classexml.get("precision")
+			signature = False
+			if 'signature' in form.cleaned_data:
+				signature = form.cleaned_data['tampon']
+		else:
+			return ectscredits(request,classe.pk,form)
+	else:
+		datedujour = date.today().strftime('%d/%m/%Y')
+		filiere = classe.nom
+		signataire = 'Proviseur'
+		etoile = False
+		domaine = branche = precision = ""
+		signature = False
 	LIST_NOTES="ABCDEF"
 	response = HttpResponse(content_type='application/pdf')
 	if elev is None:
 		eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name').select_related('user')
-		nomfichier="ECTS_{}.pdf".format(unidecode(classe.nom))
+		nomfichier="ECTS_{}.pdf".format(unidecode(classe.nom)).replace(" ","-")
 		credits = NoteECTS.objects.credits(classe)
 	else:
 		eleves=[elev]
 		credits=[False]
-		classe=elev.classe
-		nomfichier=unidecode("ECTS_{}_{}_{}.pdf".format(elev.classe.nom.upper(),elev.user.first_name,elev.user.last_name))
+		nomfichier=unidecode("ECTS_{}_{}_{}.pdf".format(classe.nom.upper(),elev.user.first_name,elev.user.last_name.upper())).replace(" ","-")
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
 	pdf = easyPdf()
 	cm = pdf.format[0]/21
@@ -533,7 +578,7 @@ def creditsects(datedujour,filiere,signataire,signature,etoile,domaine,branche,p
 			pdf.showPage()
 			pdf.y = pdf.format[1]-pdf.marge_y-12
 			pdf.setFont('Helvetica-Bold',12)
-			pdf.drawCentredString(10.5*cm,pdf.y,"RELEVÉ DE RÉSULTATS (classe {})".format(filiere + ('*' if etoile and eleve.classe.annee == 2 else '')))
+			pdf.drawCentredString(10.5*cm,pdf.y,"RELEVÉ DE RÉSULTATS (classe {})".format(filiere + ('*' if etoile and classe.annee == 2 else '')))
 			sem1,sem2 = NoteECTS.objects.notePDF(eleve)
 			data=[["ENSEIGNEMENTS","Crédits ECTS","Mention"],["Premier semestre","",""]]
 			sp=0 # variable qui va contenir la somme pondérée des notes en vue du calcul de la mention globale

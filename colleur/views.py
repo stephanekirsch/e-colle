@@ -812,115 +812,25 @@ def ficheectspdf(request,id_eleve):
 	eleve = get_object_or_404(Eleve,pk=id_eleve)
 	if not is_profprincipal(request.user,eleve.classe):
 		return HttpResponseForbidden("Accès non autorisé")
-	if request.method=="POST":
-		form=ECTSForm(eleve.classe,request.POST)
-		if form.is_valid():
-			datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
-			filiere,annee = form.cleaned_data['classe'].split("_")
-			signataire = form.cleaned_data['signature']
-			etoile = form.cleaned_data['etoile']
-			tree=etree.parse(RESOURCES_ROOT+'classes.xml')
-			classe=tree.xpath("/classes/classe[@nom='{}'][@annee='{}']".format(filiere,annee)).pop()
-			domaine = classe.get("domaine")
-			branche = classe.get("type").lower()
-			precision = classe.get("precision")
-			signature = False
-			if 'signature' in form.cleaned_data:
-				signature = form.cleaned_data['tampon']
-		else:
-			return ectscredits(request,eleve.classe.pk,form)
-	else:
-		datedujour = date.today().strftime('%d/%m/%Y')
-		filiere = eleve.classe.nom
-		signataire = 'Proviseur'
-		etoile = False
-		domaine = branche = precision = ""
-		signature = False
-	return creditsects(datedujour,filiere,signataire,signature,etoile,domaine,branche,precision,eleve)
+	return creditsects(request,eleve,eleve.classe)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def attestationectspdf(request,id_eleve):
 	eleve = get_object_or_404(Eleve,pk=id_eleve)
 	if not is_profprincipal(request.user,eleve.classe):
 		return HttpResponseForbidden("Accès non autorisé")
-	if request.method=="POST":
-		form=ECTSForm(eleve.classe,request.POST)
-		if form.is_valid():
-			datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
-			filiere = form.cleaned_data['classe'].split("_")[0]
-			signataire = form.cleaned_data['signature']
-			annee = form.cleaned_data['anneescolaire']
-			etoile = form.cleaned_data['etoile']
-			signature = False
-			if 'signature' in form.cleaned_data:
-				signature = form.cleaned_data['tampon']
-		else:
-			return ectscredits(request,eleve.classe.pk,form)
-	else:
-		datedujour = date.today().strftime('%d/%m/%Y')
-		filiere = eleve.classe.nom
-		signataire = 'Proviseur'
-		annee = date.today().year
-		etoile = False
-		signature = False
-	annee = "{}-{}".format(int(annee)-1,annee)
-	return attestationects(datedujour,filiere,signataire,signature,etoile,annee,eleve)
+	return attestationects(request,eleve,eleve.classe)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def ficheectsclassepdf(request,id_classe):
 	classe = get_object_or_404(Classe,pk=id_classe)
 	if not is_profprincipal(request.user,classe):
 		return HttpResponseForbidden("Accès non autorisé")
-	if request.method=="POST":
-		form=ECTSForm(classe,request.POST)
-		if form.is_valid():
-			datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
-			filiere,annee = form.cleaned_data['classe'].split("_")
-			signataire = form.cleaned_data['signature']
-			etoile = form.cleaned_data['etoile']
-			tree=etree.parse(RESOURCES_ROOT+'classes.xml')
-			classexml=tree.xpath("/classes/classe[@nom='{}'][@annee='{}']".format(filiere,annee)).pop()
-			domaine = classexml.get("domaine")
-			branche = classexml.get("type").lower()
-			precision = classexml.get("precision")
-			signature = False
-			if 'signature' in form.cleaned_data:
-				signature = form.cleaned_data['tampon']
-		else:
-			return ectscredits(request,classe.pk,form)
-	else:
-		datedujour = date.today().strftime('%d/%m/%Y')
-		filiere = classe.nom
-		signataire = 'Proviseur'
-		etoile = False
-		domaine = branche = precision = ""
-		signature = False
-	return creditsects(datedujour,filiere,signataire,signature,etoile,domaine,branche,precision,None,classe)
+	return creditsects(request,None,classe)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def attestationectsclassepdf(request,id_classe):
 	classe = get_object_or_404(Classe,pk=id_classe)
 	if not is_profprincipal(request.user,classe):
 		return HttpResponseForbidden("Accès non autorisé")
-	if request.method=="POST":
-		form=ECTSForm(classe,request.POST)
-		if form.is_valid():
-			datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
-			filiere = form.cleaned_data['classe'].split("_")[0]
-			signataire = form.cleaned_data['signature']
-			annee = form.cleaned_data['anneescolaire']
-			etoile = form.cleaned_data['etoile']
-			signature = False
-			if 'signature' in form.cleaned_data:
-				signature = form.cleaned_data['tampon']
-		else:
-			return ectscredits(request,classe.pk,form)
-	else:
-		datedujour = date.today().strftime('%d/%m/%Y')
-		filiere = classe.nom
-		signataire = 'Proviseur'
-		annee = date.today().year
-		etoile = False
-		signature = False
-	annee = "{}-{}".format(int(annee)-1,annee)
-	return attestationects(datedujour,filiere,signataire,signature,etoile,annee,None,classe)
+	return attestationects(request,None,classe)
