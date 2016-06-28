@@ -20,7 +20,7 @@
 	{% csrf_token %}
 <table class="tableausimple" id="suppr">
 	<tr class="entete">
-		<td rowspan="2">Élève</td>
+		<td rowspan="2">Élève{% if form.errors %}{{form.eleve.errors}}{% endif %}</td>
 		{% for matiere,nbsem in matieres|tzip:nbsemestres %}
 		<td colspan="{{nbsem}}">{{matiere}}</td>
 		{% endfor %}

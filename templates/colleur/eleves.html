@@ -1,5 +1,6 @@
 {% extends 'colleur/action.html' %}
 {% load static %}
+{% load customfilter %}
 {% block body %}
 <form method="POST">
 {% csrf_token %}
@@ -52,6 +53,7 @@
 {% endif %}
 {% endblock %}
 {% block javascript %}
+{% get_mathjax as latex %}
 {% if latex %}
 {% include "mathjax.html" %}
 {% endif %}

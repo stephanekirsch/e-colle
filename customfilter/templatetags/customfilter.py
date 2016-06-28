@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django import template
 from datetime import date, timedelta
-from ecolle.settings import NOM_ETABLISSEMENT
+from ecolle.settings import NOM_ETABLISSEMENT, MATHJAX, ECTS
 
 register = template.Library()
 
@@ -37,5 +37,13 @@ def image(fichier):
 @register.filter
 def tzip(l1, l2):
     return zip(l1,l2)
+
+@register.assignment_tag
+def get_mathjax():
+    return MATHJAX
+
+@register.assignment_tag
+def get_ects():
+    return ECTS
 
 

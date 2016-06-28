@@ -1,5 +1,6 @@
 {% extends 'colleur/action.html' %}
 {% load static %}
+{% load customfilter %}
 {% block body %}
 <table class="accueil"><tr><td>Résultats de la classe {{classe}} en {{matiere}}</td></tr></table>
 <form method="POST">
@@ -64,6 +65,7 @@
 {% endif %}
 {% endblock %}
 {% block javascript %}
+{% get_mathjax as latex %}
 {% if latex %}
 {% include "mathjax.html" %}
 {% endif %}

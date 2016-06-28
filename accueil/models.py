@@ -9,7 +9,7 @@ import os
 from ecolle.settings import MEDIA_ROOT, IMAGEMAGICK, BDD
 from django.core.files import File
 from PIL import Image
-from django.db.models import Count, Avg, Min, Max, Sum, F
+from django.db.models import Count, Avg, Min, Max, Sum, F, Q
 from django.db.models.functions import Lower, Upper, Concat, Substr
 
 semaine = ["lundi", "mardi","mercredi","jeudi","vendredi","samedi","dimanche"]
@@ -203,6 +203,9 @@ class Colleur(models.Model):
 			if prof.modifgroupe or prof.classe.profprincipal == self:
 				return True
 		return False
+
+	def ectsclasses(self):
+		return Classe.objects.filter(Q(profprincipal=self) | Q(classematiereECTS__profs=self)).distinct().order_by('nom')
 
 	def __str__(self):
 		if hasattr(self,'user'):

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% loas customfilter %}
 {% block nav %}
 <div id="nav"> 
 	<ul id="menu">
@@ -13,6 +14,16 @@
 		{% endfor %}
 			</ul>
 		</li>
+		{% get_ects as ects %}
+		{% if ects %}
+		<li><a href="#">Crédits ECTS</a>
+			<ul>
+		{% for classe in classes %}
+				<li><a href="{% url 'secret_ects_credits' classe.pk %}">{{classe.nom}}</a></li>
+		{% endfor %}
+			</ul>
+		</li>
+		{% endif %}
 	</ul>
 </div>
 {% endblock %}

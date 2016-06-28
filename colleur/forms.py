@@ -7,6 +7,7 @@ from django.forms.extras.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from lxml import etree
 from ecolle.settings import RESOURCES_ROOT
+from os.path import isfile
 
 class ColleurConnexionForm(forms.Form):
 	def __init__(self,matiere, *args, **kwargs):
@@ -244,8 +245,12 @@ class ECTSForm(forms.Form):
 		for x in tree.xpath("/classes/classe"):
 			if classe.nom.lower()[:len(x.get("nom"))] == x.get("nom").lower() and classe.annee == int(x.get("annee")):
 				default=x.get("nom")+"_"+x.get("annee")
+		imagesProviseur=(RESOURCES_ROOT+'proviseur.png',RESOURCES_ROOT+'proviseur.jpg')
+		imagesProviseurAdjoint=(RESOURCES_ROOT+'proviseuradjoint.png',RESOURCES_ROOT+'proviseuradjoint.jpg')
 		self.fields['classe'] = forms.ChoiceField(label="filière",choices=LISTE_CLASSES,initial=default)
 		self.fields['date'] = forms.DateField(label="Date d'édition",input_formats=['%d/%m/%Y','%j/%m/%Y','%d/%n/%Y','%j/%n/%Y'],widget=forms.TextInput(attrs={'placeholder': 'jj/mm/aaaa'}),initial=date.today().strftime('%d/%m/%Y'))
 		self.fields['signature'] = forms.ChoiceField(label="signature/tampon par:",choices=(['Proviseur']*2,['Proviseur adjoint']*2))
 		self.fields['anneescolaire'] = forms.ChoiceField(label="année scolaire",choices=[(x+1,"{}-{}".format(x,x+1)) for x in range(date.today().year-10,date.today().year+10)],initial=date.today().year)
 		self.fields['etoile'] = forms.BooleanField(label="classe étoile",required=False)
+		if any(isfile(x) for x in imagesProviseur+imagesProviseurAdjoint): # si au moins un des tampons est présent
+			self.fields['tampon'] = forms.BooleanField(label='incrustuer le tampon/la signature',required=False)

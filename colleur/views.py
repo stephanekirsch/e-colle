@@ -15,7 +15,7 @@ import os
 import json
 import csv
 from lxml import etree
-from ecolle.settings import MEDIA_ROOT, MEDIA_URL, MATHJAX, IMAGEMAGICK, RESOURCES_ROOT
+from ecolle.settings import MEDIA_ROOT, MEDIA_URL, IMAGEMAGICK, RESOURCES_ROOT
 
 def is_colleur(user):
 	"""Renvoie True si l'utilisateur est authentifié et est un colleur, False sinon"""
@@ -91,7 +91,7 @@ def note(request,id_classe):
 		del eleves_groupes[:value['nb']]
 	eleves=Eleve.objects.filter(classe=classe,groupe__isnull=True).values('pk','user__first_name','user__last_name').order_by('user__last_name','user__first_name')
 	modulo = eleves.count() % 3
-	return render(request,"colleur/note.html",{'notes':Note.objects.listeNotes(classe,matiere,colleur),'classe':classe,'eleves':eleves,'groupes':nom_groupes,'modulo':modulo,'latex':MATHJAX})
+	return render(request,"colleur/note.html",{'notes':Note.objects.listeNotes(classe,matiere,colleur),'classe':classe,'eleves':eleves,'groupes':nom_groupes,'modulo':modulo})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def noteEleve(request,id_eleve,id_classe,colle=None):
@@ -204,7 +204,7 @@ def resultat2(request,id_classe,id_semin,id_semax):
 	semaines = next(generateur)
 	isprof = is_prof(request.user,matiere,classe)
 	stat_colleurs = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).exclude(note__gt=20).values('colleur__user__first_name','colleur__user__last_name').distinct().annotate(moy=Avg('note'),minimum=Min('note'),maximum=Max('note'),ecarttype=StdDev('note')) if isprof else False
-	return render(request,"colleur/resultat.html",{'form':form,'classe':classe,'semaines':semaines,'matiere':matiere,'notes':generateur,'isprof':isprof,'semin':semin,'semax':semax,'stats':stat_colleurs,'latex':MATHJAX})
+	return render(request,"colleur/resultat.html",{'form':form,'classe':classe,'semaines':semaines,'matiere':matiere,'notes':generateur,'isprof':isprof,'semin':semin,'semax':semax,'stats':stat_colleurs})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def resultatcsv(request,id_classe,id_semin,id_semax):
@@ -247,7 +247,7 @@ def programme(request,id_classe):
 			return redirect('programme_colleur',classe.pk)
 	else:
 		form=False
-	return render(request,"colleur/programme.html",{'programmes':programmes,'classe':classe,'matiere':matiere,'form':form,'isprof':isprof,'latex':MATHJAX,'jpeg':IMAGEMAGICK})
+	return render(request,"colleur/programme.html",{'programmes':programmes,'classe':classe,'matiere':matiere,'form':form,'isprof':isprof,'jpeg':IMAGEMAGICK})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def programmeSuppr(request,id_programme):
@@ -596,7 +596,7 @@ def agenda(request):
 	semaine=jour+timedelta(days=-jour.weekday())
 	semainemin=semaine+timedelta(days=-21)
 	groupes,colles = Colle.objects.agenda(request.user.colleur,semainemin)
-	return render(request,"colleur/agenda.html",{'colles':colles,'groupes':groupes,'media_url':MEDIA_URL,'jour':jour,'semaine':semaine,'latex':MATHJAX})
+	return render(request,"colleur/agenda.html",{'colles':colles,'groupes':groupes,'media_url':MEDIA_URL,'jour':jour,'semaine':semaine})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def colleNote(request,id_colle):
@@ -695,14 +695,14 @@ def eleves(request,id_classe):
 			matierenote.append((matiere,moyenne,rang,notes))
 	else:
 		semaines = matierenote = None
-	return render(request,'colleur/eleves.html',{'eleve':eleve,'semin':semin,'semax':semax,'form':form,'form2':form2,'matierenote':matierenote,'semaines':semaines,'latex':MATHJAX})
+	return render(request,'colleur/eleves.html',{'eleve':eleve,'semin':semin,'semax':semax,'form':form,'form2':form2,'matierenote':matierenote,'semaines':semaines})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def ectsmatieres(request,id_classe):
 	"""Renvoie la vue de la page de gestion des matières ects de la classe"""
 	classe = get_object_or_404(Classe,pk=id_classe)
 	if not is_profprincipal(request.user,classe):
-		return HttpResponseForbidden("Accès non autorisé")
+		return redirect('ects_notes',classe.pk)
 	matieresECTS = MatiereECTS.objects.filter(classe=classe).prefetch_related('profs').order_by('nom','precision')
 	newMatiere = MatiereECTS(classe=classe)
 	form = MatiereECTSForm(request.POST or None,instance=newMatiere)
@@ -824,6 +824,9 @@ def ficheectspdf(request,id_eleve):
 			domaine = classe.get("domaine")
 			branche = classe.get("type").lower()
 			precision = classe.get("precision")
+			signature = False
+			if 'signature' in form.cleaned_data:
+				signature = form.cleaned_data['tampon']
 		else:
 			return ectscredits(request,eleve.classe.pk,form)
 	else:
@@ -832,7 +835,8 @@ def ficheectspdf(request,id_eleve):
 		signataire = 'Proviseur'
 		etoile = False
 		domaine = branche = precision = ""
-	return creditsects(datedujour,filiere,signataire,etoile,domaine,branche,precision,eleve)
+		signature = False
+	return creditsects(datedujour,filiere,signataire,signature,etoile,domaine,branche,precision,eleve)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def attestationectspdf(request,id_eleve):
@@ -847,6 +851,9 @@ def attestationectspdf(request,id_eleve):
 			signataire = form.cleaned_data['signature']
 			annee = form.cleaned_data['anneescolaire']
 			etoile = form.cleaned_data['etoile']
+			signature = False
+			if 'signature' in form.cleaned_data:
+				signature = form.cleaned_data['tampon']
 		else:
 			return ectscredits(request,eleve.classe.pk,form)
 	else:
@@ -855,8 +862,9 @@ def attestationectspdf(request,id_eleve):
 		signataire = 'Proviseur'
 		annee = date.today().year
 		etoile = False
+		signature = False
 	annee = "{}-{}".format(int(annee)-1,annee)
-	return attestationects(datedujour,filiere,signataire,etoile,annee,eleve)
+	return attestationects(datedujour,filiere,signataire,signature,etoile,annee,eleve)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def ficheectsclassepdf(request,id_classe):
@@ -875,6 +883,9 @@ def ficheectsclassepdf(request,id_classe):
 			domaine = classexml.get("domaine")
 			branche = classexml.get("type").lower()
 			precision = classexml.get("precision")
+			signature = False
+			if 'signature' in form.cleaned_data:
+				signature = form.cleaned_data['tampon']
 		else:
 			return ectscredits(request,classe.pk,form)
 	else:
@@ -883,7 +894,8 @@ def ficheectsclassepdf(request,id_classe):
 		signataire = 'Proviseur'
 		etoile = False
 		domaine = branche = precision = ""
-	return creditsects(datedujour,filiere,signataire,etoile,domaine,branche,precision,None,classe)
+		signature = False
+	return creditsects(datedujour,filiere,signataire,signature,etoile,domaine,branche,precision,None,classe)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def attestationectsclassepdf(request,id_classe):
@@ -898,6 +910,9 @@ def attestationectsclassepdf(request,id_classe):
 			signataire = form.cleaned_data['signature']
 			annee = form.cleaned_data['anneescolaire']
 			etoile = form.cleaned_data['etoile']
+			signature = False
+			if 'signature' in form.cleaned_data:
+				signature = form.cleaned_data['tampon']
 		else:
 			return ectscredits(request,classe.pk,form)
 	else:
@@ -906,5 +921,6 @@ def attestationectsclassepdf(request,id_classe):
 		signataire = 'Proviseur'
 		annee = date.today().year
 		etoile = False
+		signature = False
 	annee = "{}-{}".format(int(annee)-1,annee)
-	return attestationects(datedujour,filiere,signataire,etoile,annee,None,classe)
+	return attestationects(datedujour,filiere,signataire,signature,etoile,annee,None,classe)

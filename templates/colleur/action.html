@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load customfilter %}
 {% block nav %}
 <div id="nav"> 
 	<ul id="menu" style="position: relative;z-index: 10;">
@@ -59,6 +60,12 @@
 			{% endfor %}
 			</ul>
 		</li>
+		{% endif %}
+		{% endwith %}
+		{% get_ects as ects %}
+		{% if ects %}
+		{% with user.colleur.ectsclasses as classes %}
+		{% if classes %}
 		<li><a href="#">ECTS</a>
 			<ul>
 			{% for classe in classes %}
@@ -68,6 +75,7 @@
 		</li>
 		{% endif %}
 		{% endwith %}
+		{% endif %}
 	</ul>
 </div>
 {% endblock %}

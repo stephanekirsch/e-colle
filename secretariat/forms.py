@@ -11,9 +11,11 @@ class RamassageForm(forms.ModelForm):
 		fields=['moisDebut','moisFin']
 
 	def clean(self):
-		"""Vérifie que moisDebut est antérieur à mois Fin"""
+		"""Vérifie que moisDebut est antérieur à mois Fin, ainsi que l'unicité du couple moisDebut/moisFin"""
 		if self.cleaned_data['moisDebut'] > self.cleaned_data['moisFin']:
 			raise ValidationError('le mois de début doit être antérieur au mois de fin')
+		if Ramassage.objects.filter(moisDebut=self.cleaned_data['moisDebut'],moisFin=self.cleaned_data['moisFin']).exists():
+			raise ValidationError('Ce ramassage existe déjà',code="uniqueness violation")
 
 class MoisForm(forms.Form):
 	def __init__(self,moisMin,moisMax, *args, **kwargs):

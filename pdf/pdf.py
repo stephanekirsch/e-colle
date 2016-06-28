@@ -10,6 +10,8 @@ from django.http import HttpResponse
 from ecolle.settings import NOM_ETABLISSEMENT,  RESOURCES_ROOT, NOM_ADRESSE_ETABLISSEMENT, VILLE, NOM_ETABLISSEMENT, ACADEMIE
 from accueil.models import Groupe, Colle, Matiere, Colleur, NoteECTS, Eleve
 from reportlab.lib.units import cm
+from unidecode import unidecode
+from os.path import isfile
 
 class easyPdf(Canvas):
 	"""classe fille de canvas avec des méthodes supplémentaires pour créer le titre et la fin de page"""
@@ -81,7 +83,7 @@ def Pdf(classe,semin,semax):
 		couleurs[matiere.pk]=(rouge,vert,bleu)
 	LISTE_JOURS=["lundi","mardi","mercredi","jeudi","vendredi","samedi"]
 	response = HttpResponse(content_type='application/pdf')
-	nomfichier="Colloscope_{}_semaine_{}_{}.pdf".format(classe.nom,semin.numero,semax.numero)
+	nomfichier="Colloscope_{}_semaine_{}_{}.pdf".format(unidecode(classe.nom),semin.numero,semax.numero)
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
 	pdf = easyPdf(orientation='landscape',titre="Colloscope {} semaines n°{} à {}".format(classe.nom,semin.numero,semax.numero),marge_x=30,marge_y=30)
 	nbCreneaux=creneaux.count()
@@ -209,32 +211,53 @@ def Pdf(classe,semin,semax):
 	response.write(fichier)
 	return response
 
-def attestationects(datedujour,filiere,signataire,etoile,annee,elev=None,classe=None):
+def attestationects(datedujour,filiere,signataire,signature,etoile,annee,elev=None,classe=None):
 	"""renvoie l'attestation ects pdf de l'élève elev, ou si elev vaut None renvoie les attestations ects pdf de toute la classe classe en un seul fichier"""
 	LIST_NOTES="ABCDEF"
 	response = HttpResponse(content_type='application/pdf')
 	if elev is None:
 		eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name').select_related('user')
-		nomfichier="ATTESTATIONS_{}.pdf".format(classe.nom.upper())
+		nomfichier="ATTESTATIONS_{}.pdf".format(unidecode(classe.nom))
 		credits = NoteECTS.objects.credits(classe)
 	else:
 		eleves=[elev]
 		credits=[False]
 		classe=elev.classe
-		nomfichier="ATTESTATION_{}_{}_{}.pdf".format(elev.classe.nom.upper(),elev.user.first_name,elev.user.last_name)
+		nomfichier=unidecode("ATTESTATION_{}_{}_{}.pdf".format(elev.classe.nom.upper(),elev.user.first_name,elev.user.last_name))
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
 	pdf = easyPdf()
 	cm = pdf.format[0]/21
 	pdf.marge_x = cm # 1cm de marge gauche/droite
 	pdf.marge_y = 1.5*cm # 1,5cm de marge haut/bas
 	I = Image(RESOURCES_ROOT+'marianne.jpg')
+	I.drawHeight = 1.8*cm
+	I.drawWidth = 3*cm
+	if signature and signataire == 'Proviseur':
+		try:
+			I2 = Image(RESOURCES_ROOT+'proviseur.png')
+		except Exception:
+			try:
+				I2 = Image(RESOURCES_ROOT+'proviseur.png')
+			except Exception:
+				I2 = False
+	elif signature and signataire == 'Proviseur adjoint':
+		try:
+			I2 = Image(RESOURCES_ROOT+'proviseuradjoint.png')
+		except Exception:
+			try:
+				I2 = Image(RESOURCES_ROOT+'proviseuradjoint.png')
+			except Exception:
+				I2 = False
+	else:
+		I2 = False
+	if I2:
+		I2.drawHeight = 3*cm
+		I2.drawWidth = 3*cm
 	newpage = False
 	for eleve,credit in zip(eleves,credits):
 		if elev or credit and credit['ddn'] and credit['ine'] and credit['sem1']==30 and credit['sem2']==30: # si l'élève a bien toutes les infos/crédits
 			if newpage:# si ce n'est pas la première page, on change de page
 				pdf.showPage()
-			I.drawHeight = 1.8*cm
-			I.drawWidth = 3*cm
 			pdf.y = pdf.format[1]-pdf.marge_y-1.8*cm
 			I.drawOn(pdf,9*cm,pdf.y)
 			pdf.y -= 10
@@ -289,6 +312,10 @@ def attestationects(datedujour,filiere,signataire,etoile,annee,elev=None,classe=
 			pdf.drawString(15*cm,pdf.y,"Pour le recteur,")
 			pdf.y -= 15
 			pdf.drawString(15*cm,pdf.y,"Le {}".format(signataire.lower()))
+			pdf.y -= 3*cm
+			pdf.x = pdf.format[0]-5*cm-2*pdf.marge_x
+			if I2:
+				I2.drawOn(pdf,pdf.x,pdf.y)
 			pdf.setFont("Helvetica-Oblique",9)
 			pdf.y=3*cm
 			pdf.drawCentredString(pdf.format[0]/2,pdf.y,"Attestation délivrée en application des dispositions de l’article 8 du décret n° 94-1015")
@@ -303,32 +330,55 @@ def attestationects(datedujour,filiere,signataire,etoile,annee,elev=None,classe=
 	response.write(fichier)
 	return response
 
-def creditsects(datedujour,filiere,signataire,etoile,domaine,branche,precision=None,elev=None,classe=None):
+def creditsects(datedujour,filiere,signataire,signature,etoile,domaine,branche,precision=None,elev=None,classe=None):
 	"""renvoie les crédits ects pdf de l'élève elev, ou si elev vaut None renvoie les crédits ects pdf de toute la classe en un seul fichier"""
 	LIST_NOTES="ABCDEF"
 	response = HttpResponse(content_type='application/pdf')
 	if elev is None:
 		eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name').select_related('user')
-		nomfichier="ECTS_{}.pdf".format(classe.nom.upper())
+		nomfichier="ECTS_{}.pdf".format(unidecode(classe.nom))
 		credits = NoteECTS.objects.credits(classe)
 	else:
 		eleves=[elev]
 		credits=[False]
 		classe=elev.classe
-		nomfichier="ECTS_{}_{}_{}.pdf".format(elev.classe.nom.upper(),elev.user.first_name,elev.user.last_name)
+		nomfichier=unidecode("ECTS_{}_{}_{}.pdf".format(elev.classe.nom.upper(),elev.user.first_name,elev.user.last_name))
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
 	pdf = easyPdf()
 	cm = pdf.format[0]/21
 	pdf.marge_x = cm # 1cm de marge gauche/droite
 	pdf.marge_y = 1.5*cm # 1,5cm de marge haut/bas
 	I = Image(RESOURCES_ROOT+'marianne.jpg')
+	I.drawHeight = 1.8*cm
+	I.drawWidth = 3*cm
+	print(signataire)
+	if signature and signataire == 'Proviseur':
+		try:
+			I2 = Image(RESOURCES_ROOT+'proviseur.png')
+		except Exception:
+			try:
+				I2 = Image(RESOURCES_ROOT+'proviseur.png')
+			except Exception:
+				I2 = False
+	elif signature and signataire == 'Proviseur adjoint':
+		try:
+			I2 = Image(RESOURCES_ROOT+'proviseuradjoint.png')
+		except Exception:
+			try:
+				I2 = Image(RESOURCES_ROOT+'proviseuradjoint.png')
+			except Exception:
+				I2 = False
+	else:
+		I2 = False
+	if I2:
+		I2.drawHeight = 3*cm
+		I2.drawWidth = 3*cm
 	newpage = False
 	for eleve,credit in zip(eleves,credits):
 		if elev or credit and credit['ddn'] and credit['ine'] and credit['sem1']==30 and credit['sem2']==30: # si l'élève a bien toutes les infos/crédits
 			if newpage:# si ce n'est pas la première page, on change de page
 				pdf.showPage()
-			I.drawHeight = 1.8*cm
-			I.drawWidth = 3*cm
+			
 			pdf.y = pdf.format[1]-pdf.marge_y-1.8*cm
 			I.drawOn(pdf,9*cm,pdf.y)
 			pdf.y -= 10
@@ -478,6 +528,8 @@ def creditsects(datedujour,filiere,signataire,etoile,domaine,branche,precision=N
 			story.append(t)
 			fr = Frame(11*cm, 1.5*cm, 9*cm, 23*cm , showBoundary=0, leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
 			fr.addFromList(story,pdf)
+			if I2:
+				I2.drawOn(pdf,16.2*cm,13.2*cm)
 			pdf.showPage()
 			pdf.y = pdf.format[1]-pdf.marge_y-12
 			pdf.setFont('Helvetica-Bold',12)
@@ -526,6 +578,9 @@ def creditsects(datedujour,filiere,signataire,etoile,domaine,branche,precision=N
 				pdf.drawString(pdf.x,pdf.y,"Pas de mention, il manque {} crédits".format(60-coeff))
 				pdf.setFillColor((0,0,0))
 			pdf.drawRightString(pdf.format[0]-pdf.x-15,pdf.y,"Cachet et signature")
+			pdf.y-= 3.2*cm
+			if I2:
+				I2.drawOn(pdf,pdf.format[0]-2*pdf.marge_x-3*cm,pdf.y)
 			newpage=True
 	pdf.save()
 	fichier = pdf.buffer.getvalue()

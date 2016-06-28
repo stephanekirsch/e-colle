@@ -44,6 +44,7 @@
 {% endblock %}
 {% block javascript %}
 <script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+{% get_mathjax as latex %}
 {% if latex %}
 {% include "mathjax.html" %}
 {% endif %}

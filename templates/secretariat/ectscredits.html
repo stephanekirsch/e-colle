@@ -1,0 +1,52 @@
+{% extends 'secretariat/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil"><tr><td>Fiches de crédits ECTS en {{classe}}</td></tr></table>
+
+<form method="POST" id="form">
+{% csrf_token %}
+<table class="tableausimple">
+	{{form.as_table}}
+</table>
+</form>
+
+<table class="tableausimple" id="ects">
+	<tr class="entete">
+		<td>Élève</td>
+		<td>Date de naissance</td>
+		<td>n° étudiant</td>
+		<td>Crédits semestre 1</td>
+		<td>Crédits semestre 2</td>
+		<td>Fiche de crédits</td>
+		<td>Attestation</td>
+	</tr>
+	<tr class="plusclair">
+		<td>Tous</td>
+		<td>{{total.0}}/{{nbeleves}}</td>
+		<td>{{total.1}}/{{nbeleves}}</td>
+		<td>{{total.2}}/{{nbeleves}}</td>
+		<td>{{total.3}}/{{nbeleves}}</td>
+		<td>{{total.4}}/{{nbeleves}}<a href="{% url 'secret_ects_fiche_classe' classe.pk %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
+		<td>{{total.4}}/{{nbeleves}}<a href="{% url 'secret_ects_attestation_classe' classe.pk %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
+	</tr>
+	{% for credit in credits %}
+	<tr>
+		<td>{{credit.prenom|title}} {{credit.nom|upper}}</td>
+		{% if credit.ddn %}<td style="color:green;">✓</td>{% else %}<td style="color:red;">❌</td>{% endif %}
+		{% if credit.ine %}<td style="color:green;">✓</td>{% else %}<td style="color:red;">❌</td>{% endif %}
+		{% if credit.sem1 == 30 %}<td style="color:green;">30</td>{% else %}<td style="color:red;">{% firstof credit.sem1 "0" %}</td>{% endif %}
+		{% if credit.sem2 == 30 %}<td style="color:green;">30</td>{% else %}<td style="color:red;">{% firstof credit.sem2 "0" %}</td>{% endif %}
+		<td><a href="{% url 'secret_ects_fiche' credit.id %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
+		{% if credit.sem1 == 30 and credit.sem2 == 30 and credit.ddn and credit.ine %}
+		<td><a href="{% url 'secret_ects_attestation' credit.id %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
+		{% else %}
+		<td></td>
+		{% endif %}
+	</tr>
+	{% endfor %}
+</table>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/ects.js' %}"></script>
+{% endblock %}

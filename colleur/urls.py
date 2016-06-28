@@ -1,6 +1,7 @@
 #-*- coding: utf-8 -*-
 from django.conf.urls import patterns, url
 from . import views
+from ecolle.settings import ECTS
 
 urlpatterns = [
 url(r'^(\d+)$', views.connec,name="login_colleur"),
@@ -38,16 +39,16 @@ url(r'^action/agenda$', views.agenda,name="agenda_colleur"),
 url(r'^action/note/colle/(\d+)$', views.colleNote,name="collenote_colleur"),
 url(r'^action/note/colleeleve/(\d+)$', views.colleNoteEleve,name="collenoteeleve_colleur"),
 url(r'^action/decompte$', views.decompte,name="decompte_colleur"),
-url(r'^action/changemat/(\d+)$', views.changemat,name="changemat_colleur"),
-url(r'^action/ects/matieres/(\d+)$', views.ectsmatieres,name="ects_matieres"),
-url(r'^action/ects/matiere/modif/(\d+)$', views.ectsmatieremodif,name="ects_matiere_modif"),
-url(r'^action/ects/matiere/suppr/(\d+)$', views.ectsmatieresuppr,name="ects_matiere_suppr"),
-url(r'^action/ects/notes/(\d+)$', views.ectsnotes,name="ects_notes"),
-url(r'^action/ects/notes/modif/(\d+)/(\d+(?:-\d+)*)$', views.ectsnotesmodif,name="ects_notes_modif"),
-url(r'^action/ects/credits/(\d+)$', views.ectscredits,name="ects_credits"),
-url(r'^action/ects/fiche/(\d+)$', views.ficheectspdf,name="ects_fiche"),
-url(r'^action/ects/attestation/(\d+)$', views.attestationectspdf,name="ects_attestation"),
-url(r'^action/ects/fiche/classe/(\d+)$', views.ficheectsclassepdf,name="ects_fiche_classe"),
-url(r'^action/ects/attestation/classe/(\d+)$', views.attestationectsclassepdf,name="ects_attestation_classe"),
+url(r'^action/changemat/(\d+)$', views.changemat,name="changemat_colleur")]
 
-]
+if ECTS: # si les crédits activés, on ajoute les urls pour les ECTS
+	urlpatterns.extend([url(r'^action/ects/matieres/(\d+)$', views.ectsmatieres,name="ects_matieres"),
+	url(r'^action/ects/matiere/modif/(\d+)$', views.ectsmatieremodif,name="ects_matiere_modif"),
+	url(r'^action/ects/matiere/suppr/(\d+)$', views.ectsmatieresuppr,name="ects_matiere_suppr"),
+	url(r'^action/ects/notes/(\d+)$', views.ectsnotes,name="ects_notes"),
+	url(r'^action/ects/notes/modif/(\d+)/(\d+(?:-\d+)*)$', views.ectsnotesmodif,name="ects_notes_modif"),
+	url(r'^action/ects/credits/(\d+)$', views.ectscredits,name="ects_credits"),
+	url(r'^action/ects/fiche/(\d+)$', views.ficheectspdf,name="ects_fiche"),
+	url(r'^action/ects/attestation/(\d+)$', views.attestationectspdf,name="ects_attestation"),
+	url(r'^action/ects/fiche/classe/(\d+)$', views.ficheectsclassepdf,name="ects_fiche_classe"),
+	url(r'^action/ects/attestation/classe/(\d+)$', views.attestationectsclassepdf,name="ects_attestation_classe")])

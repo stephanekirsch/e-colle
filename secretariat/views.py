@@ -5,15 +5,18 @@ from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from administrateur.forms import AdminConnexionForm
-from colleur.forms import SemaineForm
+from colleur.forms import SemaineForm, ECTSForm
 from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSelectForm, MatiereClasseSemaineSelectForm
-from accueil.models import Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois
+from accueil.models import Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois, NoteECTS
 from django.db.models import Count
 from datetime import date, timedelta
 from django.http import Http404, HttpResponse
 from django.db.models import Avg
-from pdf.pdf import easyPdf, Pdf
+from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
 from reportlab.platypus import Table, TableStyle
+from unidecode import unidecode
+from lxml import etree
+from ecolle.settings import RESOURCES_ROOT
 import csv
 
 def is_secret(user):
@@ -235,7 +238,7 @@ def ramassagePdf(request,id_ramassage):
 					for i in range(len(effectifs)):
 						data[ligneColleur][i+4]="{}h{:02d}".format(decomptes[i]//60,decomptes[i]%60)
 					ligneColleur+=1
-					if ligneColleur==24: # si le tableau prend toute une page, on termine la page et on recommence un autre tableau
+					if ligneColleur==24 and nbKolleurs>23: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau
 						t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel]+[largeurcel]*len(effectifs),rowHeights=min((1+nbKolleurs),24)*[hauteurcel])
 						t.setStyle(LIST_STYLE)
 						w,h=t.wrapOn(pdf,0,0)
@@ -243,6 +246,12 @@ def ramassagePdf(request,id_ramassage):
 						pdf.finDePage()
 						# on redémarre sur une nouvelle page
 						pdf.debutDePage()
+						LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
+										,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))
+										,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+										,('ALIGN',(0,0),(-1,-1),'CENTRE')
+										,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
+										,('SIZE',(0,0),(-1,-1),8)])
 						nbKolleurs-=23
 						data = [["Matière","Établissement","Grade","Colleur"]+["{}è. ann.\n{}".format(annee,effectif) for annee,effectif in effectifs]]+[[""]*(4+len(effectifs)) for i in range(min(23,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
 						ligneEtab-=23
@@ -253,14 +262,14 @@ def ramassagePdf(request,id_ramassage):
 							data[1][0]=matiere.title()
 							if ligneMat>2:
 								LIST_STYLE.add('SPAN',(0,1),(0,min(ligneMat-1,23)))
-							if ligneEtab>1:
-								data[1][1]=etablissement.nom.title()
-								if ligneEtab>2:
-									LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab-1,23)))
-								if ligneGrade>1:
+							if ligneEtab>=1:
+								data[1][1]='Inconnu' if not etablissement else etablissement.title()
+								if ligneEtab>=2:
+									LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab,23)))
+								if ligneGrade>=1:
 									data[1][2]=grade
-									if ligneGrade>2:
-										LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade-1,23)))
+									if ligneGrade>=2:
+										LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade,23)))
 	t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel]+[largeurcel]*len(effectifs),rowHeights=min((1+nbKolleurs),24)*[hauteurcel])
 	t.setStyle(LIST_STYLE)
 	w,h=t.wrapOn(pdf,0,0)
@@ -271,3 +280,126 @@ def ramassagePdf(request,id_ramassage):
 	pdf.buffer.close()
 	response.write(fichier)
 	return response
+
+@user_passes_test(is_secret, login_url='login_secret')
+def ectscredits(request,id_classe,form=None):
+	classe =get_object_or_404(Classe,pk=id_classe)
+	eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name')
+	if not form:
+		form=ECTSForm(classe,request.POST or None)
+	total = [0]*5
+	credits = NoteECTS.objects.credits(classe)
+	for credit in credits:
+		attest = 1
+		if credit['ddn']:
+			total[0]+=1
+		else:
+			attest = 0
+		if credit['ine']:
+			total[1]+=1
+		else:
+			attest = 0
+		if credit['sem1'] == 30:
+			total[2]+=1
+		else:
+			attest = 0
+		if credit['sem2'] == 30:
+			total[3]+=1
+		else:
+			attest = 0
+		total[4] += attest			
+	return render(request,'secretariat/ectscredits.html',{'classe':classe,'credits':credits,'form':form,'total':total,"nbeleves":eleves.order_by().count()})
+
+@user_passes_test(is_secret, login_url='login_secret')
+def ficheectspdf(request,id_eleve):
+	eleve = get_object_or_404(Eleve,pk=id_eleve)
+	if request.method=="POST":
+		form=ECTSForm(eleve.classe,request.POST)
+		if form.is_valid():
+			datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
+			filiere,annee = form.cleaned_data['classe'].split("_")
+			signataire = form.cleaned_data['signature']
+			etoile = form.cleaned_data['etoile']
+			tree=etree.parse(RESOURCES_ROOT+'classes.xml')
+			classe=tree.xpath("/classes/classe[@nom='{}'][@annee='{}']".format(filiere,annee)).pop()
+			domaine = classe.get("domaine")
+			branche = classe.get("type").lower()
+			precision = classe.get("precision")
+		else:
+			return ectscredits(request,eleve.classe.pk,form)
+	else:
+		datedujour = date.today().strftime('%d/%m/%Y')
+		filiere = eleve.classe.nom
+		signataire = 'Proviseur'
+		etoile = False
+		domaine = branche = precision = ""
+	return creditsects(datedujour,filiere,signataire,etoile,domaine,branche,precision,eleve)
+
+@user_passes_test(is_secret, login_url='login_secret')
+def attestationectspdf(request,id_eleve):
+	eleve = get_object_or_404(Eleve,pk=id_eleve)
+	if request.method=="POST":
+		form=ECTSForm(eleve.classe,request.POST)
+		if form.is_valid():
+			datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
+			filiere = form.cleaned_data['classe'].split("_")[0]
+			signataire = form.cleaned_data['signature']
+			annee = form.cleaned_data['anneescolaire']
+			etoile = form.cleaned_data['etoile']
+		else:
+			return ectscredits(request,eleve.classe.pk,form)
+	else:
+		datedujour = date.today().strftime('%d/%m/%Y')
+		filiere = eleve.classe.nom
+		signataire = 'Proviseur'
+		annee = date.today().year
+		etoile = False
+	annee = "{}-{}".format(int(annee)-1,annee)
+	return attestationects(datedujour,filiere,signataire,etoile,annee,eleve)
+
+@user_passes_test(is_secret, login_url='login_secret')
+def ficheectsclassepdf(request,id_classe):
+	classe = get_object_or_404(Classe,pk=id_classe)
+	if request.method=="POST":
+		form=ECTSForm(classe,request.POST)
+		if form.is_valid():
+			datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
+			filiere,annee = form.cleaned_data['classe'].split("_")
+			signataire = form.cleaned_data['signature']
+			etoile = form.cleaned_data['etoile']
+			tree=etree.parse(RESOURCES_ROOT+'classes.xml')
+			classexml=tree.xpath("/classes/classe[@nom='{}'][@annee='{}']".format(filiere,annee)).pop()
+			domaine = classexml.get("domaine")
+			branche = classexml.get("type").lower()
+			precision = classexml.get("precision")
+		else:
+			return ectscredits(request,classe.pk,form)
+	else:
+		datedujour = date.today().strftime('%d/%m/%Y')
+		filiere = classe.nom
+		signataire = 'Proviseur'
+		etoile = False
+		domaine = branche = precision = ""
+	return creditsects(datedujour,filiere,signataire,etoile,domaine,branche,precision,None,classe)
+
+@user_passes_test(is_secret, login_url='login_secret')
+def attestationectsclassepdf(request,id_classe):
+	classe = get_object_or_404(Classe,pk=id_classe)
+	if request.method=="POST":
+		form=ECTSForm(classe,request.POST)
+		if form.is_valid():
+			datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
+			filiere = form.cleaned_data['classe'].split("_")[0]
+			signataire = form.cleaned_data['signature']
+			annee = form.cleaned_data['anneescolaire']
+			etoile = form.cleaned_data['etoile']
+		else:
+			return ectscredits(request,classe.pk,form)
+	else:
+		datedujour = date.today().strftime('%d/%m/%Y')
+		filiere = classe.nom
+		signataire = 'Proviseur'
+		annee = date.today().year
+		etoile = False
+	annee = "{}-{}".format(int(annee)-1,annee)
+	return attestationects(datedujour,filiere,signataire,etoile,annee,None,classe)
