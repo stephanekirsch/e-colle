@@ -533,7 +533,6 @@ def creditsects(request,elev,classe):
 			texte="<b><i>1.1. Nom:</i></b> {}<br/><b><i>1.2. Prénom:</i></b> {}<br/><b><i>1.3. Date de Naissance:</i></b> {}<br/><b><i>1.4. N° INE:</i></b> {}".format(eleve.user.last_name.upper(),eleve.user.first_name.title(),"" if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),eleve.ine)
 			p2=Paragraph(texte,style)
 			story.extend([p2,p3])
-			story.append(p3)
 			texte="""<b><i>2.1. Nom de la formation:</i></b><br/>
 			Classe préparatoire {} {} {}<br/>
 			<b><i>2.2. Principaux domaines d’étude:</i></b><br/>
