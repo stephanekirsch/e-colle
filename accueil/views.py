@@ -144,6 +144,8 @@ def ecrire(request):
 				destinataires |= {colleur.user for colleur in value}
 			elif cle == 'classegroupe':
 				destinataires |= {eleve.user for eleve in Eleve.objects.filter(groupe__in=value)}
+			elif cle == 'classeeleve':
+				destinataires |= {eleve.user for eleve in value}
 		if not destinataires:
 			messagees.error(request, "Il faut au moins un destinataire")
 		else:

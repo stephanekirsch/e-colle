@@ -9,7 +9,7 @@
 	<table class="tableausimple">
 		<tr >
 			<th rowspan="{{form.rowspan}}">Destinataires</th>
-			{% for classe, prof, profs, colleur, colleurs, groupe, groupes in form.champs %}
+			{% for classe, prof, profs, colleur, colleurs, groupe, groupes, eleve, eleves in form.champs %}
 			<td {% if forloop.last and form.reste %} colspan="2" {% endif %}>
 			<b>Classe de {{classe.nom}}</b><br/><br/>
 			{% with prof as formprof %}
@@ -36,6 +36,10 @@
 			{{ groupe }} <b>{{groupe.label_tag}}</b></div>
 			{{ groupes.errors }}
 			{{ groupes }}
+			<div>{{ eleve.errors}}
+			{{ eleve }} <b>{{eleve.label_tag}}</b></div>
+			{{ eleves.errors }}
+			{{ eleves }}
 			</td> {% if not forloop.last %}{% cycle '' "</tr><tr>" %}{% endif %}
 			{% endfor %}
 		</tr>

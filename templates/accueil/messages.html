@@ -31,7 +31,7 @@
 		<td>{{widget}}</td>
 		<td><a href="{% url 'message' mesage.pk %}">Lire</a></td>
 		<td>{% if not lu %}<b>{% endif %}{{mesage.message.date|date:"D d M Y à H:i:s"}}{% if not lu %}</b>{% endif %}</td>
-		<td>{% if not lu %} ✓ {% endif %}</td>
+		<td>{% if lu %} ✓ {% endif %}</td>
 		<td>{% if not lu %}<b>{% endif %} {{mesage.message.auteur}} {% if not lu %}</b>{% endif %}</td>
 		<td>{% if not lu %}<b>{% endif %} {{mesage.message.listedestinataires|truncatechars:200}} {% if not lu %}</b>{% endif %}</td>
 		<td>{% if not lu %}<b>{% endif %} {{mesage.message.titre}} {% if not lu %}</b>{% endif %}</td>

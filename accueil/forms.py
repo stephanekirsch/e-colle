@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django import forms
 from django.forms.widgets import Input
-from accueil.models import Colleur, Groupe, Matiere, Destinataire, Message, User, Classe, Prof
+from accueil.models import Colleur, Groupe, Matiere, Destinataire, Message, User, Classe, Prof, Eleve
 from administrateur.forms import CustomMultipleChoiceField
 from django.contrib.auth.password_validation import validate_password
 from django.db.models import Q
@@ -62,7 +62,7 @@ class ReponseForm(forms.Form):
 		super().__init__(*args,**kwargs)
 		self.fields['destinataire'] = forms.CharField(label="Destinataire",initial=str(destinataire.message.auteur),required=False)
 		self.fields['destinataire'].widget.attrs={'disabled':True}
-		self.fields['titre'] = forms.CharField(label="titre",max_length=100,required=True)
+		self.fields['titre'] = forms.CharField(label="titre",max_length=100,required=True,initial="Re: "+destinataire.message.titre)
 		self.fields['titre'].widget.attrs={'size':50}
 		self.fields['corps'] = forms.CharField(label="corps du message",widget=forms.Textarea,required=True,max_length=2000)
 		self.fields['corps'].widget.attrs={'cols':60,'rows':15}
@@ -97,11 +97,14 @@ class EcrireForm(forms.Form):
 					query = Colleur.objects.filter(classes=classe,matieres=matiere,user__is_active=True).exclude(pk=user.colleur.pk).select_related('user').order_by('user__last_name')
 					self.fields['classematiere_{}_{}'.format(classe.pk,matiere.pk)] = ColleurMultipleChoiceField(classe,True,queryset=query,widget=forms.CheckboxSelectMultiple,required=False)
 					listematieres.append(self['classematiere_{}_{}'.format(classe.pk,matiere.pk)])
-				self.fields['matieregroupe_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves",required=False)
+				self.fields['matieregroupe_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(groupe)",required=False)
 				query2 = Groupe.objects.filter(groupeeleve__classe=classe).prefetch_related('groupeeleve__user').distinct()
 				self.fields['classegroupe_{}'.format(classe.pk)] = GroupeMultipleChoiceField(queryset=query2,widget=forms.CheckboxSelectMultiple,required=False)
+				self.fields['matiereeleve_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(solo)",required=False)
+				query3 = Eleve.objects.filter(classe=classe).select_related('user')
+				self.fields['classeeleve_{}'.format(classe.pk)] = forms.ModelMultipleChoiceField(queryset=query3,widget=forms.CheckboxSelectMultiple,required=False)
 				colleurs = zip(listecolleurs,listematieres) if listecolleurs else False
-				self.champs.append((classe,prof,listeprofs,colleur,colleurs,self['matieregroupe_{}'.format(classe.pk)],self['classegroupe_{}'.format(classe.pk)]))
+				self.champs.append((classe,prof,listeprofs,colleur,colleurs,self['matieregroupe_{}'.format(classe.pk)],self['classegroupe_{}'.format(classe.pk)],self['matiereeleve_{}'.format(classe.pk)],self['classeeleve_{}'.format(classe.pk)]))
 		elif user.username=="Secrétariat" or user.username=="admin":
 			classes = Classe.objects.all()
 			for classe in classes:
@@ -122,11 +125,14 @@ class EcrireForm(forms.Form):
 					query = Colleur.objects.filter(classes=classe,matieres=matiere,user__is_active=True).select_related('user').order_by('user__last_name')
 					self.fields['classematiere_{}_{}'.format(classe.pk,matiere.pk)] = ColleurMultipleChoiceField(classe,True,queryset=query,widget=forms.CheckboxSelectMultiple,required=False)
 					listematieres.append(self['classematiere_{}_{}'.format(classe.pk,matiere.pk)])
-				self.fields['matieregroupe_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves",required=False)
+				self.fields['matieregroupe_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(groupe)",required=False)
 				query2 = Groupe.objects.filter(groupeeleve__classe=classe).prefetch_related('groupeeleve__user').distinct()
 				self.fields['classegroupe_{}'.format(classe.pk)] = GroupeMultipleChoiceField(queryset=query2,widget=forms.CheckboxSelectMultiple,required=False)
+				self.fields['matiereeleve_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(solo)",required=False)
+				query3 = Eleve.objects.filter(classe=classe).select_related('user')
+				self.fields['classeeleve_{}'.format(classe.pk)] = forms.ModelMultipleChoiceField(queryset=query3,widget=forms.CheckboxSelectMultiple,required=False)
 				colleurs = zip(listecolleurs,listematieres) if listecolleurs else False
-				self.champs.append((classe,prof,listeprofs,colleur,colleurs,self['matieregroupe_{}'.format(classe.pk)],self['classegroupe_{}'.format(classe.pk)]))
+				self.champs.append((classe,prof,listeprofs,colleur,colleurs,self['matieregroupe_{}'.format(classe.pk)],self['classegroupe_{}'.format(classe.pk)],self['matiereeleve_{}'.format(classe.pk)],self['classeeleve_{}'.format(classe.pk)]))
 		self.colspan = len(self.champs)
 		self.colspansubmit = self.colspan+1
 		nb = classes.count()
