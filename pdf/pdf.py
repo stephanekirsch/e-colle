@@ -419,11 +419,103 @@ def creditsects(request,elev,classe):
 		I2.drawHeight = 3*cm
 		I2.drawWidth = 3*cm
 	newpage = False
+	style=ParagraphStyle(name='normal',fontSize=9,leading=11,spaceAfter=5)
+	styleResume=ParagraphStyle(name='resume',fontSize=9,leading=11,spaceAfter=0)
+	styleTitre=ParagraphStyle(name='titre',fontSize=12,leading=13,fontName="Helvetica-Bold",borderColor='black',borderPadding=(0,0,2,0),borderWidth=1,backColor='#DDDDDD',spaceAfter=2)
+	data1 = [["A","Très Bien","C","Assez Bien","E","Passable"],["B","Bien","D","Convenable","F","Insuffisant"]]
+	LIST_STYLE1 = TableStyle([('GRID',(0,0),(-1,-1),.2,(0,0,0))
+								,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+								,('ALIGN',(0,0),(-1,-1),'CENTRE')
+								,('FACE',(0,0),(-1,-1),'Helvetica')
+								,('SIZE',(0,0),(-1,-1),8)
+								,('BACKGROUND',(0,0),(-1,-1),(.9,.9,.9))])
+	t1=Table(data1,colWidths=[.8*cm,2*cm,.8*cm,2*cm,.8*cm,2*cm],rowHeights=[12]*2)
+	t1.setStyle(LIST_STYLE1)
+	data2 = [["8","D","","Université","",""],["7","D","","Université","",""],["6","D","","Université","",""],\
+			["5","M","","Université ou grande école","",""],["4","M","","Université ou grande école","",""],["3","L","ATS","Université ou grande école","",""],\
+			["2","L","STS-IUT","","Université","CPGE"],["1","L","STS-IUT","","Université","CPGE"],["0","Bac","Enseignement secondaire","","",""]]
+	LIST_STYLE2 = TableStyle([('GRID',(0,0),(1,4),.8,(0,0,0))
+								,('GRID',(3,0),(5,4),.8,(0,0,0))
+								,('GRID',(0,5),(5,8),.8,(0,0,0))
+								,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+								,('ALIGN',(0,0),(-1,-1),'CENTRE')
+								,('FACE',(0,0),(-1,-1),'Helvetica-Bold')
+								,('SIZE',(0,0),(-1,-1),8)
+								,('BACKGROUND',(0,0),(-1,-1),(1,1,1))
+								,('SPAN',(3,0),(5,0))
+								,('SPAN',(3,1),(5,1))
+								,('SPAN',(3,2),(5,2))
+								,('SPAN',(3,3),(5,3))
+								,('SPAN',(3,4),(5,4))
+								,('SPAN',(3,5),(5,5))
+								,('SPAN',(2,6),(3,6))
+								,('SPAN',(2,7),(3,7))
+								,('SPAN',(2,8),(5,8))
+								,('BACKGROUND',(3,0),(5,2),'#FABF8F')
+								,('BACKGROUND',(3,3),(5,4),'#FBD4B4')
+								,('BACKGROUND',(2,5),(2,5),'#76923C')
+								,('BACKGROUND',(3,5),(5,5),'#FDE9D9')
+								,('BACKGROUND',(4,6),(4,7),'#FDE9D9')
+								,('BACKGROUND',(2,6),(3,7),'#D6E3BC')
+								,('BACKGROUND',(5,6),(5,7),'#FF9900')])
+	t2=Table(data2,colWidths=[.84*cm,.91*cm,.75*cm,1.4*cm,2.5*cm,2.5*cm],rowHeights=[.8*cm]*9)
+	t2.setStyle(LIST_STYLE2)
+	texte="1. Information sur l'étudiant"
+	p1=Paragraph(texte,styleTitre)
+	texte="2. Information sur la formation"
+	p3=Paragraph(texte,styleTitre)
+	texte="3. Information sur le niveau de la formation"
+	p5=Paragraph(texte,styleTitre)
+	texte="""<b><i>3.1. Niveau de la formation:</i></b><br/>
+	Située au sein des études menant au grade de licence.<br/>
+	Niveau bac + 2 / 120 crédits ECTS<br/>
+	<b><i>3.2. Durée officielle du programme de formation:</i></b><br/>
+	La durée du programme est de 2 ans.<br/>
+	<b><i>3.3. Conditions d’accès:</i></b><br/>
+	Entrée sélective après le baccalauréat s’effectuant dans le cadre d’une procédure nationale d’admission.<br/>
+	Cf: <a href="http://www.admission-postbac.fr" color="blue">http://www.admission-postbac.fr</a>"""
+	p6=Paragraph(texte,style)
+	texte="""4. Information sur les contenus et les résultats obtenus"""
+	p7=Paragraph(texte,styleTitre)
+	texte="""<b><i>4.1. Organisation des études:</i></b><br/>
+	Plein temps, contrôle continu écrit et oral<br/>
+	<b><i>4.2. Exigences du programme:</i></b><br/>
+	La formation dispensée a pour objet de donner aux étudiants une compréhension approfondie des disciplines enseignées et une appréhension de leurs caractéristiques générales. Elle prend en compte leurs évolutions, leurs applications et la préparation à des démarches de recherche.
+	Elle est définie par des programmes nationaux.<br/>
+	<b><i>4.3. Précisions sur le programme:</i></b><br/>
+	Voir relevé au verso et catalogue de cours<br/>
+	<b><i>4.4. Échelle d’évaluation:</i></b><br/>
+	L’évaluation prend en compte l’ensemble des travaux des étudiants. La qualité du travail, des résultats obtenus et des compétences acquises est exprimée par une mention conformément au tableau ci-dessous."""
+	p8=Paragraph(texte,styleResume)
+	texte="""<b><i>4.5. Classification de la formation:</i></b><br/>
+	Une mention globale, portant sur l’ensemble du parcours et s’exprimant dans la même échelle qu’en 4.4 figure à la fin du relevé."""
+	p9=Paragraph(texte,style)
+	texte="5. Information sur la fonction de la qualification"
+	p10=Paragraph(texte,styleTitre)
+	texte="""<b><i>5.1. Accès à un niveau d’études supérieur:</i></b><br/>
+	Accès par concours aux grandes écoles.<br/>
+	Accès, par validation de parcours, à tout type d’établissement d’enseignement supérieur.<br/>
+	<b><i>5.2. Statut  professionnel (si applicable):</i></b><br/>
+	Sans objet"""
+	p11=Paragraph(texte,style)
+	texte="6. Informations complémentaires"
+	p12=Paragraph(texte,styleTitre)
+	texte="""<b><i>6.1. Informations complémentaires:</i></b><br/>
+	Catalogue des cours et arrêtés ministériels définissant les programmes consultables sur :<br/>
+	<a href="http://www.enseignementsup-recherche.gouv.fr/" color="blue">http://www.enseignementsup-recherche.gouv.fr/</a><br/>
+	<b><i>6.2. Autres sources d’information:</i></b><br/>
+	Pour toute information sur le dispositif CPGE consulter :<br/>
+	<a href="http://www.enseignementsup-recherche.gouv.fr/" color="blue">http://www.enseignementsup-recherche.gouv.fr/</a>"""
+	p13=Paragraph(texte,style)
+	texte="7. Certification de l’attestation"
+	p14=Paragraph(texte,styleTitre)
+	texte="8. Informations sur le système national d’enseignement supérieur"
+	p16=Paragraph(texte,styleTitre)
+	p17=Paragraph("<br/> <br/>",style)
 	for eleve,credit in zip(eleves,credits):
 		if elev or credit and credit['ddn'] and credit['ine'] and credit['sem1']==30 and credit['sem2']==30: # si l'élève a bien toutes les infos/crédits
 			if newpage:# si ce n'est pas la première page, on change de page
 				pdf.showPage()
-			
 			pdf.y = pdf.format[1]-pdf.marge_y-1.8*cm
 			I.drawOn(pdf,9*cm,pdf.y)
 			pdf.y -= 10
@@ -437,19 +529,11 @@ def creditsects(request,elev,classe):
 			pdf.y -= 12
 			pdf.setFont("Helvetica",11)
 			pdf.drawCentredString(10.5*cm,pdf.y,"ANNEXE DESCRIPTIVE DE LA FORMATION")
-			style=ParagraphStyle(name='normal',fontSize=9,leading=11,spaceAfter=5)
-			styleResume=ParagraphStyle(name='resume',fontSize=9,leading=11,spaceAfter=0)
-			styleTitre=ParagraphStyle(name='titre',fontSize=12,leading=13,fontName="Helvetica-Bold",borderColor='black',borderPadding=(0,0,2,0),borderWidth=1,backColor='#DDDDDD',spaceAfter=2)
-			story=[]
-			texte="1. Information sur l'étudiant"
-			p=Paragraph(texte,styleTitre)
-			story.append(p)
+			story=[p1]
 			texte="<b><i>1.1. Nom:</i></b> {}<br/><b><i>1.2. Prénom:</i></b> {}<br/><b><i>1.3. Date de Naissance:</i></b> {}<br/><b><i>1.4. N° INE:</i></b> {}".format(eleve.user.last_name.upper(),eleve.user.first_name.title(),"" if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),eleve.ine)
-			p=Paragraph(texte,style)
-			story.append(p)
-			texte="2. Information sur la formation"
-			p=Paragraph(texte,styleTitre)
-			story.append(p)
+			p2=Paragraph(texte,style)
+			story.extend([p2,p3])
+			story.append(p3)
 			texte="""<b><i>2.1. Nom de la formation:</i></b><br/>
 			Classe préparatoire {} {} {}<br/>
 			<b><i>2.2. Principaux domaines d’étude:</i></b><br/>
@@ -460,117 +544,17 @@ def creditsects(request,elev,classe):
 			<b><i>2.4. Nom et statut de l’établissement dispensant la formation:</i></b><br/>
 			{}<br/>
 			<b><i>2.5. Langue de formation:</i></b> français""".format(branche,filiere,"("+precision+")" if precision else "",domaine,NOM_ADRESSE_ETABLISSEMENT.replace("\n","<br/>").replace("\r","<br/>").replace("<br/><br/>","<br/>"))
-			p=Paragraph(texte,style)
-			story.append(p)
-			texte="3. Information sur le niveau de la formation"
-			p=Paragraph(texte,styleTitre)
-			story.append(p)
-			texte="""<b><i>3.1. Niveau de la formation:</i></b><br/>
-			Située au sein des études menant au grade de licence.<br/>
-			Niveau bac + 2 / 120 crédits ECTS<br/>
-			<b><i>3.2. Durée officielle du programme de formation:</i></b><br/>
-			La durée du programme est de 2 ans.<br/>
-			<b><i>3.3. Conditions d’accès:</i></b><br/>
-			Entrée sélective après le baccalauréat s’effectuant dans le cadre d’une procédure nationale d’admission.<br/>
-			Cf: <a href="http://www.admission-postbac.fr" color="blue">http://www.admission-postbac.fr</a>"""
-			p=Paragraph(texte,style)
-			story.append(p)
-			texte="""4. Information sur les contenus et les résultats obtenus"""
-			p=Paragraph(texte,styleTitre)
-			story.append(p)
-			texte="""<b><i>4.1. Organisation des études:</i></b><br/>
-			Plein temps, contrôle continu écrit et oral<br/>
-			<b><i>4.2. Exigences du programme:</i></b><br/>
-			La formation dispensée a pour objet de donner aux étudiants une compréhension approfondie des disciplines enseignées et une appréhension de leurs caractéristiques générales. Elle prend en compte leurs évolutions, leurs applications et la préparation à des démarches de recherche.
-			Elle est définie par des programmes nationaux.<br/>
-			<b><i>4.3. Précisions sur le programme:</i></b><br/>
-			Voir relevé au verso et catalogue de cours<br/>
-			<b><i>4.4. Échelle d’évaluation:</i></b><br/>
-			L’évaluation prend en compte l’ensemble des travaux des étudiants. La qualité du travail, des résultats obtenus et des compétences acquises est exprimée par une mention conformément au tableau ci-dessous."""
-			p=Paragraph(texte,styleResume)
-			story.append(p)
-			data = [["A","Très Bien","C","Assez Bien","E","Passable"],["B","Bien","D","Convenable","F","Insuffisant"]]
-			LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),.2,(0,0,0))
-												,('VALIGN',(0,0),(-1,-1),'MIDDLE')
-												,('ALIGN',(0,0),(-1,-1),'CENTRE')
-												,('FACE',(0,0),(-1,-1),'Helvetica')
-												,('SIZE',(0,0),(-1,-1),8)
-												,('BACKGROUND',(0,0),(-1,-1),(.9,.9,.9))])
-			t=Table(data,colWidths=[.8*cm,2*cm,.8*cm,2*cm,.8*cm,2*cm],rowHeights=[12]*2)
-			t.setStyle(LIST_STYLE)
-			story.append(t)
-			texte="""<b><i>4.5. Classification de la formation:</i></b><br/>
-			Une mention globale, portant sur l’ensemble du parcours et s’exprimant dans la même échelle qu’en 4.4 figure à la fin du relevé."""
-			p=Paragraph(texte,style)
-			story.append(p)
+			p4=Paragraph(texte,style)
+			story.extend([p4,p5,p6,p7,p8,t1,p9])
 			fl = Frame(cm, 1.5*cm, 9*cm, 23*cm , showBoundary=0, leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
 			fl.addFromList(story,pdf)
-			story=[]
-			texte="5. Information sur la fonction de la qualification"
-			p=Paragraph(texte,styleTitre)
-			story.append(p)
-			texte="""<b><i>5.1. Accès à un niveau d’études supérieur:</i></b><br/>
-			Accès par concours aux grandes écoles.<br/>
-			Accès, par validation de parcours, à tout type d’établissement d’enseignement supérieur.<br/>
-			<b><i>5.2. Statut  professionnel (si applicable):</i></b><br/>
-			Sans objet"""
-			p=Paragraph(texte,style)
-			story.append(p)
-			texte="6. Informations complémentaires"
-			p=Paragraph(texte,styleTitre)
-			story.append(p)
-			texte="""<b><i>6.1. Informations complémentaires:</i></b><br/>
-			Catalogue des cours et arrêtés ministériels définissant les programmes consultables sur :<br/>
-			<a href="http://www.enseignementsup-recherche.gouv.fr/" color="blue">http://www.enseignementsup-recherche.gouv.fr/</a><br/>
-			<b><i>6.2. Autres sources d’information:</i></b><br/>
-			Pour toute information sur le dispositif CPGE consulter :<br/>
-			<a href="http://www.enseignementsup-recherche.gouv.fr/" color="blue">http://www.enseignementsup-recherche.gouv.fr/</a>"""
-			p=Paragraph(texte,style)
-			story.append(p)
-			texte="7. Certification de l’attestation"
-			p=Paragraph(texte,styleTitre)
-			story.append(p)
+			story=[p10,p11,p12,p13,p14]
 			texte="""<b><i>7.1. Date:</i></b> {}<br/>
 			<b><i>7.2. Signature:</i></b><br/><br/><br/><br/>
 			<b><i>7.3. Fonction:</i></b> {}<br/>
 			<b><i>7.4. Tampon ou cachet officiel:</i></b><br/><br/><br/><br/><br/><br/>""".format(datedujour,signataire)
-			p=Paragraph(texte,style)
-			story.append(p)
-			texte="8. Informations sur le système national d’enseignement supérieur"
-			p=Paragraph(texte,styleTitre)
-			story.append(p)
-			p=Paragraph("<br/> <br/>",style)
-			story.append(p)
-			data = [["8","D","","Université","",""],["7","D","","Université","",""],["6","D","","Université","",""],\
-			["5","M","","Université ou grande école","",""],["4","M","","Université ou grande école","",""],["3","L","ATS","Université ou grande école","",""],\
-			["2","L","STS-IUT","","Université","CPGE"],["1","L","STS-IUT","","Université","CPGE"],["0","Bac","Enseignement secondaire","","",""]]
-			LIST_STYLE = TableStyle([('GRID',(0,0),(1,4),.8,(0,0,0))
-										,('GRID',(3,0),(5,4),.8,(0,0,0))
-										,('GRID',(0,5),(5,8),.8,(0,0,0))
-										,('VALIGN',(0,0),(-1,-1),'MIDDLE')
-										,('ALIGN',(0,0),(-1,-1),'CENTRE')
-										,('FACE',(0,0),(-1,-1),'Helvetica-Bold')
-										,('SIZE',(0,0),(-1,-1),8)
-										,('BACKGROUND',(0,0),(-1,-1),(1,1,1))
-										,('SPAN',(3,0),(5,0))
-										,('SPAN',(3,1),(5,1))
-										,('SPAN',(3,2),(5,2))
-										,('SPAN',(3,3),(5,3))
-										,('SPAN',(3,4),(5,4))
-										,('SPAN',(3,5),(5,5))
-										,('SPAN',(2,6),(3,6))
-										,('SPAN',(2,7),(3,7))
-										,('SPAN',(2,8),(5,8))
-										,('BACKGROUND',(3,0),(5,2),'#FABF8F')
-										,('BACKGROUND',(3,3),(5,4),'#FBD4B4')
-										,('BACKGROUND',(2,5),(2,5),'#76923C')
-										,('BACKGROUND',(3,5),(5,5),'#FDE9D9')
-										,('BACKGROUND',(4,6),(4,7),'#FDE9D9')
-										,('BACKGROUND',(2,6),(3,7),'#D6E3BC')
-										,('BACKGROUND',(5,6),(5,7),'#FF9900')])
-			t=Table(data,colWidths=[.84*cm,.91*cm,.75*cm,1.4*cm,2.5*cm,2.5*cm],rowHeights=[.8*cm]*9)
-			t.setStyle(LIST_STYLE)
-			story.append(t)
+			p15=Paragraph(texte,style)
+			story.extend([p15,p16,p17,t2])
 			fr = Frame(11*cm, 1.5*cm, 9*cm, 23*cm , showBoundary=0, leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
 			fr.addFromList(story,pdf)
 			if I2:
