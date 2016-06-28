@@ -299,7 +299,10 @@ def groupeSuppr(request,id_groupe):
 	if not modifgroupe(request.user.colleur,groupe.classe):
 		return HttpResponseForbidden("Accès non autorisé")
 	else:
-		groupe.delete()
+		try:
+			groupe.delete()
+		except Exception:
+			messages.error(request,"Impossible de supprimer le groupe car il est présent dans le colloscope")
 	return redirect('groupe_colleur',groupe.classe.pk)
 
 @user_passes_test(is_colleur, login_url='accueil')
