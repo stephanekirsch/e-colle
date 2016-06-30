@@ -7,6 +7,7 @@
 		<li><a href="{% url 'recapitulatif' %}" title="Récapitulatif des heures de colle">Récapitulatif</a></li>
 		<li><a href="{% url 'ramassage' %}" title="Ramassage des heures de colle">Ramassage</a></li>
 		<li><a href="{% url 'resultats_secret'%}">Résultats</a>
+		{% get_classes as classes %}
 		<li><a href="#">Colloscopes</a>
 			<ul>
 		{% for classe in classes %}
@@ -14,6 +15,16 @@
 		{% endfor %}
 			</ul>
 		</li>
+		{% get_modifgroupe as modif %}
+		{% if modif %}
+		<li><a href="#">Groupes</a>
+			<ul>
+		{% for classe in classes %}
+				<li><a href="{% url 'groupe_secret' classe.pk %}">{{classe.nom}}</a></li>
+		{% endfor %}
+			</ul>
+		</li>
+		{% endif %}
 		{% get_ects as ects %}
 		{% if ects %}
 		<li><a href="#">Crédits ECTS</a>

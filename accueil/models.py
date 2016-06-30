@@ -6,7 +6,7 @@ import locale
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 import os
-from ecolle.settings import MEDIA_ROOT, IMAGEMAGICK, BDD
+from ecolle.settings import MEDIA_ROOT, IMAGEMAGICK, BDD, MODIF_PROF_GROUPE
 from django.core.files import File
 from PIL import Image
 from django.db.models import Count, Avg, Min, Max, Sum, F, Q
@@ -199,9 +199,10 @@ class Colleur(models.Model):
 		return self.colleurprof.prefetch_related('classe')
 
 	def modifgroupe(self):
-		for prof in self.colleurprof.all():
-			if prof.modifgroupe or prof.classe.profprincipal == self:
-				return True
+		if MODIF_PROF_GROUPE:
+			for prof in self.colleurprof.all():
+				if prof.modifgroupe or prof.classe.profprincipal == self:
+					return True
 		return False
 
 	def ectsclasses(self):

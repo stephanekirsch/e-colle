@@ -17,9 +17,25 @@ IP_FILTRE_ADMIN = True # True si on veut restreindre la partie admin à certaine
 
 IP_FILTRE_ADRESSES = ('^127\.0\.0\.1$',) # la liste des adresses autorisées pour la partie admin si IP_FILTRE_ADMIN vaut True, à renseigner avec des REGEXP.
 
+MODIF_SECRETARIAT_COLLOSCOPE = True # True si on veut que le secrétariat ait les droits de modifier le colloscope, False sinon
+
+MODIF_PROF_COLLOSCOPE = False # si on veut que les profs aient les droits de modifier le colloscope, False sinon
+
+MODIF_SECRETARIAT_GROUPE = True # True si on veut que le secrétariat ait les droits de modifier le colloscope, False sinon
+
+MODIF_PROF_GROUPE = False # si on veut que les profs aient les droits de modifier les groupes de colle de sa classe, False sinon
+
+####################################### si MODIF_PROF_COLLOSCOPE vaut True: ##############################################################
+
 DEFAULT_MODIF_COLLOSCOPE = True # True si on veut qu'un prof d'une classe ait par défaut les droits de modifier le colloscope de sa classe, False sinon
 
+##########################################################################################################################################
+
+####################################### si MODIF_PROF_GROUPE vaut True: ##############################################################
+
 DEFAULT_MODIF_GROUPE = True # True si on veut qu'un prof d'une classe ait par défaut les droits de modifier les groupes de sa classe, False sinon
+
+##########################################################################################################################################
 
 MATHJAX = True # True pour utiliser Mathjax afin de mettre en forme du latex, False sinon.
 
@@ -41,7 +57,7 @@ ADMINS = ( # les couples nom/email du (des) administrateur(s) du site
 
 ALLOWED_HOSTS = [] # les nom de domaine autorisés pour accéder à e-colle, démarrer par un '.' pour les sous-domaines (par exemple '.e-colle.fr')
 
-CHEMINVERSECOLLE='/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/e-colle' # chemin absolu vers l'intérieur du répertoire e-colle
+CHEMINVERSECOLLE='/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/e-colle' # chemin absolu vers l'intérieur du répertoire e-colle
 
 SECRET_KEY = 'cg(ip)m3z77z3v!5wo&cl8^4!rk9t0++5wld+@i(kifb!z-k0p' # une clé secrète de 50 caractères. À modifier à la configuration
 

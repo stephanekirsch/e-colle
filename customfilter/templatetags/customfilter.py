@@ -1,7 +1,8 @@
 #-*- coding: utf-8 -*-
 from django import template
 from datetime import date, timedelta
-from ecolle.settings import NOM_ETABLISSEMENT, MATHJAX, ECTS
+from ecolle.settings import NOM_ETABLISSEMENT, MATHJAX, ECTS, MODIF_SECRETARIAT_GROUPE
+from accueil.models import Classe
 
 register = template.Library()
 
@@ -45,5 +46,13 @@ def get_mathjax():
 @register.assignment_tag
 def get_ects():
     return ECTS
+
+@register.assignment_tag
+def get_modifgroupe():
+    return MODIF_SECRETARIAT_GROUPE
+
+@register.assignment_tag
+def get_classes():
+    return Classe.objects.all()
 
 
