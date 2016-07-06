@@ -1,0 +1,22 @@
+{% extends 'secretariat/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+{% include "secretariat/navplanification.html" %}
+	<table class="accueil"><tr><td>Fréquence des colles</td></tr></table>
+	<table class="tableausimple" id="suppr">
+		<tr class="entete">
+			<td>Classe</td>
+			<td>Fréquences</td>
+			<td>Modifier</td>
+		</tr>
+		{% for classe,frequences in listefrequences %}
+		<tr>
+			<td>{{classe}}</td>
+			<td>{% for matiere,frequence in frequences %}
+			{{matiere}}: {% if frequence %}{{frequence}}{% endif %}<br/>{% endfor %}</td>
+			<td><a class="bouton" href="{% url 'frequence_modif' classe.pk %}">Modifier</a></td>
+		</tr>
+		{% endfor %}
+	</table>
+{% endblock %}

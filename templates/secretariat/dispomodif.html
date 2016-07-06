@@ -1,0 +1,26 @@
+{% extends 'secretariat/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+{% include "secretariat/navplanification.html" %}
+<table class="accueil"><tr><td>Modification des disponibilités</td></tr></table>
+	<form method="post">
+	{% csrf_token %}
+	{{ formset.management_form }}
+	<table class="tableausimple" id="suppr">
+	{% if formset.non_form_errors %}
+	<tr><td colspan="2">{{ formset.non_form_errors }}</td>
+	{% endif %}
+	{% for form in formset %}
+	{% for field in form %}
+	<tr>
+		<th>{{field.errors}}{{field.label_tag}}</th>
+		<td>{% for widget in field %}{{widget}}{% endfor %}</td>
+	</tr>
+	{% endfor %}
+	{% endfor %}
+	<tr><td colspan="2"><input type="submit"/></td></tr>
+	</table>
+	</form>
+	<table class="accueil"><tr><td><a href="{% url 'dispo' %}">Annuler</a></td></tr></table>
+{% endblock %}

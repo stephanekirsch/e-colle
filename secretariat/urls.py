@@ -12,6 +12,12 @@ url(r'^action/colloscope/(\d+)$', views.colloscope, name="colloscope_secret"),
 url(r'^action/colloscope/(\d+)/(\d+)/(\d+)$', views.colloscope2, name="colloscope2_secret"),
 url(r'^action/colloscopepdf/(\d+)/(\d+)/(\d+)$', views.colloscopePdf, name="colloscopepdf_secret"),
 url(r'^action/colloscope/modifier/(\d+)/(\d+)/(\d+)$', views.colloscopeModif,name="colloscopemodif_secret"),
+url(r'^action/planification$', views.planification, name="planification"),
+url(r'^action/dispo$', views.dispo, name="dispo"),
+url(r'^action/dispo/modif/(\d+(?:-\d+)*)$', views.dispomodif, name="dispo_modif"),
+url(r'^action/frequence$', views.frequence, name="frequence"),
+url(r'^action/frequence/modif/(\d+)$', views.frequencemodif, name="frequence_modif"),
+url(r'^action/edt/(\d+)/(\d+)/(\d+(?:-\d+)*)$', views.edt, name="edt"),
 url(r'^action/creneau/modifier/(\d+)/(\d+)/(\d+)$', views.creneauModif,name="creneaumodif_secret"),
 url(r'^action/creneau/supprimer/(\d+)/(\d+)/(\d+)$', views.creneauSuppr,name="creneausuppr_secret"),
 url(r'^action/creneau/dupliquer/(\d+)/(\d+)/(\d+)$', views.creneauDupli,name="creneaudupli_secret"),
@@ -29,6 +35,7 @@ url(r'^action/recapitulatif$', views.recapitulatif, name="recapitulatif"),
 url(r'^action/ramassage$', views.ramassage, name="ramassage"),
 url(r'^action/ramassage/suppr/(\d+)$', views.ramassageSuppr, name="ramassagesuppr"),
 url(r'^action/ramassage/pdf/(\d+)$', views.ramassagePdf, name="ramassagepdf")]
+
 
 if ECTS: # si les crédits activés, on ajoute les urls pour les ECTS
 	urlpatterns.extend([url(r'^action/ects/credits/(\d+)$', views.ectscredits,name="secret_ects_credits"),

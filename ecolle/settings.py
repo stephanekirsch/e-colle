@@ -57,7 +57,7 @@ ADMINS = ( # les couples nom/email du (des) administrateur(s) du site
 
 ALLOWED_HOSTS = [] # les nom de domaine autorisés pour accéder à e-colle, démarrer par un '.' pour les sous-domaines (par exemple '.e-colle.fr')
 
-CHEMINVERSECOLLE='/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/e-colle' # chemin absolu vers l'intérieur du répertoire e-colle
+CHEMINVERSECOLLE='/home/stef/Documents/git/e-colle' # chemin absolu vers l'intérieur du répertoire e-colle
 
 SECRET_KEY = 'cg(ip)m3z77z3v!5wo&cl8^4!rk9t0++5wld+@i(kifb!z-k0p' # une clé secrète de 50 caractères. À modifier à la configuration
 
@@ -67,7 +67,7 @@ DATABASES = {
         'NAME': 'e-colle',               # le nom de la base de données (le chemin vers le fichier + le nom du fichier.db pour sqlite)
         # La suite est à laisser vide si vous utilisez SQlite, puisqu'aucune authentification n'y est nécessaire
         'USER': 'e-colle',               # le nom de l'utilisateur ayant droits sur la base de données.
-        'PASSWORD':'',       # le mot de passe de l'utilisateur
+        'PASSWORD':'for6KJzlgIYSiF5q',       # le mot de passe de l'utilisateur
         'HOST': 'localhost',                  # l'adresse IP de la base de données. Mettre 'localhost' si elle se trouve directement sur le serveur de e-colle 
         'PORT': '',                           # vide par défaut. À renseigner si la BDD se trouve sur un port particulier.
     }
@@ -133,7 +133,7 @@ MEDIA_URL = '/media/'
 
 STATIC_URL = '/static/'
 
-DEBUG = False
+DEBUG = True
 
 APPEND_SLASH = False
 

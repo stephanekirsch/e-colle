@@ -11,6 +11,7 @@ from django.core.files import File
 from PIL import Image
 from django.db.models import Count, Avg, Min, Max, Sum, F, Q
 from django.db.models.functions import Lower, Upper, Concat, Substr
+from fractions import Fraction
 
 semaine = ["lundi", "mardi","mercredi","jeudi","vendredi","samedi","dimanche"]
 
@@ -170,9 +171,17 @@ class Classe(models.Model):
 			setattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk),dictColleurs)
 			return getattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk))
 
+class Frequence(models.Model):
+	classe = models.ForeignKey(Classe,verbose_name="Classe",on_delete=models.CASCADE)
+	matiere = models.ForeignKey(Matiere,verbose_name="Matière",on_delete=models.CASCADE)
+	frequence = models.PositiveSmallIntegerField(verbose_name="Fréquence des colles par élève")
+	repartition = models.BooleanField(verbose_name="Tous les groupes sur une semaine")
+
+	def __str__(self):
+		return "{} colle par semaine".format(Fraction(self.frequence,24)) + ("(regroupés)" if self.repartition else "")
 
 class Etablissement(models.Model):
-	nom = models.CharField(max_length = 50, unique=True,)
+	nom = models.CharField(max_length = 50, unique=True)
 
 	def __str__(self):
 		return self.nom
@@ -188,12 +197,26 @@ class Groupe(models.Model):
 	def __str__(self):
 		return self.nom
 
+class Dispo(models.Model):
+	LISTE_HEURE=[(i,"{}h{:02d}".format(i//4,15*(i%4))) for i in range(24,89)] # une heure est représentée par le nombre de 1/4 d'heure depuis 0h00. entre 6h et 22h
+	LISTE_JOUR=list(enumerate(["lundi","mardi","mercredi","jeudi","vendredi","samedi"]))
+	jour = models.PositiveSmallIntegerField(choices=LISTE_JOUR,default=0)
+	heure = models.PositiveSmallIntegerField(choices=LISTE_HEURE,default=14)
+
+	class Meta:
+		unique_together=('jour','heure')
+		ordering=['jour','heure']
+
+	def __str__(self):
+		return "{} {}h{:02d}".format(self.LISTE_JOUR[self.jour][1],self.heure//4,15*(self.heure%4))
+
 class Colleur(models.Model):
 	LISTE_GRADES=[(0,"autre"),(1,"certifié"),(2,"bi-admissible"),(3,"agrégé"),(4,"chaire supérieure")]
 	matieres = models.ManyToManyField(Matiere, verbose_name="Matière(s)")
 	classes = models.ManyToManyField(Classe, verbose_name="Classe(s)")
 	grade = models.PositiveSmallIntegerField(choices=LISTE_GRADES, default=3)
 	etablissement = models.ForeignKey(Etablissement, verbose_name="Établissement", null=True,blank=True, on_delete=models.PROTECT)
+	dispos = models.ManyToManyField(Dispo, verbose_name="Disponibilités")
 
 	def allprofs(self):
 		return self.colleurprof.prefetch_related('classe')

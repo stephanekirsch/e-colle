@@ -4,10 +4,11 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
-from administrateur.forms import AdminConnexionForm
+from administrateur.forms import AdminConnexionForm, SelectColleurForm, MatiereClasseSelectForm as ClasseMatiereSelectForm
 from colleur.forms import SemaineForm, ECTSForm, CreneauForm, ColleForm, GroupeForm
-from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSelectForm, MatiereClasseSemaineSelectForm
-from accueil.models import Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois, NoteECTS, JourFerie
+from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSelectForm, MatiereClasseSemaineSelectForm, SelectClasseSemaineForm, DispoForm, DispoFormSet, FrequenceForm
+from django.forms.formsets import formset_factory
+from accueil.models import Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois, NoteECTS, JourFerie, Frequence
 from django.db.models import Count, F
 from datetime import date, timedelta
 from django.http import Http404, HttpResponse
@@ -397,6 +398,95 @@ def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_el
 				pass
 			i+=1
 	return HttpResponse(json.dumps(creneaux))
+
+@user_passes_test(is_secret, login_url='login_secret')
+def planification(request):
+	return render(request,"secretariat/planification.html")
+
+@user_passes_test(is_secret, login_url='login_secret')
+def dispo(request):
+	"""Renvoie la vue de la page de gestion des disponibilités des colleurs"""
+	if "selectmatiere" in request.POST:
+		form = ClasseMatiereSelectForm(request.POST)
+	else:
+		try:
+			matiere = Matiere.objects.get(pk=request.session['matiere'])
+		except Exception:
+			matiere = None
+		try:
+			classe = Classe.objects.get(pk=request.session['classe'])
+		except Exception:
+			classe = None
+		form = ClasseMatiereSelectForm(initial = {'matiere':matiere,'classe':classe})
+	if form.is_valid():
+		matiere = form.cleaned_data['matiere']
+		request.session['matiere'] = None if not matiere else matiere.pk
+		classe = form.cleaned_data['classe']
+		request.session['classe'] = None if not classe else classe.pk
+	else:
+		try:
+			matiere = Matiere.objects.get(pk=request.session['matiere'])
+		except Exception:
+			matiere = None
+		try:
+			classe = Classe.objects.get(pk=request.session['classe'])
+		except Exception:
+			classe = None
+	form2 = SelectColleurForm(matiere,classe,request.POST if "modifier" in request.POST else None)
+	if form2.is_valid():
+		return redirect('dispo_modif', "-".join([str(colleur.pk) for colleur in form2.cleaned_data['colleur']]))
+	colleurs = Colleur.objects.select_related('user').prefetch_related('dispos').order_by('user__last_name','user__first_name')
+	return render(request,"secretariat/dispo.html",{'form':form,'form2':form2})
+
+@user_passes_test(is_secret, login_url='login_secret')
+def dispomodif(request,chaine_colleurs):
+	"""Renvoie la vue de la page de modification des disponibilités des colleurs dont l'id fait partie de chaine_colleurs"""
+	listeColleurs = Colleur.objects.filter(pk__in=[int(i) for i in chaine_colleurs.split("-")]).order_by('user__last_name','user__first_name').select_related('user')
+	Dispoformset = formset_factory(DispoForm,extra=0,max_num=listeColleurs.count(),formset=DispoFormSet)
+	if request.method == 'POST':
+		formset = Dispoformset(listeColleurs,request.POST)
+		if formset.is_valid():
+			formset.save()
+			return redirect('dispo')
+	else:
+		formset = Dispoformset(listeColleurs,initial=[{'dispo':[ 96*dispo.jour+dispo.heure for dispo in colleur.dispos.all()]} for colleur in listeColleurs])	
+	return render(request,'secretariat/dispomodif.html',{'formset':formset})
+
+@user_passes_test(is_secret, login_url='login_secret')
+def frequence(request):
+	"""Renvoie la vue de la page de gestion des fréquences des colles par matière/classe"""
+	frequences = []
+	for classe in Classe.objects.all():
+		frequences.append((classe,[(matiere,Frequence.objects.filter(classe=classe,matiere=matiere).first()) for matiere in classe.matieres.all()]))
+	return render(request,"secretariat/frequence.html",{'listefrequences':frequences})
+
+@user_passes_test(is_secret, login_url='login_secret')
+def frequencemodif(request,id_classe):
+	classe=get_object_or_404(Classe,pk=id_classe)
+	
+	initial = dict()
+	for matiere in Matiere.objects.filter(matieresclasse=classe,temps=20).order_by('nom'):
+		frequence = Frequence.objects.filter(matiere=matiere,classe=classe).first()
+		if frequence is not None:
+			initial[str(matiere.pk)] = frequence.frequence
+			initial[str(matiere.pk)+"_"] = frequence.repartition
+	form=FrequenceForm(classe,request.POST or None,initial=initial)
+	if form.is_valid():
+		form.save()
+		return redirect('frequence')
+	return render(request,'secretariat/frequencemodif.html',{'form':form,'classe':classe})
+
+@user_passes_test(is_secret, login_url='login_secret')
+def edt(request,semin,semax,chaine_classes):
+	semin=get_object_or_404(Semaine,pk=semin)
+	semax=get_object_or_404(Semaine,pk=semax)
+	classes = Classe.objects.filter(pk__in=[int(x) for x in chaine_classes.split("-")])
+	if not classes:
+		raise Http404
+	form = PlanificationForm(classes,semin,semax,request.POST or None)
+	if form.is_valid():
+		pass
+	return render(request,'secretariat/edt.html')
 
 @user_passes_test(is_secret, login_url='login_secret')
 def recapitulatif(request):

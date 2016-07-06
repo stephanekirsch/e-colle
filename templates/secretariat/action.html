@@ -3,12 +3,13 @@
 {% load customfilter %}
 {% block nav %}
 <div id="nav"> 
-	<ul id="menu">
+	<ul id="menu" style="position: relative;z-index: 10;">
 		<li><a href="{% url 'recapitulatif' %}" title="Récapitulatif des heures de colle">Récapitulatif</a></li>
 		<li><a href="{% url 'ramassage' %}" title="Ramassage des heures de colle">Ramassage</a></li>
-		<li><a href="{% url 'resultats_secret'%}">Résultats</a>
+		<li><a href="{% url 'planification' %}" title="Planification du colloscope">Planification</a></li>
+		<li><a href="{% url 'resultats_secret'%}" title="résultats par classe/matière des élèves">Résultats</a>
 		{% get_classes as classes %}
-		<li><a href="#">Colloscopes</a>
+		<li><a href="#" title="Colloscope des élève par classe">Colloscopes</a>
 			<ul>
 		{% for classe in classes %}
 				<li><a href="{% url 'colloscope_secret' classe.pk %}">{{classe.nom}}</a></li>
@@ -17,7 +18,7 @@
 		</li>
 		{% get_modifgroupe as modif %}
 		{% if modif %}
-		<li><a href="#">Groupes</a>
+		<li><a href="#" title="Gestion des groupes de colle">Groupes</a>
 			<ul>
 		{% for classe in classes %}
 				<li><a href="{% url 'groupe_secret' classe.pk %}">{{classe.nom}}</a></li>
@@ -27,7 +28,7 @@
 		{% endif %}
 		{% get_ects as ects %}
 		{% if ects %}
-		<li><a href="#">Crédits ECTS</a>
+		<li><a href="#" title="Gestion des crédits ECTS">Crédits ECTS</a>
 			<ul>
 		{% for classe in classes %}
 				<li><a href="{% url 'secret_ects_credits' classe.pk %}">{{classe.nom}}</a></li>

@@ -575,7 +575,8 @@ def creditsects(request,elev,classe):
 			for note in sem2:
 				data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[3],LIST_NOTES[note[4]]])
 				sp+=note[3]*note[4]
-				coeff+=note[3]
+				if note[4] !=5:
+					coeff+=note[3]
 			LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),.8,(0,0,0))
 										,('SPAN',(0,1),(2,1))
 										,('SPAN',(0,2+len(sem1)),(2,2+len(sem1)))
