@@ -7,7 +7,7 @@
 	{% if form.non_field_errors %}
 	<tr><td colspan="5">{{form.non_field_errors}}</td></tr>
 	{% endif %}
-	<tr class="entete"><td colspan="5">Notation groupe {{groupe}} {{groupe.classe}} en {{matiere}}</td></tr>
+	<tr class="entete"><td colspan="5">Notation groupe {{groupe}} {{groupe.classe}} en {{matiere,nom|title}}</td></tr>
 		<tr>
 			<td colspan="2">{{form.semaine.errors}}{{form.semaine.label_tag}}{{form.semaine}}</td>
 			<td>{{form.jour.errors}}{{form.jour.label_tag}}{{form.jour}}</td>

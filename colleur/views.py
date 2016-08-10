@@ -84,9 +84,18 @@ def note(request,id_classe):
 		raise Http404
 	groupes = Groupe.objects.filter(classe=classe).values('nom','pk').annotate(nb=Count('groupeeleve'))
 	nom_groupes = []
-	eleves_groupes = list(Eleve.objects.filter(classe=classe,groupe__isnull=False).values('pk','user__first_name','user__last_name').order_by('groupe__nom','user__last_name','user__first_name'))
+	eleves_groupes = list(Eleve.objects.filter(classe=classe,groupe__isnull=False).values('pk','user__first_name','user__last_name','lv1','lv2').order_by('groupe__nom','user__last_name','user__first_name'))
+	if matiere.lv == 0 :
+		for i in range(len(eleves_groupes)):
+			eleves_groupes[i]['lien'] = True
+	elif matiere.lv == 1:
+		for i in range(len(eleves_groupes)):
+			eleves_groupes[i]['lien'] = True if eleves_groupes[i]['lv1'] == matiere.pk else False
+	elif matiere.lv == 2:
+		for i in range(len(eleves_groupes)):
+			eleves_groupes[i]['lien'] = True if eleves_groupes[i]['lv2'] == matiere.pk else False
 	for value in groupes:
-		nom_groupes.append((value['nom'],value['pk'],value['nb'],[("{} {}".format(x['user__first_name'].title(),x['user__last_name'].upper()),x['pk']) for x in eleves_groupes[:value['nb']]]))
+		nom_groupes.append((value['nom'],value['pk'],value['nb'],[("{} {}".format(x['user__first_name'].title(),x['user__last_name'].upper()),x['pk'],x['lien']) for x in eleves_groupes[:value['nb']]],any(x['lien'] for x in eleves_groupes[:value['nb']])))
 		del eleves_groupes[:value['nb']]
 	eleves=Eleve.objects.filter(classe=classe,groupe__isnull=True).values('pk','user__first_name','user__last_name').order_by('user__last_name','user__first_name')
 	modulo = eleves.count() % 3
@@ -135,7 +144,12 @@ def noteGroupe(request,id_groupe,colle=None):
 	else:
 		matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
 		form=NoteGroupeForm(groupe,matiere,colleur,request.POST or None)
-	eleves=list(groupe.groupeeleve.all().select_related('user'))
+	if matiere.lv == 0:
+		eleves=list(Eleve.objects.filter(groupe=groupe))
+	elif matiere.lv == 1:
+		eleves=list(Eleve.objects.filter(groupe=groupe,lv1=matiere))
+	elif matiere.lv == 2:
+		eleves=list(Eleve.objects.filter(groupe=groupe,lv2=matiere))
 	eleves+=[None]*(3-len(eleves))
 	if form.is_valid():
 		form.save()
@@ -287,7 +301,7 @@ def groupe(request,id_classe):
 	if form.is_valid():
 		form.save()
 		return redirect('groupe_colleur', classe.pk)
-	return render(request,"colleur/groupe.html",{'classe':classe,'groupes':groupes,'form':form})
+	return render(request,"colleur/groupe.html",{'classe':classe,'groupes':groupes,'form':form,'hide':json.dumps([(eleve.id,"" if not eleve.lv1 else eleve.lv1.pk,"" if not eleve.lv2 else eleve.lv2.pk) for eleve in form.fields['eleve0'].queryset])})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def groupeSuppr(request,id_groupe):
@@ -318,7 +332,7 @@ def groupeModif(request,id_groupe):
 	if form.is_valid():
 		form.save()
 		return redirect('groupe_colleur', groupe.classe.pk)
-	return render(request,'colleur/groupeModif.html',{'form':form,'groupe':groupe})
+	return render(request,'colleur/groupeModif.html',{'form':form,'groupe':groupe,'hide':json.dumps([(eleve.id,"" if not eleve.lv1 else eleve.lv1.pk,"" if not eleve.lv2 else eleve.lv2.pk) for eleve in form.fields['eleve0'].queryset])})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def colloscope(request,id_classe):
@@ -347,16 +361,9 @@ def colloscope2(request,id_classe,id_semin,id_semax):
 	form=SemaineForm(request.POST or None,initial={'semin':semin,'semax':semax})
 	if form.is_valid():
 		return redirect('colloscope2_colleur',id_classe,form.cleaned_data['semin'].pk,form.cleaned_data['semax'].pk)
-	groupes = Groupe.objects.filter(classe=classe).values('nom','pk').annotate(nb=Count('groupeeleve'))
-	nom_groupes = []
-	eleves_groupes = list(Eleve.objects.filter(classe=classe,groupe__isnull=False).values('pk','user__first_name','user__last_name').order_by('groupe__nom','user__last_name','user__first_name'))
-	for value in groupes:
-		nom_groupes.append((value['pk'],(value['nom'],"; ".join(["{} {}".format(x['user__first_name'].title(),x['user__last_name'].upper()) for x in eleves_groupes[:value['nb']]]))))
-		del eleves_groupes[:value['nb']]
-	listegroupes = dict(nom_groupes)
 	jours,creneaux,colles,semaines=Colle.objects.classe2colloscope(classe,semin,semax)
 	return render(request,'colleur/colloscope.html',
-	{'semin':semin,'semax':semax,'form':form,'isprof':modifcolloscope(request.user.colleur,classe),'classe':classe,'jours':jours,'listegroupes':listegroupes,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'dictColleurs':classe.dictColleurs(semin,semax)})
+	{'semin':semin,'semax':semax,'form':form,'isprof':modifcolloscope(request.user.colleur,classe),'classe':classe,'jours':jours,'dictgroupes':classe.dictGroupes(),'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'dictColleurs':classe.dictColleurs(semin,semax)})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):
@@ -385,18 +392,19 @@ def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):
 			else:
 				form.save()
 		return redirect('colloscopemodif_colleur',classe.pk,semin.pk,semax.pk)
-	matieres = list(classe.matieres.filter(colleur__classes=classe).values_list('pk','nom','couleur','temps').annotate(nb=Count("colleur")))
+	matieres = list(classe.matieres.filter(colleur__classes=classe).values_list('pk','nom','couleur','temps','lv').annotate(nb=Count("colleur")))
 	colleurs = list(Classe.objects.filter(pk=classe.pk,matieres__colleur__classes=classe).values_list('matieres__colleur__pk','matieres__colleur__user__username','matieres__colleur__user__first_name','matieres__colleur__user__last_name').order_by("matieres__nom","matieres__colleur__user__last_name","matieres__colleur__user__first_name"))
+	groupes = Groupe.objects.filter(classe=classe)
+	matieresgroupes = [[groupe for groupe in groupes if groupe.haslangue(matiere)] for matiere in classe.matieres.filter(colleur__classes=classe)]
 	listeColleurs = []
 	for x in matieres:
-		listeColleurs.append(colleurs[:x[4]])
-		del colleurs[:x[4]]
-	groupes = Groupe.objects.filter(classe=classe)
+		listeColleurs.append(colleurs[:x[5]])
+		del colleurs[:x[5]]
 	largeur=str(650+42*creneaux.count())+'px'
 	hauteur=str(27*(len(matieres)+classe.classeeleve.count()+Colleur.objects.filter(classes=classe).count()))+'px'
 	return render(request,'colleur/colloscopeModif.html',
-	{'semin':semin,'semax':semax,'form1':form1,'form':form,'form2':form2,'largeur':largeur,'hauteur':hauteur,'groupes':groupes,'matieres':zip(matieres,listeColleurs),'creneau':creneaumodif\
-	,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'dictColleurs':classe.dictColleurs(semin,semax)})
+	{'semin':semin,'semax':semax,'form1':form1,'form':form,'form2':form2,'largeur':largeur,'hauteur':hauteur,'matieres':zip(matieres,listeColleurs,matieresgroupes,classe.loginMatiereEleves()),'creneau':creneaumodif\
+	,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'dictColleurs':classe.dictColleurs(semin,semax),'dictGroupes':json.dumps(classe.dictGroupes(False)),'dictEleves':json.dumps(classe.dictElevespk())})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def creneauSuppr(request,id_creneau,id_semin,id_semax):

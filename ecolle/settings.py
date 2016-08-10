@@ -19,11 +19,11 @@ IP_FILTRE_ADRESSES = ('^127\.0\.0\.1$',) # la liste des adresses autorisées pou
 
 MODIF_SECRETARIAT_COLLOSCOPE = True # True si on veut que le secrétariat ait les droits de modifier le colloscope, False sinon
 
-MODIF_PROF_COLLOSCOPE = False # si on veut que les profs aient les droits de modifier le colloscope, False sinon
+MODIF_PROF_COLLOSCOPE = True # si on veut que les profs aient les droits de modifier le colloscope, False sinon
 
 MODIF_SECRETARIAT_GROUPE = True # True si on veut que le secrétariat ait les droits de modifier le colloscope, False sinon
 
-MODIF_PROF_GROUPE = False # si on veut que les profs aient les droits de modifier les groupes de colle de sa classe, False sinon
+MODIF_PROF_GROUPE = True # si on veut que les profs aient les droits de modifier les groupes de colle de sa classe, False sinon
 
 ####################################### si MODIF_PROF_COLLOSCOPE vaut True: ##############################################################
 
@@ -159,6 +159,7 @@ INSTALLED_APPS = (
     'secretariat',
     'customfilter',
     'pdf',
+    'planification'
 )
 
 MIDDLEWARE_CLASSES = (

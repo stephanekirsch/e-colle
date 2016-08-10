@@ -30,6 +30,8 @@
 			<td>Date de naissance</td>
 			<td>n° INE</td>
 			<td>Classe</td>
+			<td>LV1</td>
+			<td>LV2</td>
 			<td>Photo</td>
 			<td>Modifier</td>
 			<td>Supprimer</td>
@@ -43,6 +45,8 @@
 			<td>{% if eleve.ddn %}{{eleve.ddn|date:'d/m/Y'}}{% endif %}</td>
 			<td>{% if eleve.ine %}{{eleve.ine}}{% endif %}</td>
 			<td>{{eleve.classe.nom}}</td>
+			<td>{% if eleve.lv1 %}{{eleve.lv1}}{% endif %}</td>
+			<td>{% if eleve.lv2 %}{{eleve.lv2}}{% endif %}</td>
 			<td>{% with eleve.photo as photo %}{% if photo %} <img alt="photo élève" class="photo" src="{{ photo.url }}"/>{% endif %} {% endwith %}</td>
 			<td><a class="bouton" href="{% url 'modif_eleve' eleve.pk %}">Modifier</a></td>
 			<td><a class="bouton" href="{% url 'suppr_eleve' eleve.pk %}">Supprimer</a></td>
@@ -53,6 +57,8 @@
 			<td colspan="2"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
 			<td colspan="2"><input type="submit" value="Modifier la sélection" name="modifier"/></td>
 			<td colspan="3"><input type="submit" value="Transférer la sélection en" name="transferer"/> {{ form2.klasse }}</td>
+			<td colspan="2"><input type="submit" value="passer la sélection en lv1" name="lv1"/>{{form2.lv1}}</td>
+			<td colspan="2"><input type="submit" value="passer la sélection en lv2" name="lv2"/>{{form2.lv2}}</td>
 		</tr>
 	</table>
 	</form>

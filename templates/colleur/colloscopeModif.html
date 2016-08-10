@@ -98,7 +98,7 @@
 <ul id="niveau2">
 	<li><a id="creneaux" href="false" style="background-color:#888888">creneaux multiples</a></li>
 	<li><a href="{% url 'ajaxeffacer_colleur' 'semaine' 'creneau' %}">Effacer</a></li>
-{% for matiere,colleurs in matieres %}
+{% for matiere,colleurs,groupes,loginsEleves in matieres %}
 	<li style="background-color:{{matiere.2}}">{{matiere.1|title}}
 		<ul class="niveau3">
 		{% for colleur in colleurs %}
@@ -110,7 +110,7 @@
 				{% endfor %}
 				{% elif matiere.3 == 30 %}
 				<ul class="niveau4">
-				{% for eleve,login in classe.loginsEleves %}
+				{% for eleve,login in loginsEleves %}
 					<li><a href="{% url 'ajax_colleur_eleve' matiere.0 colleur.0 eleve.pk 'semaine' 'creneau' login %}">{{eleve}} ({{login}})</a></li>
 				{% endfor %}
 				{% elif matiere.3 == 60 %}
@@ -127,6 +127,8 @@
 <div style="width:{{largeur}};height:{{hauteur}}"></div>
 <div id="grise">
 	<form method="POST" action="{% url 'ajaxmulti_colleur' 'matiere' 'kolleur' 'groupe' 'eleve' 'semaine' 'creneau' 'duree' 'frequence' 'permu' %}">
+	<input type="hidden" id="dictgroupes" value="{{dictGroupes}}"></input>
+	<input type="hidden" id="dicteleves" value="{{dictEleves}}"></input>
 	<table class="reservation">
 		{{form2.as_table}}
 		<tr><td colspan="2"><input type="submit" name="submit" value="Valider"/></td></tr>

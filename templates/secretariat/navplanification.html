@@ -2,6 +2,7 @@
 	<ul id="menu">
 		<li><a href="{% url 'dispo' %}" title="Gérer les disponibilités des colleurs">Disponibilités</a></li>
 		<li><a href="{% url 'frequence' %}" title="Gérer les fréquences des colles par matière dans chaque classe">Fréquences</a></li>
-		<li><a href="#" title="Lancer une planification du colloscope en fonction des contraintes fournies">Planifier</a></li>
+		<li><a href="{% url 'colles' %}" title="Gérer le nombre de colles par colleur et par classe">Colles</a></li>
+		<li><a href="{% url 'edt' %}" title="Lancer une planification du colloscope en fonction des contraintes fournies">Planifier</a></li>
 	</ul>
 </div>

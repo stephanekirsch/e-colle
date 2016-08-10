@@ -13,6 +13,30 @@ compat.onclick=function(){return false};
 var treleve = document.getElementById('id_eleve').parentNode.parentNode;
 var trgroupe = document.getElementById('id_groupe').parentNode.parentNode;
 var trpermu = document.getElementById('id_permutation').parentNode.parentNode;
+var dictgroupes = eval('('+document.getElementById('dictgroupes').value+')');
+var selectgroupe = trgroupe.firstElementChild.nextElementSibling.firstElementChild.cloneNode(true);
+var dictselectgroupe = new Object();
+for (var i in dictgroupes) {
+	dictselectgroupe[i] = selectgroupe.cloneNode(true);
+	for (var j = dictgroupes[i].length - 1; j >= 0; j--) {
+		if (!dictgroupes[i][j])
+		{
+			dictselectgroupe[i].removeChild(dictselectgroupe[i][j]);
+		}
+	}
+}
+var dicteleves = eval('('+document.getElementById('dicteleves').value+')');
+var selecteleve = treleve.firstElementChild.nextElementSibling.firstElementChild.cloneNode(true);
+var dictselecteleve = new Object();
+for (var i in dicteleves) {
+	dictselecteleve[i] = selecteleve.cloneNode(true);
+	for (var j = dicteleves[i].length - 1; j >= 0; j--) {
+		if (!dicteleves[i][j])
+		{
+			dictselecteleve[i].removeChild(dictselecteleve[i][j]);
+		}
+	}
+}
 var matieres = new Object();
 var temps = new Object();
 function videColleur()
@@ -50,12 +74,14 @@ function majColleur()
 						treleve.style.display="none";
 						trgroupe.style.display="table-row";
 						trpermu.style.display="table-row";
+						trgroupe.firstElementChild.nextElementSibling.replaceChild(dictselectgroupe[matiere],trgroupe.firstElementChild.nextElementSibling.firstElementChild);
 					}
 					else if (temps[matiere] == '30')
 					{
 						trgroupe.style.display="none";
 						treleve.style.display="table-row";
 						trpermu.style.display="table-row";
+						treleve.firstElementChild.nextElementSibling.replaceChild(dictselecteleve[matiere],treleve.firstElementChild.nextElementSibling.firstElementChild);
 					}
 					else if (temps[matiere] == '60')
 					{
@@ -87,12 +113,14 @@ function majColleur()
 			treleve.style.display="none";
 			trgroupe.style.display="table-row";
 			trpermu.style.display="table-row";
+			trgroupe.firstElementChild.nextElementSibling.replaceChild(dictselectgroupe[matiere],trgroupe.firstElementChild.nextElementSibling.firstElementChild);
 		}
 		else if (temps[matiere] == '30')
 		{
 			trgroupe.style.display="none";
 			treleve.style.display="table-row";
 			trpermu.style.display="table-row";
+			treleve.firstElementChild.nextElementSibling.replaceChild(dictselecteleve[matiere],treleve.firstElementChild.nextElementSibling.firstElementChild);
 		}
 		else if (temps[matiere] == '60')
 		{

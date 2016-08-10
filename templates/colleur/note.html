@@ -13,9 +13,9 @@
 	</tr>
 	{% for groupe in groupes %}
 	<tr {% cycle '' "class=plusclair" %}>
-		<td><a href="{% url 'notegroupe_colleur' groupe.1 %}">{{groupe.0}}</a></td>
+		<td>{% if groupe.4 %}<a href="{% url 'notegroupe_colleur' groupe.1 %}">{% endif %}{{groupe.0}}{% if groupe.4 %}</a>{% endif %}</td>
 		{% for eleve in groupe.3 %}
-		<td><a href="{% url 'noteeleve_colleur' eleve.1 classe.pk %}">{{eleve.0}}</a></td>
+		<td>{% if eleve.2 %}<a href="{% url 'noteeleve_colleur' eleve.1 classe.pk %}">{% endif %}{{eleve.0}}{% if eleve.2 %}</a>{% endif %}</td>
 		{% endfor %}
 		{% if groupe.2 < 3 %}<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td>
 		{% if groupe.2 < 2 %}<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td>

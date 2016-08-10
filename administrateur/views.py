@@ -324,7 +324,7 @@ def eleve(request):
 			classe = Classe.objects.get(pk=request.session['classe'])
 		except Exception:
 			classe = None
-	form2 = SelectEleveForm(classe,request.POST if ("supprimer" in request.POST or "modifier" in request.POST or "transferer" in request.POST) else None)
+	form2 = SelectEleveForm(classe,request.POST if ("supprimer" in request.POST or "modifier" in request.POST or "transferer" in request.POST or "lv1" in request.POST or "lv2" in request.POST) else None)
 	if form2.is_valid():
 		if "supprimer" in request.POST:
 			elevesPasSuppr = []
@@ -350,6 +350,20 @@ def eleve(request):
 				Groupe.objects.filter(pk__in=groupes).annotate(nb=Count('groupeeleve')).filter(nb=0).delete()
 			except Exception:
 				pass
+			return redirect('gestion_eleve')
+		elif "lv1" in request.POST:
+			# on commence par enlever les élèves dont la classe ne possède pas la langue en question, puis on met à jour la lv1
+			if form2.cleaned_data['lv1'] is not None:
+				form2.cleaned_data['eleve'].filter(classe__matieres=form2.cleaned_data['lv1']).update(lv1=form2.cleaned_data['lv1'])
+			else: # dans le cas contraire c'est qu'on remet à zéro la lv1
+				form2.cleaned_data['eleve'].update(lv1=None)
+			return redirect('gestion_eleve')
+		elif "lv2" in request.POST:
+			# on commence par enlever les élèves dont la classe ne possède pas la langue en question, puis on met à jour la lv1
+			if form2.cleaned_data['lv2'] is not None:
+				form2.cleaned_data['eleve'].filter(classe__matieres=form2.cleaned_data['lv2']).update(lv2=form2.cleaned_data['lv2'])
+			else: # dans le cas contraire c'est qu'on remet à zéro la lv1
+				form2.cleaned_data['eleve'].update(lv2=None)
 			return redirect('gestion_eleve')
 	return render (request,'administrateur/eleve.html',{'form':form,'form2':form2})
 
@@ -421,11 +435,15 @@ def elevemodif(request, chaine_eleves):
 					eleve.photo=None
 				eleve.ddn=form.cleaned_data['ddn']
 				eleve.ine=form.cleaned_data['ine']
+				eleve.lv1=form.cleaned_data['lv1']
+				eleve.lv2=form.cleaned_data['lv2']
 				user.save()
 				eleve.save()
 			return redirect('gestion_eleve')
 	else:
-		formset = EleveFormSet(initial=[{'nom':eleve.user.last_name,'prenom':eleve.user.first_name,'ine':eleve.ine,'ddn': None if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),'identifiant':eleve.user.username,'email':eleve.user.email,'classe':eleve.classe,'photo':eleve.photo} for eleve in listeEleves])	
+		formset = EleveFormSet(initial=[{'nom':eleve.user.last_name,'prenom':eleve.user.first_name,'ine':eleve.ine,\
+			'ddn': None if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),'identifiant':eleve.user.username,'email':eleve.user.email,\
+			'classe':eleve.classe,'photo':eleve.photo,'lv1':eleve.lv1,'lv2':eleve.lv2} for eleve in listeEleves])	
 	return render(request,'administrateur/elevemodif.html',{'formset':formset})
 
 @ip_filter
@@ -452,7 +470,7 @@ def eleveajout(request,initial=None):
 					user = User(first_name=form.cleaned_data['prenom'],last_name=form.cleaned_data['nom'],email=form.cleaned_data['email'])
 					user.set_password(form.cleaned_data['motdepasse'])
 					user.username=random_string()
-					eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'],ddn=form.cleaned_data['ddn'],ine=form.cleaned_data['ine'])
+					eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'],ddn=form.cleaned_data['ddn'],ine=form.cleaned_data['ine'],lv1=form.cleaned_data['lv1'],lv2=form.cleaned_data['lv2'])
 					eleve.save()
 					user.eleve=eleve
 					user.save()

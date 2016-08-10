@@ -98,7 +98,7 @@
 <ul id="niveau2">
 	<li><a id="creneaux" href="false" style="background-color:#888888">creneaux multiples</a></li>
 	<li><a href="{% url 'ajaxeffacer_secret' 'semaine' 'creneau' %}">Effacer</a></li>
-{% for matiere,colleurs in matieres %}
+{% for matiere,colleurs,groupes in matieres %}
 	<li style="background-color:{{matiere.2}}">{{matiere.1|title}}
 		<ul class="niveau3">
 		{% for colleur in colleurs %}

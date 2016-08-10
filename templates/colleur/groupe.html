@@ -31,6 +31,7 @@
 <form method="POST">
 {% csrf_token %}
 <table class="tableausimple">
+	<input type="hidden" id="hide" value="{{hide}}"></input>
 	{{ form.as_table }}
 	<tr><td colspan="2"><input type="submit"/></td></tr>
 </table>
@@ -38,4 +39,5 @@
 {% endblock %}
 {% block javascript %}
 <script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/groupelangue.js' %}"></script>
 {% endblock %}

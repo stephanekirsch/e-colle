@@ -16,12 +16,18 @@
 			{% if user.colleur %}
 			<ul class="accueil">
 				<li>{{user.first_name|title}}<br>{{user.last_name|upper}}</li>
-				{% for matiere in user.colleur.matieres.all %}<li> {% ifnotequal request.session.matiere matiere.pk %}<a href="{% url 'changemat_colleur' matiere.pk %}">{{matiere}}</a>{% else %}{{matiere}}{% endifnotequal %}</li>{% endfor %}
+				{% for matiere in user.colleur.matieres.all %}<li> {% ifnotequal request.session.matiere matiere.pk %}<a href="{% url 'changemat_colleur' matiere.pk %}">{{matiere.nom|title}}</a>{% else %}{{matiere.nom|title}}{% endifnotequal %}</li>{% endfor %}
 			</ul>
 			{% elif user.eleve %}
 			<ul class="accueil">
 				<li>{{user.first_name|title}}<br>{{user.last_name|upper}}</li>
 				<li>{{user.eleve.classe.nom}}</li>
+				{% if user.eleve.lv1 %}
+				<li>LV1: {{user.eleve.lv1.nom|title}}</li>
+				{% endif %}
+				{% if user.eleve.lv2 %}
+				<li>LV2: {{user.eleve.lv2.nom|title}}</li>
+				{% endif %}
 			</ul>
 			{% elif user.username == 'admin' %}
 			<ul class="accueil">

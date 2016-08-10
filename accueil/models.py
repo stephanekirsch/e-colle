@@ -59,15 +59,15 @@ class Matiere(models.Model):
 		('#1E90FF',"Bleu toile"),('#B0C4DE',"Bleu acier clair"),('#6495ED',"Bleuet"),('#4682B4',"Bleu acier"),('#4169E1',"Bleu royal"),('#0000FF',"Bleu"),('#0000CD',"Bleu moyen"),('#00008B',"Bleu foncé"),('#000080',"Bleu marin"),('#191970',"Bleu de minuit"),)
 	nom = models.CharField(max_length = 20)
 	couleur = models.CharField(max_length = 7, choices=LISTE_COULEURS, default='#696969')
-	CHOIX_TEMPS = ((20,'20 min'),(30,'30 min'),(60,'60 min (informatique)'))
+	CHOIX_TEMPS = ((20,'20 min (par groupe de 3)'),(30,'30 min (solo)'),(60,'60 min (informatique)'))
 	temps = models.PositiveSmallIntegerField(choices=CHOIX_TEMPS,verbose_name="minutes/colle/élève",default=20)
-	precision = models.CharField(verbose_name="Précision(facultatif)",max_length=10,null=True,blank=True)
+	lv = models.PositiveSmallIntegerField(verbose_name="Langue vivante",choices=enumerate(['---','LV1','LV2']),default=0)
 	class Meta:
-		ordering=['nom','precision']
-		unique_together=(('nom','precision'))
+		ordering=['nom','lv','temps']
+		unique_together=(('nom','lv','temps'))
 
 	def __str__(self):
-		return self.nom.title() + ('' if not self.precision else "({})".format(self.precision)) 
+		return self.nom.title() + "({})".format("/".join([str(self.temps)+"min"] + (["LV{}".format(self.lv)] if self.lv else []))) 
 
 class Classe(models.Model):
 	ANNEE_PREPA = ((1,"1ère année"),(2,"2ème année"),)
@@ -108,6 +108,28 @@ class Classe(models.Model):
 			lastlogin=login
 		self.listeLoginsEleves = list(zip(eleves,listeLogins))
 		return self.listeLoginsEleves
+
+	def loginMatiereEleves(self):
+		matiereeleves = []
+		listeEleves = self.loginsEleves()
+		for matiere in self.matieres.filter(colleur__classes=self).distinct():
+			if matiere.temps != 30:
+				matiereeleves.append(None)
+			elif not matiere.lv:
+				matiereeleves.append(listeEleves)
+			elif matiere.lv==1:
+				listeTemp=listeEleves.copy()
+				for i in range(len(listeTemp)-1,-1,-1):
+					if listeTemp[i][0].lv1 != matiere:
+						listeTemp.pop(i)
+				matiereeleves.append(listeTemp)
+			elif matiere.lv==2:
+				listeTemp=listeEleves.copy()
+				for i in range(len(listeTemp)-1,-1,-1):
+					if listeTemp[i][0].lv2 != matiere:
+						listeTemp.pop(i)
+				matiereeleves.append(listeTemp)
+		return matiereeleves
 
 	def dictEleves(self):
 		"""renvoie un dictionnaire dont les clés sont les id des élèves de la classe, et les valeurs le login correspondant"""
@@ -171,14 +193,51 @@ class Classe(models.Model):
 			setattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk),dictColleurs)
 			return getattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk))
 
+	def dictGroupes(self,noms=True):
+		dictgroupes = dict()
+		if noms:
+			groupes = Groupe.objects.filter(classe=self).prefetch_related('groupeeleve','groupeeleve__user')
+			listegroupes = {groupe.pk: (groupe.nom,"; ".join(["{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper()) for eleve in groupe.groupeeleve.all()])) for groupe in groupes}
+			for matiere in self.matieres.filter(temps=20):
+				if matiere.lv == 0:
+					dictgroupes[matiere.pk] = listegroupes
+				elif matiere.lv == 1:
+					dictgroupes[matiere.pk] = {groupe.pk: (groupe.nom,"; ".join(["{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper()) for eleve in groupe.groupeeleve.all() if eleve.lv1==matiere])) for groupe in groupes}
+				elif matiere.lv == 2:
+					dictgroupes[matiere.pk] = {groupe.pk: (groupe.nom,"; ".join(["{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper()) for eleve in groupe.groupeeleve.all() if eleve.lv2==matiere])) for groupe in groupes}
+		else:
+			groupes = Groupe.objects.filter(classe=self)
+			listegroupes = [True]*groupes.count()
+			for matiere in self.matieres.filter(temps=20):
+				if matiere.lv == 0:
+					dictgroupes[matiere.pk] = listegroupes
+				elif matiere.lv == 1:
+					dictgroupes[matiere.pk] = [any(eleve.lv1==matiere for eleve in groupe.groupeeleve.all()) for groupe in groupes]
+				elif matiere.lv == 2:
+					dictgroupes[matiere.pk] = [any(eleve.lv2==matiere for eleve in groupe.groupeeleve.all()) for groupe in groupes]
+		return dictgroupes
+
+	def dictElevespk(self):
+		dictEleves = dict()
+		listeEleves = [True]*Eleve.objects.filter(classe=self).count()
+		for matiere in self.matieres.filter(temps=30):
+			if matiere.lv == 0:
+				dictEleves[matiere.pk] = listeEleves
+			elif matiere.lv == 1:
+				dictEleves[matiere.pk] = [eleve.lv1 == matiere for eleve in Eleve.objects.filter(classe=self)]
+			elif matiere.lv == 2:
+				dictEleves[matiere.pk] = [eleve.lv2 == matiere for eleve in Eleve.objects.filter(classe=self)]
+		return dictEleves
+
 class Frequence(models.Model):
-	classe = models.ForeignKey(Classe,verbose_name="Classe",on_delete=models.CASCADE)
+	classe = models.ForeignKey(Classe,verbose_name="Classe",on_delete=models.CASCADE,related_name="classefrequence")
 	matiere = models.ForeignKey(Matiere,verbose_name="Matière",on_delete=models.CASCADE)
 	frequence = models.PositiveSmallIntegerField(verbose_name="Fréquence des colles par élève")
 	repartition = models.BooleanField(verbose_name="Tous les groupes sur une semaine")
+	premiere = models.PositiveSmallIntegerField(verbose_name="Première semaine (si regroupés)")
 
 	def __str__(self):
-		return "{} colle par semaine".format(Fraction(self.frequence,24)) + ("(regroupés)" if self.repartition else "")
+		return "{} colle par semaine".format(Fraction(self.frequence,24)) + (" / regroupés" if self.repartition else "") + " / débute semaine {}".format(self.premiere)
 
 class Etablissement(models.Model):
 	nom = models.CharField(max_length = 50, unique=True)
@@ -187,12 +246,20 @@ class Etablissement(models.Model):
 		return self.nom
 
 class Groupe(models.Model):
-	nom = models.CharField(max_length = 10)
+	nom = models.CharField(max_length = 2)
 	classe = models.ForeignKey(Classe,related_name="classegroupe", on_delete=models.PROTECT)
 
 	class Meta:
 		unique_together=('nom','classe')
 		ordering=['nom']
+
+	def haslangue(self,matiere):
+		if not matiere.lv:
+			return True
+		if matiere.lv == 1:
+			return Eleve.objects.filter(groupe=self,lv1=matiere).exists()
+		if matiere.lv == 2:
+			return Eleve.objects.filter(groupe=self,lv2=matiere).exists()
 
 	def __str__(self):
 		return self.nom
@@ -236,6 +303,27 @@ class Colleur(models.Model):
 			return "{} {}".format(self.user.first_name.title(),self.user.last_name.upper())
 		return ""
 
+class ColleurgroupeManager(models.Manager):
+	def liste(self):
+		classes = []
+		for classe in Classe.objects.all():
+			nbclasses = Groupe.objects.filter(classe=classe).count()
+			matieres=[]
+			for matiere in classe.matieres.filter(temps=20):
+				colleurs = self.filter(classe=classe,matiere=matiere).select_related('colleur__user').order_by('colleur__user__last_name','colleur__user__first_name')
+				matieres.append((matiere,colleurs,max(1,colleurs.count())))
+			classes.append((classe,matieres,sum(x[2] for x in matieres),nbclasses))
+		return classes
+
+
+class Colleurgroupe(models.Model):
+	colleur = models.ForeignKey(Colleur,verbose_name="Colleur",on_delete=models.CASCADE)
+	matiere = models.ForeignKey(Matiere,verbose_name="Matière",on_delete=models.CASCADE)
+	classe = models.ForeignKey(Classe,verbose_name="Classe",on_delete=models.CASCADE)
+	nbgroupes = models.PositiveSmallIntegerField(verbose_name="Nombre de groupes")
+	objects = ColleurgroupeManager()
+
+
 class ProfManager(models.Manager):
 	def listeprofs(self):
 		for classe in Classe.objects.all().select_related('profprincipal__user'):
@@ -276,6 +364,8 @@ class Eleve(models.Model):
 	photo = models.ImageField(verbose_name="photo(jpg/png, 300x400)",upload_to=update_photo,null=True,blank=True)
 	ddn = models.DateField(verbose_name="Date de naissance",null=True,blank=True)
 	ine = models.CharField(verbose_name="numéro étudiant (INE)",max_length=11,null=True,blank=True)
+	lv1 = models.ForeignKey(Matiere,related_name='elevelv1',null=True,blank=True)
+	lv2 = models.ForeignKey(Matiere,related_name='elevelv2',null=True,blank=True)
 
 	class Meta:
 		ordering=['user__last_name','user__first_name']
@@ -519,7 +609,7 @@ class ColleManager(models.Manager):
 		return jours,creneaux,colles,semaines
 
 	def agenda(self,colleur,semainemin):
-		requete = "SELECT COUNT(n.id) nbnotes, co.id pk, g.nom nom_groupe, g.id id_groupe, cl.nom nom_classe, s.lundi lundi, s.id, cr.jour jour,cr.heure heure, cr.salle salle, m.id, m.nom nom_matiere, m.couleur couleur, m.precision prec, m.temps temps, u.first_name prenom, u.last_name nom, u2.first_name prenom_eleve, u2.last_name nom_eleve, p.titre titre, p.detail detail, p.fichier fichier\
+		requete = "SELECT COUNT(n.id) nbnotes, co.id pk, g.nom nom_groupe, g.id id_groupe, cl.nom nom_classe, s.lundi lundi, s.id, cr.jour jour,cr.heure heure, cr.salle salle, m.id, m.nom nom_matiere, m.couleur couleur, m.lv lv, m.temps temps, u.first_name prenom, u.last_name nom, u2.first_name prenom_eleve, u2.last_name nom_eleve, p.titre titre, p.detail detail, p.fichier fichier\
 				   FROM accueil_colle co\
 				   INNER JOIN accueil_creneau cr\
 				   ON co.creneau_id = cr.id\
@@ -544,17 +634,15 @@ class ColleManager(models.Manager):
 				   LEFT OUTER JOIN accueil_note n\
 				   ON n.matiere_id = m.id AND n.colleur_id = c.id AND n.semaine_id=s.id AND n.jour = cr.jour\
 				   WHERE c.id=%s AND s.lundi >= %s\
-				   GROUP BY co.id, g.nom, g.id, cl.nom, s.lundi, s.id, cr.jour, cr.heure, cr.salle, m.id, m.nom, m.couleur, u.first_name, u.last_name, u2.first_name, u2.last_name, p.titre, p.detail, p.fichier\
+				   GROUP BY co.id, g.nom, g.id, cl.nom, s.lundi, s.id, cr.jour, cr.heure, cr.salle, m.id, m.nom, m.couleur, m.lv, m.temps, u.first_name, u.last_name, u2.first_name, u2.last_name, p.titre, p.detail, p.fichier\
 				   ORDER BY s.lundi,cr.jour,cr.heure"
 		with connection.cursor() as cursor:
 			cursor.execute(requete,(colleur.pk,semainemin))
 			colles = dictfetchall(cursor)
-		groupesnb = self.filter(colleur=colleur,semaine__lundi__gte=semainemin).values('groupe').annotate(nb=Count('groupe__groupeeleve',distinct=True)).order_by('groupe__pk')
-		groupeseleve = list(self.filter(colleur=colleur,semaine__lundi__gte=semainemin).values('groupe__groupeeleve__user__first_name','groupe__groupeeleve__user__last_name').distinct().order_by('groupe__pk','groupe__groupeeleve__user__last_name','groupe__groupeeleve__user__first_name'))
-		groupes = dict()
-		for groupe in groupesnb:
-			groupes[groupe['groupe']] = "; ".join(["{} {}".format(x['groupe__groupeeleve__user__first_name'].title(),x['groupe__groupeeleve__user__last_name'].upper()) for x in groupeseleve[:groupe['nb']]])
-			del groupeseleve[:groupe['nb']]
+		groupeseleve = self.filter(colleur=colleur,semaine__lundi__gte=semainemin,matiere__temps=20).select_related('matiere').prefetch_related('groupe__groupeeleve','groupe__groupeeleve__user')
+		groupes = {}
+		for colle in groupeseleve:
+			groupes[colle.pk] = "; ".join(["{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper()) for eleve in colle.groupe.groupeeleve.all() if not colle.matiere.lv or colle.matiere.lv==1 and eleve.lv1 == colle.matiere or colle.matiere.lv==2 and eleve.lv2 == colle.matiere])
 		return groupes, colles
 
 	def agendaEleve(self,eleve,semainemin):
@@ -573,7 +661,7 @@ class ColleManager(models.Manager):
 				   LEFT OUTER JOIN accueil_groupe g\
 				   ON co.groupe_id = g.id\
 				   INNER JOIN accueil_eleve e\
-				   ON (e.groupe_id = g.id OR e.id=co.eleve_id)\
+				   ON e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id) OR e.id=co.eleve_id\
 				   LEFT OUTER JOIN accueil_programme p\
 				   ON (p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = %s)\
 				   WHERE e.id=%s AND s.lundi >= %s\

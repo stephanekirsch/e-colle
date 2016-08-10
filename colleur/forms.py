@@ -51,7 +51,12 @@ class NoteGroupeForm(forms.Form):
 		LISTE_NOTE=[('',"---"),(21,"n.n"),(22,"Abs")]
 		LISTE_NOTE.extend(zip(range(21),range(21)))
 		LISTE_NOTE_NULL=[('',"---"),(21,"n.n")]
-		nbeleves = groupe.groupeeleve.count()
+		if matiere.lv == 0:
+			nbeleves = groupe.groupeeleve.count()
+		elif matiere.lv == 1:
+			nbeleves = Eleve.objects.filter(groupe=groupe,lv1=matiere).count()
+		elif matiere.lv == 2:
+			nbeleves = Eleve.objects.filter(groupe=groupe,lv2=matiere).count()
 		self.fields['semaine']=forms.ModelChoiceField(label="Semaine",queryset=Semaine.objects.all(), empty_label=None)
 		self.fields['jour']=forms.ChoiceField(label="Jour",choices=LISTE_JOUR)
 		self.fields['heure']=forms.ChoiceField(label="Heure",choices=LISTE_HEURE)
@@ -91,6 +96,10 @@ class ProgrammeForm(forms.ModelForm):
 		model = Programme
 		fields=['semaine','titre','detail','fichier']
 
+class MatiereChoiceField(forms.ModelChoiceField):
+	def label_from_instance(self,matiere):
+		return matiere.nom.title()
+
 class GroupeForm(forms.Form):
 	def __init__(self,classe,groupe, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -100,11 +109,17 @@ class GroupeForm(forms.Form):
 			query=Eleve.objects.filter(groupe__isnull=True,classe=classe).select_related('user')
 		else:
 			query=Eleve.objects.filter(classe=classe).filter(Q(groupe__isnull=True)|Q(groupe=groupe)).select_related('user')
-		self.fields['nom'] = forms.CharField(label="nom")
+		self.fields['nom'] = forms.ChoiceField(label="nom",choices=zip(range(1,21),range(1,21)))
 		self.fields['eleve0'] = forms.ModelChoiceField(label="Premier élève",queryset=query,empty_label="Élève fictif",required=True)
 		self.fields['eleve1'] = forms.ModelChoiceField(label="Deuxième élève",queryset=query,empty_label="Élève fictif",required=False)
 		self.fields['eleve2'] = forms.ModelChoiceField(label="Troisième élève",queryset=query,empty_label="Élève fictif",required=False)
-
+		query = Matiere.objects.filter(matieresclasse=classe,lv=1).distinct()
+		if query.count()>1:
+			self.fields['lv1'] = MatiereChoiceField(label="LV1",queryset=query,empty_label="Tout",required=False)
+		query = Matiere.objects.filter(matieresclasse=classe,lv=2).distinct()
+		if query.count()>1:
+			self.fields['lv2'] = MatiereChoiceField(label="LV2",queryset=query,empty_label="Tout",required=False)
+		
 	def clean_nom(self):
 		"""Validation du champ nom (unicité pour une classe donnée)"""
 		data = self.cleaned_data['nom']

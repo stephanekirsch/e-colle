@@ -6,9 +6,9 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from administrateur.forms import AdminConnexionForm, SelectColleurForm, MatiereClasseSelectForm as ClasseMatiereSelectForm
 from colleur.forms import SemaineForm, ECTSForm, CreneauForm, ColleForm, GroupeForm
-from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSelectForm, MatiereClasseSemaineSelectForm, SelectClasseSemaineForm, DispoForm, DispoFormSet, FrequenceForm
+from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSelectForm, MatiereClasseSemaineSelectForm, SelectClasseSemaineForm, DispoForm, DispoFormSet, FrequenceForm, ColleurgroupeForm, ColleurgroupeFormSet, PlanificationForm
 from django.forms.formsets import formset_factory
-from accueil.models import Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois, NoteECTS, JourFerie, Frequence
+from accueil.models import Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois, NoteECTS, JourFerie, Frequence, Colleurgroupe
 from django.db.models import Count, F
 from datetime import date, timedelta
 from django.http import Http404, HttpResponse
@@ -20,6 +20,7 @@ from lxml import etree
 from ecolle.settings import RESOURCES_ROOT, MODIF_SECRETARIAT_COLLOSCOPE, MODIF_SECRETARIAT_GROUPE
 import csv
 import json
+from planification.planification import planif
 
 def is_secret(user):
 	"""Renvoie True si l'utilisateur est le secrétariat, False sinon"""
@@ -147,16 +148,9 @@ def colloscope2(request,id_classe,id_semin,id_semax):
 	form=SemaineForm(request.POST or None,initial={'semin':semin,'semax':semax})
 	if form.is_valid():
 		return redirect('colloscope2_secret',id_classe,form.cleaned_data['semin'].pk,form.cleaned_data['semax'].pk)
-	groupes = Groupe.objects.filter(classe=classe).values('nom','pk').annotate(nb=Count('groupeeleve'))
-	nom_groupes = []
-	eleves_groupes = list(Eleve.objects.filter(classe=classe,groupe__isnull=False).values('pk','user__first_name','user__last_name').order_by('groupe__nom','user__last_name','user__first_name'))
-	for value in groupes:
-		nom_groupes.append((value['pk'],(value['nom'],"; ".join(["{} {}".format(x['user__first_name'].title(),x['user__last_name'].upper()) for x in eleves_groupes[:value['nb']]]))))
-		del eleves_groupes[:value['nb']]
-	listegroupes = dict(nom_groupes)
 	jours,creneaux,colles,semaines=Colle.objects.classe2colloscope(classe,semin,semax)
 	return render(request,'secretariat/colloscope.html',
-	{'semin':semin,'semax':semax,'form':form,'classe':classe,'jours':jours,'listegroupes':listegroupes,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'classes':Classe.objects.all(),'dictColleurs':classe.dictColleurs(semin,semax),'modif':MODIF_SECRETARIAT_COLLOSCOPE})
+	{'semin':semin,'semax':semax,'form':form,'classe':classe,'jours':jours,'dictgroupes':classe.dictGroupes(),'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'classes':Classe.objects.all(),'dictColleurs':classe.dictColleurs(semin,semax),'modif':MODIF_SECRETARIAT_COLLOSCOPE})
 
 @user_passes_test(is_secret, login_url='login_secret')
 def colloscopePdf(request,id_classe,id_semin,id_semax):
@@ -193,15 +187,16 @@ def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):
 		return redirect('colloscopemodif_secret',classe.pk,semin.pk,semax.pk)
 	matieres = list(classe.matieres.filter(colleur__classes=classe).values_list('pk','nom','couleur','temps').annotate(nb=Count("colleur")))
 	colleurs = list(Classe.objects.filter(pk=classe.pk,matieres__colleur__classes=classe).values_list('matieres__colleur__pk','matieres__colleur__user__username','matieres__colleur__user__first_name','matieres__colleur__user__last_name').order_by("matieres__nom","matieres__colleur__user__last_name","matieres__colleur__user__first_name"))
+	groupes = Groupe.objects.filter(classe=classe)
+	matieresgroupes = [[groupe for groupe in groupes if groupe.haslangue(matiere)] for matiere in classe.matieres.filter(colleur__classes=classe)]
 	listeColleurs = []
 	for x in matieres:
 		listeColleurs.append(colleurs[:x[4]])
 		del colleurs[:x[4]]
-	groupes = Groupe.objects.filter(classe=classe)
 	largeur=str(650+42*creneaux.count())+'px'
 	hauteur=str(27*(len(matieres)+classe.classeeleve.count()+Colleur.objects.filter(classes=classe).count()))+'px'
 	return render(request,'secretariat/colloscopeModif.html',
-	{'semin':semin,'semax':semax,'form1':form1,'form':form,'form2':form2,'largeur':largeur,'hauteur':hauteur,'groupes':groupes,'matieres':zip(matieres,listeColleurs),'creneau':creneaumodif\
+	{'semin':semin,'semax':semax,'form1':form1,'form':form,'form2':form2,'largeur':largeur,'hauteur':hauteur,'groupes':groupes,'matieres':zip(matieres,listeColleurs,matieresgroupes),'creneau':creneaumodif\
 	,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'dictColleurs':classe.dictColleurs(semin,semax)})
 
 @user_passes_test(is_secret, login_url='accueil')
@@ -463,9 +458,8 @@ def frequence(request):
 @user_passes_test(is_secret, login_url='login_secret')
 def frequencemodif(request,id_classe):
 	classe=get_object_or_404(Classe,pk=id_classe)
-	
 	initial = dict()
-	for matiere in Matiere.objects.filter(matieresclasse=classe,temps=20).order_by('nom'):
+	for matiere in Matiere.objects.filter(matieresclasse=classe,temps=20).order_by('nom','precision'):
 		frequence = Frequence.objects.filter(matiere=matiere,classe=classe).first()
 		if frequence is not None:
 			initial[str(matiere.pk)] = frequence.frequence
@@ -477,16 +471,37 @@ def frequencemodif(request,id_classe):
 	return render(request,'secretariat/frequencemodif.html',{'form':form,'classe':classe})
 
 @user_passes_test(is_secret, login_url='login_secret')
-def edt(request,semin,semax,chaine_classes):
-	semin=get_object_or_404(Semaine,pk=semin)
-	semax=get_object_or_404(Semaine,pk=semax)
-	classes = Classe.objects.filter(pk__in=[int(x) for x in chaine_classes.split("-")])
-	if not classes:
-		raise Http404
-	form = PlanificationForm(classes,semin,semax,request.POST or None)
+def colles(request):
+	classes = Colleurgroupe.objects.liste()
+	return render(request,"secretariat/colles.html",{'classes':classes})
+
+@user_passes_test(is_secret, login_url='login_secret')
+def collesmodif(request,id_classe):
+	classe = get_object_or_404(Classe,pk=id_classe)
+	Colleurgroupeformset = formset_factory(ColleurgroupeForm,extra=0,max_num=classe.matieres.filter(temps=20).count(),formset=ColleurgroupeFormSet)
+	if request.method == 'POST':
+		formset = Colleurgroupeformset(classe,request.POST)
+		if formset.is_valid():
+			formset.save()
+			return redirect('colles')
+	else:
+		initial=[]
+		for matiere in classe.matieres.filter(temps=20):
+			groupes = dict()
+			for colleur in Colleur.objects.filter(classes=classe,matieres=matiere):
+				groupe = Colleurgroupe.objects.filter(classe=classe,matiere=matiere,colleur=colleur).first()
+				if groupe:
+					groupes[str(colleur.pk)] = groupe.nbgroupes
+			initial.append(groupes)
+		formset = Colleurgroupeformset(classe,initial=initial)	
+	return render(request,"secretariat/collesmodif.html",{'formset':formset,'classe':classe})
+
+@user_passes_test(is_secret, login_url='login_secret')
+def edt(request):
+	form = PlanificationForm(request.POST or None)
 	if form.is_valid():
-		pass
-	return render(request,'secretariat/edt.html')
+		succes = planif(form.cleaned_data['semin'],form.cleaned_data['semax'],form.cleaned_data['classes'])
+	return render(request,'secretariat/edt.html',{'form':form})
 
 @user_passes_test(is_secret, login_url='login_secret')
 def recapitulatif(request):
@@ -616,7 +631,7 @@ def groupe(request,id_classe):
 	if form.is_valid():
 		form.save()
 		return redirect('groupe_secret', classe.pk)
-	return render(request,"secretariat/groupe.html",{'classe':classe,'groupes':groupes,'form':form})
+	return render(request,"secretariat/groupe.html",{'classe':classe,'groupes':groupes,'form':form,'hide':json.dumps([(eleve.id,"" if not eleve.lv1 else eleve.lv1.pk,"" if not eleve.lv2 else eleve.lv2.pk) for eleve in form.fields['eleve0'].queryset])})
 
 @user_passes_test(is_secret, login_url='accueil')
 def groupeSuppr(request,id_groupe):
@@ -642,7 +657,7 @@ def groupeModif(request,id_groupe):
 	if form.is_valid():
 		form.save()
 		return redirect('groupe_secret', groupe.classe.pk)
-	return render(request,'secretariat/groupeModif.html',{'form':form,'groupe':groupe})
+	return render(request,'secretariat/groupeModif.html',{'form':form,'groupe':groupe,'hide':json.dumps([(eleve.id,"" if not eleve.lv1 else eleve.lv1.pk,"" if not eleve.lv2 else eleve.lv2.pk) for eleve in form.fields['eleve0'].queryset])})
 
 @user_passes_test(is_secret, login_url='login_secret')
 def ectscredits(request,id_classe,form=None):

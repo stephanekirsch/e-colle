@@ -2,23 +2,13 @@
 {% load static %}
 {% load customfilter %}
 {% block body %}
-<table class="accueil"><tr><td>Planification des colles pour les classes {{classes}} </td></tr></table>
+{% include "secretariat/navplanification.html" %}
+<table class="accueil"><tr><td>Planification des colles</td></tr></table>
 <form method="post">
-	<table class="tableausimple">
-	<tr><td colspan="2">Précisez toutes les contraintes demandées puis validez pour avoir une proposition de colloscope</td></tr>
-	<tr>
-		<th>Colleur</th>
-		<th>Disponibilités</th>
-	</tr>
 	{% csrf_token %}
-	{% for i,field in form %}
-	<tr>
-		<th>{{ field.label_tag }}{{field.errors}}</th>
-		<td>{% for widget in field %}{{widget}}{% endfor %}</td>
-	</tr>
-	{% endfor %}
+	<table class="tableausimple">
+	{{form.as_table}}
 	<tr><td colspan="2"><input type="submit"/></td></tr>
-	}
-</table>
+	</table>
 </form>
 {% endblock %}

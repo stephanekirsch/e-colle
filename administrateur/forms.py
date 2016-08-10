@@ -86,11 +86,11 @@ class ClasseGabaritForm(forms.ModelForm):
 			nouvelleClasse.save() # on la sauvegarde
 			listeMatieres=[]
 			for matiere in list(classe):# on parcourt les matières du gabarit de la classe
-				query = Matiere.objects.filter(nom__iexact=matiere.get('nom'),temps=int(matiere.get("temps")),precision=matiere.get('precision'))
+				query = Matiere.objects.filter(nom__iexact=matiere.get('nom'),temps=int(matiere.get("temps")),lv=int(matiere.get('lv') or 0))
 				if query.exists():
 					matiere = query[0]
 				else:
-					matiere = Matiere(nom=matiere.get("nom"),temps=matiere.get("temps"),precision=matiere.get('precision'),couleur=choice(list(zip(*Matiere.LISTE_COULEURS))[0]))
+					matiere = Matiere(nom=matiere.get("nom"),temps=matiere.get("temps"),lv=(matiere.get('lv') or 0),couleur=choice(list(zip(*Matiere.LISTE_COULEURS))[0]))
 					matiere.save()
 				listeMatieres.append(matiere)
 			nouvelleClasse.matieres.add(*listeMatieres)
@@ -100,12 +100,7 @@ class ClasseGabaritForm(forms.ModelForm):
 class MatiereForm(forms.ModelForm):
 	class Meta:
 		model = Matiere
-		fields=['nom','precision','couleur','temps']
-
-	def save(self):
-		if self.cleaned_data['precision'].strip() == "": # si pas de précision on veut NULL et non une chaîne vide.
-			self.instance.precision=None
-		super().save()
+		fields=['nom','lv','couleur','temps']
 
 class EtabForm(forms.ModelForm):
 	class Meta:
@@ -178,6 +173,8 @@ class EleveForm(forms.Form):
 	email = forms.EmailField(label="Email(Facultatif)",max_length=50,required=False)
 	photo = forms.ImageField(label="photo(jpg/png, 300x400)",required=False)
 	classe = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
+	lv1 = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=1).order_by('nom'),empty_label='----',required=False)
+	lv2 = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=2).order_by('nom'),empty_label='----',required=False)
 
 	def clean_motdepasse(self):
 		user=User()
@@ -188,6 +185,21 @@ class EleveForm(forms.Form):
 		data = self.cleaned_data['motdepasse']
 		if data:
 			validate_password(data,user)
+		return data
+
+	def clean_lv1(self):
+		data = self.cleaned_data['lv1']
+		if data is not None:
+			print(self.cleaned_data)
+			if data not in self.cleaned_data['classe'].matieres.all():
+				raise ValidationError("Cette langue ne fait pas partie des matières de cette classe")
+		return data
+
+	def clean_lv2(self):
+		data = self.cleaned_data['lv2']
+		if data is not None:
+			if data not in self.cleaned_data['classe'].matieres.all():
+				raise ValidationError("Cette langue ne fait pas partie des matières de cette classe")
 		return data
 
 	def clean_ine(self): # validation du numéro étudiant
@@ -214,6 +226,23 @@ class EleveFormMdp(forms.Form):
 	ine = forms.CharField(label="N° étudiant INE (pour ECTS, facultatif)",required=False,max_length=11)
 	photo = forms.ImageField(label="photo(jpg/png, 300x400)",required=False)
 	classe = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
+	lv1 = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=1).order_by('nom'),empty_label='----',required=False)
+	lv2 = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=2).order_by('nom'),empty_label='----',required=False)
+
+	def clean_lv1(self):
+		data = self.cleaned_data['lv1']
+		if data is not None:
+			print(self.cleaned_data)
+			if data not in self.cleaned_data['classe'].matieres.all():
+				raise ValidationError("Cette langue ne fait pas partie des matières de cette classe")
+		return data
+
+	def clean_lv2(self):
+		data = self.cleaned_data['lv2']
+		if data is not None:
+			if data not in self.cleaned_data['classe'].matieres.all():
+				raise ValidationError("Cette langue ne fait pas partie des matières de cette classe")
+		return data
 
 	def clean_motdepasse(self):
 		user=User()
@@ -297,6 +326,8 @@ class SelectEleveForm(forms.Form):
 		self.fields['eleve'].empty_label=None
 		self.fields['klasse'] = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),required=False)
 		self.fields['klasse'].empty_label=None
+		self.fields['lv1'] = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=1).order_by('nom'),required=False)
+		self.fields['lv2'] = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=2).order_by('nom'),required=False)
 
 class ClasseSelectForm(forms.Form):
 	query=Classe.objects.order_by('nom')
