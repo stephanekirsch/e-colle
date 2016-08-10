@@ -564,13 +564,23 @@ def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_el
 		return HttpResponseForbidden("Accès non autorisé")
 	numsemaine=semaine.numero
 	if matiere.temps == 20:
-		groupeseleves=list(Groupe.objects.filter(classe=creneau.classe).order_by('nom'))
+		if matiere.lv == 0:
+			groupeseleves=list(Groupe.objects.filter(classe=creneau.classe).order_by('nom'))
+		elif matiere.lv == 1:
+			groupeseleves=list(Groupe.objects.filter(classe=creneau.classe,groupeeleve__lv1=matiere).distinct().order_by('nom'))
+		elif matiere.lv == 2:
+			groupeseleves=list(Groupe.objects.filter(classe=creneau.classe,groupeeleve__lv2=matiere).distinct().order_by('nom'))
 		rang=groupeseleves.index(groupe)
 	elif matiere.temps == 30:
-		groupeseleves=list(Eleve.objects.filter(classe=creneau.classe))
+		if matiere.lv == 0:
+			groupeseleves=list(Eleve.objects.filter(classe=creneau.classe))
+		elif matiere.lv == 1:
+			groupeseleves=list(Eleve.objects.filter(classe=creneau.classe,lv1=matiere))
+		elif matiere.lv == 2:
+			groupeseleves=list(Eleve.objects.filter(classe=creneau.classe,lv2=matiere))
 		rang=groupeseleves.index(eleve)
 	i=0
-	creneaux={'creneau':creneau.pk,'couleur':matiere.couleur,'colleur':colleur.user.username}
+	creneaux={'creneau':creneau.pk,'couleur':matiere.couleur,'colleur':creneau.classe.dictColleurs()[colleur.pk]}
 	creneaux['semgroupe']=[]
 	feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
 	if matiere.temps == 20:
