@@ -149,8 +149,8 @@ def colloscope2(request,id_classe,id_semin,id_semax):
 	if form.is_valid():
 		return redirect('colloscope2_secret',id_classe,form.cleaned_data['semin'].pk,form.cleaned_data['semax'].pk)
 	jours,creneaux,colles,semaines=Colle.objects.classe2colloscope(classe,semin,semax)
-	return render(request,'secretariat/colloscope.html',
-	{'semin':semin,'semax':semax,'form':form,'classe':classe,'jours':jours,'dictgroupes':classe.dictGroupes(),'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'classes':Classe.objects.all(),'dictColleurs':classe.dictColleurs(semin,semax),'modif':MODIF_SECRETARIAT_COLLOSCOPE})
+	return render(request,'mixte/colloscope.html',
+	{'semin':semin,'semax':semax,'form':form,'classe':classe,'jours':jours,'dictgroupes':classe.dictGroupes(),'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'classes':Classe.objects.all(),'dictColleurs':classe.dictColleurs(semin,semax),'isprof':MODIF_SECRETARIAT_COLLOSCOPE})
 
 @user_passes_test(is_secret, login_url='login_secret')
 def colloscopePdf(request,id_classe,id_semin,id_semax):
@@ -195,9 +195,9 @@ def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):
 		del colleurs[:x[4]]
 	largeur=str(650+42*creneaux.count())+'px'
 	hauteur=str(27*(len(matieres)+classe.classeeleve.count()+Colleur.objects.filter(classes=classe).count()))+'px'
-	return render(request,'secretariat/colloscopeModif.html',
+	return render(request,'mixte/colloscopeModif.html',
 	{'semin':semin,'semax':semax,'form1':form1,'form':form,'form2':form2,'largeur':largeur,'hauteur':hauteur,'groupes':groupes,'matieres':zip(matieres,listeColleurs,matieresgroupes),'creneau':creneaumodif\
-	,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'dictColleurs':classe.dictColleurs(semin,semax)})
+	,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'dictColleurs':classe.dictColleurs(semin,semax),'dictGroupes':json.dumps(classe.dictGroupes(False)),'dictEleves':json.dumps(classe.dictElevespk())})
 
 @user_passes_test(is_secret, login_url='accueil')
 def creneauSuppr(request,id_creneau,id_semin,id_semax):
@@ -631,7 +631,7 @@ def groupe(request,id_classe):
 	if form.is_valid():
 		form.save()
 		return redirect('groupe_secret', classe.pk)
-	return render(request,"secretariat/groupe.html",{'classe':classe,'groupes':groupes,'form':form,'hide':json.dumps([(eleve.id,"" if not eleve.lv1 else eleve.lv1.pk,"" if not eleve.lv2 else eleve.lv2.pk) for eleve in form.fields['eleve0'].queryset])})
+	return render(request,"mixte/groupe.html",{'classe':classe,'groupes':groupes,'form':form,'hide':json.dumps([(eleve.id,"" if not eleve.lv1 else eleve.lv1.pk,"" if not eleve.lv2 else eleve.lv2.pk) for eleve in form.fields['eleve0'].queryset])})
 
 @user_passes_test(is_secret, login_url='accueil')
 def groupeSuppr(request,id_groupe):
@@ -657,7 +657,7 @@ def groupeModif(request,id_groupe):
 	if form.is_valid():
 		form.save()
 		return redirect('groupe_secret', groupe.classe.pk)
-	return render(request,'secretariat/groupeModif.html',{'form':form,'groupe':groupe,'hide':json.dumps([(eleve.id,"" if not eleve.lv1 else eleve.lv1.pk,"" if not eleve.lv2 else eleve.lv2.pk) for eleve in form.fields['eleve0'].queryset])})
+	return render(request,'mixte/groupeModif.html',{'form':form,'groupe':groupe,'hide':json.dumps([(eleve.id,"" if not eleve.lv1 else eleve.lv1.pk,"" if not eleve.lv2 else eleve.lv2.pk) for eleve in form.fields['eleve0'].queryset])})
 
 @user_passes_test(is_secret, login_url='login_secret')
 def ectscredits(request,id_classe,form=None):
@@ -686,7 +686,7 @@ def ectscredits(request,id_classe,form=None):
 		else:
 			attest = 0
 		total[4] += attest			
-	return render(request,'secretariat/ectscredits.html',{'classe':classe,'credits':credits,'form':form,'total':total,"nbeleves":eleves.order_by().count()})
+	return render(request,'mixte/ectscredits.html',{'classe':classe,'credits':credits,'form':form,'total':total,"nbeleves":eleves.order_by().count()})
 
 @user_passes_test(is_secret, login_url='login_secret')
 def ficheectspdf(request,id_eleve):

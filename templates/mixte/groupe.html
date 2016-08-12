@@ -1,4 +1,4 @@
-{% extends 'secretariat/action.html' %}
+{% extends user.colleur|yesno:'colleur/action.html,secretariat/action.html' %}
 {% load static %}
 {% block body %}
 <table class="accueil"><tr><td>Groupes de {{classe}}</td></tr></table>
@@ -23,8 +23,8 @@
 		{% endif %}
 		{% endif %}
 		{% endwith %}
-		<td><a href="{% url 'groupemodif_secret' groupe.pk %}">Modifier</a></td>
-		<td><a href="{% url 'groupesuppr_secret' groupe.pk %}">Supprimer</a></td>
+		<td><a href="{% url user.colleur|yesno:'groupemodif_colleur,groupemodif_secret' groupe.pk %}">Modifier</a></td>
+		<td><a href="{% url user.colleur|yesno:'groupesuppr_colleur,groupesuppr_secret' groupe.pk %}">Supprimer</a></td>
 	{% endfor %}
 </table>
 <table class="accueil"><tr><td>Nouveau groupe</td></tr></table>

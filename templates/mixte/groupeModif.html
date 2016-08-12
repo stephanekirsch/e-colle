@@ -1,5 +1,4 @@
-{% extends 'secretariat/action.html' %}
-{% load customfilter %}
+{% extends user.colleur|yesno:'colleur/action.html,secretariat/action.html' %}
 {% load static %}
 {% block body %}
 	<table class="accueil"><tr><td>Modification d'un groupe de {{groupe.classe}}</td></tr></table>

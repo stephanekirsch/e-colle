@@ -1,12 +1,12 @@
-{% extends 'secretariat/action.html' %}
+{% extends user.colleur|yesno:'colleur/action.html,secretariat/action.html' %}
 {% load static %}
 {% load customfilter %}
 {% block body %}
 <table class="accueil">
 	<tr>
 		<td>Colloscope de la classe de {{classe}}</td>
-		{% if modif %}
-		<td><a href="{% url 'colloscopemodif_secret' classe.pk semin.pk semax.pk %}">Modifier le colloscope</a></td>
+		{% if isprof %}
+		<td><a href="{% url user.colleur|yesno:'colloscopemodif_colleur,colloscopemodif_secret' classe.pk semin.pk semax.pk %}">Modifier le colloscope</a></td>
 		{% endif %}
 	</tr>
 </table>
@@ -19,7 +19,7 @@
 	<td>à</td>
 	<td>{{form.semax.errors}}{{form.semax}}</td>
 	<td><input type="submit"/></td>
-	<td><a href="{% url 'colloscopepdf_secret' classe.pk semin.pk semax.pk %}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a></td>
+	<td><a href="{% url user.colleur|yesno:'colloscopepdf_colleur,colloscopepdf_secret' classe.pk semin.pk semax.pk %}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a></td>
 </tr>
 </table>
 </form>

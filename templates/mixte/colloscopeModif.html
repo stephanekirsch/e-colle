@@ -1,11 +1,11 @@
-{% extends 'secretariat/action.html' %}
+{% extends user.colleur|yesno:'colleur/action.html,secretariat/action.html' %}
 {% load static %}
 {% load customfilter %}
 {% block body %}
 <table class="accueil">
 	<tr>
 		<td>Colloscope de la classe de {{classe}}</td>
-		<td><a href="{% url 'colloscope_secret' classe.pk %}">Arrêter les modifications</a></td>
+		<td><a href="{% url user.colleur|yesno:'colloscope_colleur,colloscope_secret' classe.pk %}">Arrêter les modifications</a></td>
 	</tr>
 </table>
 <form method="POST">
@@ -22,7 +22,7 @@
 </form>
 <table class="accueil">
 	<tr>
-		<td><a id="compat" href="{% url 'ajaxcompat_secret' classe.pk %}">Vérifier compatibilité</a></td>
+		<td><a id="compat" href="{% url user.colleur|yesno:'ajaxcompat_colleur,ajaxcompat_secret' classe.pk %}">Vérifier compatibilité</a></td>
 	</tr>
 </table>
 <form method="POST">
@@ -35,7 +35,7 @@
 			{% endfor %}
 			<td><input type="submit" name="submit" value="{% if creneau %}Modifier{% else %}Valider{% endif %}"/></td>
 			{% if creneau %}
-			<td><a href="{% url 'colloscopemodif_secret' classe.pk semin.pk semax.pk %}">Annuler</a></td>
+			<td><a href="{% url user.colleur|yesno:'colloscopemodif_colleur,colloscopemodif_secret' classe.pk semin.pk semax.pk %}">Annuler</a></td>
 			{% endif %}
 		</tr>
 	</table>
@@ -50,19 +50,19 @@
 	<tr class="plusclair" id="suppr">
 		<td>Supprimer</td>
 		{% for creneau in creneaux %}
-		<td><a href="{% url 'creneausuppr_secret' creneau.pk semin.pk semax.pk %}">S</a></td>
+		<td><a href="{% url user.colleur|yesno:'creneausuppr_colleur,creneausuppr_secret' creneau.pk semin.pk semax.pk %}">S</a></td>
 		{% endfor %}
 	</tr>
 	<tr class="plusclair">
 		<td>Dupliquer</td>
 		{% for creneau in creneaux %}
-		<td><a href="{% url 'creneaudupli_secret' creneau.pk semin.pk semax.pk %}">D</a></td>
+		<td><a href="{% url user.colleur|yesno:'creneaudupli_colleur,creneaudupli_secret' creneau.pk semin.pk semax.pk %}">D</a></td>
 		{% endfor %}
 	</tr>
 	<tr class="plusclair">
 		<td>Modifier</td>
 		{% for creneau in creneaux %}
-		<td><a href="{% url 'creneaumodif_secret' creneau.pk semin.pk semax.pk %}">M</a></td>
+		<td><a href="{% url user.colleur|yesno:'creneaumodif_colleur,creneaumodif_secret' creneau.pk semin.pk semax.pk %}">M</a></td>
 		{% endfor %}
 	</tr>
 	<tr class="plusclair">
@@ -97,8 +97,8 @@
 </table>
 <ul id="niveau2">
 	<li><a id="creneaux" href="false" style="background-color:#888888">creneaux multiples</a></li>
-	<li><a href="{% url 'ajaxeffacer_secret' 'semaine' 'creneau' %}">Effacer</a></li>
-{% for matiere,colleurs,groupes in matieres %}
+	<li><a href="{% url user.colleur|yesno:'ajaxeffacer_colleur,ajaxeffacer_secret' 'semaine' 'creneau' %}">Effacer</a></li>
+{% for matiere,colleurs,groupes,loginsEleves in matieres %}
 	<li style="background-color:{{matiere.2}}">{{matiere.1|title}}
 		<ul class="niveau3">
 		{% for colleur in colleurs %}
@@ -106,16 +106,16 @@
 				{% if matiere.3 == 20 %}
 				<ul class="niveau4">
 				{% for groupe in groupes %}
-					<li><a href="{% url 'ajax_secret' matiere.0 colleur.0 groupe.pk 'semaine' 'creneau' %}">G{{groupe}}</a></li>
+					<li><a href="{% url user.colleur|yesno:'ajax_colleur,ajax_secret' matiere.0 colleur.0 groupe.pk 'semaine' 'creneau' %}">G{{groupe}}</a></li>
 				{% endfor %}
 				{% elif matiere.3 == 30 %}
 				<ul class="niveau4">
-				{% for eleve,login in classe.loginsEleves %}
-					<li><a href="{% url 'ajax_secret_eleve' matiere.0 colleur.0 eleve.pk 'semaine' 'creneau' login %}">{{eleve}} ({{login}})</a></li>
+				{% for eleve,login in loginsEleves %}
+					<li><a href="{% url user.colleur|yesno:'ajax_colleur_eleve,ajax_secret_eleve' matiere.0 colleur.0 eleve.pk 'semaine' 'creneau' login %}">{{eleve}} ({{login}})</a></li>
 				{% endfor %}
 				{% elif matiere.3 == 60 %}
 				<ul class="niveau4">
-				<li><a href="{% url 'ajax_secret_eleve' matiere.0 colleur.0 0 'semaine' 'creneau' 'no' %}">{{classe}}</a></li>
+				<li><a href="{% url user.colleur|yesno:'ajax_colleur_eleve,ajax_secret_eleve' matiere.0 colleur.0 0 'semaine' 'creneau' 'no' %}">{{classe}}</a></li>
 				{% endif %}
 				</ul>
 			</li>
@@ -126,13 +126,15 @@
 </ul>
 <div style="width:{{largeur}};height:{{hauteur}}"></div>
 <div id="grise">
-	<form method="POST" action="{% url 'ajaxmulti_secret' 'matiere' 'kolleur' 'groupe' 'eleve' 'semaine' 'creneau' 'duree' 'frequence' 'permu' %}">
+	<form method="POST" action="{% url user.colleur|yesno:'ajaxmulti_colleur,ajaxmulti_secret' 'matiere' 'kolleur' 'groupe' 'eleve' 'semaine' 'creneau' 'duree' 'frequence' 'permu' %}">
+	<input type="hidden" id="dictgroupes" value="{{dictGroupes}}"></input>
+	<input type="hidden" id="dicteleves" value="{{dictEleves}}"></input>
 	<table class="reservation">
 		{{form2.as_table}}
 		<tr><td colspan="2"><input type="submit" name="submit" value="Valider"/></td></tr>
 		<tr><td colspan="2"><a href="" id="annul">Annuler</a></td></tr>
 	</table>
-	<input id="ajaxcolleur" type="hidden" value="{% url 'ajaxmaj_secret' 'matiere' classe.pk %}"/>
+	<input id="ajaxcolleur" type="hidden" value="{% url user.colleur|yesno:'ajaxmaj_colleur,ajaxmaj_secret' 'matiere' classe.pk %}"/>
 </form>
 </div>
 {% endblock %}

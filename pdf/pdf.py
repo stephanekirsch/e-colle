@@ -382,7 +382,7 @@ def creditsects(request,elev,classe):
 	response = HttpResponse(content_type='application/pdf')
 	if elev is None:
 		eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name').select_related('user')
-		nomfichier="ECTS_{}.pdf".format(unidecode(classe.nom)).replace(" ","-")
+		nomfichier="ECTS_{}.pdf".format(unidecode(classe.nom)).replace(" ","-").replace('*','etoile')
 		credits = NoteECTS.objects.credits(classe)
 	else:
 		eleves=[elev]
@@ -396,7 +396,6 @@ def creditsects(request,elev,classe):
 	I = Image(RESOURCES_ROOT+'marianne.jpg')
 	I.drawHeight = 1.8*cm
 	I.drawWidth = 3*cm
-	print(signataire)
 	if signature and signataire == 'Proviseur':
 		try:
 			I2 = Image(RESOURCES_ROOT+'proviseur.png')
