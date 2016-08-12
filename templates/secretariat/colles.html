@@ -1,0 +1,33 @@
+{% extends 'secretariat/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+{% include "secretariat/navplanification.html" %}
+	<table class="accueil"><tr><td>Nombre de colles par colleur et par classe</td></tr></table>
+	<table class="tableausimple" id="suppr">
+		<tr class="entete">
+			<td>Classe</td>
+			<td>Matieres</td>
+			<td>Nombre de groupes</td>
+			<td>Modifier</td>
+		</tr>
+		{% for classe,matieres,nb,nbclasses in classes %}
+		<tr>
+			<td rowspan="{{nb}}" {% cycle ''  'class="plusclair"' as couleur %}>{{classe.nom}}</td>
+			{% for matiere,colleurs,nb2 in matieres %}
+				{% if not forloop.first %}
+				<tr>
+				{% endif %}
+				<td rowspan="{{nb2}}" {{couleur}}>{{matiere}}</td>
+				{% if colleurs %}
+				{% for colleur in colleurs %}
+					<td {{couleur}}>{{colleur.colleur}}: {{colleur.nbgroupes}} sur {{nbclasses}}</td>{% if forloop.first and forloop.parentloop.first %}<td rowspan="{{nb}}" {{couleur}}><a href="{% url 'collesmodif' classe.pk %}">Modifier</a></td>{% endif %}</tr>
+				{% endfor %}
+				{% else %}
+				<td {{couleur}}></td>{% if forloop.first %}<td rowspan="{{nb}}" {{couleur}}><a href="{% url 'collesmodif' classe.pk %}">Modifier</a></td>{% endif %}</tr>
+				{% endif %}
+			{% endfor %}
+		</tr>
+		{% endfor %}
+	</table>
+{% endblock %}
