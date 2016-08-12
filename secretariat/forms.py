@@ -51,6 +51,11 @@ class MatiereClasseSemaineSelectForm(forms.Form):
 		semin=forms.ModelChoiceField(queryset=Semaine.objects.none(), empty_label=None,required=True)
 		semax=forms.ModelChoiceField(queryset=Semaine.objects.none(), empty_label=None,required=True)
 
+	def clean(self):
+		if self.cleaned_data['matiere'] not in self.cleaned_data['classe'].matieres.all():
+			raise ValidationError("la classe %(classe)s n'a pas pour matière %(matiere)s",params={'classe':self.cleaned_data['classe'],'matiere':self.cleaned_data['matiere']})
+
+
 class SelectClasseSemaineForm(forms.Form):
 	classes = forms.ModelMultipleChoiceField(queryset=Classe.objects.all(),label="classes",widget=forms.CheckboxSelectMultiple,required=True)
 	query=Semaine.objects.all()

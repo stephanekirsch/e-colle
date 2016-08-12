@@ -337,6 +337,10 @@ class MatiereClasseSelectForm(forms.Form):
 	matiere=forms.ModelChoiceField(label="Matière",queryset=Matiere.objects.order_by('nom'), empty_label="Toutes",required=False)
 	classe=forms.ModelChoiceField(label="Classe",queryset=Classe.objects.order_by('nom'), empty_label="Toutes",required=False)
 
+	def clean(self):
+		if self.cleaned_data['matiere'] not in self.cleaned_data['classe'].matieres.all():
+			raise ValidationError("la classe %(classe)s n'a pas pour matière %(matiere)s",params={'classe':self.cleaned_data['classe'],'matiere':self.cleaned_data['matiere']})
+
 class CsvForm(forms.Form):
 	nom = forms.CharField(label="intitulé du champ nom",required=True,max_length=30)
 	prenom = forms.CharField(label="intitulé du champ prénom",required=True,max_length=30)

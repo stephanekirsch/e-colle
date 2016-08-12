@@ -5,6 +5,9 @@
 <form method="post">
 {% csrf_token %}
 <table class="tableausimple">
+	{% if form.non_field_errors %}
+	<tr><td colspan="4">{{form.non_field_errors}}</td></tr>
+	{% endif %}
 	<tr>
 		<th>Classe</th>
 		<td>{{form.classe.errors}}{{form.classe}}</td>

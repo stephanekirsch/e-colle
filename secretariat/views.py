@@ -4,9 +4,9 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
-from administrateur.forms import AdminConnexionForm, SelectColleurForm, MatiereClasseSelectForm as ClasseMatiereSelectForm
+from administrateur.forms import AdminConnexionForm, SelectColleurForm, MatiereClasseSelectForm
 from colleur.forms import SemaineForm, ECTSForm, CreneauForm, ColleForm, GroupeForm
-from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSelectForm, MatiereClasseSemaineSelectForm, SelectClasseSemaineForm, DispoForm, DispoFormSet, FrequenceForm, ColleurgroupeForm, ColleurgroupeFormSet, PlanificationForm
+from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm, SelectClasseSemaineForm, DispoForm, DispoFormSet, FrequenceForm, ColleurgroupeForm, ColleurgroupeFormSet, PlanificationForm
 from django.forms.formsets import formset_factory
 from accueil.models import Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois, NoteECTS, JourFerie, Frequence, Colleurgroupe
 from django.db.models import Count, F
@@ -52,28 +52,31 @@ def action(request):
 def resultats(request):
 	"""Renvoie la vue de la page de consultation des résultats des classes"""
 	form = MatiereClasseSemaineSelectForm(request.POST or None)
-	if form.is_valid():
-		classe = form.cleaned_data['classe']
-		matiere = form.cleaned_data['matiere']
-		semin = form.cleaned_data['semin']
-		semax = form.cleaned_data['semax']
-		request.session['classe'] = classe.pk
-		request.session['matiere'] = matiere.pk
-		request.session['semin'] = semin.pk
-		request.session['semax'] = semax.pk
-		return redirect('resultats_secret')
-	try:
-		classe = Classe.objects.get(pk=request.session['classe'])
-		matiere = Matiere.objects.get(pk=request.session['matiere'])
-		semin = Semaine.objects.get(pk=request.session['semin'])
-		semax = Semaine.objects.get(pk=request.session['semax'])
-	except Exception:
+	if request.method=="POST":
+		if form.is_valid():
+			classe = form.cleaned_data['classe']
+			matiere = form.cleaned_data['matiere']
+			semin = form.cleaned_data['semin']
+			semax = form.cleaned_data['semax']
+			request.session['classe'] = classe.pk
+			request.session['matiere'] = matiere.pk
+			request.session['semin'] = semin.pk
+			request.session['semax'] = semax.pk
+			return redirect('resultats_secret')
 		classe=matiere=semin=semax=semaines=generateur=None
-		form = MatiereClasseSemaineSelectForm()
-	else:
-		generateur = Note.objects.classe2resultat(matiere,classe,semin,semax)
-		semaines = next(generateur)
-		form = MatiereClasseSemaineSelectForm(initial = {'classe':classe,'matiere':matiere,'semin':semin,'semax':semax})		
+	else:	
+		try:
+			classe = Classe.objects.get(pk=request.session['classe'])
+			matiere = Matiere.objects.get(pk=request.session['matiere'])
+			semin = Semaine.objects.get(pk=request.session['semin'])
+			semax = Semaine.objects.get(pk=request.session['semax'])
+		except Exception:
+			classe=matiere=semin=semax=semaines=generateur=None
+			form = MatiereClasseSemaineSelectForm(request.POST or None)
+		else:
+			generateur = Note.objects.classe2resultat(matiere,classe,semin,semax)
+			semaines = next(generateur)
+			form = MatiereClasseSemaineSelectForm(initial = {'classe':classe,'matiere':matiere,'semin':semin,'semax':semax})		
 	return render(request,"secretariat/resultats.html",{'form':form,'classe':classe,'matiere':matiere,'semaines':semaines,'notes':generateur, 'semin':semin,'semax':semax,'classes':Classe.objects.all()})
 
 @user_passes_test(is_secret, login_url='login_secret')
@@ -402,7 +405,7 @@ def planification(request):
 def dispo(request):
 	"""Renvoie la vue de la page de gestion des disponibilités des colleurs"""
 	if "selectmatiere" in request.POST:
-		form = ClasseMatiereSelectForm(request.POST)
+		form = MatiereClasseSelectForm(request.POST)
 	else:
 		try:
 			matiere = Matiere.objects.get(pk=request.session['matiere'])
@@ -412,7 +415,7 @@ def dispo(request):
 			classe = Classe.objects.get(pk=request.session['classe'])
 		except Exception:
 			classe = None
-		form = ClasseMatiereSelectForm(initial = {'matiere':matiere,'classe':classe})
+		form = MatiereClasseSelectForm(initial = {'matiere':matiere,'classe':classe})
 	if form.is_valid():
 		matiere = form.cleaned_data['matiere']
 		request.session['matiere'] = None if not matiere else matiere.pk
