@@ -14,7 +14,7 @@ from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
 import os
 import json
 import csv
-from ecolle.settings import MEDIA_ROOT, MEDIA_URL, IMAGEMAGICK, RESOURCES_ROOT, MODIF_PROF_COLLOSCOPE, MODIF_PROF_GROUPE
+from ecolle.settings import MEDIA_ROOT, MEDIA_URL, IMAGEMAGICK, MODIF_PROF_COLLOSCOPE, MODIF_PROF_GROUPE
 
 def is_colleur(user):
 	"""Renvoie True si l'utilisateur est authentifié et est un colleur, False sinon"""
@@ -77,6 +77,8 @@ def action(request):
 @user_passes_test(is_colleur, login_url='accueil')
 def note(request,id_classe):
 	"""Renvoie la vue de la page de gestion des notes"""
+	from ecolle.settings import BASE_DIR
+	print(BASE_DIR)
 	classe=get_object_or_404(Classe,pk=id_classe)
 	colleur=request.user.colleur
 	matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=request.user.colleur)
@@ -278,7 +280,7 @@ def programmeModif(request,id_programme):
 	if not is_prof(request.user,programme.matiere,programme.classe):
 		raise Http404
 	form=ProgrammeForm(request.POST or None,request.FILES or None, instance=programme)
-	oldfile=MEDIA_ROOT+programme.fichier.name if programme.fichier else False
+	oldfile=path.join(MEDIA_ROOT,programme.fichier.name) if programme.fichier else False
 	if form.is_valid():
 		if request.FILES and oldfile:
 			if os.path.isfile(oldfile):

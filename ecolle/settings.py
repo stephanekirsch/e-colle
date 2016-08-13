@@ -57,8 +57,6 @@ ADMINS = ( # les couples nom/email du (des) administrateur(s) du site
 
 ALLOWED_HOSTS = [] # les nom de domaine autorisés pour accéder à e-colle, démarrer par un '.' pour les sous-domaines (par exemple '.e-colle.fr')
 
-CHEMINVERSECOLLE='/home/stef/Documents/git/e-colle' # chemin absolu vers l'intérieur du répertoire e-colle
-
 SECRET_KEY = 'cg(ip)m3z77z3v!5wo&cl8^4!rk9t0++5wld+@i(kifb!z-k0p' # une clé secrète de 50 caractères. À modifier à la configuration
 
 DATABASES = {
@@ -78,13 +76,16 @@ DATABASES = {
 #------------------------------------------------------------ FIN INFORMATIONS À REMPLIR------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+from os import path
+CHEMINVERSECOLLE = path.dirname(path.dirname(__file__))
+
 BDD=DATABASES['default']['ENGINE'].split(".")[-1] # on récupère le nom du SGBD: mysql ou sqlite3 ou postgresql ou oracle.
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            CHEMINVERSECOLLE+'/templates'
+            path.join(CHEMINVERSECOLLE,'templates')
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -120,12 +121,12 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-MEDIA_ROOT = CHEMINVERSECOLLE+'/media/'
+MEDIA_ROOT = path.join(CHEMINVERSECOLLE,'media')
 
-RESOURCES_ROOT = CHEMINVERSECOLLE+'/resources/'
+RESOURCES_ROOT = path.join(CHEMINVERSECOLLE,'resources')
 
 STATICFILES_DIRS = (
-    CHEMINVERSECOLLE+'/public',
+    path.join(CHEMINVERSECOLLE,'public'),
 )
 
 
@@ -138,10 +139,6 @@ DEBUG = True
 APPEND_SLASH = False
 
 MANAGERS = ADMINS
-
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import os
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Application definition
 
@@ -158,8 +155,6 @@ INSTALLED_APPS = (
     'colleur',
     'secretariat',
     'customfilter',
-    'pdf',
-    'planification'
 )
 
 MIDDLEWARE_CLASSES = (

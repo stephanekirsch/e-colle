@@ -7,7 +7,7 @@ from django.forms.extras.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from lxml import etree
 from ecolle.settings import RESOURCES_ROOT
-from os.path import isfile
+from os.path import isfile,join
 
 class ColleurConnexionForm(forms.Form):
 	def __init__(self,matiere, *args, **kwargs):
@@ -248,7 +248,7 @@ class NoteEleveFormSet(forms.BaseFormSet):
 class ECTSForm(forms.Form):
 	def __init__(self,classe,*args,**kwargs):
 		super().__init__(*args,**kwargs)
-		tree=etree.parse(RESOURCES_ROOT+'classes.xml')
+		tree=etree.parse(join(RESOURCES_ROOT,'classes.xml'))
 		types={x.get("type")+'_'+x.get("annee") for x in tree.xpath("/classes/classe")}
 		types = list(types)
 		types.sort()
@@ -260,8 +260,8 @@ class ECTSForm(forms.Form):
 		for x in tree.xpath("/classes/classe"):
 			if classe.nom.lower()[:len(x.get("nom"))] == x.get("nom").lower() and classe.annee == int(x.get("annee")):
 				default=x.get("nom")+"_"+x.get("annee")
-		imagesProviseur=(RESOURCES_ROOT+'proviseur.png',RESOURCES_ROOT+'proviseur.jpg')
-		imagesProviseurAdjoint=(RESOURCES_ROOT+'proviseuradjoint.png',RESOURCES_ROOT+'proviseuradjoint.jpg')
+		imagesProviseur=(join(RESOURCES_ROOT,'proviseur.png'),join(RESOURCES_ROOT,'proviseur.jpg'))
+		imagesProviseurAdjoint=(join(RESOURCES_ROOT,'proviseuradjoint.png'),join(RESOURCES_ROOT,'proviseuradjoint.jpg'))
 		self.fields['classe'] = forms.ChoiceField(label="filière",choices=LISTE_CLASSES,initial=default)
 		self.fields['date'] = forms.DateField(label="Date d'édition",input_formats=['%d/%m/%Y','%j/%m/%Y','%d/%n/%Y','%j/%n/%Y'],widget=forms.TextInput(attrs={'placeholder': 'jj/mm/aaaa'}),initial=date.today().strftime('%d/%m/%Y'))
 		self.fields['signature'] = forms.ChoiceField(label="signature/tampon par:",choices=(['Proviseur']*2,['Proviseur adjoint']*2))

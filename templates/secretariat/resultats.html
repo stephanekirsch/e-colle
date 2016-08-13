@@ -27,7 +27,7 @@
 </form>
 
 {% if classe %}
-<table class="accueil"><tr><td>Résultats de la classe {{classe}} en {{matiere}}</td></tr></table>
+<table class="accueil"><tr><td>Résultats de la classe {{classe}} en {{matiere.nom|title}}</td></tr></table>
 <table class="tableausimple"><tr><td><a href="{% url 'resultatcsv_secret' classe.pk matiere.pk semin.pk semax.pk %}"><img src="{% static 'images/csv.png' %}"></img></a></td></tr></table>
 <table class="tableausimple">
 	<tr class="entete">

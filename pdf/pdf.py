@@ -7,12 +7,12 @@ from reportlab.platypus.flowables import Flowable
 from reportlab.lib.styles import ParagraphStyle
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
-from ecolle.settings import NOM_ETABLISSEMENT,  RESOURCES_ROOT, NOM_ADRESSE_ETABLISSEMENT, VILLE, NOM_ETABLISSEMENT, ACADEMIE
+from ecolle.settings import NOM_ETABLISSEMENT, RESOURCES_ROOT, NOM_ADRESSE_ETABLISSEMENT, VILLE, NOM_ETABLISSEMENT, ACADEMIE
 from accueil.models import Groupe, Colle, Matiere, Colleur, NoteECTS, Eleve
 from colleur.forms import ECTSForm
 from reportlab.lib.units import cm
 from unidecode import unidecode
-from os.path import isfile
+from os.path import isfile,join
 from lxml import etree
 
 class easyPdf(Canvas):
@@ -251,23 +251,23 @@ def attestationects(request,elev,classe):
 	cm = pdf.format[0]/21
 	pdf.marge_x = cm # 1cm de marge gauche/droite
 	pdf.marge_y = 1.5*cm # 1,5cm de marge haut/bas
-	I = Image(RESOURCES_ROOT+'marianne.jpg')
+	I = Image(join(RESOURCES_ROOT,'marianne.jpg'))
 	I.drawHeight = 1.8*cm
 	I.drawWidth = 3*cm
 	if signature and signataire == 'Proviseur':
 		try:
-			I2 = Image(RESOURCES_ROOT+'proviseur.png')
+			I2 = Image(join(RESOURCES_ROOT,'proviseur.png'))
 		except Exception:
 			try:
-				I2 = Image(RESOURCES_ROOT+'proviseur.png')
+				I2 = Image(join(RESOURCES_ROOT,'proviseur.png'))
 			except Exception:
 				I2 = False
 	elif signature and signataire == 'Proviseur adjoint':
 		try:
-			I2 = Image(RESOURCES_ROOT+'proviseuradjoint.png')
+			I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.png'))
 		except Exception:
 			try:
-				I2 = Image(RESOURCES_ROOT+'proviseuradjoint.png')
+				I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.png'))
 			except Exception:
 				I2 = False
 	else:
@@ -361,7 +361,7 @@ def creditsects(request,elev,classe):
 			filiere,annee = form.cleaned_data['classe'].split("_")
 			signataire = form.cleaned_data['signature']
 			etoile = form.cleaned_data['etoile']
-			tree=etree.parse(RESOURCES_ROOT+'classes.xml')
+			tree=etree.parse(join(RESOURCES_ROOT,'classes.xml'))
 			classexml=tree.xpath("/classes/classe[@nom='{}'][@annee='{}']".format(filiere,annee)).pop()
 			domaine = classexml.get("domaine")
 			branche = classexml.get("type").lower()
@@ -393,23 +393,23 @@ def creditsects(request,elev,classe):
 	cm = pdf.format[0]/21
 	pdf.marge_x = cm # 1cm de marge gauche/droite
 	pdf.marge_y = 1.5*cm # 1,5cm de marge haut/bas
-	I = Image(RESOURCES_ROOT+'marianne.jpg')
+	I = Image(join(RESOURCES_ROOT,'marianne.jpg'))
 	I.drawHeight = 1.8*cm
 	I.drawWidth = 3*cm
 	if signature and signataire == 'Proviseur':
 		try:
-			I2 = Image(RESOURCES_ROOT+'proviseur.png')
+			I2 = Image(join(RESOURCES_ROOT,'proviseur.png'))
 		except Exception:
 			try:
-				I2 = Image(RESOURCES_ROOT+'proviseur.png')
+				I2 = Image(join(RESOURCES_ROOT,'proviseur.png'))
 			except Exception:
 				I2 = False
 	elif signature and signataire == 'Proviseur adjoint':
 		try:
-			I2 = Image(RESOURCES_ROOT+'proviseuradjoint.png')
+			I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.png'))
 		except Exception:
 			try:
-				I2 = Image(RESOURCES_ROOT+'proviseuradjoint.png')
+				I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.png'))
 			except Exception:
 				I2 = False
 	else:

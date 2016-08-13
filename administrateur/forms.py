@@ -7,6 +7,7 @@ from django.contrib.auth.password_validation import validate_password
 from ecolle.settings import DEFAULT_MODIF_COLLOSCOPE, DEFAULT_MODIF_GROUPE, RESOURCES_ROOT
 from lxml import etree
 from random import choice
+from os import path
 
 def random_string():
 	"""renvoie une chaine de caractères aléatoires contenant des lettres ou des chiffres ou un des symboles _+-.@"""
@@ -62,7 +63,7 @@ class ClasseForm(forms.ModelForm):
 
 class ClasseGabaritForm(forms.ModelForm):
 	gabarit=forms.BooleanField(label="gabarit",required=False)
-	tree=etree.parse(RESOURCES_ROOT+'classes.xml')
+	tree=etree.parse(path.join(RESOURCES_ROOT,'classes.xml'))
 	types={x.get("type")+'_'+x.get("annee") for x in tree.xpath("/classes/classe")}
 	types = list(types)
 	types.sort()

@@ -17,7 +17,7 @@ from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
 from reportlab.platypus import Table, TableStyle
 from unidecode import unidecode
 from lxml import etree
-from ecolle.settings import RESOURCES_ROOT, MODIF_SECRETARIAT_COLLOSCOPE, MODIF_SECRETARIAT_GROUPE
+from ecolle.settings import MODIF_SECRETARIAT_COLLOSCOPE, MODIF_SECRETARIAT_GROUPE
 import csv
 import json
 from planification.planification import planif

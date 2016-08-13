@@ -12,7 +12,7 @@ from datetime import timedelta
 from random import choice
 import csv
 from _io import TextIOWrapper
-from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES, DEFAULT_MODIF_COLLOSCOPE, DEFAULT_MODIF_GROUPE, RESOURCES_ROOT
+from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES, DEFAULT_MODIF_COLLOSCOPE, DEFAULT_MODIF_GROUPE
 import re 
 from django.core.urlresolvers import reverse
 
