@@ -26,6 +26,10 @@ def is_secret(user):
 	"""Renvoie True si l'utilisateur est le secrétariat, False sinon"""
 	return user.is_authenticated() and user.username=="Secrétariat"
 
+def is_secret_ects(user):
+	"""Renvoie True si l'utilisateur est le secrétariat et ECTS activé, False sinon"""
+	return is_secret(user) and conf.config.ECTS
+
 def connec(request):
 	"""Renvoie la vue de la page de connexion du secrétariat. Si le secrétariat est déjà connecté, redirige vers la page d'accueil du secrétariat"""
 	if is_secret(request.user):
@@ -662,7 +666,7 @@ def groupeModif(request,id_groupe):
 		return redirect('groupe_secret', groupe.classe.pk)
 	return render(request,'mixte/groupeModif.html',{'form':form,'groupe':groupe,'hide':json.dumps([(eleve.id,"" if not eleve.lv1 else eleve.lv1.pk,"" if not eleve.lv2 else eleve.lv2.pk) for eleve in form.fields['eleve0'].queryset])})
 
-@user_passes_test(is_secret, login_url='login_secret')
+@user_passes_test(is_secret_ects, login_url='login_secret')
 def ectscredits(request,id_classe,form=None):
 	classe =get_object_or_404(Classe,pk=id_classe)
 	eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name')
@@ -691,22 +695,22 @@ def ectscredits(request,id_classe,form=None):
 		total[4] += attest			
 	return render(request,'mixte/ectscredits.html',{'classe':classe,'credits':credits,'form':form,'total':total,"nbeleves":eleves.order_by().count()})
 
-@user_passes_test(is_secret, login_url='login_secret')
+@user_passes_test(is_secret_ects, login_url='login_secret')
 def ficheectspdf(request,id_eleve):
 	eleve = get_object_or_404(Eleve,pk=id_eleve)
 	return creditsects(request,eleve,eleve.classe)
 
-@user_passes_test(is_secret, login_url='login_secret')
+@user_passes_test(is_secret_ects, login_url='login_secret')
 def attestationectspdf(request,id_eleve):
 	eleve = get_object_or_404(Eleve,pk=id_eleve)
 	return attestationects(request,eleve,eleve.classe)
 
-@user_passes_test(is_secret, login_url='login_secret')
+@user_passes_test(is_secret_ects, login_url='login_secret')
 def ficheectsclassepdf(request,id_classe):
 	classe = get_object_or_404(Classe,pk=id_classe)
 	return creditsects(request,None,classe)
 
-@user_passes_test(is_secret, login_url='login_secret')
+@user_passes_test(is_secret_ects, login_url='login_secret')
 def attestationectsclassepdf(request,id_classe):
 	classe = get_object_or_404(Classe,pk=id_classe)
 	return attestationects(request,None,classe)

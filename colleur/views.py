@@ -23,6 +23,10 @@ def is_colleur(user):
 		return bool(user.colleur)
 	return False
 
+def is_colleur_ects(user):
+	"""Renvoie True si l'utilisateur est authentifié et est un colleur et ECTS est activé, False sinon"""
+	return is_colleur and conf.config.ECTS
+
 def is_prof(user,matiere,classe):
 	"""Renvoie True si l'utilisateur est un prof de la classe classe et dans la matière matière, False sinon"""
 	if matiere==None:
@@ -720,7 +724,7 @@ def eleves(request,id_classe):
 		semaines = matierenote = None
 	return render(request,'colleur/eleves.html',{'eleve':eleve,'semin':semin,'semax':semax,'form':form,'form2':form2,'matierenote':matierenote,'semaines':semaines})
 
-@user_passes_test(is_colleur, login_url='accueil')
+@user_passes_test(is_colleur_ects, login_url='accueil')
 def ectsmatieres(request,id_classe):
 	"""Renvoie la vue de la page de gestion des matières ects de la classe"""
 	classe = get_object_or_404(Classe,pk=id_classe)
@@ -735,7 +739,7 @@ def ectsmatieres(request,id_classe):
 		return redirect('ects_matieres',classe.pk)
 	return render(request,'colleur/ectsmatieres.html',{'classe':classe,'matieresECTS':matieresECTS,'form':form})
 
-@user_passes_test(is_colleur, login_url='accueil')
+@user_passes_test(is_colleur_ects, login_url='accueil')
 def ectsmatieremodif(request,id_matiere):
 	"""Renvoie la vue de la page de modification des matières ects de la classe"""
 	matiere = get_object_or_404(MatiereECTS,pk=id_matiere)
@@ -748,7 +752,7 @@ def ectsmatieremodif(request,id_matiere):
 		return redirect('ects_matieres',matiere.classe.pk)
 	return render(request,'colleur/ectsmatieremodif.html',{'matiere':matiere,'form':form})
 
-@user_passes_test(is_colleur, login_url='accueil')
+@user_passes_test(is_colleur_ects, login_url='accueil')
 def ectsmatieresuppr(request,id_matiere):
 	"""Supprime la matière ects dont l'id est id_matiere puis renvoie la page des matières ECTS"""
 	matiere = get_object_or_404(MatiereECTS,pk=id_matiere)
@@ -762,7 +766,7 @@ def ectsmatieresuppr(request,id_matiere):
 		messages.error(request,"Impossible de l'effacer (des élèves y ont des notes)")
 	return redirect('ects_matieres',matiere.classe.pk)
 
-@user_passes_test(is_colleur, login_url='accueil')
+@user_passes_test(is_colleur_ects, login_url='accueil')
 def ectsnotes(request,id_classe):
 	"""Renvoie la vue de la page de gestion des matières ects de la classe"""
 	classe = get_object_or_404(Classe,pk=id_classe)
@@ -782,7 +786,7 @@ def ectsnotes(request,id_classe):
 		nbsemestres.append(int(matiere.semestre1 is not None)+int(matiere.semestre2 is not None))
 	return render(request,'colleur/ectsnotes.html',{'classe':classe,'matieres':matieres,'listeNotes':listeNotes,'listNotes':listNotes,'form':form,'nbsemestres':nbsemestres})
 
-@user_passes_test(is_colleur, login_url='accueil')
+@user_passes_test(is_colleur_ects, login_url='accueil')
 def ectsnotesmodif(request,id_matiere,chaine_eleves):
 	"""Renvoie la vue de la page de modification des notes ECTS des élèves sélectionnés, dont l'id fait partie de chaine_eleves, dans la matiere dont l"id est id_matiere"""
 	matiere = get_object_or_404(MatiereECTS,pk=id_matiere,profs=request.user.colleur)
@@ -799,7 +803,7 @@ def ectsnotesmodif(request,id_matiere,chaine_eleves):
 	nbsemestres = 1+int(matiere.semestre1 is not None)+int(matiere.semestre2 is not None)
 	return render(request,'colleur/ectsnotesmodif.html',{'formset':formset,'matiere':matiere,'nbsemestres':nbsemestres})
 
-@user_passes_test(is_colleur, login_url='accueil')
+@user_passes_test(is_colleur_ects, login_url='accueil')
 def ectscredits(request,id_classe,form=None):
 	classe =get_object_or_404(Classe,pk=id_classe)
 	if not is_profprincipal(request.user,classe):
@@ -830,28 +834,28 @@ def ectscredits(request,id_classe,form=None):
 		total[4] += attest			
 	return render(request,'colleur/ectscredits.html',{'classe':classe,'credits':credits,'form':form,'total':total,"nbeleves":eleves.order_by().count()})
 
-@user_passes_test(is_colleur, login_url='accueil')
+@user_passes_test(is_colleur_ects, login_url='accueil')
 def ficheectspdf(request,id_eleve):
 	eleve = get_object_or_404(Eleve,pk=id_eleve)
 	if not is_profprincipal(request.user,eleve.classe):
 		return HttpResponseForbidden("Accès non autorisé")
 	return creditsects(request,eleve,eleve.classe)
 
-@user_passes_test(is_colleur, login_url='accueil')
+@user_passes_test(is_colleur_ects, login_url='accueil')
 def attestationectspdf(request,id_eleve):
 	eleve = get_object_or_404(Eleve,pk=id_eleve)
 	if not is_profprincipal(request.user,eleve.classe):
 		return HttpResponseForbidden("Accès non autorisé")
 	return attestationects(request,eleve,eleve.classe)
 
-@user_passes_test(is_colleur, login_url='accueil')
+@user_passes_test(is_colleur_ects, login_url='accueil')
 def ficheectsclassepdf(request,id_classe):
 	classe = get_object_or_404(Classe,pk=id_classe)
 	if not is_profprincipal(request.user,classe):
 		return HttpResponseForbidden("Accès non autorisé")
 	return creditsects(request,None,classe)
 
-@user_passes_test(is_colleur, login_url='accueil')
+@user_passes_test(is_colleur_ects, login_url='accueil')
 def attestationectsclassepdf(request,id_classe):
 	classe = get_object_or_404(Classe,pk=id_classe)
 	if not is_profprincipal(request.user,classe):

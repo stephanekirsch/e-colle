@@ -5,7 +5,7 @@
 <table class="accueil">
 	<tr>
 		<td>Liste des message envoyé</td>
-		<td><a href="{% url 'accueil.views.messages' %}">Messages reçus</a></td>
+		<td><a href="{% url 'messages' %}">Messages reçus</a></td>
 	</tr>
 </table>
 
@@ -23,7 +23,7 @@
 	{% for mesage,widget in form.fields.message.queryset|tzip:form.message %}
 	<tr>
 		<td>{{widget}}</td>
-		<td><a href="{% url 'accueil.views.messageenvoye' mesage.pk %}">Lire</a></td>
+		<td><a href="{% url 'messageenvoye' mesage.pk %}">Lire</a></td>
 		<td>{{mesage.date|date:"D d M Y à H:i:s"}}</td>
 		<td>{{mesage.listedestinataires|truncatechars:200}}</td>
 		<td>{{mesage.titre}}</td>
@@ -39,7 +39,7 @@
 
 </table>
 </form>
-<table class="accueil"><tr><td><a href="{% url 'accueil.views.home' %}">Retour</a></td></tr></table>
+<table class="accueil"><tr><td><a href="{% url 'accueil' %}">Retour</a></td></tr></table>
 {% endblock %}
 {% block javascript %}
 <script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
