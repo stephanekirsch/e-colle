@@ -17,39 +17,7 @@ IP_FILTRE_ADMIN = True # True si on veut restreindre la partie admin à certaine
 
 IP_FILTRE_ADRESSES = ('^127\.0\.0\.1$',) # la liste des adresses autorisées pour la partie admin si IP_FILTRE_ADMIN vaut True, à renseigner avec des REGEXP.
 
-MODIF_SECRETARIAT_COLLOSCOPE = True # True si on veut que le secrétariat ait les droits de modifier le colloscope, False sinon
-
-MODIF_PROF_COLLOSCOPE = True # si on veut que les profs aient les droits de modifier le colloscope, False sinon
-
-MODIF_SECRETARIAT_GROUPE = True # True si on veut que le secrétariat ait les droits de modifier le colloscope, False sinon
-
-MODIF_PROF_GROUPE = True # si on veut que les profs aient les droits de modifier les groupes de colle de sa classe, False sinon
-
-####################################### si MODIF_PROF_COLLOSCOPE vaut True: ##############################################################
-
-DEFAULT_MODIF_COLLOSCOPE = True # True si on veut qu'un prof d'une classe ait par défaut les droits de modifier le colloscope de sa classe, False sinon
-
-##########################################################################################################################################
-
-####################################### si MODIF_PROF_GROUPE vaut True: ##############################################################
-
-DEFAULT_MODIF_GROUPE = True # True si on veut qu'un prof d'une classe ait par défaut les droits de modifier les groupes de sa classe, False sinon
-
-##########################################################################################################################################
-
-MATHJAX = True # True pour utiliser Mathjax afin de mettre en forme du latex, False sinon.
-
-ECTS = True # True pour activer la gestion des crédits ECTS, False sinon
-
 IMAGEMAGICK= True # True pour faire des images miniatures des pièces jointes de programmes de colle. False sinon.
-
-NOM_ETABLISSEMENT = "" # le nom de l'Établissement, qui apparaît en haut de toutes les pages, ainsi que sur les pdf du colloscope et des ramassages
-
-NOM_ADRESSE_ETABLISSEMENT = """ """ #Le nom complet + adresse de l'établissement, pour les attestations ECTS
-
-VILLE = "" # Commune de l'établissement
-
-ACADEMIE = "" # académie de l'établissement
 
 ADMINS = ( # les couples nom/email du (des) administrateur(s) du site
      ('admin', 'admin@example.com'),
