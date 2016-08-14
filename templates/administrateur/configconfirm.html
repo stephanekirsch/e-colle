@@ -1,0 +1,7 @@
+{% extends 'administrateur/action.html' %}
+{% load static %}
+{% block body %}
+	<table class="accueil"><tr><td>Configuration du site</td></tr></table>
+	<div class="error">La configuration a été mise à jour</div>
+	<table class="accueil"><tr><td><a href="{% url 'config' %}">Retour</a></td></tr></table>
+{% endblock %}
