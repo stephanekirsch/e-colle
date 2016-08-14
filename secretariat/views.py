@@ -17,10 +17,10 @@ from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
 from reportlab.platypus import Table, TableStyle
 from unidecode import unidecode
 from lxml import etree
-from ecolle.settings import MODIF_SECRETARIAT_COLLOSCOPE, MODIF_SECRETARIAT_GROUPE
 import csv
 import json
 from planification.planification import planif
+conf=__import__('ecolle.config')
 
 def is_secret(user):
 	"""Renvoie True si l'utilisateur est le secrétariat, False sinon"""
@@ -153,7 +153,7 @@ def colloscope2(request,id_classe,id_semin,id_semax):
 		return redirect('colloscope2_secret',id_classe,form.cleaned_data['semin'].pk,form.cleaned_data['semax'].pk)
 	jours,creneaux,colles,semaines=Colle.objects.classe2colloscope(classe,semin,semax)
 	return render(request,'mixte/colloscope.html',
-	{'semin':semin,'semax':semax,'form':form,'classe':classe,'jours':jours,'dictgroupes':classe.dictGroupes(),'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'classes':Classe.objects.all(),'dictColleurs':classe.dictColleurs(semin,semax),'isprof':MODIF_SECRETARIAT_COLLOSCOPE})
+	{'semin':semin,'semax':semax,'form':form,'classe':classe,'jours':jours,'dictgroupes':classe.dictGroupes(),'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'classes':Classe.objects.all(),'dictColleurs':classe.dictColleurs(semin,semax),'isprof':conf.config.MODIF_SECRETARIAT_COLLOSCOPE})
 
 @user_passes_test(is_secret, login_url='login_secret')
 def colloscopePdf(request,id_classe,id_semin,id_semax):
@@ -167,7 +167,7 @@ def colloscopePdf(request,id_classe,id_semin,id_semax):
 def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):
 	"""Renvoie la vue de la page de modification du colloscope de la classe dont l'id est id_classe,
 	dont les semaines sont entre la semaine d'id id_semin et celle d'id id_semax"""
-	if not MODIF_SECRETARIAT_COLLOSCOPE:
+	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	classe=get_object_or_404(Classe,pk=id_classe)
 	semin=get_object_or_404(Semaine,pk=id_semin)
@@ -206,7 +206,7 @@ def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):
 def creneauSuppr(request,id_creneau,id_semin,id_semax):
 	"""Essaie de supprimer le créneau dont l'id est id_creneau puis redirige vers la page de modification du colloscope
 	dont les semaines sont entre la semaine d'id id_semin et celle d'id id_semax"""
-	if not MODIF_SECRETARIAT_COLLOSCOPE:
+	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
 	try:
@@ -218,7 +218,7 @@ def creneauSuppr(request,id_creneau,id_semin,id_semax):
 @user_passes_test(is_secret, login_url='accueil')
 def creneauModif(request,id_creneau,id_semin,id_semax):
 	"""Renvoie la vue de la page de modification du creneau dont l'id est id_creneau"""
-	if not MODIF_SECRETARIAT_COLLOSCOPE:
+	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
 	return colloscopeModif(request,creneau.classe.pk,id_semin,id_semax,creneaumodif=creneau)
@@ -226,7 +226,7 @@ def creneauModif(request,id_creneau,id_semin,id_semax):
 @user_passes_test(is_secret, login_url='accueil')
 def creneauDupli(request,id_creneau,id_semin,id_semax):
 	"""Renvoie la vue de la page de duplication du creneau dont l'id est id_creneau"""
-	if not MODIF_SECRETARIAT_COLLOSCOPE:
+	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
 	creneau.pk=None
@@ -237,7 +237,7 @@ def creneauDupli(request,id_creneau,id_semin,id_semax):
 @user_passes_test(is_secret, login_url='accueil')
 def ajaxcompat(request,id_classe):
 	"""Renvoie ue chaîne de caractères récapitulant les incompatibilités du colloscope de la classe dont l'id est id_classe"""
-	if not MODIF_SECRETARIAT_COLLOSCOPE:
+	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	LISTE_JOURS=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche']
 	classe=get_object_or_404(Classe,pk=id_classe)
@@ -257,7 +257,7 @@ def ajaxcompat(request,id_classe):
 @user_passes_test(is_secret, login_url='accueil')
 def ajaxmajcolleur(request, id_matiere, id_classe):
 	"""Renvoie la liste des colleurs de la classe dont l'id est id_classe et de la matière dont l'id est id_matiere, au format json"""
-	if not MODIF_SECRETARIAT_COLLOSCOPE:
+	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	classe=get_object_or_404(Classe,pk=id_classe)
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
@@ -269,7 +269,7 @@ def ajaxmajcolleur(request, id_matiere, id_classe):
 def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, id_semaine, id_creneau):
 	"""Ajoute la colle propre au quintuplet (matière,colleur,groupe,semaine,créneau) et renvoie le username du colleur
 	en effaçant au préalable toute colle déjà existante sur ce couple créneau/semaine"""
-	if not MODIF_SECRETARIAT_COLLOSCOPE:
+	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	colleur=get_object_or_404(Colleur,pk=id_colleur)
@@ -287,7 +287,7 @@ def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, id_semaine, id_cr
 def ajaxcolloscopeeleve(request, id_matiere, id_colleur, id_eleve, id_semaine, id_creneau, login):
 	"""Ajoute la colle propre au quintuplet (matière,colleur,eleve,semaine,créneau) et renvoie le username du colleur
 	en effaçant au préalable toute colle déjà existante sur ce couple créneau/semaine"""
-	if not MODIF_SECRETARIAT_COLLOSCOPE:
+	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	colleur=get_object_or_404(Colleur,pk=id_colleur)
@@ -317,7 +317,7 @@ def ajaxcolloscopeeleve(request, id_matiere, id_colleur, id_eleve, id_semaine, i
 def ajaxcolloscopeeffacer(request,id_semaine, id_creneau):
 	"""Efface la colle sur le créneau dont l'id est id_creneau et la semaine sont l'id est id_semaine
 	puis renvoie la chaine de caractères "efface" """
-	if not MODIF_SECRETARIAT_COLLOSCOPE:
+	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	semaine=get_object_or_404(Semaine,pk=id_semaine)
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
@@ -331,7 +331,7 @@ def ajaxcolloscopemulti(request, id_matiere, id_colleur, id_groupe, id_eleve, id
 	et dont le numéro est congru à celui de la semaine d'id id_semaine modulo frequence
 	S'il n'y en a aucune, ajoute les colles sur les couples créneau/semaine précédents, avec le colleur dont l'id est id_colleur
 	le groupe démarre au groupe dont l'id est id_groupe puis va de permutation en permutation, et la matière dont l'id est id_matière"""
-	if not MODIF_SECRETARIAT_COLLOSCOPE:
+	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	colleur=get_object_or_404(Colleur,pk=id_colleur)
@@ -352,7 +352,7 @@ def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_el
 	et les semaines dont le numéro est compris entre celui de la semaine d'id id_semaine et ce dernier + duree
 	et dont le numéro est congru à celui de la semaine d'id id_semaine modulo frequence, avec le colleur dont l'id est id_colleur
 	le groupe démarre au groupe dont l'id est id_groupe puis va de permutation en permutation, et la matière dont l'id est id_matière"""
-	if not MODIF_SECRETARIAT_COLLOSCOPE:
+	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	colleur=get_object_or_404(Colleur,pk=id_colleur)
@@ -626,7 +626,7 @@ def ramassagePdf(request,id_ramassage):
 @user_passes_test(is_secret, login_url='accueil')
 def groupe(request,id_classe):
 	"""Renvoie la vue de la page de gestion des groupes de la classe dont l'id est id_classe"""
-	if not MODIF_SECRETARIAT_GROUPE:
+	if not conf.config.MODIF_SECRETARIAT_GROUPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	classe=get_object_or_404(Classe,pk=id_classe)
 	groupes = Groupe.objects.filter(classe=classe).prefetch_related('groupeeleve__user')
@@ -639,7 +639,7 @@ def groupe(request,id_classe):
 @user_passes_test(is_secret, login_url='accueil')
 def groupeSuppr(request,id_groupe):
 	"""Essaie de supprimer la groupe dont l'id est id_groupe, puis redirige vers la page de gestion des groupes"""
-	if not MODIF_SECRETARIAT_GROUPE:
+	if not conf.config.MODIF_SECRETARIAT_GROUPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	groupe=get_object_or_404(Groupe,pk=id_groupe)
 	try:
@@ -651,7 +651,7 @@ def groupeSuppr(request,id_groupe):
 @user_passes_test(is_secret, login_url='accueil')
 def groupeModif(request,id_groupe):
 	"""Renvoie la vue de la page de modification du groupe dont l'id est id_groupe"""
-	if not MODIF_SECRETARIAT_GROUPE:
+	if not conf.config.MODIF_SECRETARIAT_GROUPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	groupe=get_object_or_404(Groupe,pk=id_groupe)
 	initial = {"eleve{}".format(i):eleve for i,eleve in enumerate(groupe.groupeeleve.all())}

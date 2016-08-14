@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
-from administrateur.forms import ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm
+from administrateur.forms import ConfigForm, ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
@@ -12,7 +12,7 @@ from datetime import timedelta
 from random import choice
 import csv
 from _io import TextIOWrapper
-from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES, DEFAULT_MODIF_COLLOSCOPE, DEFAULT_MODIF_GROUPE
+from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES
 import re 
 from django.core.urlresolvers import reverse
 
@@ -74,6 +74,20 @@ def connec(request):
 def action(request):
 	"""Renvoie la vue la page d'accueil de l'administrateur"""
 	return render(request,'administrateur/action.html')
+
+@ip_filter
+def config(request):
+	"""Renvoie la vue de la page de configuration de l'administrateur"""
+	form = ConfigForm(request.POST or None)
+	if form.is_valid():
+		form.save()
+		return redirect('configconfirm')
+	return render(request,'administrateur/config.html',{'form':form})
+
+@ip_filter
+def configconfirm(request):
+	"""Renvoie la vue de la page de confirmation de modification de la configuration"""
+	return render(request,'administrateur/configconfirm.html')
 
 @ip_filter
 def classe(request):

@@ -35,6 +35,7 @@
 </table>
 {% endblock %}
 {% block javascript %}
+{% get_mathjax as latex %}
 {% if latex %}
 {% include "mathjax.html" %}
 {% endif %}

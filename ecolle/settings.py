@@ -77,6 +77,7 @@ DATABASES = {
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 from os import path
+
 CHEMINVERSECOLLE = path.dirname(path.dirname(__file__))
 
 BDD=DATABASES['default']['ENGINE'].split(".")[-1] # on récupère le nom du SGBD: mysql ou sqlite3 ou postgresql ou oracle.

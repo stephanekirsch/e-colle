@@ -1,14 +1,14 @@
 #-*- coding: utf-8 -*-
 from django import template
 from datetime import date, timedelta
-from ecolle.settings import NOM_ETABLISSEMENT, MATHJAX, ECTS, MODIF_SECRETARIAT_GROUPE
 from accueil.models import Classe
+conf=__import__('ecolle.config')
 
 register = template.Library()
 
 @register.filter
 def nometab(d):
-	return NOM_ETABLISSEMENT
+	return conf.config.NOM_ETABLISSEMENT
 
 @register.filter
 def lookup(d,key):
@@ -41,15 +41,15 @@ def tzip(l1, l2):
 
 @register.assignment_tag
 def get_mathjax():
-    return MATHJAX
+    return conf.config.MATHJAX
 
 @register.assignment_tag
 def get_ects():
-    return ECTS
+    return conf.config.ECTS
 
 @register.assignment_tag
 def get_modifgroupe():
-    return MODIF_SECRETARIAT_GROUPE
+    return conf.config.MODIF_SECRETARIAT_GROUPE
 
 @register.assignment_tag
 def get_classes():

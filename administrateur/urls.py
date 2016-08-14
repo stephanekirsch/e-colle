@@ -5,6 +5,8 @@ from . import views
 urlpatterns = [
 url(r'^$', views.connec,name="login_admin"),
 url(r'^action$', views.action,name="action_admin"),
+url(r'^action/config$', views.config,name="config"),
+url(r'^action/configconfirm$', views.configconfirm,name="configconfirm"),
 url(r'^action/classe$', views.classe,name="gestion_classe"),
 url(r'^action/classe/modifier/(\d+)$', views.classemodif,name="modif_classe"),
 url(r'^action/classe/supprimer/(\d+)$', views.classesuppr,name="suppr_classe"),

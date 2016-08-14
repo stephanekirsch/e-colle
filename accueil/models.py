@@ -6,12 +6,13 @@ import locale
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 import os
-from ecolle.settings import MEDIA_ROOT, IMAGEMAGICK, BDD, MODIF_PROF_GROUPE
+from ecolle.settings import MEDIA_ROOT, IMAGEMAGICK, BDD
 from django.core.files import File
 from PIL import Image
 from django.db.models import Count, Avg, Min, Max, Sum, F, Q
 from django.db.models.functions import Lower, Upper, Concat, Substr
 from fractions import Fraction
+conf = __import__('ecolle.config')
 
 semaine = ["lundi", "mardi","mercredi","jeudi","vendredi","samedi","dimanche"]
 
@@ -289,7 +290,7 @@ class Colleur(models.Model):
 		return self.colleurprof.prefetch_related('classe')
 
 	def modifgroupe(self):
-		if MODIF_PROF_GROUPE:
+		if conf.config.MODIF_PROF_GROUPE:
 			for prof in self.colleurprof.all():
 				if prof.modifgroupe or prof.classe.profprincipal == self:
 					return True

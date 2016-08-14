@@ -14,7 +14,8 @@ from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
 import os
 import json
 import csv
-from ecolle.settings import MEDIA_ROOT, MEDIA_URL, IMAGEMAGICK, MODIF_PROF_COLLOSCOPE, MODIF_PROF_GROUPE
+from ecolle.settings import MEDIA_ROOT, MEDIA_URL, IMAGEMAGICK
+conf=__import__('ecolle.config')
 
 def is_colleur(user):
 	"""Renvoie True si l'utilisateur est authentifié et est un colleur, False sinon"""
@@ -31,11 +32,11 @@ def is_prof(user,matiere,classe):
 
 def modifgroupe(colleur,classe):
 	"""Renvoie True si colleur a les drois en modification des groupes dans la classe classe, False sinon"""
-	return MODIF_PROF_GROUPE and  (classe.profprincipal==colleur or (colleur in Colleur.objects.filter(colleurprof__classe=classe,colleurprof__modifgroupe=True)))
+	return conf.config.MODIF_PROF_GROUPE and  (classe.profprincipal==colleur or (colleur in Colleur.objects.filter(colleurprof__classe=classe,colleurprof__modifgroupe=True)))
 
 def modifcolloscope(colleur,classe):
 	"""Renvoie True si colleur a les drois en modification du colloscope dans la classe classe, False sinon"""
-	return MODIF_PROF_COLLOSCOPE and (classe.profprincipal==colleur or (colleur in Colleur.objects.filter(colleurprof__classe=classe,colleurprof__modifcolloscope=True)))
+	return conf.config.MODIF_PROF_COLLOSCOPE and (classe.profprincipal==colleur or (colleur in Colleur.objects.filter(colleurprof__classe=classe,colleurprof__modifcolloscope=True)))
 
 def is_profprincipal(user,classe=False):
 	"""Renvoie True si user est professeur principal de la classe classe, False sinon"""

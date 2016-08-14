@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Min, Max, Avg, StdDev, Count
 from datetime import date, timedelta
 from pdf.pdf import Pdf
-from ecolle.settings import MEDIA_URL, MATHJAX, IMAGEMAGICK
+from ecolle.settings import MEDIA_URL, IMAGEMAGICK
 from django.http import Http404
 
 def is_eleve(user):
@@ -81,7 +81,7 @@ def note(request):
 	else:
 		matiere=None
 	eleve = request.user.eleve
-	return render(request,'eleve/note.html',{'form':form,'matiere':matiere,'notes':Note.objects.noteEleve(eleve,matiere),'latex':MATHJAX})
+	return render(request,'eleve/note.html',{'form':form,'matiere':matiere,'notes':Note.objects.noteEleve(eleve,matiere)})
 
 @user_passes_test(is_eleve, login_url='accueil')
 def programme(request):
@@ -95,7 +95,7 @@ def programme(request):
 	if matiere:
 		programmes=programmes.filter(matiere=matiere)
 	programmes=programmes.values('matiere__couleur','matiere__nom','semaine__numero','titre','fichier','detail').order_by('-semaine__lundi','matiere__nom')
-	return render(request,'eleve/programme.html',{'form':form,'matiere':matiere,'programmes':programmes,'media_url':MEDIA_URL,'latex':MATHJAX,'jpeg':IMAGEMAGICK})
+	return render(request,'eleve/programme.html',{'form':form,'matiere':matiere,'programmes':programmes,'media_url':MEDIA_URL,'jpeg':IMAGEMAGICK})
 
 @user_passes_test(is_eleve, login_url='accueil')
 def colloscope(request):
@@ -131,7 +131,7 @@ def agenda(request):
 	semaine=jour+timedelta(days=-jour.weekday())
 	semainemin=semaine+timedelta(days=-21)
 	eleve=request.user.eleve
-	return render(request,"eleve/agenda.html",{'colles':Colle.objects.agendaEleve(eleve,semainemin),'media_url':MEDIA_URL,'jour':jour,'semaine':semaine,'latex':MATHJAX})
+	return render(request,"eleve/agenda.html",{'colles':Colle.objects.agendaEleve(eleve,semainemin),'media_url':MEDIA_URL,'jour':jour,'semaine':semaine})
 
 @user_passes_test(is_eleve, login_url='accueil')
 def colloscopePdf(request,id_semin,id_semax):
