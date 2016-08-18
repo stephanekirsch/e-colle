@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from colleur.forms import ColleurConnexionForm, NoteForm, ProgrammeForm, GroupeForm, NoteGroupeForm, CreneauForm, SemaineForm, ColleForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm
 from accueil.models import Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, JourFerie, MatiereECTS, NoteECTS
-from mixte.mixte import mixteajaxcompat,mixteajaxcolloscopemulticonfirm
+from mixte.mixte import mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulticonfirm
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import F, Count, Avg, Min, Max, StdDev, Sum
@@ -450,7 +450,7 @@ def creneauDupli(request,id_creneau,id_semin,id_semax):
 def ajaxcompat(request,id_classe):
 	"""Renvoie une chaîne de caractères récapitulant les incompatibilités du colloscope de la classe dont l'id est id_classe"""
 	classe=get_object_or_404(Classe,pk=id_classe)
-	return HttpResponse(mixteajaxcompat(classe))
+	return mixteajaxcompat(classe)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def ajaxmajcolleur(request, id_matiere, id_classe):
@@ -459,9 +459,7 @@ def ajaxmajcolleur(request, id_matiere, id_classe):
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	if not modifcolloscope(request.user.colleur,classe):
 		return HttpResponseForbidden("Accès non autorisé")
-	colleurs=Colleur.objects.filter(matieres=matiere,classes=classe).values('id','user__first_name','user__last_name','user__username').order_by('user__first_name','user__last_name')
-	colleurs=[{'nom': value['user__first_name'].title()+" "+value['user__last_name'].upper()+' ('+classe.dictColleurs()[value['id']]+')','id':value['id']} for value in colleurs]
-	return HttpResponse(json.dumps([matiere.temps]+colleurs))
+	return mixteajaxmajcolleur(matiere,classe)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, id_semaine, id_creneau):
@@ -474,42 +472,19 @@ def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, id_semaine, id_cr
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
 	if not modifcolloscope(request.user.colleur,creneau.classe) or matiere not in colleur.matieres.all() or matiere not in creneau.classe.matieres.all():
 		return HttpResponseForbidden("Accès non autorisé")
-	Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
-	feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
-	if semaine.lundi+timedelta(days=creneau.jour) in feries:
-		return HttpResponse("jour férié")
-	Colle(semaine=semaine,creneau=creneau,groupe=groupe,colleur=colleur,matiere=matiere).save()
-	return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':'+groupe.nom)
+	return mixteajaxcolloscope(matiere,colleur,groupe,semaine,creneau)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def ajaxcolloscopeeleve(request, id_matiere, id_colleur, id_eleve, id_semaine, id_creneau, login):
-	"""Ajoute la colle propre au quintuplet (matière,colleur,eleve,semaine,créneau) et renvoie le username du colleur
+	"""Ajoute la colle propre au quintuplet (matière,colleur,eleve,semaine,créneau) et renvoie le login du colleur
 	en effaçant au préalable toute colle déjà existante sur ce couple créneau/semaine"""
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	colleur=get_object_or_404(Colleur,pk=id_colleur)
-	try:
-		eleve = Eleve.objects.get(pk=id_eleve)
-	except Exception:
-		if matiere.temps == 60:
-			eleve = None
-		else:
-			raise Http404
 	semaine=get_object_or_404(Semaine,pk=id_semaine)
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
 	if not modifcolloscope(request.user.colleur,creneau.classe) or matiere not in colleur.matieres.all() or matiere not in creneau.classe.matieres.all():
 		return HttpResponseForbidden("Accès non autorisé")
-	Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
-	feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
-	if semaine.lundi+timedelta(days=creneau.jour) in feries:
-		return HttpResponse("jour férié")
-	colle=Colle(semaine=semaine,creneau=creneau,colleur=colleur,eleve=eleve,matiere=matiere)
-	if eleve is None:
-		colle.classe=creneau.classe
-		colle.save()
-		return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':')
-	else:
-		colle.save()
-		return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':'+login)
+	return mixteajaxcolloscopeeleve(matiere,colleur, id_eleve,semaine,creneau,login)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def ajaxcolloscopeeffacer(request,id_semaine, id_creneau):
@@ -519,8 +494,7 @@ def ajaxcolloscopeeffacer(request,id_semaine, id_creneau):
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
 	if not modifcolloscope(request.user.colleur,creneau.classe):
 		return HttpResponseForbidden("Accès non autorisé")
-	Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
-	return HttpResponse("efface")
+	return mixteajaxcolloscopeeffacer(semaine,creneau)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def ajaxcolloscopemulti(request, id_matiere, id_colleur, id_groupe, id_eleve, id_semaine, id_creneau, duree, frequence, permutation):
@@ -558,7 +532,7 @@ def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_el
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
 	if not modifcolloscope(request.user.colleur,creneau.classe) or matiere not in colleur.matieres.all() or matiere not in creneau.classe.matieres.all():
 		return HttpResponseForbidden("Accès non autorisé")
-	return HttpResponse(json.dumps(mixteajaxcolloscopemulticonfirm(matiere,colleur,groupe,eleve,semaine,creneau,duree, frequence, permutation)))
+	return mixteajaxcolloscopemulticonfirm(matiere,colleur,groupe,eleve,semaine,creneau,duree, frequence, permutation)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def agenda(request):

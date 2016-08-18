@@ -9,7 +9,7 @@ from colleur.forms import SemaineForm, ECTSForm, CreneauForm, ColleForm, GroupeF
 from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm, SelectClasseSemaineForm, DispoForm, DispoFormSet, FrequenceForm, ColleurgroupeForm, ColleurgroupeFormSet, PlanificationForm
 from django.forms.formsets import formset_factory
 from accueil.models import Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois, NoteECTS, JourFerie, Frequence, Colleurgroupe
-from mixte.mixte import mixteajaxcompat,mixteajaxcolloscopemulticonfirm
+from mixte.mixte import mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulticonfirm
 from django.db.models import Count, F
 from datetime import date, timedelta
 from django.http import Http404, HttpResponse
@@ -104,33 +104,6 @@ def resultatcsv(request,id_classe,id_matiere,id_semin,id_semax):
 	for note in generateur:
 		writer.writerow([note['eleve'],note['rang'],note['moyenne']]+["|".join([notation[note['note']] for note in value]) for value in note['semaine']])
 	return response
-
-def classe2resultat(matiere,classe,semin,semax):
-	"""Renvoie les résultats de la classe classe, dans la matière matière entre le semaine semin et semax"""
-	semaines = Semaine.objects.filter(semainenote__classe=classe,semainenote__matiere=matiere,lundi__range=(semin.lundi,semax.lundi)).distinct().order_by('lundi')
-	yield semaines
-	listeEleves = list(Eleve.objects.filter(classe=classe).select_related('user'))
-	elevesdict = {eleve.pk:[eleve.user.first_name.title(),eleve.user.last_name.upper(),"",""] for eleve in listeEleves}
-	moyennes = list(Note.objects.exclude(note__gt=20).filter(matiere=matiere,classe=classe).filter(semaine__lundi__range=[semin.lundi,semax.lundi]).values('eleve__id','eleve__user__first_name','eleve__user__last_name').annotate(Avg('note')).order_by('eleve__user__last_name','eleve__user__first_name'))
-	moyennes.sort(key=lambda x:x['note__avg'],reverse=True)
-	for i,x in enumerate(moyennes):
-		x['rang']=i+1
-	for i in range(len(moyennes)-1):
-		if moyennes[i]['note__avg']-moyennes[i+1]['note__avg']<1e-6:
-			moyennes[i+1]['rang']=moyennes[i]['rang']
-	for moyenne in moyennes:
-		elevesdict[moyenne['eleve__id']][2:]=[moyenne['note__avg'],moyenne['rang']]
-	eleves = list(elevesdict.values())
-	eleves.sort(key=lambda x:(x[1],x[0]))
-	for elevemoy,eleve in zip(eleves,listeEleves):
-		note=dict()
-		note['eleve']=eleve
-		note['moyenne']=elevemoy[2]
-		note['rang']=elevemoy[3]
-		note['semaine']=list()
-		for semaine in semaines:
-			note['semaine'].append(Note.objects.filter(eleve=eleve,matiere=matiere,semaine=semaine).values('note','colleur__user__first_name','colleur__user__last_name','commentaire'))
-		yield note
 
 @user_passes_test(is_secret, login_url='login_secret')
 def colloscope(request,id_classe):
@@ -245,7 +218,7 @@ def ajaxcompat(request,id_classe):
 	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	classe=get_object_or_404(Classe,pk=id_classe)
-	return HttpResponse(mixteajaxcompat(classe))
+	return mixteajaxcompat(classe)
 
 @user_passes_test(is_secret, login_url='accueil')
 def ajaxmajcolleur(request, id_matiere, id_classe):
@@ -254,9 +227,8 @@ def ajaxmajcolleur(request, id_matiere, id_classe):
 		return HttpResponseForbidden("Accès non autorisé")
 	classe=get_object_or_404(Classe,pk=id_classe)
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
-	colleurs=Colleur.objects.filter(matieres=matiere,classes=classe).values('id','user__first_name','user__last_name','user__username').order_by('user__first_name','user__last_name')
-	colleurs=[{'nom': value['user__first_name'].title()+" "+value['user__last_name'].upper()+' ('+classe.dictColleurs()[value['id']]+')','id':value['id']} for value in colleurs]
-	return HttpResponse(json.dumps([matiere.temps]+colleurs))
+	return mixteajaxmajcolleur(matiere,classe)
+	
 
 @user_passes_test(is_secret, login_url='accueil')
 def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, id_semaine, id_creneau):
@@ -269,12 +241,8 @@ def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, id_semaine, id_cr
 	groupe=get_object_or_404(Groupe,pk=id_groupe)
 	semaine=get_object_or_404(Semaine,pk=id_semaine)
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
-	Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
-	feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
-	if semaine.lundi+timedelta(days=creneau.jour) in feries:
-		return HttpResponse("jour férié")
-	Colle(semaine=semaine,creneau=creneau,groupe=groupe,colleur=colleur,matiere=matiere).save()
-	return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':'+groupe.nom)
+	return mixteajaxcolloscope(matiere,colleur,groupe,semaine,creneau)
+	
 
 @user_passes_test(is_secret, login_url='accueil')
 def ajaxcolloscopeeleve(request, id_matiere, id_colleur, id_eleve, id_semaine, id_creneau, login):
@@ -284,27 +252,9 @@ def ajaxcolloscopeeleve(request, id_matiere, id_colleur, id_eleve, id_semaine, i
 		return HttpResponseForbidden("Accès non autorisé")
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	colleur=get_object_or_404(Colleur,pk=id_colleur)
-	try:
-		eleve = Eleve.objects.get(pk=id_eleve)
-	except Exception:
-		if matiere.temps == 60:
-			eleve = None
-		else:
-			raise Http404
 	semaine=get_object_or_404(Semaine,pk=id_semaine)
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
-	Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
-	feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
-	if semaine.lundi+timedelta(days=creneau.jour) in feries:
-		return HttpResponse("jour férié")
-	colle=Colle(semaine=semaine,creneau=creneau,colleur=colleur,eleve=eleve,matiere=matiere)
-	if eleve is None:
-		colle.classe=creneau.classe
-		colle.save()
-		return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':')
-	else:
-		colle.save()
-		return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':'+login)
+	return mixteajaxcolloscopeeleve(matiere,colleur, id_eleve,semaine,creneau,login)
 
 @user_passes_test(is_secret, login_url='accueil')
 def ajaxcolloscopeeffacer(request,id_semaine, id_creneau):
@@ -314,8 +264,7 @@ def ajaxcolloscopeeffacer(request,id_semaine, id_creneau):
 		return HttpResponseForbidden("Accès non autorisé")
 	semaine=get_object_or_404(Semaine,pk=id_semaine)
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
-	Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
-	return HttpResponse("efface")
+	return mixteajaxcolloscopeeffacer(semaine,creneau)
 
 @user_passes_test(is_secret, login_url='accueil')
 def ajaxcolloscopemulti(request, id_matiere, id_colleur, id_groupe, id_eleve, id_semaine, id_creneau, duree, frequence, permutation):
@@ -353,7 +302,7 @@ def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_el
 	eleve=None if matiere.temps!=30 else get_object_or_404(Eleve,pk=id_eleve)
 	semaine=get_object_or_404(Semaine,pk=id_semaine)
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
-	return HttpResponse(json.dumps(mixteajaxcolloscopemulticonfirm(matiere,colleur,groupe,eleve,semaine,creneau,duree, frequence, permutation)))
+	return mixteajaxcolloscopemulticonfirm(matiere,colleur,groupe,eleve,semaine,creneau,duree, frequence, permutation)
 
 @user_passes_test(is_secret, login_url='login_secret')
 def planification(request):

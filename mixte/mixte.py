@@ -1,7 +1,9 @@
 #-*- coding: utf-8 -*-
-from accueil.models import Groupe, JourFerie, Colle, Semaine
+from accueil.models import Groupe, JourFerie, Colle, Semaine, Eleve
 from datetime import timedelta
 from django.db.models import Count
+from django.http import Http404, HttpResponse
+import json
 
 def mixteajaxcompat(classe):
 	LISTE_JOURS=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche']
@@ -16,8 +18,45 @@ def mixteajaxcompat(classe):
 	reponse=colleurs+"\n\n"*int(bool(colleurs))+eleves+"\n\n"*int(bool(eleves))+elevesolo+"\n\n"*int(bool(elevesolo))+groupes
 	if not reponse:
 		reponse="aucune incompatibilité dans le colloscope"
-	return reponse
+	return HttpResponse(reponse)
 
+def mixteajaxcolloscope(matiere,colleur,groupe,semaine,creneau):
+	Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
+	feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
+	if semaine.lundi+timedelta(days=creneau.jour) in feries:
+		return HttpResponse("jour férié")
+	Colle(semaine=semaine,creneau=creneau,groupe=groupe,colleur=colleur,matiere=matiere).save()
+	return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':'+groupe.nom)
+
+def mixteajaxcolloscopeeleve(matiere,colleur, id_eleve,semaine,creneau,login):
+	try:
+		eleve = Eleve.objects.get(pk=id_eleve)
+	except Exception:
+		if matiere.temps == 60:
+			eleve = None
+		else:
+			raise Http404
+	Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
+	feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
+	if semaine.lundi+timedelta(days=creneau.jour) in feries:
+		return HttpResponse("jour férié")
+	colle=Colle(semaine=semaine,creneau=creneau,colleur=colleur,eleve=eleve,matiere=matiere)
+	if eleve is None:
+		colle.classe=creneau.classe
+		colle.save()
+		return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':')
+	else:
+		colle.save()
+		return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':'+login)
+
+def mixteajaxcolloscopeeffacer(semaine,creneau):
+	Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
+	return HttpResponse("efface")
+
+def mixteajaxmajcolleur(matiere,classe):
+	colleurs=Colleur.objects.filter(matieres=matiere,classes=classe).values('id','user__first_name','user__last_name','user__username').order_by('user__first_name','user__last_name')
+	colleurs=[{'nom': value['user__first_name'].title()+" "+value['user__last_name'].upper()+' ('+classe.dictColleurs()[value['id']]+')','id':value['id']} for value in colleurs]
+	return HttpResponse(json.dumps([matiere.temps]+colleurs))
 
 def mixteajaxcolloscopemulticonfirm(matiere,colleur,groupe,eleve,semaine,creneau,duree, frequence, permutation):
 	numsemaine=semaine.numero
@@ -65,4 +104,4 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,groupe,eleve,semaine,creneau
 			except Exception:
 				pass
 			i+=1
-	return creneaux
+	return HttpResponse(json.dumps(creneaux))
