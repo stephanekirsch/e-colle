@@ -68,7 +68,8 @@ class Matiere(models.Model):
 		unique_together=(('nom','lv','temps'))
 
 	def __str__(self):
-		return self.nom.title() + "({})".format("/".join([str(self.temps)+"min"] + (["LV{}".format(self.lv)] if self.lv else []))) 
+		dico = {20:'Gr',30:'So',60:'Cl'}
+		return self.nom.title() + "({})".format("/".join([dico[self.temps]] + (["LV{}".format(self.lv)] if self.lv else []))) 
 
 class Classe(models.Model):
 	ANNEE_PREPA = ((1,"1ère année"),(2,"2ème année"),)
