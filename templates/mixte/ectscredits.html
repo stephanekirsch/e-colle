@@ -18,6 +18,7 @@
 	<tr class="entete">
 		<td>Élève</td>
 		<td>Date de naissance</td>
+		<td>Lieu de naissance</td>
 		<td>n° étudiant</td>
 		<td>Crédits semestre 1</td>
 		<td>Crédits semestre 2</td>
@@ -30,13 +31,15 @@
 		<td>{{total.1}}/{{nbeleves}}</td>
 		<td>{{total.2}}/{{nbeleves}}</td>
 		<td>{{total.3}}/{{nbeleves}}</td>
-		<td>{{total.4}}/{{nbeleves}}<a href="{% url user.colleur|yesno:'ects_fiche_classe,secret_ects_fiche_classe' classe.pk %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
-		<td>{{total.4}}/{{nbeleves}}<a href="{% url user.colleur|yesno:'ects_attestation_classe,secret_ects_attestation_classe' classe.pk %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
+		<td>{{total.4}}/{{nbeleves}}</td>
+		<td>{{total.5}}/{{nbeleves}}<a href="{% url user.colleur|yesno:'ects_fiche_classe,secret_ects_fiche_classe' classe.pk %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
+		<td>{{total.5}}/{{nbeleves}}<a href="{% url user.colleur|yesno:'ects_attestation_classe,secret_ects_attestation_classe' classe.pk %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
 	</tr>
 	{% for credit in credits %}
 	<tr>
 		<td>{{credit.prenom|title}} {{credit.nom|upper}}</td>
 		{% if credit.ddn %}<td style="color:green;">✓</td>{% else %}<td style="color:red;">❌</td>{% endif %}
+		{% if credit.ldn %}<td style="color:green;">✓</td>{% else %}<td style="color:red;">❌</td>{% endif %}
 		{% if credit.ine %}<td style="color:green;">✓</td>{% else %}<td style="color:red;">❌</td>{% endif %}
 		{% if credit.sem1 == 30 %}<td style="color:green;">30</td>{% else %}<td style="color:red;">{% firstof credit.sem1 "0" %}</td>{% endif %}
 		{% if credit.sem2 == 30 %}<td style="color:green;">30</td>{% else %}<td style="color:red;">{% firstof credit.sem2 "0" %}</td>{% endif %}

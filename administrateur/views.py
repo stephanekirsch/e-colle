@@ -384,34 +384,20 @@ def eleve(request):
 @ip_filter
 def elevecsv(request):
 	"""Renvoie la vue de la page d'ajout d'élèves via un fichier CSV"""
-	form = CsvForm(request.POST or None, request.FILES or None,initial = {'nom':'Nom','prenom':'Prénom', 'ddn': 'Date de naissance', 'ine': 'Numéro INE','email':'Adresse mail'})
+	form = CsvForm(request.POST or None, request.FILES or None,initial = {'nom':'Nom','prenom':'Prénom', 'ddn': 'Date de naissance', 'ldn': 'Commune de naissance', 'ine': 'Numéro INE','email':'Adresse mail'})
 	if form.is_valid():
 		try:
 			with TextIOWrapper(form.cleaned_data['fichier'].file,encoding = 'utf8') as fichiercsv:
 				dialect = csv.Sniffer().sniff(fichiercsv.read(4096))
-				nom,prenom,ddn,ine,email=form.cleaned_data['nom'],form.cleaned_data['prenom'],form.cleaned_data['ddn'],form.cleaned_data['ine'],form.cleaned_data['email']
+				nom,prenom,ddn,ldn,ine,email=form.cleaned_data['nom'],form.cleaned_data['prenom'],form.cleaned_data['ddn'],form.cleaned_data['ldn'],form.cleaned_data['ine'],form.cleaned_data['email']
 				fichiercsv.seek(0)
 				reader = csv.DictReader(fichiercsv, dialect=dialect)
 				ligne = next(reader)
 				if not(nom in ligne and prenom in ligne):
 					messages.error("Les intitulés des champs nom et/ou prénom sont inexacts")
 				else:
-					if (ddn and ddn in ligne and ine and ine in ligne and email and email in ligne):
-						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':ligne[ddn],'ine':ligne[ine],'email':ligne[email],'classe':form.cleaned_data['classe']} for ligne in reader]
-					elif (ddn and ddn in ligne and ine and ine in ligne):
-						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':ligne[ddn],'ine':ligne[ine],'email':"",'classe':form.cleaned_data['classe']} for ligne in reader]
-					elif (ddn and ddn in ligne and email and email in ligne):
-						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':ligne[ddn],'ine':'','email':ligne[email],'classe':form.cleaned_data['classe']} for ligne in reader]
-					elif (ine and ine in ligne and email and email in ligne):
-						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':None,'ine':ligne[ine],'email':ligne[email],'classe':form.cleaned_data['classe']} for ligne in reader]
-					elif (ine and ine in ligne):
-						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':None,'ine':ligne[ine],'email':"",'classe':form.cleaned_data['classe']} for ligne in reader]
-					elif (ddn and ddn in ligne):
-						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':ligne[ddn],'ine':'','email':"",'classe':form.cleaned_data['classe']} for ligne in reader]
-					elif (email and email in ligne):
-						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':None,'ine':'','email':ligne[email],'classe':form.cleaned_data['classe']} for ligne in reader]
-					else:
-						initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':None,'ine':'','email':"",'classe':form.cleaned_data['classe']} for ligne in reader]
+					initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':None if ddn not in ligne else ligne[ddn],'ldn':None if ldn not in ligne else ligne[ldn],\
+					'ine':'' if ine not in ligne else ligne[ine],'email':'' if email not in ligne else ligne[email],'classe':form.cleaned_data['classe']} for ligne in reader]
 					return eleveajout(request,initial=initial)
 		except Exception:
 				messages.error(request,"Le fichier doit être un fichier CSV valide, encodé en UTF-8")
@@ -448,6 +434,7 @@ def elevemodif(request, chaine_eleves):
 				elif form.cleaned_data is False:
 					eleve.photo=None
 				eleve.ddn=form.cleaned_data['ddn']
+				eleve.ldn=form.cleaned_data['ldn']
 				eleve.ine=form.cleaned_data['ine']
 				eleve.lv1=form.cleaned_data['lv1']
 				eleve.lv2=form.cleaned_data['lv2']
@@ -484,7 +471,7 @@ def eleveajout(request,initial=None):
 					user = User(first_name=form.cleaned_data['prenom'],last_name=form.cleaned_data['nom'],email=form.cleaned_data['email'])
 					user.set_password(form.cleaned_data['motdepasse'])
 					user.username=random_string()
-					eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'],ddn=form.cleaned_data['ddn'],ine=form.cleaned_data['ine'],lv1=form.cleaned_data['lv1'],lv2=form.cleaned_data['lv2'])
+					eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'],ddn=form.cleaned_data['ddn'],ldn=form.cleaned_data['ldn'],ine=form.cleaned_data['ine'],lv1=form.cleaned_data['lv1'],lv2=form.cleaned_data['lv2'])
 					eleve.save()
 					user.eleve=eleve
 					user.save()

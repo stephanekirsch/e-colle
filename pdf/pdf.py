@@ -305,7 +305,7 @@ def attestationects(request,elev,classe):
 			pdf.drawCentredString(pdf.format[0]/2,pdf.y, "{}".format(eleve))
 			pdf.y -= 50
 			pdf.setFont("Helvetica",11)
-			pdf.drawString(2*cm,pdf.y, "né(e) le {}".format(eleve.ddn.strftime('%d/%m/%Y')))
+			pdf.drawString(2*cm,pdf.y, "né(e) le {} à {}".format(eleve.ddn.strftime('%d/%m/%Y')),eleve.ldn.title())
 			pdf.y -= 15
 			pdf.drawString(2*cm,pdf.y, "n° INE: {}".format(eleve.ine))
 			pdf.y -= 50
@@ -530,7 +530,7 @@ def creditsects(request,elev,classe):
 			pdf.setFont("Helvetica",11)
 			pdf.drawCentredString(10.5*cm,pdf.y,"ANNEXE DESCRIPTIVE DE LA FORMATION")
 			story=[p1]
-			texte="<b><i>1.1. Nom:</i></b> {}<br/><b><i>1.2. Prénom:</i></b> {}<br/><b><i>1.3. Date de Naissance:</i></b> {}<br/><b><i>1.4. N° INE:</i></b> {}".format(eleve.user.last_name.upper(),eleve.user.first_name.title(),"" if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),eleve.ine)
+			texte="<b><i>1.1. Nom:</i></b> {}<br/><b><i>1.2. Prénom:</i></b> {}<br/><b><i>1.3. Date de Naissance:</i></b> {}<br/><b><i>1.4. Lieu de Naissance:</i></b> {}<br/><b><i>1.5. N° INE:</i></b> {}".format(eleve.user.last_name.upper(),eleve.user.first_name.title(),"" if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),"" if not eleve.ldn else eleve.ldn.title(),eleve.ine)
 			p2=Paragraph(texte,style)
 			story.extend([p2,p3])
 			texte="""<b><i>2.1. Nom de la formation:</i></b><br/>

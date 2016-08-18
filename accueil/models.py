@@ -364,6 +364,7 @@ class Eleve(models.Model):
 	groupe = models.ForeignKey(Groupe, null=True,related_name="groupeeleve", on_delete=models.SET_NULL)
 	photo = models.ImageField(verbose_name="photo(jpg/png, 300x400)",upload_to=update_photo,null=True,blank=True)
 	ddn = models.DateField(verbose_name="Date de naissance",null=True,blank=True)
+	ldn = models.CharField(verbose_name="Lieu de naissance",max_length=50,blank=True,default="")
 	ine = models.CharField(verbose_name="numéro étudiant (INE)",max_length=11,null=True,blank=True)
 	lv1 = models.ForeignKey(Matiere,related_name='elevelv1',null=True,blank=True)
 	lv2 = models.ForeignKey(Matiere,related_name='elevelv2',null=True,blank=True)
@@ -980,7 +981,7 @@ class NoteECTSManager(models.Manager):
 
 	def credits(self,classe):
 		if BDD == 'mysql': # la double jointure externe sur même table semble bugger avec mysql, donc j'ai mis un SUM(CASE ....) pour y remédier.
-			requete = "SELECT u.first_name prenom, u.last_name nom, e.id, e.ddn, e.ine, SUM(CASE WHEN ne.semestre = 1 THEN m.semestre1 ELSE 0 END) sem1,\
+			requete = "SELECT u.first_name prenom, u.last_name nom, e.id, e.ddn, e.ldn, e.ine, SUM(CASE WHEN ne.semestre = 1 THEN m.semestre1 ELSE 0 END) sem1,\
 			SUM(CASE WHEN ne.semestre = 2 THEN m.semestre2 ELSE 0 END) sem2\
 			FROM accueil_classe cl\
 			INNER JOIN accueil_eleve e\
@@ -992,10 +993,10 @@ class NoteECTSManager(models.Manager):
 			LEFT OUTER JOIN accueil_matiereects m\
 			ON ne.matiere_id = m.id\
 			WHERE cl.id = %s\
-			GROUP BY u.last_name, u.first_name, e.id, e.ddn, e.ine\
+			GROUP BY u.last_name, u.first_name, e.id, e.ddn, e.ldn, e.ine\
 			ORDER BY u.last_name, u.first_name"
 		else: # avec sqlite ou postgresql pas de bug! (probablement avec oracle aussi)
-			requete = "SELECT u.first_name prenom, u.last_name nom, e.id, e.ddn, e.ine, SUM(m1.semestre1) sem1, SUM(m2.semestre2) sem2\
+			requete = "SELECT u.first_name prenom, u.last_name nom, e.id, e.ddn, e.ldn, e.ine, SUM(m1.semestre1) sem1, SUM(m2.semestre2) sem2\
 			FROM accueil_classe cl\
 			INNER JOIN accueil_eleve e\
 			ON e.classe_id=cl.id\
@@ -1008,12 +1009,36 @@ class NoteECTSManager(models.Manager):
 			LEFT OUTER JOIN accueil_matiereects m2\
 			ON ne.matiere_id = m2.id AND ne.semestre = 2\
 			WHERE cl.id = %s\
-			GROUP BY u.last_name, u.first_name, e.id, e.ddn, e.ine\
+			GROUP BY u.last_name, u.first_name, e.id, e.ddn, e.ldn, e.ine\
 			ORDER BY u.last_name, u.first_name"
 		with connection.cursor() as cursor:
 			cursor.execute(requete,(classe.pk,))
 			credits = dictfetchall(cursor)
-		return credits
+		total = [0]*6
+		for credit in credits:
+			attest = 1
+			if credit['ddn']:
+				total[0]+=1
+			else:
+				attest = 0
+			if credit['ldn']:
+				total[1]+=1
+			else:
+				attest = 0
+			if credit['ine']:
+				total[2]+=1
+			else:
+				attest = 0
+			if credit['sem1'] == 30:
+				total[3]+=1
+			else:
+				attest = 0
+			if credit['sem2'] == 30:
+				total[4]+=1
+			else:
+				attest = 0
+			total[5] += attest
+		return credits,total
 
 
 class NoteECTS(models.Model):
