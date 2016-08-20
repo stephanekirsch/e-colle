@@ -7,8 +7,6 @@ DEFAULT_MODIF_COLLOSCOPE=False
 DEFAULT_MODIF_GROUPE=False
 MATHJAX=False
 ECTS=False
-NOM_ADRESSE_ETABLISSEMENT="""Lycée général et technologique Léon Gontran Damas
-chemin Vidal
-97354 Rémire-Montjoly"""
-VILLE="Rémire-Montjoly"
-ACADEMIE="Guyane"
+NOM_ADRESSE_ETABLISSEMENT=""
+VILLE=""
+ACADEMIE=""
