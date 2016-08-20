@@ -399,7 +399,7 @@ class MatiereClasseSelectForm(forms.Form):
 	classe=forms.ModelChoiceField(label="Classe",queryset=Classe.objects.order_by('nom'), empty_label="Toutes",required=False)
 
 	def clean(self):
-		if self.cleaned_data['matiere'] not in self.cleaned_data['classe'].matieres.all():
+		if self.cleaned_data['classe'] is not None and self.cleaned_data['matiere'] is not None and self.cleaned_data['matiere'] not in self.cleaned_data['classe'].matieres.all():
 			raise ValidationError("la classe %(classe)s n'a pas pour matière %(matiere)s",params={'classe':self.cleaned_data['classe'],'matiere':self.cleaned_data['matiere']})
 
 class CsvForm(forms.Form):

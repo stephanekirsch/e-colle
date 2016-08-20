@@ -6,7 +6,7 @@
 	<ul id="menu" style="position: relative;z-index: 10;">
 		<li><a href="{% url 'recapitulatif' %}" title="Récapitulatif des heures de colle">Récapitulatif</a></li>
 		<li><a href="{% url 'ramassage' %}" title="Ramassage des heures de colle">Ramassage</a></li>
-		<li><a href="{% url 'planification' %}" title="Planification du colloscope">Planification</a></li>
+		{% comment %}<li><a href="{% url 'planification' %}" title="Planification du colloscope">Planification</a></li>{% endcomment %}
 		<li><a href="{% url 'resultats_secret'%}" title="résultats par classe/matière des élèves">Résultats</a>
 		{% get_classes as classes %}
 		<li><a href="#" title="Colloscope des élève par classe">Colloscopes</a>

@@ -12,7 +12,7 @@ from os.path import isfile,join
 class ColleurConnexionForm(forms.Form):
 	def __init__(self,matiere, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		query=Colleur.objects.filter(matieres=matiere,user__is_active=True).order_by('user__last_name','user__first_name')
+		query=Colleur.objects.filter(matieres__nom__iexact=matiere.nom,user__is_active=True).distinct().order_by('user__last_name','user__first_name')
 		self.fields['colleur'] = forms.ModelChoiceField(label="Colleur",queryset=query, empty_label=None)
 		self.fields['password'] = forms.CharField(label="Mot de passe",widget=forms.PasswordInput)
 

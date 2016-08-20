@@ -6,11 +6,11 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from administrateur.forms import AdminConnexionForm, SelectColleurForm, MatiereClasseSelectForm
 from colleur.forms import SemaineForm, ECTSForm, CreneauForm, ColleForm, GroupeForm
-from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm, SelectClasseSemaineForm, DispoForm, DispoFormSet, FrequenceForm, ColleurgroupeForm, ColleurgroupeFormSet, PlanificationForm
+from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm, SelectClasseSemaineForm #, DispoForm, DispoFormSet, FrequenceForm, ColleurgroupeForm, ColleurgroupeFormSet, PlanificationForm
 from django.forms.formsets import formset_factory
-from accueil.models import Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois, NoteECTS, JourFerie, Frequence, Colleurgroupe
-from mixte.mixte import mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulticonfirm
-from django.db.models import Count, F
+from accueil.models import Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois, NoteECTS, JourFerie #, Frequence, Colleurgroupe
+from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm
+from django.db.models import Count
 from datetime import date, timedelta
 from django.http import Http404, HttpResponse
 from django.db.models import Avg
@@ -20,7 +20,7 @@ from unidecode import unidecode
 from lxml import etree
 import csv
 import json
-from planification.planification import planif
+# from planification.planification import planif
 conf=__import__('ecolle.config')
 
 def is_secret(user):
@@ -109,13 +109,9 @@ def resultatcsv(request,id_classe,id_matiere,id_semin,id_semax):
 def colloscope(request,id_classe):
 	"""Renvoie la vue de la page du colloscope de la classe dont l'id est id_classe"""
 	classe=get_object_or_404(Classe,pk=id_classe)
-	semaines=Semaine.objects.all()
+	semaines=list(Semaine.objects.all())
 	try:
-		semin=semaines[0]
-	except Exception:
-		raise Http404
-	try:
-		semax=semaines[semaines.count()-1]
+		semin,semax=semaines[0],semaines[-1]
 	except Exception:
 		raise Http404
 	return colloscope2(request,id_classe,semin.pk,semax.pk)
@@ -126,12 +122,8 @@ def colloscope2(request,id_classe,id_semin,id_semax):
 	classe=get_object_or_404(Classe,pk=id_classe)
 	semin=get_object_or_404(Semaine,pk=id_semin)
 	semax=get_object_or_404(Semaine,pk=id_semax)
-	form=SemaineForm(request.POST or None,initial={'semin':semin,'semax':semax})
-	if form.is_valid():
-		return redirect('colloscope2_secret',id_classe,form.cleaned_data['semin'].pk,form.cleaned_data['semax'].pk)
-	jours,creneaux,colles,semaines=Colle.objects.classe2colloscope(classe,semin,semax)
-	return render(request,'mixte/colloscope.html',
-	{'semin':semin,'semax':semax,'form':form,'classe':classe,'jours':jours,'dictgroupes':classe.dictGroupes(),'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'classes':Classe.objects.all(),'dictColleurs':classe.dictColleurs(semin,semax),'isprof':conf.config.MODIF_SECRETARIAT_COLLOSCOPE})
+	isprof = conf.config.MODIF_SECRETARIAT_COLLOSCOPE
+	return mixtecolloscope(request,classe,semin,semax,isprof)
 
 @user_passes_test(is_secret, login_url='login_secret')
 def colloscopePdf(request,id_classe,id_semin,id_semax):
@@ -150,36 +142,8 @@ def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):
 	classe=get_object_or_404(Classe,pk=id_classe)
 	semin=get_object_or_404(Semaine,pk=id_semin)
 	semax=get_object_or_404(Semaine,pk=id_semax)
-	form1=SemaineForm(request.POST or None,initial={'semin':semin,'semax':semax})
-	if form1.is_valid():
-		return redirect('colloscopemodif_secret',id_classe,form1.cleaned_data['semin'].pk,form1.cleaned_data['semax'].pk)
-	form2=ColleForm(classe,None)
-	jours,creneaux,colles,semaines = Colle.objects.classe2colloscope(classe,semin,semax,True)
-	creneau=creneaumodif if creneaumodif else Creneau(classe=classe)
-	form=CreneauForm(request.POST or None,instance=creneau)
-	if form.is_valid():
-		if creneaumodif:
-			form.save()
-		else:
-			if Creneau.objects.filter(classe=classe,jour=form.cleaned_data['jour'],heure=form.cleaned_data['heure']).exists():
-				messages.error(request,"Il y a déjà un créneau ce jour à cette heure, utiliser la fonction dupliquer")
-			else:
-				form.save()
-		return redirect('colloscopemodif_secret',classe.pk,semin.pk,semax.pk)
-	matieres = list(classe.matieres.filter(colleur__classes=classe).values_list('pk','nom','couleur','temps').annotate(nb=Count("colleur")))
-	colleurs = list(Classe.objects.filter(pk=classe.pk,matieres__colleur__classes=classe).values_list('matieres__colleur__pk','matieres__colleur__user__username','matieres__colleur__user__first_name','matieres__colleur__user__last_name').order_by("matieres__nom","matieres__colleur__user__last_name","matieres__colleur__user__first_name"))
-	groupes = Groupe.objects.filter(classe=classe)
-	matieresgroupes = [[groupe for groupe in groupes if groupe.haslangue(matiere)] for matiere in classe.matieres.filter(colleur__classes=classe)]
-	listeColleurs = []
-	for x in matieres:
-		listeColleurs.append(colleurs[:x[4]])
-		del colleurs[:x[4]]
-	largeur=str(650+42*creneaux.count())+'px'
-	hauteur=str(27*(len(matieres)+classe.classeeleve.count()+Colleur.objects.filter(classes=classe).count()))+'px'
-	return render(request,'mixte/colloscopeModif.html',
-	{'semin':semin,'semax':semax,'form1':form1,'form':form,'form2':form2,'largeur':largeur,'hauteur':hauteur,'groupes':groupes,'matieres':zip(matieres,listeColleurs,matieresgroupes),'creneau':creneaumodif\
-	,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'dictColleurs':classe.dictColleurs(semin,semax),'dictGroupes':json.dumps(classe.dictGroupes(False)),'dictEleves':json.dumps(classe.dictElevespk())})
-
+	return mixtecolloscopemodif(request,classe,semin,semax,creneaumodif)
+	
 @user_passes_test(is_secret, login_url='accueil')
 def creneauSuppr(request,id_creneau,id_semin,id_semax):
 	"""Essaie de supprimer le créneau dont l'id est id_creneau puis redirige vers la page de modification du colloscope
@@ -187,11 +151,7 @@ def creneauSuppr(request,id_creneau,id_semin,id_semax):
 	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
-	try:
-		creneau.delete()
-	except Exception:
-		messages.error(request,"Vous ne pouvez pas effacer un créneau qui contient des colles")
-	return redirect('colloscopemodif_secret',creneau.classe.pk,id_semin,id_semax)
+	return mixtecreneausuppr(request.user,creneau,id_semin,id_semax)
 
 @user_passes_test(is_secret, login_url='accueil')
 def creneauModif(request,id_creneau,id_semin,id_semax):
@@ -206,11 +166,7 @@ def creneauDupli(request,id_creneau,id_semin,id_semax):
 	"""Renvoie la vue de la page de duplication du creneau dont l'id est id_creneau"""
 	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
 		return HttpResponseForbidden("Accès non autorisé")
-	creneau=get_object_or_404(Creneau,pk=id_creneau)
-	creneau.pk=None
-	creneau.salle=None
-	creneau.save()
-	return redirect('colloscopemodif_secret',creneau.classe.pk,id_semin,id_semax)
+	return mixtecreneaudupli(request.user,creneau,id_semin,id_semax)
 
 @user_passes_test(is_secret, login_url='accueil')
 def ajaxcompat(request,id_classe):
@@ -279,15 +235,8 @@ def ajaxcolloscopemulti(request, id_matiere, id_colleur, id_groupe, id_eleve, id
 	colleur=get_object_or_404(Colleur,pk=id_colleur)
 	semaine=get_object_or_404(Semaine,pk=id_semaine)
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
-	frequence = int(frequence)
-	modulo = int(semaine.numero)%frequence
-	ecrase = Colle.objects.filter(creneau = creneau,semaine__numero__range=(semaine.numero,semaine.numero+int(duree)-1)).annotate(semaine_mod = F('semaine__numero') % frequence).filter(semaine_mod=modulo).count()
-	nbferies = JourFerie.objects.recupFerie(creneau.jour,semaine,duree,frequence,modulo)
-	if not(ecrase and nbferies[0]):
-		return HttpResponse("{}_{}".format(ecrase,nbferies[0]))
-	else:
-		return ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_eleve, id_semaine, id_creneau, duree, frequence, permutation)
-
+	return mixteajaxcolloscopemulti(matiere,colleur,id_groupe,id_eleve,semaine,creneau,duree, frequence, permutation)
+	
 @user_passes_test(is_secret, login_url='accueil')
 def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_eleve, id_semaine, id_creneau, duree, frequence, permutation):
 	"""ajoute les colles sur les couples créneau/semaine sur le créneau dont l'id est id_creneau
@@ -298,11 +247,9 @@ def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_el
 		return HttpResponseForbidden("Accès non autorisé")
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	colleur=get_object_or_404(Colleur,pk=id_colleur)
-	groupe=None if matiere.temps!=20 else get_object_or_404(Groupe,pk=id_groupe)
-	eleve=None if matiere.temps!=30 else get_object_or_404(Eleve,pk=id_eleve)
 	semaine=get_object_or_404(Semaine,pk=id_semaine)
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
-	return mixteajaxcolloscopemulticonfirm(matiere,colleur,groupe,eleve,semaine,creneau,duree, frequence, permutation)
+	return mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,creneau,duree, frequence, permutation)
 
 @user_passes_test(is_secret, login_url='login_secret')
 def planification(request):
@@ -537,11 +484,7 @@ def groupe(request,id_classe):
 		return HttpResponseForbidden("Accès non autorisé")
 	classe=get_object_or_404(Classe,pk=id_classe)
 	groupes = Groupe.objects.filter(classe=classe).prefetch_related('groupeeleve__user')
-	form = GroupeForm(classe,None,request.POST or None)
-	if form.is_valid():
-		form.save()
-		return redirect('groupe_secret', classe.pk)
-	return render(request,"mixte/groupe.html",{'classe':classe,'groupes':groupes,'form':form,'hide':json.dumps([(eleve.id,"" if not eleve.lv1 else eleve.lv1.pk,"" if not eleve.lv2 else eleve.lv2.pk) for eleve in form.fields['eleve0'].queryset])})
+	return mixtegroupe(request,classe,groupes)
 
 @user_passes_test(is_secret, login_url='accueil')
 def groupeSuppr(request,id_groupe):
@@ -549,11 +492,7 @@ def groupeSuppr(request,id_groupe):
 	if not conf.config.MODIF_SECRETARIAT_GROUPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	groupe=get_object_or_404(Groupe,pk=id_groupe)
-	try:
-		groupe.delete()
-	except Exception:
-		messages.error(request,"Impossible de supprimer le groupe car il est présent dans le colloscope")
-	return redirect('groupe_secret',groupe.classe.pk)
+	return mixtegroupesuppr(request.user,groupe)
 
 @user_passes_test(is_secret, login_url='accueil')
 def groupeModif(request,id_groupe):
@@ -561,13 +500,7 @@ def groupeModif(request,id_groupe):
 	if not conf.config.MODIF_SECRETARIAT_GROUPE:
 		return HttpResponseForbidden("Accès non autorisé")
 	groupe=get_object_or_404(Groupe,pk=id_groupe)
-	initial = {"eleve{}".format(i):eleve for i,eleve in enumerate(groupe.groupeeleve.all())}
-	initial['nom']=groupe.nom
-	form = GroupeForm(groupe.classe,groupe,request.POST or None, initial=initial)
-	if form.is_valid():
-		form.save()
-		return redirect('groupe_secret', groupe.classe.pk)
-	return render(request,'mixte/groupeModif.html',{'form':form,'groupe':groupe,'hide':json.dumps([(eleve.id,"" if not eleve.lv1 else eleve.lv1.pk,"" if not eleve.lv2 else eleve.lv2.pk) for eleve in form.fields['eleve0'].queryset])})
+	return mixtegroupemodif(request,groupe)
 
 @user_passes_test(is_secret_ects, login_url='login_secret')
 def ectscredits(request,id_classe,form=None):

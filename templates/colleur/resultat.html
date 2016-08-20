@@ -2,7 +2,7 @@
 {% load static %}
 {% load customfilter %}
 {% block body %}
-<table class="accueil"><tr><td>Résultats de la classe {{classe}} en {{matiere}}</td></tr></table>
+<table class="accueil"><tr><td>Résultats de la classe {{classe}} en {{matiere.nom|title}}</td></tr></table>
 <form method="POST">
 {% csrf_token %}
 <table class="tableausimple">

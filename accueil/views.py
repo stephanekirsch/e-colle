@@ -23,7 +23,10 @@ def home(request):
 		elif user.eleve:
 			return redirect('action_eleve')
 	classes=Classe.objects.all()
-	matieres=Matiere.objects.all()
+	matieres=list(Matiere.objects.all())
+	for i in range(len(matieres)-1,0,-1):
+		if matieres[i].nom.lower() == matieres[i-1].nom.lower():
+			matieres.pop(i)
 	show_admin=True
 	if IP_FILTRE_ADMIN:
 		show_admin=False
