@@ -191,7 +191,7 @@ def Pdf(classe,semin,semax):
 	fontsize=9
 	pdf.setFont("Helvetica-Bold",fontsize)
 	for matiere in matieres:
-		data=[[matiere]]
+		data=[[matiere.nom.title() + ("" if not matiere.lv else "(LV{})".format(matiere.lv))]]
 		colleurs=Colle.objects.filter(creneau__classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).values('colleur').distinct()
 		for colleur_id in colleurs:
 			colleur=get_object_or_404(Colleur,pk=colleur_id['colleur'])

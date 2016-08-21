@@ -47,8 +47,8 @@
 			<td>{% if eleve.ldn %}{{eleve.ldn|title}}{% endif %}</td>
 			<td>{% if eleve.ine %}{{eleve.ine}}{% endif %}</td>
 			<td>{{eleve.classe.nom}}</td>
-			<td>{% if eleve.lv1 %}{{eleve.lv1}}{% endif %}</td>
-			<td>{% if eleve.lv2 %}{{eleve.lv2}}{% endif %}</td>
+			<td>{% if eleve.lv1 %}{{eleve.lv1.nom|title}}{% endif %}</td>
+			<td>{% if eleve.lv2 %}{{eleve.lv2.nom|title}}{% endif %}</td>
 			<td>{% with eleve.photo as photo %}{% if photo %} <img alt="photo élève" class="photo" src="{{ photo.url }}"/>{% endif %} {% endwith %}</td>
 			<td><a class="bouton" href="{% url 'modif_eleve' eleve.pk %}">Modifier</a></td>
 			<td><a class="bouton" href="{% url 'suppr_eleve' eleve.pk %}">Supprimer</a></td>
