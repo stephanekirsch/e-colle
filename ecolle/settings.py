@@ -29,7 +29,7 @@ SECRET_KEY = 'cg(ip)m3z77z3v!5wo&cl8^4!rk9t0++5wld+@i(kifb!z-k0p' # une clé sec
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql', # le SGBD choisi: 'django.db.backends.mysql' si vous utilisez mysql, 'django.db.backends.postgresql' pour postgreSQL, etc ... 
+        'ENGINE': 'django.db.backends.mysql', # le SGBD choisi: 'django.db.backends.mysql' si vous utilisez mysql, 'django.db.backends.postgresql' pour postgreSQL, etc ... 
         'NAME': 'e-colle',               # le nom de la base de données (le chemin vers le fichier + le nom du fichier.db pour sqlite)
         # La suite est à laisser vide si vous utilisez SQlite, puisqu'aucune authentification n'y est nécessaire
         'USER': 'e-colle',               # le nom de l'utilisateur ayant droits sur la base de données.
