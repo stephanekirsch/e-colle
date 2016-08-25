@@ -832,15 +832,15 @@ def update_name(programme):
 	nomimage=programme.fichier.name.replace('programme','image').replace('pdf','jpg')
 	nouveaufichier="programme/prog"+str(programme.semaine.pk)+"-"+str(programme.classe.pk)+"-"+str(programme.matiere.pk)+".pdf"
 	nouvelleimage=nouveaufichier.replace('programme','image').replace('pdf','jpg')
-	os.rename(MEDIA_ROOT+programme.fichier.name,MEDIA_ROOT+nouveaufichier)
-	os.rename(MEDIA_ROOT+nomimage,MEDIA_ROOT+nouvelleimage)
+	os.rename(os.path.join(MEDIA_ROOT,programme.fichier.name),os.path.join(MEDIA_ROOT,nouveaufichier))
+	os.rename(os.path.join(MEDIA_ROOT,nomimage),os.path.join(MEDIA_ROOT,nouvelleimage))
 	programme.fichier.name=nouveaufichier
 	programme.save()
 
 @receiver(post_delete, sender=Programme)
 def programme_post_delete_function(sender, instance, **kwargs):
 	if instance.fichier and instance.fichier.name is not None:
-		fichier=MEDIA_ROOT+instance.fichier.name
+		fichier=os.path.join(MEDIA_ROOT,instance.fichier.name)
 		if os.path.isfile(fichier):
 			os.remove(fichier)
 		if IMAGEMAGICK:
@@ -856,13 +856,13 @@ def programme_post_save_function(sender, instance, **kwargs):
 			nomimage=nomfichier.replace('programme','image').replace('pdf','jpg') # on récupère le nom de l'éventuelle image correspondante, lève une exception s'il n'y a pas de pdf car replace n'est pas une méthode de NoneType
 			if not os.path.isfile(MEDIA_ROOT+nomimage): # si l'image n'existe pas
 				# on convertit la première page du pdf en jpg (échoue avec une exception s'il n'y pas pas de pdf ou si imagemagick n'est pas installé)
-				os.system("convert -density 200 "+MEDIA_ROOT+nomfichier+"[0] "+MEDIA_ROOT+nomimage)  
-				os.system("convert -resize 50% "+MEDIA_ROOT+nomimage+" "+MEDIA_ROOT+nomimage)
-		if nomfichier != "programme/prog"+str(instance.semaine.pk)+"-"+str(instance.classe.pk)+"-"+str(instance.matiere.pk)+".pdf":
+				os.system("convert -density 200 "+os.path.join(MEDIA_ROOT,nomfichier)+"[0] "+os.path.join(MEDIA_ROOT,nomimage))  
+				os.system("convert -resize 50% "+os.path.join(MEDIA_ROOT,nomimage)+" "+os.path.join(MEDIA_ROOT,nomimage))
+		if nomfichier != os.path.join("programme","prog")+str(instance.semaine.pk)+"-"+str(instance.classe.pk)+"-"+str(instance.matiere.pk)+".pdf":
 			# si le nom du fichier ne correspond pas à ses caractéristiques (semaine/classe/matière), ce qui signifie qu'un de ces 3 champs a été modifié, on met à jour le nom du fichier.
 			update_name(instance)
 	except Exception: # Dans le cas ou plus aucun fichier n'est lié au programme, on efface l'éventuel fichier présent avant la modification
-		nomfichier = MEDIA_ROOT+"programme/prog"+str(instance.semaine.pk)+"-"+str(instance.classe.pk)+"-"+str(instance.matiere.pk)+".pdf"
+		nomfichier = os.path.join(MEDIA_ROOT,"programme","prog")+str(instance.semaine.pk)+"-"+str(instance.classe.pk)+"-"+str(instance.matiere.pk)+".pdf"
 		if os.path.isfile(nomfichier): # s'il y a bien un fichier, on l'efface
 			os.remove(nomfichier)
 		if IMAGEMAGICK:
@@ -873,7 +873,7 @@ def programme_post_save_function(sender, instance, **kwargs):
 def update_photo(eleve):
 	try:
 		nomphoto = 'photos/photo_{}.{}'.format(eleve.pk,eleve.photo.name.split(".")[-1].lower())
-		os.rename(MEDIA_ROOT+eleve.photo.name,MEDIA_ROOT+nomphoto)
+		os.rename(os.path.join(MEDIA_ROOT,eleve.photo.name),os.path.join(MEDIA_ROOT,nomphoto))
 		if nomphoto != eleve.photo.name:
 			eleve.photo.name=nomphoto
 			eleve.save()
@@ -886,7 +886,7 @@ def eleve_post_save_function(sender, instance, **kwargs):
 	if instance.photo:
 		update_photo(instance)
 	if instance.photo: # si l'exécution de update_photo a effacé la photo
-		image=Image.open(MEDIA_ROOT+instance.photo.name)
+		image=Image.open(os.path.join(MEDIA_ROOT,instance.photo.name))
 		taille=image.size
 		try:
 			ratio=taille[0]/taille[1]
@@ -902,12 +902,12 @@ def eleve_post_save_function(sender, instance, **kwargs):
 			image=image.crop((0,ordonnee,300,ordonnee+400))
 		else:
 			image=image.resize((300,400))
-		image.save(MEDIA_ROOT+instance.photo.name)
+		image.save(os.path.join(MEDIA_ROOT,instance.photo.name))
 
 @receiver(post_delete, sender=Eleve)
 def eleve_post_delete_function(sender, instance, **kwargs):
 	if instance.photo and instance.photo.name is not None:
-		fichier=MEDIA_ROOT+instance.photo.name
+		fichier=os.path.join(MEDIA_ROOT,instance.photo.name)
 		if os.path.isfile(fichier):
 			os.remove(fichier)
 
