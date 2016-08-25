@@ -98,7 +98,7 @@
 <ul id="niveau2">
 	<li><a id="creneaux" href="false" style="background-color:#888888">creneaux multiples</a></li>
 	<li><a href="{% url user.colleur|yesno:'ajaxeffacer_colleur,ajaxeffacer_secret' 'semaine' 'creneau' %}">Effacer</a></li>
-{% for matiere,colleurs,groupes,loginsEleves in matieres %}
+{% for matiere,colleurs,groupes in matieres %}
 	<li style="background-color:{{matiere.2}}">{{matiere.1|title}}
 		<ul class="niveau3">
 		{% for colleur in colleurs %}
@@ -110,7 +110,7 @@
 				{% endfor %}
 				{% elif matiere.3 == 30 %}
 				<ul class="niveau4">
-				{% for eleve,login in loginsEleves %}
+				{% for eleve,login in classe.loginsEleves %}
 					<li><a href="{% url user.colleur|yesno:'ajax_colleur_eleve,ajax_secret_eleve' matiere.0 colleur.0 eleve.pk 'semaine' 'creneau' login %}">{{eleve}} ({{login}})</a></li>
 				{% endfor %}
 				{% elif matiere.3 == 60 %}
