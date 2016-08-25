@@ -36,7 +36,7 @@ class NoteForm(forms.ModelForm):
 		if nbNotesColleur>=3:
 			raise ValidationError('Vous avez déjà 3 notes sur ce créneau')
 		nbNotesEleve=Note.objects.filter(semaine=self.cleaned_data['semaine'],matiere=self.instance.matiere,colleur=colleur,eleve=self.instance.eleve).count()
-		if nbNotesEleve !=0 and self.instance.eleve:
+		if nbNotesEleve !=0 and self.instance.eleve and not self.instance.pk:
 			raise ValidationError('Vous avez déjà collé cet élève dans cette matière cette semaine')
 
 
