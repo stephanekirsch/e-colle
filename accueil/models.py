@@ -809,7 +809,7 @@ def programme_post_save_function(sender, instance, **kwargs):
 		nomfichier=instance.fichier.name # on récupère le nom du fichier joint
 		if IMAGEMAGICK:
 			nomimage=nomfichier.replace('programme','image').replace('pdf','jpg') # on récupère le nom de l'éventuelle image correspondante, lève une exception s'il n'y a pas de pdf car replace n'est pas une méthode de NoneType
-			if not os.path.isfile(MEDIA_ROOT+nomimage): # si l'image n'existe pas
+			if not os.path.isfile(os.path.join(MEDIA_ROOT,nomimage)): # si l'image n'existe pas
 				# on convertit la première page du pdf en jpg (échoue avec une exception s'il n'y pas pas de pdf ou si imagemagick n'est pas installé)
 				os.system("convert -density 200 "+os.path.join(MEDIA_ROOT,nomfichier)+"[0] "+os.path.join(MEDIA_ROOT,nomimage))  
 				os.system("convert -resize 50% "+os.path.join(MEDIA_ROOT,nomimage)+" "+os.path.join(MEDIA_ROOT,nomimage))
