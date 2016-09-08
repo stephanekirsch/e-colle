@@ -250,7 +250,6 @@ class EleveForm(forms.Form):
 	def clean_lv1(self):
 		data = self.cleaned_data['lv1']
 		if data is not None:
-			print(self.cleaned_data)
 			if data not in self.cleaned_data['classe'].matieres.all():
 				raise ValidationError("Cette langue ne fait pas partie des matières de cette classe")
 		return data
