@@ -414,8 +414,8 @@ def elevemodif(request, chaine_eleves):
 		if formset.is_valid():
 			for form,eleve in zip(formset,listeEleves):
 				user=eleve.user
-				user.last_name=form.cleaned_data['nom']
-				user.first_name=form.cleaned_data['prenom']
+				user.last_name=form.cleaned_data['nom'].lower()
+				user.first_name=form.cleaned_data['prenom'].lower()
 				user.email=form.cleaned_data['email']
 				if form.cleaned_data['motdepasse']:
 					user.set_password(form.cleaned_data['motdepasse'])
@@ -468,7 +468,7 @@ def eleveajout(request,initial=None):
 			formset=EleveFormSet(request.POST,request.FILES)
 			if formset.is_valid():
 				for i,form in enumerate(formset):
-					user = User(first_name=form.cleaned_data['prenom'],last_name=form.cleaned_data['nom'],email=form.cleaned_data['email'])
+					user = User(first_name=form.cleaned_data['prenom'].lower(),last_name=form.cleaned_data['nom'].lower(),email=form.cleaned_data['email'])
 					user.set_password(form.cleaned_data['motdepasse'])
 					user.username=random_string()
 					eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'],ddn=form.cleaned_data['ddn'],ldn=form.cleaned_data['ldn'],ine=form.cleaned_data['ine'],lv1=form.cleaned_data['lv1'],lv2=form.cleaned_data['lv2'])

@@ -82,7 +82,7 @@ class ColleurFormSetMdp(forms.BaseFormSet):
 			colleur.matieres=form.cleaned_data['matiere']
 			colleur.classes=form.cleaned_data['classe']
 			# on crée le user
-			user = User(username=random_string(),first_name=form.cleaned_data['prenom'],last_name=form.cleaned_data['nom'],email=form.cleaned_data['email'],colleur=colleur)
+			user = User(username=random_string(),first_name=form.cleaned_data['prenom'].lower(),last_name=form.cleaned_data['nom'].lower(),email=form.cleaned_data['email'],colleur=colleur)
 			user.set_password(form.cleaned_data['motdepasse'])
 			user.save()		
 
@@ -101,8 +101,8 @@ class ColleurFormSet(forms.BaseFormSet):
 			colleur.save()
 			user=colleur.user
 			user.username=random_string()
-			user.first_name=form.cleaned_data['prenom']
-			user.last_name=form.cleaned_data['nom']
+			user.first_name=form.cleaned_data['prenom'].lower()
+			user.last_name=form.cleaned_data['nom'].lower()
 			user.email=form.cleaned_data['email']
 			user.is_active=form.cleaned_data['active']
 			user.set_password(form.cleaned_data['motdepasse'])
