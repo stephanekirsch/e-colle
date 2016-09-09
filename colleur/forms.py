@@ -110,7 +110,7 @@ class GroupeForm(forms.Form):
 		else:
 			query=Eleve.objects.filter(classe=classe).filter(Q(groupe__isnull=True)|Q(groupe=groupe)).select_related('user')
 		self.fields['nom'] = forms.ChoiceField(label="nom",choices=zip(range(1,21),range(1,21)))
-		self.fields['eleve0'] = forms.ModelChoiceField(label="Premier élève",queryset=query,empty_label="Élève fictif",required=True)
+		self.fields['eleve0'] = forms.ModelChoiceField(label="Premier élève",queryset=query,empty_label="Élève fictif",required=False)
 		self.fields['eleve1'] = forms.ModelChoiceField(label="Deuxième élève",queryset=query,empty_label="Élève fictif",required=False)
 		self.fields['eleve2'] = forms.ModelChoiceField(label="Troisième élève",queryset=query,empty_label="Élève fictif",required=False)
 		query = Matiere.objects.filter(matieresclasse=classe,lv=1).distinct()
