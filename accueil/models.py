@@ -12,7 +12,6 @@ from PIL import Image
 from django.db.models import Count, Avg, Min, Max, Sum, F, Q
 from django.db.models.functions import Lower, Upper, Concat, Substr
 from fractions import Fraction
-conf = __import__('ecolle.config')
 
 semaine = ["lundi", "mardi","mercredi","jeudi","vendredi","samedi","dimanche"]
 
