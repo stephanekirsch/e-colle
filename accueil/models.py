@@ -291,7 +291,7 @@ class Colleur(models.Model):
 		return self.colleurprof.prefetch_related('classe')
 
 	def modifgroupe(self):
-		if Config.get_config().modif_prof_groupe:
+		if Config.objects.get_config().modif_prof_groupe:
 			for prof in self.colleurprof.all():
 				if prof.modifgroupe or prof.classe.profprincipal == self:
 					return True
