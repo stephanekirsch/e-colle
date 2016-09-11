@@ -78,7 +78,7 @@ def action(request):
 @ip_filter
 def config(request):
 	"""Renvoie la vue de la page de configuration de l'administrateur"""
-	form = ConfigForm(request.POST or None)
+	form = ConfigForm(request.POST or None,instance=Config.objects.get_config())
 	if form.is_valid():
 		form.save()
 		return redirect('configconfirm')

@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Classe, Matiere, Etablissement, Semaine, Colleur, Eleve, JourFerie, User, Prof
+from accueil.models import Classe, Matiere, Etablissement, Semaine, Colleur, Eleve, JourFerie, User, Prof, Config
 from django.forms.extras.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
@@ -8,68 +8,20 @@ from ecolle.settings import RESOURCES_ROOT, CHEMINVERSECOLLE
 from lxml import etree
 from random import choice
 from os import path
-conf = __import__('ecolle.config')
 
 def random_string():
 	"""renvoie une chaine de caractères aléatoires contenant des lettres ou des chiffres ou un des symboles _+-.@"""
 	return "".join([choice("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_+-.@0123456789") for i in range (30)])
 
-class ConfigForm(forms.Form):
-	NOM_ETABLISSEMENT=""
-	MODIF_SECRETARIAT_COLLOSCOPE=True
-	MODIF_PROF_COLLOSCOPE=True
-	MODIF_SECRETARIAT_GROUPE=True
-	MODIF_PROF_GROUPE=True
-	DEFAULT_MODIF_COLLOSCOPE=True
-	DEFAULT_MODIF_GROUPE=True
-	MATHJAX=True
-	ECTS=True
-	NOM_ADRESSE_ETABLISSEMENT=""
-	VILLE=""
-	ACADEMIE=""
-	try:
-		NOM_ETABLISSEMENT=conf.config.NOM_ETABLISSEMENT
-		MODIF_SECRETARIAT_COLLOSCOPE=conf.config.MODIF_SECRETARIAT_COLLOSCOPE
-		MODIF_PROF_COLLOSCOPE=conf.config.MODIF_PROF_COLLOSCOPE
-		MODIF_SECRETARIAT_GROUPE=conf.config.MODIF_SECRETARIAT_GROUPE
-		MODIF_PROF_GROUPE=conf.config.MODIF_PROF_GROUPE
-		DEFAULT_MODIF_COLLOSCOPE=conf.config.DEFAULT_MODIF_COLLOSCOPE
-		DEFAULT_MODIF_GROUPE=conf.config.DEFAULT_MODIF_GROUPE
-		MATHJAX=conf.config.MATHJAX
-		ECTS=conf.config.ECTS
-		NOM_ADRESSE_ETABLISSEMENT=conf.config.NOM_ADRESSE_ETABLISSEMENT
-		VILLE=conf.config.VILLE
-		ACADEMIE=conf.config.ACADEMIE
-	except Exception:
-		pass
-	nomEtab = forms.CharField(label="Nom de l'établissement",max_length=70,required=False,initial = NOM_ETABLISSEMENT)
-	modifSecretCol = forms.BooleanField(label="Modification du colloscope par le secrétariat",required=False, initial = MODIF_SECRETARIAT_COLLOSCOPE)
-	modifSecretGroupe = forms.BooleanField(label="Modification des groupes de colle par le secrétariat",required=False, initial = MODIF_SECRETARIAT_GROUPE)
-	modifProfCol = forms.BooleanField(label="Modification du colloscope par les enseignants",required=False, initial = MODIF_PROF_COLLOSCOPE)
-	defaultModifCol = forms.BooleanField(label="Modification du colloscope par défaut pour tous les enseignants",required=False, initial = DEFAULT_MODIF_COLLOSCOPE)
-	modifProfGroupe = forms.BooleanField(label="Modification des groupes de colle par les enseignants",required=False, initial = MODIF_PROF_GROUPE)
-	defaultModifGroupe = forms.BooleanField(label="Modification des groupes par défaut pour tous les enseignants",required=False, initial = DEFAULT_MODIF_GROUPE)
-	mathjax = forms.BooleanField(label="Mise en forme des formules mathématiques avec Mathjax",required=False, initial = MATHJAX)
-	ects = forms.BooleanField(label="Gestion des fiches de crédits ECTS",required=False, initial = ECTS)
-	nomEtabFull = forms.CharField(label="Nom complet de l'établissement + adresse",widget=forms.Textarea,required=False, initial = NOM_ADRESSE_ETABLISSEMENT)
-	ville = forms.CharField(label="Ville de l'établissement",max_length=50,required=False, initial = VILLE)
-	academie = forms.CharField(label="Académie de l'établissement",max_length=50,required=False, initial = ACADEMIE)
+class ConfigForm(forms.ModelForm):
+	class Meta:
+		model = Config
+		fields=['nom_etablissement','modif_secret_col','modif_secret_groupe','modif_prof_col','default_modif_col',\
+		'modif_prof_groupe','default_modif_groupe','mathjax','ects','nom_adresse_etablissement','ville','academie']
 
 	def save(self):
-		with open(path.join(CHEMINVERSECOLLE,'ecolle','config.py'),'wt',encoding="utf8") as fichier:
-			fichier.write("\n".join(['NOM_ETABLISSEMENT="{}"'.format(self.cleaned_data['nomEtab']),
-			'MODIF_SECRETARIAT_COLLOSCOPE={}'.format(self.cleaned_data['modifSecretCol']),
-			'MODIF_PROF_COLLOSCOPE={}'.format(self.cleaned_data['modifProfCol']),
-			'MODIF_SECRETARIAT_GROUPE={}'.format(self.cleaned_data['modifSecretGroupe']),
-			'MODIF_PROF_GROUPE={}'.format(self.cleaned_data['modifProfGroupe']),
-			'DEFAULT_MODIF_COLLOSCOPE={}'.format(self.cleaned_data['defaultModifCol']),
-			'DEFAULT_MODIF_GROUPE={}'.format(self.cleaned_data['defaultModifGroupe']),
-			'MATHJAX={}'.format(self.cleaned_data['mathjax']),
-			'ECTS={}'.format(self.cleaned_data['ects']),
-			'NOM_ADRESSE_ETABLISSEMENT="""{}"""'.format(self.cleaned_data['nomEtabFull']),
-			'VILLE="{}"'.format(self.cleaned_data['ville']),
-			'ACADEMIE="{}"'.format(self.cleaned_data['academie'])]))
-
+		Config.objects.all().delete()
+		super().save()
 
 class ColleurFormSetMdp(forms.BaseFormSet):
 	def save(self):
@@ -351,7 +303,8 @@ class ProfForm(forms.Form):
 		# on efface les profs correspondants à la classe courante
 		Prof.objects.filter(classe=self.classe).delete()
 		# on crée les nouvelles entités profs
-		Prof.objects.bulk_create([Prof(classe=self.classe,matiere=matiere,modifgroupe=conf.config.DEFAULT_MODIF_GROUPE,modifcolloscope=conf.config.DEFAULT_MODIF_COLLOSCOPE,colleur=colleur) for matiere,colleur in zip(matieres_avec_prof,colleurs_avec_prof)])
+		config=Config.objects.get_config()
+		Prof.objects.bulk_create([Prof(classe=self.classe,matiere=matiere,modifgroupe=config.default_modif_groupe,modifcolloscope=config.default_modif_col,colleur=colleur) for matiere,colleur in zip(matieres_avec_prof,colleurs_avec_prof)])
 		# mise à jour du prof principal
 		if self.cleaned_data['profprincipal']:
 			self.classe.profprincipal=self.cleaned_data['profprincipal']

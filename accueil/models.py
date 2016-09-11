@@ -46,6 +46,31 @@ def date_moins_date(date1,date2):
 	else:
 		return "" # à compléter par ce qu'il faut dans le cas ou vous utilisez un SGBD qui n'est ni mysql, ni postgresql, ni sqlite ni oracle
 
+class ConfigManager(models.Manager):
+	def get_config(self):
+		try:
+			config = self.all()[0]
+		except Exception:
+			config = Config(nom_etablissement="",modif_secret_col=False,modif_secret_groupe=False,modif_prof_col=True,modif_prof_groupe=True,\
+			default_modif_col=False,default_modif_groupe=False,mathjax=True,ects=False,nom_adresse_etablissement="",academie="",ville="")
+		return config
+
+
+class Config(models.Model):
+	nom_etablissement = models.CharField(verbose_name="Nom de l'établissement",max_length=30,blank=True)
+	modif_secret_col = models.BooleanField(verbose_name="Modification du colloscope par le secrétariat")
+	modif_secret_groupe = models.BooleanField(verbose_name="Modification des groupes par le secrétariat")
+	modif_prof_col = models.BooleanField(verbose_name="Modification du colloscope par les enseignants")
+	default_modif_col = models.BooleanField(verbose_name="Modification du colloscope par défaut pour tous les enseignants")
+	modif_prof_groupe = models.BooleanField(verbose_name="Modification des groupes par les enseignants")
+	default_modif_groupe = models.BooleanField(verbose_name="Modification des groupes par défaut pour tous les enseignants")
+	mathjax = models.BooleanField(verbose_name="Mise en forme des formules mathématiques avec Mathjax")
+	ects = models.BooleanField(verbose_name="Gestion des fiches de crédits ECTS")
+	nom_adresse_etablissement = models.TextField(verbose_name="Nom complet de l'établissement + adresse",blank=True)
+	ville = models.CharField(verbose_name = "Ville de l'établissement", max_length=40,blank=True)
+	academie = models.CharField(verbose_name = "Académie de l'établissement", max_length=40,blank=True)
+	objects = ConfigManager()
+
 class Matiere(models.Model):
 	LISTE_COULEURS=(('#696969',"Gris mat"),('#808080',"Gris"),('#A9A9A9',"Gris foncé"),('#C0C0C0',"Gris argent"),('#D3D3D3',"Gris clair"),('#DCDCDC',"Gris Gainsboro"),('#FFC0CB',"Rose"),('#FFB6C1',"Rose clair"),
 		('#FF69B4',"Rose passion"),('#FF1493' ,"Rose profond"),('#DB7093',"Violet Pâle"),('#FF00FF',"Fushia"),('#C71585',"Violet moyen"),('#D8BFD8',"Violet chardon"),('#DDA0DD',"Prune"),('#EE82EE',"Violet"),('#DA70D6',"Orchidée"),
@@ -267,7 +292,7 @@ class Colleur(models.Model):
 		return self.colleurprof.prefetch_related('classe')
 
 	def modifgroupe(self):
-		if conf.config.MODIF_PROF_GROUPE:
+		if Config.get_config().modif_prof_groupe:
 			for prof in self.colleurprof.all():
 				if prof.modifgroupe or prof.classe.profprincipal == self:
 					return True

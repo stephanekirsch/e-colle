@@ -2,7 +2,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from colleur.forms import ColleurConnexionForm, NoteForm, ProgrammeForm, GroupeForm, NoteGroupeForm, CreneauForm, SemaineForm, ColleForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm
-from accueil.models import Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, JourFerie, MatiereECTS, NoteECTS
+from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, JourFerie, MatiereECTS, NoteECTS
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
@@ -16,7 +16,6 @@ import os
 import json
 import csv
 from ecolle.settings import MEDIA_ROOT, MEDIA_URL, IMAGEMAGICK
-conf=__import__('ecolle.config')
 
 def is_colleur(user):
 	"""Renvoie True si l'utilisateur est authentifié et est un colleur, False sinon"""
@@ -26,7 +25,7 @@ def is_colleur(user):
 
 def is_colleur_ects(user):
 	"""Renvoie True si l'utilisateur est authentifié et est un colleur et ECTS est activé, False sinon"""
-	return is_colleur and conf.config.ECTS
+	return is_colleur and Config.objects.get_config().ects
 
 def is_prof(user,matiere,classe):
 	"""Renvoie True si l'utilisateur est un prof de la classe classe et dans la matière matière, False sinon"""
@@ -37,11 +36,11 @@ def is_prof(user,matiere,classe):
 
 def modifgroupe(colleur,classe):
 	"""Renvoie True si colleur a les drois en modification des groupes dans la classe classe, False sinon"""
-	return conf.config.MODIF_PROF_GROUPE and  (classe.profprincipal==colleur or (colleur in Colleur.objects.filter(colleurprof__classe=classe,colleurprof__modifgroupe=True)))
+	return Config.objects.get_config().modif_prof_groupe and  (classe.profprincipal==colleur or (colleur in Colleur.objects.filter(colleurprof__classe=classe,colleurprof__modifgroupe=True)))
 
 def modifcolloscope(colleur,classe):
 	"""Renvoie True si colleur a les drois en modification du colloscope dans la classe classe, False sinon"""
-	return conf.config.MODIF_PROF_COLLOSCOPE and (classe.profprincipal==colleur or (colleur in Colleur.objects.filter(colleurprof__classe=classe,colleurprof__modifcolloscope=True)))
+	return Config.objects.get_config().modif_prof_col and (classe.profprincipal==colleur or (colleur in Colleur.objects.filter(colleurprof__classe=classe,colleurprof__modifcolloscope=True)))
 
 def is_profprincipal(user,classe=False):
 	"""Renvoie True si user est professeur principal de la classe classe, False sinon"""

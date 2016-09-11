@@ -8,7 +8,7 @@ from administrateur.forms import AdminConnexionForm, SelectColleurForm, MatiereC
 from colleur.forms import SemaineForm, ECTSForm, CreneauForm, ColleForm, GroupeForm
 from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm, SelectClasseSemaineForm 
 from django.forms.formsets import formset_factory
-from accueil.models import Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois, NoteECTS, JourFerie
+from accueil.models import Config, Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois, NoteECTS, JourFerie
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm
 from django.db.models import Count
 from datetime import date, timedelta
@@ -21,15 +21,13 @@ from lxml import etree
 import csv
 import json
 
-conf=__import__('ecolle.config')
-
 def is_secret(user):
 	"""Renvoie True si l'utilisateur est le secrétariat, False sinon"""
 	return user.is_authenticated() and user.username=="Secrétariat"
 
 def is_secret_ects(user):
 	"""Renvoie True si l'utilisateur est le secrétariat et ECTS activé, False sinon"""
-	return is_secret(user) and conf.config.ECTS
+	return is_secret(user) and Config.objects.get_config().ects
 
 def connec(request):
 	"""Renvoie la vue de la page de connexion du secrétariat. Si le secrétariat est déjà connecté, redirige vers la page d'accueil du secrétariat"""
@@ -122,7 +120,7 @@ def colloscope2(request,id_classe,id_semin,id_semax):
 	classe=get_object_or_404(Classe,pk=id_classe)
 	semin=get_object_or_404(Semaine,pk=id_semin)
 	semax=get_object_or_404(Semaine,pk=id_semax)
-	isprof = conf.config.MODIF_SECRETARIAT_COLLOSCOPE
+	isprof = Config.objects.get_config().modif_secret_col
 	return mixtecolloscope(request,classe,semin,semax,isprof)
 
 @user_passes_test(is_secret, login_url='login_secret')
@@ -137,7 +135,7 @@ def colloscopePdf(request,id_classe,id_semin,id_semax):
 def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):
 	"""Renvoie la vue de la page de modification du colloscope de la classe dont l'id est id_classe,
 	dont les semaines sont entre la semaine d'id id_semin et celle d'id id_semax"""
-	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
+	if not Config.objects.get_config().modif_secret_col:
 		return HttpResponseForbidden("Accès non autorisé")
 	classe=get_object_or_404(Classe,pk=id_classe)
 	semin=get_object_or_404(Semaine,pk=id_semin)
@@ -148,7 +146,7 @@ def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):
 def creneauSuppr(request,id_creneau,id_semin,id_semax):
 	"""Essaie de supprimer le créneau dont l'id est id_creneau puis redirige vers la page de modification du colloscope
 	dont les semaines sont entre la semaine d'id id_semin et celle d'id id_semax"""
-	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
+	if not Config.objects.get_config().modif_secret_col:
 		return HttpResponseForbidden("Accès non autorisé")
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
 	return mixtecreneausuppr(request.user,creneau,id_semin,id_semax)
@@ -156,7 +154,7 @@ def creneauSuppr(request,id_creneau,id_semin,id_semax):
 @user_passes_test(is_secret, login_url='accueil')
 def creneauModif(request,id_creneau,id_semin,id_semax):
 	"""Renvoie la vue de la page de modification du creneau dont l'id est id_creneau"""
-	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
+	if not Config.objects.get_config().modif_secret_col:
 		return HttpResponseForbidden("Accès non autorisé")
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
 	return colloscopeModif(request,creneau.classe.pk,id_semin,id_semax,creneaumodif=creneau)
@@ -164,14 +162,14 @@ def creneauModif(request,id_creneau,id_semin,id_semax):
 @user_passes_test(is_secret, login_url='accueil')
 def creneauDupli(request,id_creneau,id_semin,id_semax):
 	"""Renvoie la vue de la page de duplication du creneau dont l'id est id_creneau"""
-	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
+	if not Config.objects.get_config().modif_secret_col:
 		return HttpResponseForbidden("Accès non autorisé")
 	return mixtecreneaudupli(request.user,creneau,id_semin,id_semax)
 
 @user_passes_test(is_secret, login_url='accueil')
 def ajaxcompat(request,id_classe):
 	"""Renvoie ue chaîne de caractères récapitulant les incompatibilités du colloscope de la classe dont l'id est id_classe"""
-	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
+	if not Config.objects.get_config().modif_secret_col:
 		return HttpResponseForbidden("Accès non autorisé")
 	classe=get_object_or_404(Classe,pk=id_classe)
 	return mixteajaxcompat(classe)
@@ -179,7 +177,7 @@ def ajaxcompat(request,id_classe):
 @user_passes_test(is_secret, login_url='accueil')
 def ajaxmajcolleur(request, id_matiere, id_classe):
 	"""Renvoie la liste des colleurs de la classe dont l'id est id_classe et de la matière dont l'id est id_matiere, au format json"""
-	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
+	if not Config.objects.get_config().modif_secret_col:
 		return HttpResponseForbidden("Accès non autorisé")
 	classe=get_object_or_404(Classe,pk=id_classe)
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
@@ -190,7 +188,7 @@ def ajaxmajcolleur(request, id_matiere, id_classe):
 def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, id_semaine, id_creneau):
 	"""Ajoute la colle propre au quintuplet (matière,colleur,groupe,semaine,créneau) et renvoie le username du colleur
 	en effaçant au préalable toute colle déjà existante sur ce couple créneau/semaine"""
-	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
+	if not Config.objects.get_config().modif_secret_col:
 		return HttpResponseForbidden("Accès non autorisé")
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	colleur=get_object_or_404(Colleur,pk=id_colleur)
@@ -204,7 +202,7 @@ def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, id_semaine, id_cr
 def ajaxcolloscopeeleve(request, id_matiere, id_colleur, id_eleve, id_semaine, id_creneau, login):
 	"""Ajoute la colle propre au quintuplet (matière,colleur,eleve,semaine,créneau) et renvoie le username du colleur
 	en effaçant au préalable toute colle déjà existante sur ce couple créneau/semaine"""
-	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
+	if not Config.objects.get_config().modif_secret_col:
 		return HttpResponseForbidden("Accès non autorisé")
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	colleur=get_object_or_404(Colleur,pk=id_colleur)
@@ -216,7 +214,7 @@ def ajaxcolloscopeeleve(request, id_matiere, id_colleur, id_eleve, id_semaine, i
 def ajaxcolloscopeeffacer(request,id_semaine, id_creneau):
 	"""Efface la colle sur le créneau dont l'id est id_creneau et la semaine sont l'id est id_semaine
 	puis renvoie la chaine de caractères "efface" """
-	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
+	if not Config.objects.get_config().modif_secret_col:
 		return HttpResponseForbidden("Accès non autorisé")
 	semaine=get_object_or_404(Semaine,pk=id_semaine)
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
@@ -229,7 +227,7 @@ def ajaxcolloscopemulti(request, id_matiere, id_colleur, id_groupe, id_eleve, id
 	et dont le numéro est congru à celui de la semaine d'id id_semaine modulo frequence
 	S'il n'y en a aucune, ajoute les colles sur les couples créneau/semaine précédents, avec le colleur dont l'id est id_colleur
 	le groupe démarre au groupe dont l'id est id_groupe puis va de permutation en permutation, et la matière dont l'id est id_matière"""
-	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
+	if not Config.objects.get_config().modif_secret_col:
 		return HttpResponseForbidden("Accès non autorisé")
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	colleur=get_object_or_404(Colleur,pk=id_colleur)
@@ -243,7 +241,7 @@ def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_el
 	et les semaines dont le numéro est compris entre celui de la semaine d'id id_semaine et ce dernier + duree
 	et dont le numéro est congru à celui de la semaine d'id id_semaine modulo frequence, avec le colleur dont l'id est id_colleur
 	le groupe démarre au groupe dont l'id est id_groupe puis va de permutation en permutation, et la matière dont l'id est id_matière"""
-	if not conf.config.MODIF_SECRETARIAT_COLLOSCOPE:
+	if not Config.objects.get_config().modif_secret_col:
 		return HttpResponseForbidden("Accès non autorisé")
 	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	colleur=get_object_or_404(Colleur,pk=id_colleur)
@@ -371,7 +369,7 @@ def ramassagePdf(request,id_ramassage):
 @user_passes_test(is_secret, login_url='accueil')
 def groupe(request,id_classe):
 	"""Renvoie la vue de la page de gestion des groupes de la classe dont l'id est id_classe"""
-	if not conf.config.MODIF_SECRETARIAT_GROUPE:
+	if not Config.objects.get_config().modif_secret_groupe:
 		return HttpResponseForbidden("Accès non autorisé")
 	classe=get_object_or_404(Classe,pk=id_classe)
 	groupes = Groupe.objects.filter(classe=classe).prefetch_related('groupeeleve__user')
@@ -380,7 +378,7 @@ def groupe(request,id_classe):
 @user_passes_test(is_secret, login_url='accueil')
 def groupeSuppr(request,id_groupe):
 	"""Essaie de supprimer la groupe dont l'id est id_groupe, puis redirige vers la page de gestion des groupes"""
-	if not conf.config.MODIF_SECRETARIAT_GROUPE:
+	if not Config.objects.get_config().modif_secret_groupe:
 		return HttpResponseForbidden("Accès non autorisé")
 	groupe=get_object_or_404(Groupe,pk=id_groupe)
 	return mixtegroupesuppr(request.user,groupe)
@@ -388,7 +386,7 @@ def groupeSuppr(request,id_groupe):
 @user_passes_test(is_secret, login_url='accueil')
 def groupeModif(request,id_groupe):
 	"""Renvoie la vue de la page de modification du groupe dont l'id est id_groupe"""
-	if not conf.config.MODIF_SECRETARIAT_GROUPE:
+	if not Config.objects.get_config().modif_secret_groupe:
 		return HttpResponseForbidden("Accès non autorisé")
 	groupe=get_object_or_404(Groupe,pk=id_groupe)
 	return mixtegroupemodif(request,groupe)

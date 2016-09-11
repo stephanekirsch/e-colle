@@ -8,13 +8,12 @@ from reportlab.lib.styles import ParagraphStyle
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from ecolle.settings import RESOURCES_ROOT
-from accueil.models import Groupe, Colle, Matiere, Colleur, NoteECTS, Eleve
+from accueil.models import Groupe, Colle, Matiere, Colleur, NoteECTS, Eleve, Config
 from colleur.forms import ECTSForm
 from reportlab.lib.units import cm
 from unidecode import unidecode
 from os.path import isfile,join
 from lxml import etree
-conf=__import__('ecolle.config')
 
 class easyPdf(Canvas):
 	"""classe fille de canvas avec des méthodes supplémentaires pour créer le titre et la fin de page"""
@@ -54,7 +53,7 @@ class easyPdf(Canvas):
 		self.setFont("Helvetica-Bold",12)
 		self.drawCentredString(self.x,self.y,self.titre)
 		self.y-=20
-		self.drawCentredString(self.x,self.y,conf.config.NOM_ETABLISSEMENT)
+		self.drawCentredString(self.x,self.y,Config.objects.nom_etablissement)
 		if soustitre:
 			self.y-=26
 			self.setFillColorRGB(.5,.5,.5)
@@ -236,6 +235,7 @@ def attestationects(request,elev,classe):
 		annee = date.today().year
 		etoile = False
 		signature = False
+	config=Config.objects.get_config()
 	annee = "{}-{}".format(int(annee)-1,annee)
 	LIST_NOTES="ABCDEF"
 	response = HttpResponse(content_type='application/pdf')
@@ -297,7 +297,7 @@ def attestationects(request,elev,classe):
 			pdf.drawCentredString(pdf.format[0]/2,pdf.y, "CLASSE PRÉPARATOIRE AUX GRANDES ÉCOLES")
 			pdf.y -= 40
 			pdf.setFont("Helvetica-Oblique",11)
-			pdf.drawCentredString(pdf.format[0]/2,pdf.y, "Le recteur de l'académie de {}, Chancelier des universités,".format(conf.config.ACADEMIE))
+			pdf.drawCentredString(pdf.format[0]/2,pdf.y, "Le recteur de l'académie de {}, Chancelier des universités,".format(config.academie))
 			pdf.y -= 15
 			pdf.drawCentredString(pdf.format[0]/2,pdf.y, "atteste que")
 			pdf.y -= 40
@@ -326,9 +326,9 @@ def attestationects(request,elev,classe):
 			pdf.setFont("Helvetica",11)
 			pdf.drawString(2*cm,pdf.y,"Année académique: {}".format(annee))
 			pdf.y -= 15
-			pdf.drawString(2*cm,pdf.y,conf.config.NOM_ETABLISSEMENT)
+			pdf.drawString(2*cm,pdf.y,config.nom_etablissement)
 			pdf.y -= 30
-			pdf.drawCentredString(pdf.format[0]/2,pdf.y,"Fait à {},".format(conf.config.VILLE))
+			pdf.drawCentredString(pdf.format[0]/2,pdf.y,"Fait à {},".format(config.ville))
 			pdf.y -= 15
 			pdf.drawString(15*cm,pdf.y,"le {}".format(datedujour))
 			pdf.y -= 15
@@ -542,7 +542,7 @@ def creditsects(request,elev,classe):
 			Classes préparatoires aux grandes écoles<br/>
 			<b><i>2.4. Nom et statut de l’établissement dispensant la formation:</i></b><br/>
 			{}<br/>
-			<b><i>2.5. Langue de formation:</i></b> français""".format(branche,filiere,"("+precision+")" if precision else "",domaine,conf.config.NOM_ADRESSE_ETABLISSEMENT.replace("\n","<br/>").replace("\r","<br/>").replace("<br/><br/>","<br/>"))
+			<b><i>2.5. Langue de formation:</i></b> français""".format(branche,filiere,"("+precision+")" if precision else "",domaine,Config.objects.get_config().nom_adresse_etablissement.replace("\n","<br/>").replace("\r","<br/>").replace("<br/><br/>","<br/>"))
 			p4=Paragraph(texte,style)
 			story.extend([p4,p5,p6,p7,p8,t1,p9])
 			fl = Frame(cm, 1.5*cm, 9*cm, 23*cm , showBoundary=0, leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
