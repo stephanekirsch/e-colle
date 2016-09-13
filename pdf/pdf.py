@@ -53,7 +53,7 @@ class easyPdf(Canvas):
 		self.setFont("Helvetica-Bold",12)
 		self.drawCentredString(self.x,self.y,self.titre)
 		self.y-=20
-		self.drawCentredString(self.x,self.y,Config.objects.nom_etablissement)
+		self.drawCentredString(self.x,self.y,Config.objects.get_config().nom_etablissement)
 		if soustitre:
 			self.y-=26
 			self.setFillColorRGB(.5,.5,.5)
@@ -191,7 +191,7 @@ def Pdf(classe,semin,semax):
 	pdf.setFont("Helvetica-Bold",fontsize)
 	for matiere in matieres:
 		data=[[matiere.nom.title() + ("" if not matiere.lv else "(LV{})".format(matiere.lv))]]
-		colleurs=Colle.objects.filter(creneau__classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).values('colleur').distinct()
+		colleurs=Colle.objects.filter(creneau__classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).values('colleur').distinct().order_by('colleur__user__last_name','colleur__user__first_name')
 		for colleur_id in colleurs:
 			colleur=get_object_or_404(Colleur,pk=colleur_id['colleur'])
 			data+=[["{}. {} ({})".format(colleur.user.first_name[0].title(),colleur.user.last_name.upper(),classe.dictColleurs(semin,semax)[colleur.pk])]]

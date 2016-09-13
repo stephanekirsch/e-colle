@@ -172,11 +172,11 @@ class Classe(models.Model):
 		if semin is None or semax is None:
 			if hasattr(self,'listeLoginsColleurs'):
 				return getattr(self,'listeLoginsColleurs')
-			colleurs = self.colleur_set.annotate(login=Upper(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1))))
+			colleurs = self.colleur_set.annotate(login=Upper(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1)))).order_by('user__last_name','user__first_name')
 		else:
 			if hasattr(self,'listeLoginsColleurs_{}_{}'.format(semin.pk,semax.pk)):
 				return getattr(self,'listeLoginsColleurs_{}_{}'.format(semin.pk,semax.pk))
-			colleurs = self.colleur_set.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi)).distinct().annotate(login=Upper(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1))))
+			colleurs = self.colleur_set.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi)).distinct().annotate(login=Upper(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1)))).order_by('user__last_name','user__first_name')
 		listeLogins = []
 		lastlogin = False
 		indice=1
