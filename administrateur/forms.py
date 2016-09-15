@@ -57,7 +57,8 @@ class ColleurFormSet(forms.BaseFormSet):
 			user.last_name=form.cleaned_data['nom'].lower()
 			user.email=form.cleaned_data['email']
 			user.is_active=form.cleaned_data['active']
-			user.set_password(form.cleaned_data['motdepasse'])
+			if form.cleaned_data['motdepasse']:
+				user.set_password(form.cleaned_data['motdepasse'])
 			user.save()
 
 class AdminConnexionForm(forms.Form):
