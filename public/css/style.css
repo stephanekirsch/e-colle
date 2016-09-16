@@ -60,6 +60,9 @@ a /* on vire la deco des liens */
 	text-shadow: 2px 2px 4px black; /* on ombrage le texte */
 	text-align:center;
 }
+#header :link, #header :hover, #header :active, #header :visited {
+  color: inherit;
+}
 h1 /* titre de l'en-tête */
 {
 	margin-bottom:10px;
