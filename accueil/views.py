@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from accueil.models import Classe, Matiere, User, Colleur, Prof, Message, Destinataire, Eleve
 from accueil.forms import UserForm, UserProfprincipalForm, SelectMessageForm, EcrireForm, ReponseForm
 from django.contrib import messages as messagees
-from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES, DEFAULT_ADMIN_PASSWD, DEFAULT_SECRETARIAT_PASSWD
+from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES
 import re
 
 def home(request):
@@ -182,22 +182,3 @@ def repondre(request,destinataire_id):
 		messagees.error(request, "Message envoyé")
 		return redirect('messages')
 	return render(request,"accueil/repondre.html",{'form':form,'destinataire':destinataire})
-
-def init(request):
-	"""Exécute la création des utilisateurs admin et Secrétariat s'ils n'existent pas déjà"""
-	admin = User.objects.filter(username="admin")
-	crees = []
-	if not admin.exists():
-		admin = User(username="admin",last_name="Administrateur")
-		admin.set_password(DEFAULT_ADMIN_PASSWD)
-		admin.save()
-		crees.append("Admin")
-	secret = User.objects.filter(username="Secrétariat")
-	if not secret.exists():
-		secret = User(username="Secrétariat",last_name="Secrétariat")
-		secret.set_password(DEFAULT_SECRETARIAT_PASSWD)
-		secret.save()
-		crees.append("Secrétariat")
-	if crees:
-		messagees.error(request,"les utilisateurs "+ " et ".join(crees)+" ont été créés avec les paramètres par défaut")
-	return redirect('accueil')
