@@ -48,7 +48,7 @@ def get_ects():
 
 @register.assignment_tag
 def get_modifgroupe():
-    return Config.objects.get_config().modif_secretariat_groupe
+    return Config.objects.get_config().modif_secret_groupe
 
 @register.assignment_tag
 def get_classes():
