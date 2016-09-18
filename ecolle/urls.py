@@ -5,7 +5,6 @@ from django.conf.urls.static import static
 from accueil import views
 
 urlpatterns = [
-    url(r'^init$', views.init), # À commenter dès la création de l'admin et du secrétariat
     url(r'^$', views.home, name="accueil"),
     url(r'^messages$', views.messages, name="messages"),
     url(r'^messagesenvoyes$', views.messagesenvoyes, name="messagesenvoyes"),
