@@ -283,7 +283,7 @@ def programmeModif(request,id_programme):
 	if not is_prof(request.user,programme.matiere,programme.classe):
 		raise Http404
 	form=ProgrammeForm(request.POST or None,request.FILES or None, instance=programme)
-	oldfile=path.join(MEDIA_ROOT,programme.fichier.name) if programme.fichier else False
+	oldfile=os.path.join(MEDIA_ROOT,programme.fichier.name) if programme.fichier else False
 	if form.is_valid():
 		if request.FILES and oldfile:
 			if os.path.isfile(oldfile):
