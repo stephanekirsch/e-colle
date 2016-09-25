@@ -225,7 +225,7 @@ def attestationects(request,elev,classe):
 			annee = form.cleaned_data['anneescolaire']
 			etoile = form.cleaned_data['etoile']
 			signature = False
-			if 'signature' in form.cleaned_data:
+			if 'tampon' in form.cleaned_data:
 				signature = form.cleaned_data['tampon']
 		else:
 			return ectscredits(request,classe.pk,form)
@@ -368,7 +368,7 @@ def creditsects(request,elev,classe):
 			branche = classexml.get("type").lower()
 			precision = classexml.get("precision")
 			signature = False
-			if 'signature' in form.cleaned_data:
+			if 'tampon' in form.cleaned_data:
 				signature = form.cleaned_data['tampon']
 		else:
 			return ectscredits(request,classe.pk,form)
