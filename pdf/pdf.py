@@ -242,7 +242,7 @@ def attestationects(request,elev,classe):
 	if elev is None:
 		eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name').select_related('user')
 		nomfichier="ATTESTATIONS_{}.pdf".format(unidecode(classe.nom)).replace(" ","-")
-		credits = NoteECTS.objects.credits(classe)
+		credits = NoteECTS.objects.credits(classe)[0]
 	else:
 		eleves=[elev]
 		credits=[False]
@@ -384,7 +384,7 @@ def creditsects(request,elev,classe):
 	if elev is None:
 		eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name').select_related('user')
 		nomfichier="ECTS_{}.pdf".format(unidecode(classe.nom)).replace(" ","-").replace('*','etoile')
-		credits = NoteECTS.objects.credits(classe)
+		credits = NoteECTS.objects.credits(classe)[0]
 	else:
 		eleves=[elev]
 		credits=[False]
