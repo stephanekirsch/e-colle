@@ -6,9 +6,9 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from administrateur.forms import AdminConnexionForm, SelectColleurForm, MatiereClasseSelectForm
 from colleur.forms import SemaineForm, ECTSForm, CreneauForm, ColleForm, GroupeForm
-from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm, SelectClasseSemaineForm #, DispoForm, DispoFormSet, FrequenceForm, ColleurgroupeForm, ColleurgroupeFormSet, PlanificationForm
+from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm, SelectClasseSemaineForm 
 from django.forms.formsets import formset_factory
-from accueil.models import Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois, NoteECTS, JourFerie #, Frequence, Colleurgroupe
+from accueil.models import Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois, NoteECTS, JourFerie
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm
 from django.db.models import Count
 from datetime import date, timedelta
@@ -20,7 +20,7 @@ from unidecode import unidecode
 from lxml import etree
 import csv
 import json
-# from planification.planification import planif
+
 conf=__import__('ecolle.config')
 
 def is_secret(user):
@@ -250,115 +250,6 @@ def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_el
 	semaine=get_object_or_404(Semaine,pk=id_semaine)
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
 	return mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,creneau,duree, frequence, permutation)
-
-@user_passes_test(is_secret, login_url='login_secret')
-def planification(request):
-	return render(request,"secretariat/planification.html")
-
-@user_passes_test(is_secret, login_url='login_secret')
-def dispo(request):
-	"""Renvoie la vue de la page de gestion des disponibilités des colleurs"""
-	if "selectmatiere" in request.POST:
-		form = MatiereClasseSelectForm(request.POST)
-	else:
-		try:
-			matiere = Matiere.objects.get(pk=request.session['matiere'])
-		except Exception:
-			matiere = None
-		try:
-			classe = Classe.objects.get(pk=request.session['classe'])
-		except Exception:
-			classe = None
-		form = MatiereClasseSelectForm(initial = {'matiere':matiere,'classe':classe})
-	if form.is_valid():
-		matiere = form.cleaned_data['matiere']
-		request.session['matiere'] = None if not matiere else matiere.pk
-		classe = form.cleaned_data['classe']
-		request.session['classe'] = None if not classe else classe.pk
-	else:
-		try:
-			matiere = Matiere.objects.get(pk=request.session['matiere'])
-		except Exception:
-			matiere = None
-		try:
-			classe = Classe.objects.get(pk=request.session['classe'])
-		except Exception:
-			classe = None
-	form2 = SelectColleurForm(matiere,classe,request.POST if "modifier" in request.POST else None)
-	if form2.is_valid():
-		return redirect('dispo_modif', "-".join([str(colleur.pk) for colleur in form2.cleaned_data['colleur']]))
-	colleurs = Colleur.objects.select_related('user').prefetch_related('dispos').order_by('user__last_name','user__first_name')
-	return render(request,"secretariat/dispo.html",{'form':form,'form2':form2})
-
-@user_passes_test(is_secret, login_url='login_secret')
-def dispomodif(request,chaine_colleurs):
-	"""Renvoie la vue de la page de modification des disponibilités des colleurs dont l'id fait partie de chaine_colleurs"""
-	listeColleurs = Colleur.objects.filter(pk__in=[int(i) for i in chaine_colleurs.split("-")]).order_by('user__last_name','user__first_name').select_related('user')
-	Dispoformset = formset_factory(DispoForm,extra=0,max_num=listeColleurs.count(),formset=DispoFormSet)
-	if request.method == 'POST':
-		formset = Dispoformset(listeColleurs,request.POST)
-		if formset.is_valid():
-			formset.save()
-			return redirect('dispo')
-	else:
-		formset = Dispoformset(listeColleurs,initial=[{'dispo':[ 96*dispo.jour+dispo.heure for dispo in colleur.dispos.all()]} for colleur in listeColleurs])	
-	return render(request,'secretariat/dispomodif.html',{'formset':formset})
-
-@user_passes_test(is_secret, login_url='login_secret')
-def frequence(request):
-	"""Renvoie la vue de la page de gestion des fréquences des colles par matière/classe"""
-	frequences = []
-	for classe in Classe.objects.all():
-		frequences.append((classe,[(matiere,Frequence.objects.filter(classe=classe,matiere=matiere).first()) for matiere in classe.matieres.all()]))
-	return render(request,"secretariat/frequence.html",{'listefrequences':frequences})
-
-@user_passes_test(is_secret, login_url='login_secret')
-def frequencemodif(request,id_classe):
-	classe=get_object_or_404(Classe,pk=id_classe)
-	initial = dict()
-	for matiere in Matiere.objects.filter(matieresclasse=classe,temps=20).order_by('nom','precision'):
-		frequence = Frequence.objects.filter(matiere=matiere,classe=classe).first()
-		if frequence is not None:
-			initial[str(matiere.pk)] = frequence.frequence
-			initial[str(matiere.pk)+"_"] = frequence.repartition
-	form=FrequenceForm(classe,request.POST or None,initial=initial)
-	if form.is_valid():
-		form.save()
-		return redirect('frequence')
-	return render(request,'secretariat/frequencemodif.html',{'form':form,'classe':classe})
-
-@user_passes_test(is_secret, login_url='login_secret')
-def colles(request):
-	classes = Colleurgroupe.objects.liste()
-	return render(request,"secretariat/colles.html",{'classes':classes})
-
-@user_passes_test(is_secret, login_url='login_secret')
-def collesmodif(request,id_classe):
-	classe = get_object_or_404(Classe,pk=id_classe)
-	Colleurgroupeformset = formset_factory(ColleurgroupeForm,extra=0,max_num=classe.matieres.filter(temps=20).count(),formset=ColleurgroupeFormSet)
-	if request.method == 'POST':
-		formset = Colleurgroupeformset(classe,request.POST)
-		if formset.is_valid():
-			formset.save()
-			return redirect('colles')
-	else:
-		initial=[]
-		for matiere in classe.matieres.filter(temps=20):
-			groupes = dict()
-			for colleur in Colleur.objects.filter(classes=classe,matieres=matiere):
-				groupe = Colleurgroupe.objects.filter(classe=classe,matiere=matiere,colleur=colleur).first()
-				if groupe:
-					groupes[str(colleur.pk)] = groupe.nbgroupes
-			initial.append(groupes)
-		formset = Colleurgroupeformset(classe,initial=initial)	
-	return render(request,"secretariat/collesmodif.html",{'formset':formset,'classe':classe})
-
-@user_passes_test(is_secret, login_url='login_secret')
-def edt(request):
-	form = PlanificationForm(request.POST or None)
-	if form.is_valid():
-		succes = planif(form.cleaned_data['semin'],form.cleaned_data['semax'],form.cleaned_data['classes'])
-	return render(request,'secretariat/edt.html',{'form':form})
 
 @user_passes_test(is_secret, login_url='login_secret')
 def recapitulatif(request):

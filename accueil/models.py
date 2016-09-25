@@ -231,16 +231,6 @@ class Classe(models.Model):
 				dictEleves[matiere.pk] = [eleve.lv2 == matiere for eleve in Eleve.objects.filter(classe=self)]
 		return dictEleves
 
-# class Frequence(models.Model):
-# 	classe = models.ForeignKey(Classe,verbose_name="Classe",on_delete=models.CASCADE,related_name="classefrequence")
-# 	matiere = models.ForeignKey(Matiere,verbose_name="Matière",on_delete=models.CASCADE)
-# 	frequence = models.PositiveSmallIntegerField(verbose_name="Fréquence des colles par élève")
-# 	repartition = models.BooleanField(verbose_name="Tous les groupes sur une semaine")
-# 	premiere = models.PositiveSmallIntegerField(verbose_name="Première semaine (si regroupés)")
-
-# 	def __str__(self):
-# 		return "{} colle par semaine".format(Fraction(self.frequence,24)) + (" / regroupés" if self.repartition else "") + " / débute semaine {}".format(self.premiere)
-
 class Etablissement(models.Model):
 	nom = models.CharField(max_length = 50, unique=True)
 
@@ -266,27 +256,13 @@ class Groupe(models.Model):
 	def __str__(self):
 		return self.nom
 
-# class Dispo(models.Model):
-# 	LISTE_HEURE=[(i,"{}h{:02d}".format(i//4,15*(i%4))) for i in range(24,89)] # une heure est représentée par le nombre de 1/4 d'heure depuis 0h00. entre 6h et 22h
-# 	LISTE_JOUR=list(enumerate(["lundi","mardi","mercredi","jeudi","vendredi","samedi"]))
-# 	jour = models.PositiveSmallIntegerField(choices=LISTE_JOUR,default=0)
-# 	heure = models.PositiveSmallIntegerField(choices=LISTE_HEURE,default=14)
-
-# 	class Meta:
-# 		unique_together=('jour','heure')
-# 		ordering=['jour','heure']
-
-# 	def __str__(self):
-# 		return "{} {}h{:02d}".format(self.LISTE_JOUR[self.jour][1],self.heure//4,15*(self.heure%4))
-
 class Colleur(models.Model):
 	LISTE_GRADES=[(0,"autre"),(1,"certifié"),(2,"bi-admissible"),(3,"agrégé"),(4,"chaire supérieure")]
 	matieres = models.ManyToManyField(Matiere, verbose_name="Matière(s)")
 	classes = models.ManyToManyField(Classe, verbose_name="Classe(s)")
 	grade = models.PositiveSmallIntegerField(choices=LISTE_GRADES, default=3)
 	etablissement = models.ForeignKey(Etablissement, verbose_name="Établissement", null=True,blank=True, on_delete=models.PROTECT)
-	# dispos = models.ManyToManyField(Dispo, verbose_name="Disponibilités")
-
+	
 	def allprofs(self):
 		return self.colleurprof.prefetch_related('classe')
 
@@ -304,27 +280,6 @@ class Colleur(models.Model):
 		if hasattr(self,'user'):
 			return "{} {}".format(self.user.first_name.title(),self.user.last_name.upper())
 		return ""
-
-# class ColleurgroupeManager(models.Manager):
-# 	def liste(self):
-# 		classes = []
-# 		for classe in Classe.objects.all():
-# 			nbclasses = Groupe.objects.filter(classe=classe).count()
-# 			matieres=[]
-# 			for matiere in classe.matieres.filter(temps=20):
-# 				colleurs = self.filter(classe=classe,matiere=matiere).select_related('colleur__user').order_by('colleur__user__last_name','colleur__user__first_name')
-# 				matieres.append((matiere,colleurs,max(1,colleurs.count())))
-# 			classes.append((classe,matieres,sum(x[2] for x in matieres),nbclasses))
-# 		return classes
-
-
-# class Colleurgroupe(models.Model):
-# 	colleur = models.ForeignKey(Colleur,verbose_name="Colleur",on_delete=models.CASCADE)
-# 	matiere = models.ForeignKey(Matiere,verbose_name="Matière",on_delete=models.CASCADE)
-# 	classe = models.ForeignKey(Classe,verbose_name="Classe",on_delete=models.CASCADE)
-# 	nbgroupes = models.PositiveSmallIntegerField(verbose_name="Nombre de groupes")
-# 	objects = ColleurgroupeManager()
-
 
 class ProfManager(models.Manager):
 	def listeprofs(self):
