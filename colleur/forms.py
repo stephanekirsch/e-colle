@@ -5,7 +5,7 @@ from django.db.models import Q
 from datetime import date, timedelta
 from django.forms.extras.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
-from lxml import etree
+from xml.etree import ElementTree as etree
 from ecolle.settings import RESOURCES_ROOT
 from os.path import isfile,join
 
@@ -248,16 +248,16 @@ class NoteEleveFormSet(forms.BaseFormSet):
 class ECTSForm(forms.Form):
 	def __init__(self,classe,*args,**kwargs):
 		super().__init__(*args,**kwargs)
-		tree=etree.parse(join(RESOURCES_ROOT,'classes.xml'))
-		types={x.get("type")+'_'+x.get("annee") for x in tree.xpath("/classes/classe")}
+		tree=etree.parse(join(RESOURCES_ROOT,'classes.xml')).getroot()
+		types={x.get("type")+'_'+x.get("annee") for x in tree.findall("classe")}
 		types = list(types)
 		types.sort()
 		LISTE_CLASSES=[]
 		default = None
 		for typ in types:
 			style,annee=typ.split("_")
-			LISTE_CLASSES.append((style+" "+annee+"è"+("r" if annee=="1" else "m")+"e année",sorted((lambda y,z:[(x.get("nom")+"_"+x.get("annee"),x.get("nom")) for x in z.xpath("/classes/classe") if [x.get("type"),x.get("annee")] == y.split("_")])(typ,tree))))
-		for x in tree.xpath("/classes/classe"):
+			LISTE_CLASSES.append((style+" "+annee+"è"+("r" if annee=="1" else "m")+"e année",sorted((lambda y,z:[(x.get("nom")+"_"+x.get("annee"),x.get("nom")) for x in z.findall("classe") if [x.get("type"),x.get("annee")] == y.split("_")])(typ,tree))))
+		for x in tree.findall("classe"):
 			if classe.nom.lower()[:len(x.get("nom"))] == x.get("nom").lower() and classe.annee == int(x.get("annee")):
 				default=x.get("nom")+"_"+x.get("annee")
 		imagesProviseur=(join(RESOURCES_ROOT,'proviseur.png'),join(RESOURCES_ROOT,'proviseur.jpg'))

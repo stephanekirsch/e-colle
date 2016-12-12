@@ -15,7 +15,7 @@ from reportlab.lib.units import cm
 from unidecode import unidecode
 from datetime import date
 from os.path import join
-from lxml import etree
+from xml.etree import ElementTree as etree
 
 class easyPdf(Canvas):
 	"""classe fille de canvas avec des méthodes supplémentaires pour créer le titre et la fin de page"""
@@ -362,8 +362,8 @@ def creditsects(request,elev,classe):
 			filiere,annee = form.cleaned_data['classe'].split("_")
 			signataire = form.cleaned_data['signature']
 			etoile = form.cleaned_data['etoile']
-			tree=etree.parse(join(RESOURCES_ROOT,'classes.xml'))
-			classexml=tree.xpath("/classes/classe[@nom='{}'][@annee='{}']".format(filiere,annee)).pop()
+			tree=etree.parse(join(RESOURCES_ROOT,'classes.xml')).getroot()
+			classexml=tree.findall("classe[@nom='{}'][@annee='{}']".format(filiere,annee)).pop()
 			domaine = classexml.get("domaine")
 			branche = classexml.get("type").lower()
 			precision = classexml.get("precision")

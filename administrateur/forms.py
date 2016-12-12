@@ -5,7 +5,7 @@ from django.forms.extras.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from ecolle.settings import RESOURCES_ROOT
-from lxml import etree
+from xml.etree import ElementTree as etree
 from random import choice
 from os import path
 
@@ -74,14 +74,12 @@ class ClasseForm(forms.ModelForm):
 
 class ClasseGabaritForm(forms.ModelForm):
 	gabarit=forms.BooleanField(label="gabarit",required=False)
-	tree=etree.parse(path.join(RESOURCES_ROOT,'classes.xml'))
-	types={x.get("type")+'_'+x.get("annee") for x in tree.xpath("/classes/classe")}
-	types = list(types)
-	types.sort()
+	tree=etree.parse(path.join(RESOURCES_ROOT,'classes.xml')).getroot()
+	types=sorted({x.get("type")+'_'+x.get("annee") for x in tree.findall("classe")})
 	LISTE_CLASSES=[]
 	for typ in types:
 		style,annee=typ.split("_")
-		LISTE_CLASSES.append((style+" "+annee+"è"+("r" if annee=="1" else "m")+"e année",sorted((lambda y,z:[(x.get("nom")+"_"+x.get("annee"),x.get("nom")) for x in z.xpath("/classes/classe") if [x.get("type"),x.get("annee")] == y.split("_")])(typ,tree))))
+		LISTE_CLASSES.append((style+" "+annee+"è"+("r" if annee=="1" else "m")+"e année",sorted((lambda y,z:[(x.get("nom")+"_"+x.get("annee"),x.get("nom")) for x in z.findall("classe") if [x.get("type"),x.get("annee")] == y.split("_")])(typ,tree))))
 	classe = forms.ChoiceField(label="classe",choices=LISTE_CLASSES)
 	class Meta:
 		model = Classe
@@ -93,7 +91,7 @@ class ClasseGabaritForm(forms.ModelForm):
 			nom,annee=self.cleaned_data['classe'].split("_")
 			annee=int(annee)
 			# on passe en revue les matières, si elles existent, on les associe, sinon on les crée
-			classe=self.tree.xpath("/classes/classe[@nom='{}'][@annee='{}']".format(nom,annee)).pop()
+			classe=self.tree.findall("classe[@nom='{}'][@annee='{}']".format(nom,annee)).pop()
 			nouvelleClasse = Classe(nom=self.cleaned_data['nom'],annee=classe.get("annee")) #On crée la classe
 			nouvelleClasse.save() # on la sauvegarde
 			listeMatieres=[]
