@@ -15,12 +15,12 @@ def mixtegroupe(request,classe,groupes):
 		return redirect('groupe_colleur' if request.user.colleur else 'groupe_secret', classe.pk)
 	return render(request,"mixte/groupe.html",{'classe':classe,'groupes':groupes,'form':form,'hide':json.dumps([(eleve.id,"" if not eleve.lv1 else eleve.lv1.pk,"" if not eleve.lv2 else eleve.lv2.pk) for eleve in form.fields['eleve0'].queryset])})
 
-def mixtegroupesuppr(user,groupe):
+def mixtegroupesuppr(request,groupe):
 	try:
 		groupe.delete()
 	except Exception:
 		messages.error(request,"Impossible de supprimer le groupe car il est présent dans le colloscope")
-	return redirect('groupe_colleur' if user.colleur else 'groupe_secret',groupe.classe.pk)
+	return redirect('groupe_colleur' if request.user.colleur else 'groupe_secret',groupe.classe.pk)
 
 def mixtegroupemodif(request,groupe):
 	initial = {"eleve{}".format(i):eleve for i,eleve in enumerate(groupe.groupeeleve.all())}
@@ -70,12 +70,12 @@ def mixtecolloscopemodif(request,classe,semin,semax,creneaumodif):
 	{'semin':semin,'semax':semax,'form1':form1,'form':form,'form2':form2,'largeur':largeur,'hauteur':hauteur,'groupes':groupes,'matieres':zip(matieres,listeColleurs,matieresgroupes),'creneau':creneaumodif\
 	,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'dictColleurs':classe.dictColleurs(semin,semax),'dictGroupes':json.dumps(classe.dictGroupes(False)),'dictEleves':json.dumps(classe.dictElevespk())})
 
-def mixtecreneausuppr(user,creneau,id_semin,id_semax):
+def mixtecreneausuppr(request,creneau,id_semin,id_semax):
 	try:
 		creneau.delete()
 	except Exception:
 		messages.error(request,"Vous ne pouvez pas effacer un créneau qui contient des colles")
-	return redirect('colloscopemodif_colleur' if user.colleur else 'colloscopemodif_secret',creneau.classe.pk,id_semin,id_semax)
+	return redirect('colloscopemodif_colleur' if request.user.colleur else 'colloscopemodif_secret',creneau.classe.pk,id_semin,id_semax)
 
 def mixtecreneaudupli(user,creneau,id_semin,id_semax):
 	creneau.pk=None

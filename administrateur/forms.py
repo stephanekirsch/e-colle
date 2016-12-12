@@ -4,7 +4,7 @@ from accueil.models import Classe, Matiere, Etablissement, Semaine, Colleur, Ele
 from django.forms.extras.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
-from ecolle.settings import RESOURCES_ROOT, CHEMINVERSECOLLE
+from ecolle.settings import RESOURCES_ROOT
 from lxml import etree
 from random import choice
 from os import path

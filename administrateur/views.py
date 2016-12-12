@@ -14,7 +14,6 @@ import csv
 from _io import TextIOWrapper
 from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES
 import re 
-from django.core.urlresolvers import reverse
 
 def random_string():
 	"""renvoie une chaine de caractères aléatoires contenant des lettres ou des chiffres ou un des symboles _+-.@"""
@@ -396,8 +395,8 @@ def elevecsv(request):
 				if not(nom in ligne and prenom in ligne):
 					messages.error("Les intitulés des champs nom et/ou prénom sont inexacts")
 				else:
-					initial = [{'nom': ligne[nom],'prenom':ligne[prenom],'ddn':None if ddn not in ligne else ligne[ddn],'ldn':None if ldn not in ligne else ligne[ldn],\
-					'ine':'' if ine not in ligne else ligne[ine],'email':'' if email not in ligne else ligne[email],'classe':form.cleaned_data['classe']} for ligne in reader]
+					initial = [{'nom': ligneLoc[nom],'prenom':ligneLoc[prenom],'ddn':None if ddn not in ligneLoc else ligneLoc[ddn],'ldn':None if ldn not in ligneLoc else ligneLoc[ldn],\
+					'ine':'' if ine not in ligneLoc else ligneLoc[ine],'email':'' if email not in ligneLoc else ligneLoc[email],'classe':form.cleaned_data['classe']} for ligneLoc in reader]
 					return eleveajout(request,initial=initial)
 		except Exception:
 				messages.error(request,"Le fichier doit être un fichier CSV valide, encodé en UTF-8")

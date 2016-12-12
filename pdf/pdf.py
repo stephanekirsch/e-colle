@@ -1,18 +1,20 @@
 #-*- coding: utf-8 -*-
 from io import BytesIO
 from reportlab.pdfgen.canvas import Canvas
-from reportlab.lib.pagesizes import A4, legal, landscape
+from reportlab.lib.pagesizes import A4, landscape
 from reportlab.platypus import Table, TableStyle, Image, Frame, Paragraph
-from reportlab.platypus.flowables import Flowable
 from reportlab.lib.styles import ParagraphStyle
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from ecolle.settings import RESOURCES_ROOT
 from accueil.models import Groupe, Colle, Matiere, Colleur, NoteECTS, Eleve, Config
 from colleur.forms import ECTSForm
+from colleur.views import ectscredits as ectscredits_colleur
+from secretariat.views import ectscredits as ectscredits_secret
 from reportlab.lib.units import cm
 from unidecode import unidecode
-from os.path import isfile,join
+from datetime import date
+from os.path import join
 from lxml import etree
 
 class easyPdf(Canvas):
@@ -227,7 +229,7 @@ def attestationects(request,elev,classe):
 			if 'tampon' in form.cleaned_data:
 				signature = form.cleaned_data['tampon']
 		else:
-			return ectscredits(request,classe.pk,form)
+			return ectscredits_colleur(request,classe.pk,form) if request.colleur else ectscredits_secret(request,classe.pk,form) 
 	else:
 		datedujour = date.today().strftime('%d/%m/%Y')
 		filiere = classe.nom
@@ -237,7 +239,6 @@ def attestationects(request,elev,classe):
 		signature = False
 	config=Config.objects.get_config()
 	annee = "{}-{}".format(int(annee)-1,annee)
-	LIST_NOTES="ABCDEF"
 	response = HttpResponse(content_type='application/pdf')
 	if elev is None:
 		eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name').select_related('user')
@@ -249,7 +250,6 @@ def attestationects(request,elev,classe):
 		nomfichier=unidecode("ATTESTATION_{}_{}_{}.pdf".format(elev.classe.nom.upper(),elev.user.first_name,elev.user.last_name.upper())).replace(" ","-")
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
 	pdf = easyPdf()
-	cm = pdf.format[0]/21
 	pdf.marge_x = cm # 1cm de marge gauche/droite
 	pdf.marge_y = 1.5*cm # 1,5cm de marge haut/bas
 	I = Image(join(RESOURCES_ROOT,'marianne.jpg'))
@@ -371,7 +371,7 @@ def creditsects(request,elev,classe):
 			if 'tampon' in form.cleaned_data:
 				signature = form.cleaned_data['tampon']
 		else:
-			return ectscredits(request,classe.pk,form)
+			return ectscredits_colleur(request,classe.pk,form) if request.colleur else ectscredits_secret(request,classe.pk,form) 
 	else:
 		datedujour = date.today().strftime('%d/%m/%Y')
 		filiere = classe.nom

@@ -1,8 +1,8 @@
 #-*- coding: utf-8 -*-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from colleur.forms import ColleurConnexionForm, NoteForm, ProgrammeForm, GroupeForm, NoteGroupeForm, CreneauForm, SemaineForm, ColleForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm
-from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, JourFerie, MatiereECTS, NoteECTS
+from colleur.forms import ColleurConnexionForm, NoteForm, ProgrammeForm, NoteGroupeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm
+from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, MatiereECTS, NoteECTS
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
@@ -10,10 +10,8 @@ from django.db.models import Count, Avg, Min, Max, StdDev, Sum
 from datetime import date, timedelta
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.forms.formsets import formset_factory
-from copy import copy
-from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
+from pdf.pdf import Pdf, creditsects, attestationects
 import os
-import json
 import csv
 from ecolle.settings import MEDIA_ROOT, MEDIA_URL, IMAGEMAGICK
 
@@ -194,7 +192,6 @@ def noteSuppr(request,id_note):
 @user_passes_test(is_colleur, login_url='accueil')
 def resultat(request,id_classe):
 	"""Renvoie la vue de la page des résultats de la classe dont l'id est id_classe"""
-	classe=get_object_or_404(Classe,pk=id_classe)
 	semaines=Semaine.objects.all()
 	try:
 		semin=semaines[0]
@@ -308,11 +305,9 @@ def groupe(request,id_classe):
 def groupeSuppr(request,id_groupe):
 	"""Essaie de supprimer la groupe dont l'id est id_groupe, puis redirige vers la page de gestion des groupes"""
 	groupe=get_object_or_404(Groupe,pk=id_groupe)
-	colleur=request.user.colleur
-	matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
 	if not modifgroupe(request.user.colleur,groupe.classe):
 		return HttpResponseForbidden("Accès non autorisé")
-	return mixtegroupesuppr(request.user,groupe)
+	return mixtegroupesuppr(request,groupe)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def groupeModif(request,id_groupe):
@@ -325,7 +320,6 @@ def groupeModif(request,id_groupe):
 @user_passes_test(is_colleur, login_url='accueil')
 def colloscope(request,id_classe):
 	"""Renvoie la vue de la page de gestion du colloscope de la classe dont l'id est id_classe"""
-	classe=get_object_or_404(Classe,pk=id_classe)
 	semaines=list(Semaine.objects.all())
 	try:
 		semin,semax=semaines[0],semaines[-1]
@@ -363,7 +357,7 @@ def creneauSuppr(request,id_creneau,id_semin,id_semax):
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
 	if not modifcolloscope(request.user.colleur,creneau.classe):
 		return HttpResponseForbidden("Accès non autorisé")
-	return mixtecreneausuppr(request.user,creneau,id_semin,id_semax)
+	return mixtecreneausuppr(request,creneau,id_semin,id_semax)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def creneauModif(request,id_creneau,id_semin,id_semax):
@@ -615,7 +609,6 @@ def ectsnotes(request,id_classe):
 	"""Renvoie la vue de la page de gestion des matières ects de la classe"""
 	classe = get_object_or_404(Classe,pk=id_classe)
 	matieres = MatiereECTS.objects.filter(classe=classe,profs=request.user.colleur).order_by('nom','precision')
-	nbmatieres= matieres.count()
 	if not matieres.exists():
 		return HttpResponseForbidden("Vous n'êtes pas habilité à attribuer des crédits ECTS aux élèves de cette classe")
 	listNotes = list("ABCDEF")

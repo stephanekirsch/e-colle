@@ -1,10 +1,9 @@
 #-*- coding: utf-8 -*-
 from django.http import HttpResponseForbidden, Http404
 from django.shortcuts import render, redirect, get_object_or_404
-from django.core.exceptions import ValidationError
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from accueil.models import Classe, Matiere, User, Colleur, Prof, Message, Destinataire, Eleve
+from accueil.models import Classe, Matiere, Colleur, Prof, Message, Destinataire, Eleve
 from accueil.forms import UserForm, UserProfprincipalForm, SelectMessageForm, EcrireForm, ReponseForm
 from django.contrib import messages as messagees
 from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES
@@ -130,7 +129,6 @@ def messageenvoye(request,id_message):
 	mesage = Message.objects.filter(auteur=request.user,pk=id_message)
 	if not mesage:
 		raise Http404
-	listelus = "; ".join(list(Destinataire.objects.filter(message=mesage,lu=True)))
 	return render(request,"accueil/messageenvoye.html",{'mesage':mesage[0]})
 
 @login_required(login_url='accueil')

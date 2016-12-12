@@ -1,7 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Note, Matiere, Classe, Semaine, Ramassage, Creneau, Colleur, Groupe 
-from django.db.models import Min, Max
+from accueil.models import Matiere, Classe, Semaine, Ramassage
 from datetime import date, timedelta
 from django.core.exceptions import ValidationError
 

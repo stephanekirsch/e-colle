@@ -1,10 +1,8 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from django.forms.widgets import Input
-from accueil.models import Colleur, Groupe, Matiere, Destinataire, Message, User, Classe, Prof, Eleve
+from accueil.models import Colleur, Groupe, Matiere, Destinataire, Message, Classe, Eleve
 from administrateur.forms import CustomMultipleChoiceField
 from django.contrib.auth.password_validation import validate_password
-from django.db.models import Q
 
 class GroupeMultipleChoiceField(forms.ModelMultipleChoiceField):
 	def label_from_instance(self,groupe,*args,**kwargs):

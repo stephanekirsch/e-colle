@@ -1,25 +1,16 @@
 #-*- coding: utf-8 -*-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.models import User
-from administrateur.forms import AdminConnexionForm, SelectColleurForm, MatiereClasseSelectForm
-from colleur.forms import SemaineForm, ECTSForm, CreneauForm, ColleForm, GroupeForm
-from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm, SelectClasseSemaineForm 
-from django.forms.formsets import formset_factory
-from accueil.models import Config, Note, Semaine, Matiere, Etablissement, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, Colle, mois, NoteECTS, JourFerie
+from administrateur.forms import AdminConnexionForm
+from colleur.forms import ECTSForm
+from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm
+from accueil.models import Config, Note, Semaine, Matiere, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, mois, NoteECTS
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm
-from django.db.models import Count
-from datetime import date, timedelta
-from django.http import Http404, HttpResponse
-from django.db.models import Avg
+from django.http import Http404, HttpResponse,  HttpResponseForbidden
 from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
 from reportlab.platypus import Table, TableStyle
-from unidecode import unidecode
-from lxml import etree
 import csv
-import json
 
 def is_secret(user):
 	"""Renvoie True si l'utilisateur est le secrétariat, False sinon"""
@@ -106,7 +97,6 @@ def resultatcsv(request,id_classe,id_matiere,id_semin,id_semax):
 @user_passes_test(is_secret, login_url='login_secret')
 def colloscope(request,id_classe):
 	"""Renvoie la vue de la page du colloscope de la classe dont l'id est id_classe"""
-	classe=get_object_or_404(Classe,pk=id_classe)
 	semaines=list(Semaine.objects.all())
 	try:
 		semin,semax=semaines[0],semaines[-1]
@@ -164,11 +154,12 @@ def creneauDupli(request,id_creneau,id_semin,id_semax):
 	"""Renvoie la vue de la page de duplication du creneau dont l'id est id_creneau"""
 	if not Config.objects.get_config().modif_secret_col:
 		return HttpResponseForbidden("Accès non autorisé")
+	creneau=get_object_or_404(Creneau,pk=id_creneau)
 	return mixtecreneaudupli(request.user,creneau,id_semin,id_semax)
 
 @user_passes_test(is_secret, login_url='accueil')
 def ajaxcompat(request,id_classe):
-	"""Renvoie ue chaîne de caractères récapitulant les incompatibilités du colloscope de la classe dont l'id est id_classe"""
+	"""Renvoie une chaîne de caractères récapitulant les incompatibilités du colloscope de la classe dont l'id est id_classe"""
 	if not Config.objects.get_config().modif_secret_col:
 		return HttpResponseForbidden("Accès non autorisé")
 	classe=get_object_or_404(Classe,pk=id_classe)
@@ -292,7 +283,6 @@ def ramassagePdf(request,id_ramassage):
 	largeurcel=(pdf.format[0]-2*pdf.marge_x)/(9+len(effectifs))
 	hauteurcel=30
 	nbKolleurs=sum([z for x,y,z in listeDecompte])
-	nbPages = -(-nbKolleurs//23)
 	pdf.debutDePage()
 	LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
 										,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))
@@ -302,7 +292,6 @@ def ramassagePdf(request,id_ramassage):
 										,('SIZE',(0,0),(-1,-1),8)])
 	data = [["Matière","Établissement","Grade","Colleur"]+["{}è. ann.\n{}".format(annee,effectif) for annee,effectif in effectifs]]+[[""]*(4+len(effectifs)) for i in range(min(23,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
 	ligneMat=ligneEtab=ligneGrade=ligneColleur=1
-	resteMat=resteEtab=resteGrade=0
 	for matiere, listeEtabs, nbEtabs in listeDecompte:
 		data[ligneMat][0]=matiere.title()
 		if nbEtabs>1:

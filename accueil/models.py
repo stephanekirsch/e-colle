@@ -1,17 +1,15 @@
 # -*- coding:utf8 -*-
 from django.db import models, connection
 from django.contrib.auth.models import AbstractUser
-from datetime import date, timedelta, time
+from datetime import date, timedelta
 import locale
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 import os
 from ecolle.settings import MEDIA_ROOT, IMAGEMAGICK, BDD
-from django.core.files import File
 from PIL import Image
 from django.db.models import Count, Avg, Min, Max, Sum, F, Q
 from django.db.models.functions import Lower, Upper, Concat, Substr
-from fractions import Fraction
 
 semaine = ["lundi", "mardi","mercredi","jeudi","vendredi","samedi","dimanche"]
 
@@ -440,7 +438,7 @@ class NoteManager(models.Manager):
 		listeEleves = []
 		nbeleves=nbheures=nbdates=0
 		try:
-			heure,date_colle,semaine,titre,detail,pk = notes[0]['heure'],notes[0]['date_colle'], notes[0]['semaine'], notes[0]['titre'], notes[0]['detail'], notes[0]['pk']
+			heure,date_colle,semaine,titre,detail = notes[0]['heure'],notes[0]['date_colle'], notes[0]['semaine'], notes[0]['titre'], notes[0]['detail']
 		except Exception:
 			pass
 		else:
