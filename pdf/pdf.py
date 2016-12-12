@@ -8,12 +8,8 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from ecolle.settings import RESOURCES_ROOT
 from accueil.models import Groupe, Colle, Matiere, Colleur, NoteECTS, Eleve, Config
-from colleur.forms import ECTSForm
-from colleur.views import ectscredits as ectscredits_colleur
-from secretariat.views import ectscredits as ectscredits_secret
 from reportlab.lib.units import cm
 from unidecode import unidecode
-from datetime import date
 from os.path import join
 from xml.etree import ElementTree as etree
 
@@ -215,28 +211,16 @@ def Pdf(classe,semin,semax):
 	response.write(fichier)
 	return response
 
-def attestationects(request,elev,classe):
+def attestationects(form,elev,classe):
 	"""renvoie l'attestation ects pdf de l'élève elev, ou si elev vaut None renvoie les attestations ects pdf de toute la classe classe en un seul fichier"""
-	if request.method=="POST":
-		form=ECTSForm(classe,request.POST)
-		if form.is_valid():
-			datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
-			filiere = form.cleaned_data['classe'].split("_")[0]
-			signataire = form.cleaned_data['signature']
-			annee = form.cleaned_data['anneescolaire']
-			etoile = form.cleaned_data['etoile']
-			signature = False
-			if 'tampon' in form.cleaned_data:
-				signature = form.cleaned_data['tampon']
-		else:
-			return ectscredits_colleur(request,classe.pk,form) if request.colleur else ectscredits_secret(request,classe.pk,form) 
-	else:
-		datedujour = date.today().strftime('%d/%m/%Y')
-		filiere = classe.nom
-		signataire = 'Proviseur'
-		annee = date.today().year
-		etoile = False
-		signature = False
+	datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
+	filiere = form.cleaned_data['classe'].split("_")[0]
+	signataire = form.cleaned_data['signature']
+	annee = form.cleaned_data['anneescolaire']
+	etoile = form.cleaned_data['etoile']
+	signature = False
+	if 'tampon' in form.cleaned_data:
+		signature = form.cleaned_data['tampon']
 	config=Config.objects.get_config()
 	annee = "{}-{}".format(int(annee)-1,annee)
 	response = HttpResponse(content_type='application/pdf')
@@ -353,32 +337,20 @@ def attestationects(request,elev,classe):
 	response.write(fichier)
 	return response
 
-def creditsects(request,elev,classe):
+def creditsects(form,elev,classe):
 	"""renvoie les crédits ects pdf de l'élève elev, ou si elev vaut None renvoie les crédits ects pdf de toute la classe en un seul fichier"""
-	if request.method=="POST":
-		form=ECTSForm(classe,request.POST)
-		if form.is_valid():
-			datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
-			filiere,annee = form.cleaned_data['classe'].split("_")
-			signataire = form.cleaned_data['signature']
-			etoile = form.cleaned_data['etoile']
-			tree=etree.parse(join(RESOURCES_ROOT,'classes.xml')).getroot()
-			classexml=tree.findall("classe[@nom='{}'][@annee='{}']".format(filiere,annee)).pop()
-			domaine = classexml.get("domaine")
-			branche = classexml.get("type").lower()
-			precision = classexml.get("precision")
-			signature = False
-			if 'tampon' in form.cleaned_data:
-				signature = form.cleaned_data['tampon']
-		else:
-			return ectscredits_colleur(request,classe.pk,form) if request.colleur else ectscredits_secret(request,classe.pk,form) 
-	else:
-		datedujour = date.today().strftime('%d/%m/%Y')
-		filiere = classe.nom
-		signataire = 'Proviseur'
-		etoile = False
-		domaine = branche = precision = ""
-		signature = False
+	datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
+	filiere,annee = form.cleaned_data['classe'].split("_")
+	signataire = form.cleaned_data['signature']
+	etoile = form.cleaned_data['etoile']
+	tree=etree.parse(join(RESOURCES_ROOT,'classes.xml')).getroot()
+	classexml=tree.findall("classe[@nom='{}'][@annee='{}']".format(filiere,annee)).pop()
+	domaine = classexml.get("domaine")
+	branche = classexml.get("type").lower()
+	precision = classexml.get("precision")
+	signature = False
+	if 'tampon' in form.cleaned_data:
+		signature = form.cleaned_data['tampon']
 	LIST_NOTES="ABCDEF"
 	response = HttpResponse(content_type='application/pdf')
 	if elev is None:

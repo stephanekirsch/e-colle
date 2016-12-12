@@ -646,7 +646,7 @@ def ectscredits(request,id_classe,form=None):
 	if not is_profprincipal(request.user,classe):
 		return HttpResponseForbidden("Accès non autorisé")
 	eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name')
-	if not form:
+	if form is None:
 		form=ECTSForm(classe,request.POST or None)
 	credits,total = NoteECTS.objects.credits(classe)		
 	return render(request,'mixte/ectscredits.html',{'classe':classe,'credits':credits,'form':form,'total':total,"nbeleves":eleves.order_by().count()})
@@ -656,25 +656,53 @@ def ficheectspdf(request,id_eleve):
 	eleve = get_object_or_404(Eleve,pk=id_eleve)
 	if not is_profprincipal(request.user,eleve.classe):
 		return HttpResponseForbidden("Accès non autorisé")
-	return creditsects(request,eleve,eleve.classe)
+	form = ECTSForm(eleve.classe, request.POST)
+	if request.method=="POST":
+		if form.is_valid():
+			return creditsects(form,eleve,eleve.classe)
+		else:
+			return ectscredits(request,eleve.classe.pk,form)
+	else:
+		raise Http404
 
 @user_passes_test(is_colleur_ects, login_url='accueil')
 def attestationectspdf(request,id_eleve):
 	eleve = get_object_or_404(Eleve,pk=id_eleve)
 	if not is_profprincipal(request.user,eleve.classe):
 		return HttpResponseForbidden("Accès non autorisé")
-	return attestationects(request,eleve,eleve.classe)
+	form = ECTSForm(eleve.classe, request.POST)
+	if request.method=="POST":
+		if form.is_valid():
+			return attestationects(form,eleve,eleve.classe)
+		else:
+			return ectscredits(request,eleve.classe.pk,form)
+	else:
+		raise Http404
 
 @user_passes_test(is_colleur_ects, login_url='accueil')
 def ficheectsclassepdf(request,id_classe):
 	classe = get_object_or_404(Classe,pk=id_classe)
 	if not is_profprincipal(request.user,classe):
 		return HttpResponseForbidden("Accès non autorisé")
-	return creditsects(request,None,classe)
+	form = ECTSForm(classe, request.POST)
+	if request.method=="POST":
+		if form.is_valid():
+			return creditsects(form,None,classe)
+		else:
+			return ectscredits(request,classe.pk,form)
+	else:
+		raise Http404
 
 @user_passes_test(is_colleur_ects, login_url='accueil')
 def attestationectsclassepdf(request,id_classe):
 	classe = get_object_or_404(Classe,pk=id_classe)
 	if not is_profprincipal(request.user,classe):
 		return HttpResponseForbidden("Accès non autorisé")
-	return attestationects(request,None,classe)
+	form = ECTSForm(classe, request.POST)
+	if request.method=="POST":
+		if form.is_valid():
+			return attestationects(form,None,classe)
+		else:
+			return ectscredits(request,classe.pk,form)
+	else:
+		raise Http404

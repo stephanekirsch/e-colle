@@ -392,19 +392,47 @@ def ectscredits(request,id_classe,form=None):
 @user_passes_test(is_secret_ects, login_url='login_secret')
 def ficheectspdf(request,id_eleve):
 	eleve = get_object_or_404(Eleve,pk=id_eleve)
-	return creditsects(request,eleve,eleve.classe)
+	form = ECTSForm(eleve.classe, request.POST)
+	if request.method=="POST":
+		if form.is_valid():
+			return creditsects(form,eleve,eleve.classe)
+		else:
+			return ectscredits(request,eleve.classe.pk,form)
+	else:
+		raise Http404
 
 @user_passes_test(is_secret_ects, login_url='login_secret')
 def attestationectspdf(request,id_eleve):
 	eleve = get_object_or_404(Eleve,pk=id_eleve)
-	return attestationects(request,eleve,eleve.classe)
+	form = ECTSForm(eleve.classe, request.POST)
+	if request.method=="POST":
+		if form.is_valid():
+			return attestationects(form,eleve,eleve.classe)
+		else:
+			return ectscredits(request,eleve.classe.pk,form)
+	else:
+		raise Http404
 
 @user_passes_test(is_secret_ects, login_url='login_secret')
 def ficheectsclassepdf(request,id_classe):
 	classe = get_object_or_404(Classe,pk=id_classe)
-	return creditsects(request,None,classe)
+	form = ECTSForm(classe, request.POST)
+	if request.method=="POST":
+		if form.is_valid():
+			return creditsects(form,None,classe)
+		else:
+			return ectscredits(request,classe.pk,form)
+	else:
+		raise Http404
 
 @user_passes_test(is_secret_ects, login_url='login_secret')
 def attestationectsclassepdf(request,id_classe):
 	classe = get_object_or_404(Classe,pk=id_classe)
-	return attestationects(request,None,classe)
+	form = ECTSForm(classe, request.POST)
+	if request.method=="POST":
+		if form.is_valid():
+			return attestationects(form,None,classe)
+		else:
+			return ectscredits(request,classe.pk,form)
+	else:
+		raise Http404
