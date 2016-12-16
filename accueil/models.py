@@ -765,7 +765,6 @@ class Ramassage(models.Model):
 	while moiscourant<moisMax:
 		LISTE_MOIS.append(moiscourant)
 		moiscourant=incremente_mois(moiscourant)
-	print(LISTE_MOIS)
 	LISTE_MOIS=[(x,x.strftime('%B %Y')) for x in LISTE_MOIS]
 	moisDebut = models.DateField(verbose_name='Début',choices=LISTE_MOIS)
 	moisFin = models.DateField(verbose_name='Fin',choices=LISTE_MOIS)
