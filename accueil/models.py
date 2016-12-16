@@ -759,11 +759,13 @@ class Ramassage(models.Model):
 		"""ajoute un mois à moment"""
 		return date(moment.year+moment.month//12,moment.month%12+1,1)
 	moisMin,moisMax=mois()
-	LISTE_MOIS =[]
 	moiscourant=moisMin
+	LISTE_MOIS =[moiscourant]
+	moiscourant=incremente_mois(moiscourant)
 	while moiscourant<moisMax:
 		LISTE_MOIS.append(moiscourant)
 		moiscourant=incremente_mois(moiscourant)
+	print(LISTE_MOIS)
 	LISTE_MOIS=[(x,x.strftime('%B %Y')) for x in LISTE_MOIS]
 	moisDebut = models.DateField(verbose_name='Début',choices=LISTE_MOIS)
 	moisFin = models.DateField(verbose_name='Fin',choices=LISTE_MOIS)

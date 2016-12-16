@@ -10,6 +10,7 @@ from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixteco
 from django.http import Http404, HttpResponse,  HttpResponseForbidden
 from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
 from reportlab.platypus import Table, TableStyle
+from datetime import timedelta
 import csv
 
 def is_secret(user):
@@ -275,7 +276,7 @@ def ramassagePdf(request,id_ramassage):
 	LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
 	response = HttpResponse(content_type='application/pdf')
 	debut=ramassage.moisDebut
-	fin=ramassage.moisFin
+	fin=Ramassage.incremente_mois(ramassage.moisFin)-timedelta(days=1)
 	listeDecompte,effectifs=Ramassage.objects.decompte(debut,fin)
 	nomfichier="ramassage{}_{}-{}_{}.pdf".format(debut.month,debut.year,fin.month,fin.year)
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
