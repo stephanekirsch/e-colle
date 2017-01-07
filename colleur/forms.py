@@ -22,6 +22,12 @@ class NoteForm(forms.ModelForm):
 		fields=['semaine','jour','heure','note','commentaire','rattrapee','date_colle']
 		widgets = {'date_colle':SelectDateWidget(years=[date.today().year+i-1 for i in range(10)])}
 
+	def save(self):
+		"""dans le cas d'un élève fictif note, remplace la note par n.n. avant de sauvegarder"""
+		if self.instance.eleve is None and self.instance.note is not None:
+			self.instance.note = 21
+		super().save()
+
 	def clean(self):
 		"""Vérifie que le colleur n'a pas déjà 3 notes sur ce créneau et qu'il n'a pas déjà collé l'élève cette semaine dans cette matière"""
 		colleur = self.instance.colleur
