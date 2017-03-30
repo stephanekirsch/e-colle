@@ -25,16 +25,16 @@
 	<td>Nb de notes</td>
 	<td>&sigma;</td>
 </tr>
-{% for moyenne,moyenneclasse,rang in moyennes %}
+{% for moyenne in moyennes %}
 	<tr>
 		<td style="background-color:{{moyenne.matiere__couleur}}">{{moyenne.matiere__nom|title}}</td>
-		{% if rang %}
-		<td>{{rang}}{{rang|pluralize:"<sup>er</sup>,<sup>&egrave;me</sup>"|safe}}</td>
+		{% if moyenne.rang %}
+		<td>{{moyenne.rang}}{{moyenne.rang|pluralize:"<sup>er</sup>,<sup>&egrave;me</sup>"|safe}}</td>
 		{% else %}
 		<td></td>
 		{% endif %}
 		<td>{{moyenne.note__avg|floatformat:"1"}}</td>
-		<td>{{moyenneclasse.note__avg|floatformat:"1"}}</td>
+		<td>{{moyenne.noteclasse__avg|floatformat:"1"}}</td>
 		<td>{{moyenne.note__min}}</td>
 		<td>{{moyenne.note__max}}</td>
 		<td>{{moyenne.note__count}}</td>

@@ -8,7 +8,7 @@ from django.dispatch import receiver
 import os
 from ecolle.settings import MEDIA_ROOT, IMAGEMAGICK, BDD
 from PIL import Image
-from django.db.models import Count, Avg, Min, Max, Sum, F, Q
+from django.db.models import Count, Avg, Min, Max, Sum, F, Q, StdDev
 from django.db.models.functions import Lower, Upper, Concat, Substr
 
 semaine = ["lundi", "mardi","mercredi","jeudi","vendredi","samedi","dimanche"]
@@ -371,7 +371,7 @@ class Semaine(models.Model):
 	LISTE_SEMAINES=zip(range(1,36),range(1,36))
 	base = date.today()
 	base = base-timedelta(days=base.weekday())
-	# utilisation d'une fonction lambda car en python 3 les compréhensions on leur propre espace de nom, et les variable d'une classe englobante y sont invisibles
+	# utilisation d'une fonction lambda car en python 3 les compréhensions on leur propre espace de nom, et les variables d'une classe englobante y sont invisibles
 	liste1=(lambda y:[y+timedelta(days=7*x) for x in range(-40,60)])(base)
 	liste2=[d.strftime('%d %B %Y') for d in liste1]
 	LISTE_LUNDIS=zip(liste1,liste2)
@@ -389,7 +389,7 @@ class Creneau(models.Model):
 	LISTE_HEURE=[(i,"{}h{:02d}".format(i//4,15*(i%4))) for i in range(24,89)] # une heure est représentée par le nombre de 1/4 d'heure depuis 0h00. entre 6h et 22h
 	LISTE_JOUR=enumerate(["lundi","mardi","mercredi","jeudi","vendredi","samedi"])
 	jour = models.PositiveSmallIntegerField(choices=LISTE_JOUR,default=0)
-	heure = models.PositiveSmallIntegerField(choices=LISTE_HEURE,default=14)
+	heure = models.PositiveSmallIntegerField(choices=LISTE_HEURE,default=24)
 	salle = models.CharField(max_length=20,null=True,blank=True)
 	classe = models.ForeignKey(Classe,related_name="classecreneau")
 
@@ -521,6 +521,30 @@ class NoteManager(models.Manager):
 			notes = dictfetchall(cursor)
 		return notes
 
+	def bilanEleve(self,eleve,semin,semax):
+		matieres = self.filter(eleve=eleve).exclude(note__gt=20)
+		if semin:
+			matieres=matieres.filter(semaine__lundi__range=(semin.lundi,semax.lundi))
+		matieres=matieres.values_list('matiere__pk').order_by('matiere__nom').distinct()
+		moyenne = self.filter(eleve=eleve,matiere__pk__in=matieres).exclude(note__gt=20)
+		moyenne_classe = self.filter(matiere__pk__in=matieres,classe=eleve.classe,eleve__isnull=False).exclude(note__gt=20) 
+		if semin:
+			moyenne=moyenne.filter(semaine__lundi__range=[semin.lundi,semax.lundi])
+			moyenne_classe = moyenne_classe.filter(semaine__lundi__range=[semin.lundi,semax.lundi])
+		moyenne = list(moyenne.values('matiere__nom','matiere__couleur').annotate(Avg('note'),Min('note'),Max('note'),Count('note'),StdDev('note')).order_by('matiere__nom'))
+		moyenne_classe = moyenne_classe.values('matiere__pk').annotate(Avg('note')).order_by('matiere__nom')
+		rangs=[]
+		for i,matiere in enumerate(matieres):
+			rang=self.exclude(note__gt=20).filter(classe=eleve.classe,eleve__isnull=False,matiere__pk=matiere[0])
+			if semin:
+				rang=rang.filter(semaine__lundi__range=[semin.lundi,semax.lundi])
+			if moyenne[i]['note__avg']:
+				rang=rang.values('eleve').annotate(Avg('note')).filter(note__avg__gt=moyenne[i]['note__avg']+0.0001).count()+1
+			else:
+				rang=0
+			rangs.append(rang)
+		return [{**x,"noteclasse__avg":y["note__avg"],"rang":z} for x,y,z in zip(moyenne,moyenne_classe,rangs)]
+
 class Note(models.Model):
 	LISTE_JOUR=enumerate(["lundi","mardi","mercredi","jeudi","vendredi","samedi"])
 	LISTE_HEURE=[(i,"{}h{:02d}".format(i//4,15*(i%4))) for i in range(24,89)]
@@ -625,8 +649,8 @@ class ColleManager(models.Manager):
 			groupes[colle.pk] = "; ".join(["{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper()) for eleve in colle.groupe.groupeeleve.all() if not colle.matiere.lv or colle.matiere.lv==1 and eleve.lv1 == colle.matiere or colle.matiere.lv==2 and eleve.lv2 == colle.matiere])
 		return groupes, colles
 
-	def agendaEleve(self,eleve,semainemin):
-		requete = "SELECT s.lundi lundi, cr.jour jour,cr.heure heure, cr.salle salle, m.nom nom_matiere, m.couleur couleur, u.first_name prenom, u.last_name nom, p.titre titre, p.detail detail, p.fichier fichier\
+	def agendaEleve(self,eleve,detail=True):
+		requete = "SELECT s.lundi lundi, {} jour, cr.heure heure, cr.salle salle, m.nom nom_matiere, m.couleur couleur, u.first_name prenom, u.last_name nom, p.titre titre, {} p.fichier fichier\
 				   FROM accueil_colle co\
 				   INNER JOIN accueil_creneau cr\
 				   ON co.creneau_id = cr.id\
@@ -645,9 +669,9 @@ class ColleManager(models.Manager):
 				   LEFT OUTER JOIN accueil_programme p\
 				   ON (p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = %s)\
 				   WHERE e.id=%s AND s.lundi >= %s\
-				   ORDER BY s.lundi,cr.jour,cr.heure"
+				   ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'),"p.detail detail," if detail else "")
 		with connection.cursor() as cursor:
-			cursor.execute(requete,(eleve.classe.pk,eleve.pk,semainemin))
+			cursor.execute(requete,(eleve.classe.pk,eleve.pk,date.today()+timedelta(days=-27)))
 			colles = dictfetchall(cursor)
 		return colles
 

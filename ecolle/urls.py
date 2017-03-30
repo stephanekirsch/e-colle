@@ -14,6 +14,7 @@ urlpatterns = [
     url(r'^repondre/(\d+)$', views.repondre, name="repondre"),
     url(r'^administrateur/', include('administrateur.urls')),
     url(r'^eleve/', include('eleve.urls')),
+    url(r'^app_mobile/', include('app_mobile.urls')),
     url(r'^colleur/', include('colleur.urls')),
     url(r'^secretariat/', include('secretariat.urls')),
     url(r'^logout/$', views.deconnexion, name="deconnexion"),

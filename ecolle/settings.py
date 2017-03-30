@@ -26,7 +26,7 @@ IP_FILTRE_ADMIN = True
 
 # liste des adresses autorisées pour la partie admin si IP_FILTRE_ADMIN == True
 # à renseigner avec des REGEXP.
-IP_FILTRE_ADRESSES = ('^127\.0\.0\.1$',)
+IP_FILTRE_ADRESSES = ('^127\.0\.0\.1$')
 
 # True pour faire des jpeg miniatures des pdf de colle. False sinon.
 IMAGEMAGICK = True
@@ -39,7 +39,7 @@ ADMINS = (
 
 # les nom de domaine autorisés pour accéder à e-colle
 # démarrer par un '.' pour les sous-domaines (par exemple '.e-colle.fr')
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['stefwin','localhost']
 
 # une clé secrète de 50 caractères. À modifier à la configuration
 SECRET_KEY = 'cg(ip)m3z77z3v!5wo&cl8^4!rk9t0++5wld+@i(kifb!z-k0p'
@@ -142,6 +142,7 @@ INSTALLED_APPS = (
     'eleve',
     'colleur',
     'secretariat',
+    'app_mobile',
     'customfilter',
 )
 

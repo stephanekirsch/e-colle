@@ -48,29 +48,8 @@ def bilan(request):
 		semin=form.cleaned_data['semin']
 		semax=form.cleaned_data['semax']
 	else:
-		semin=False
-	matieres = Note.objects.filter(eleve=eleve).exclude(note__gt=20)
-	if semin:
-		matieres=matieres.filter(semaine__lundi__range=(semin.lundi,semax.lundi))
-	matieres=matieres.values_list('matiere__pk').order_by('matiere__nom').distinct()
-	moyenne = Note.objects.filter(eleve=eleve,matiere__pk__in=matieres).exclude(note__gt=20)
-	moyenne_classe = Note.objects.filter(matiere__pk__in=matieres,classe=eleve.classe,eleve__isnull=False).exclude(note__gt=20) 
-	if semin:
-		moyenne=moyenne.filter(semaine__lundi__range=[semin.lundi,semax.lundi])
-		moyenne_classe = moyenne_classe.filter(semaine__lundi__range=[semin.lundi,semax.lundi])
-	moyenne = list(moyenne.values('matiere__pk','matiere__nom','matiere__couleur').annotate(Avg('note'),Min('note'),Max('note'),Count('note'),StdDev('note')).order_by('matiere__nom'))
-	moyenne_classe = moyenne_classe.values('matiere__pk').annotate(Avg('note')).order_by('matiere__nom')
-	rangs=[]
-	for i,matiere in enumerate(matieres):
-		rang=Note.objects.exclude(note__gt=20).filter(classe=eleve.classe,eleve__isnull=False,matiere__pk=matiere[0])
-		if semin:
-			rang=rang.filter(semaine__lundi__range=[semin.lundi,semax.lundi])
-		if moyenne[i]['note__avg']:
-			rang=rang.values('eleve').annotate(Avg('note')).filter(note__avg__gt=moyenne[i]['note__avg']+0.0001).count()+1
-		else:
-			rang=""
-		rangs.append(rang)
-	return render(request,'eleve/bilan.html',{'form':form,'moyennes':zip(moyenne,moyenne_classe,rangs)})
+		semin=semax=False
+	return render(request,'eleve/bilan.html',{'form':form,'moyennes':Note.objects.bilanEleve(eleve,semin,semax)})
 
 @user_passes_test(is_eleve, login_url='accueil')
 def note(request):
@@ -128,10 +107,8 @@ def colloscope(request):
 def agenda(request):
 	"""Renvoie la page de la vue de consultation de l'agenda"""
 	jour=date.today()
-	semaine=jour+timedelta(days=-jour.weekday())
-	semainemin=semaine+timedelta(days=-21)
 	eleve=request.user.eleve
-	return render(request,"eleve/agenda.html",{'colles':Colle.objects.agendaEleve(eleve,semainemin),'media_url':MEDIA_URL,'jour':jour,'semaine':semaine})
+	return render(request,"eleve/agenda.html",{'colles':Colle.objects.agendaEleve(eleve),'media_url':MEDIA_URL,'jour':jour})
 
 @user_passes_test(is_eleve, login_url='accueil')
 def colloscopePdf(request,id_semin,id_semax):

@@ -4,6 +4,11 @@ from accueil.models import Colleur, Groupe, Matiere, Destinataire, Message, Clas
 from administrateur.forms import CustomMultipleChoiceField
 from django.contrib.auth.password_validation import validate_password
 
+class ConnexionForm(forms.Form):
+    username = forms.CharField(label="identifiant")
+    password = forms.CharField(label="Mot de passe",
+                               widget=forms.PasswordInput)
+
 class GroupeMultipleChoiceField(forms.ModelMultipleChoiceField):
 	def label_from_instance(self,groupe,*args,**kwargs):
 		return groupe.nom+": "+"/".join([str(eleve.user.last_name.upper()) for eleve in groupe.groupeeleve.all()])
