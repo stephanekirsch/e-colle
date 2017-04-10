@@ -61,27 +61,38 @@ def grades(request):
     """renvoie les notes de l'utilisateur connecté au format json"""
     user = request.user
     checkeleve(user)
-    return HttpResponse(json.dumps(Note.objects.noteEleve(user.eleve), default=date_serial))
+    return HttpResponse(json.dumps(
+        Note.objects.noteEleve(user.eleve), default=date_serial))
 
 
 def results(request):
     """renvoie les résultats de l'utilisateur connecté au format json"""
     user = request.user
     checkeleve(user)
-    return HttpResponse(json.dumps(list(Note.objects.bilanEleve(user.eleve, False, False))))
+    return HttpResponse(json.dumps(
+        list(Note.objects.bilanEleve(user.eleve, False, False))))
+
 
 def colles(request):
     user = request.user
     checkeleve(user)
     classe = user.eleve.classe
-    creneaux = list(Creneau.objects.filter(classe=classe).annotate(nb=Count('colle')).filter(nb__gt=0).values_list('pk','jour','heure','salle'))
-    semaines = list(Semaine.objects.filter(colle__creneau__classe=classe).distinct().values_list('pk','numero','lundi'))
-    colles = list(Colle.objects.filter(creneau__classe=classe).values_list('pk','creneau','semaine','groupe','matiere','colleur','eleve'))
-    groupes = list(Groupe.objects.filter(classe=classe).values_list('pk','nom'))
-    matieres = list(Matiere.objects.filter(matieresclasse=classe).values_list('pk','nom','couleur','lv'))
-    eleves = [[eleve.pk, eleve.user.first_name.title()+" "+eleve.user.last_name.upper(), login, None if not eleve.groupe else eleve.groupe.pk ,None if not eleve.lv1 else eleve.lv1.pk, None if not eleve.lv2 else eleve.lv2.pk ] for eleve, login in classe.loginsEleves()]
-    colleurs = [[colleur.pk, colleur.user.first_name.title()+" "+colleur.user.last_name.upper(), login] for colleur, login in classe.loginsColleurs()]
-    return HttpResponse(json.dumps({'creneaux':creneaux,'semaines':semaines,'colles':colles,'groupes':groupes,'matieres':matieres,'eleves':eleves,'colleurs':colleurs},default=date_serial))
+    creneaux = list(Creneau.objects.filter(classe=classe).annotate(nb=Count(
+        'colle')).filter(nb__gt=0).values_list('pk', 'jour', 'heure', 'salle'))
+    semaines = list(Semaine.objects.filter(
+        colle__creneau__classe=classe).distinct().values_list('pk', 'numero', 'lundi'))
+    colles = list(Colle.objects.filter(creneau__classe=classe).values_list(
+        'pk', 'creneau', 'semaine', 'groupe', 'matiere', 'colleur', 'eleve'))
+    groupes = list(Groupe.objects.filter(
+        classe=classe).values_list('pk', 'nom'))
+    matieres = list(Matiere.objects.filter(
+        matieresclasse=classe).values_list('pk', 'nom', 'couleur', 'lv'))
+    eleves = [[eleve.pk, eleve.user.first_name.title() + " " + eleve.user.last_name.upper(), login, None if not eleve.groupe else eleve.groupe.pk,
+               None if not eleve.lv1 else eleve.lv1.pk, None if not eleve.lv2 else eleve.lv2.pk] for eleve, login in classe.loginsEleves()]
+    colleurs = [[colleur.pk, colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), login]
+                for colleur, login in classe.loginsColleurs()]
+    return HttpResponse(json.dumps({'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
+                                    'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs}, default=date_serial))
 
 
 def programs(request):
@@ -122,7 +133,7 @@ def sentmessages(request):
     """renvoie les messages envoyés par l'utilisateur connecté au format json"""
     user = request.user
     checkeleve(user)
-    messagesenvoyes = Message.objects.filter(auteur=user,hasAuteur=True).distinct().values(
+    messagesenvoyes = Message.objects.filter(auteur=user, hasAuteur=True).distinct().values(
         'date', 'auteur__first_name', 'auteur__last_name', 'luPar', 'listedestinataires', 'titre', 'corps', 'pk').order_by('-date')
     return HttpResponse(json.dumps(list(messagesenvoyes), default=date_serial))
 
@@ -137,24 +148,25 @@ def readmessage(request, message_id):
     destinataire.save()
     return HttpResponse("read")
 
+
 def deletemessage(request, message_id):
     """marque comme effacé le message d'ont l'identifiant est message_id"""
     user = request.user
     checkeleve(user)
-    message = get_object_or_404(Message,pk=message_id)
-    if message.hasAuteur and message.auteur==user:
+    message = get_object_or_404(Message, pk=message_id)
+    if message.hasAuteur and message.auteur == user:
         if not message.messagerecu.all().count():
             message.delete()
         else:
-            message.hasAuteur=False
+            message.hasAuteur = False
             message.save()
     else:
-        destinataire = get_object_or_404(Destinataire,message=message,user=user)
+        destinataire = get_object_or_404(
+            Destinataire, message=message, user=user)
         destinataire.delete()
         if not message.hasAuteur and not message.messagerecu.all().count():
             message.delete()
     return HttpResponse("deleted")
-
 
 
 @csrf_exempt
@@ -191,4 +203,5 @@ def answer(request, message_id, answerAll):
                     destinataireUser.user.last_name.upper()
         reponse.listedestinataires = listedestinataires
         reponse.save()
-    return HttpResponse(json.dumps({'pk': reponse.pk, 'date': int(reponse.date.strftime('%s')), 'listedestinataires': reponse.listedestinataires, 'titre': reponse.titre, 'corps': reponse.corps}))
+    return HttpResponse(json.dumps({'pk': reponse.pk, 'date': int(reponse.date.strftime(
+        '%s')), 'listedestinataires': reponse.listedestinataires, 'titre': reponse.titre, 'corps': reponse.corps}))
