@@ -81,14 +81,16 @@ def colles(request):
         'colle')).filter(nb__gt=0).values_list('pk', 'jour', 'heure', 'salle'))
     semaines = list(Semaine.objects.filter(
         colle__creneau__classe=classe).distinct().values_list('pk', 'numero', 'lundi'))
-    colles = list(Colle.objects.filter(creneau__classe=classe).values_list(
-        'pk', 'creneau', 'semaine', 'groupe', 'matiere', 'colleur', 'eleve'))
+    colles = Colle.objects.filter(creneau__classe=classe).values_list(
+        'pk', 'creneau', 'semaine', 'groupe', 'matiere', 'colleur', 'eleve')
+    colles = [[pk, creneau, semaine, groupe or 0, matiere, colleur, eleve or 0]
+    for pk, creneau, semaine, groupe, matiere, colleur, eleve in colles]
     groupes = list(Groupe.objects.filter(
         classe=classe).values_list('pk', 'nom'))
     matieres = list(Matiere.objects.filter(
         matieresclasse=classe).values_list('pk', 'nom', 'couleur', 'lv'))
-    eleves = [[eleve.pk, eleve.user.first_name.title() + " " + eleve.user.last_name.upper(), login, None if not eleve.groupe else eleve.groupe.pk,
-               None if not eleve.lv1 else eleve.lv1.pk, None if not eleve.lv2 else eleve.lv2.pk] for eleve, login in classe.loginsEleves()]
+    eleves = [[eleve.pk, eleve.user.first_name.title() + " " + eleve.user.last_name.upper(), login, 0 if not eleve.groupe else eleve.groupe.pk,
+               0 if not eleve.lv1 else eleve.lv1.pk, 0 if not eleve.lv2 else eleve.lv2.pk] for eleve, login in classe.loginsEleves()]
     colleurs = [[colleur.pk, colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), login]
                 for colleur, login in classe.loginsColleurs()]
     return HttpResponse(json.dumps({'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
