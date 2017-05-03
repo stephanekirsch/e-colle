@@ -34,6 +34,7 @@ def checkeleve(user):
         return False
     if not user.eleve.classe:
         return False
+    return True
 
 
 @csrf_exempt
@@ -52,7 +53,7 @@ def connect(request):
                                             'classe_name': classe.nom,
                                             'classe_year': classe.annee,
                                             'group': user.eleve.groupe.nom}))
-        return HttpResponse("invalide")
+        return HttpResponse("invalid")
     else:
         return HttpResponseForbidden("access denied")
 
@@ -114,7 +115,7 @@ def agenda(request):
     """renvoie l'agenda des colles de l'utilisateur connecté au format json"""
     user = request.user
     if not checkeleve(user):
-        return HttpResponseForbidden("not authenticated")
+       return HttpResponseForbidden("not authenticated")
     agendas = Colle.objects.agendaEleve(user.eleve, False)
     return HttpResponse(json.dumps([{'time': int(datetime.combine(agenda['jour'], time(agenda['heure'] // 4, 15 * (agenda['heure'] % 4))).replace(tzinfo=timezone.utc).timestamp()),
                                      'room':agenda['salle'],
