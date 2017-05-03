@@ -46,8 +46,7 @@ def connect(request):
         if user is not None and user.eleve is not None and user.eleve.classe is not None:
             login(request, user)
             classe = user.eleve.classe
-            return HttpResponse(json.dumps({'firstname': user.first_name,
-                                            'lastname': user.last_name,
+            return HttpResponse(json.dumps({'name': user.first_name.title() + " " + user.last_name.upper(),
                                             'id': user.eleve.pk,
                                             'classe_id': classe.pk,
                                             'classe_name': classe.nom,
@@ -63,9 +62,17 @@ def grades(request):
     user = request.user
     if not checkeleve(user):
         return HttpResponseForbidden("not authenticated")
-    return HttpResponse(json.dumps(
-        Note.objects.noteEleve(user.eleve), default=date_serial))
+    return HttpResponse(json.dumps([{'subject':x['nom_matiere'].title(),
+        'color':x['couleur'],
+        'date':x['date_colle'],
+        'colleur':x['prenom'].title()+" "+x['nom'].upper(),
+        'title':x['titre'],
+        'program':x['programme'],
+        'grade':x['note'],
+        'comment':x['commentaire']} for x in Note.objects.noteEleve(user.eleve)]
+        , default=date_serial))
 
+    
 
 def results(request):
     """renvoie les résultats de l'utilisateur connecté au format json"""
@@ -121,8 +128,7 @@ def agenda(request):
                                      'room':agenda['salle'],
                                      'subject':agenda['nom_matiere'],
                                      'color':agenda['couleur'],
-                                     'firstname':agenda['prenom'],
-                                     'lastname':agenda['nom'],
+                                     'colleur':agenda['prenom'].title() + " " + agenda['nom'].upper(),
                                      'program':agenda['titre'],
                                      'file':agenda['fichier']} for agenda in agendas]))
 
@@ -132,10 +138,19 @@ def messages(request):
     user = request.user
     if not checkeleve(user):
         return HttpResponseForbidden("not authenticated")
-    messagesrecus = Destinataire.objects.filter(user=user).values('lu', 'reponses', 'message__pk', 'message__date',
+    messagesrecusQuery = Destinataire.objects.filter(user=user).values('lu', 'reponses', 'message__pk', 'message__date',
                                                                   'message__auteur__first_name', 'message__auteur__last_name', 'message__luPar',
                                                                   'message__listedestinataires', 'message__titre', 'message__corps').order_by('-message__date')
-    return HttpResponse(json.dumps(list(messagesrecus), default=date_serial))
+    messagesrecus = [{'read':x['lu'],
+            'answers':x[responses],
+            'pk':x['message__pk'],
+            'date':x['message__date'],
+            'author':x['message__auteur__first_name'].title()+" "+x['message__auteur__last_name'].upper(),
+            'readBy':x['message__luPar'],
+            'recipients':x['message__listedestinataires',
+            'title':x['message__titre'],
+            'body':x['message__corps']]} for x in messagesrecusQuery]
+    return HttpResponse(json.dumps(messagesrecus, default=date_serial))
 
 
 def sentmessages(request):
@@ -143,8 +158,16 @@ def sentmessages(request):
     user = request.user
     if not checkeleve(user):
         return HttpResponseForbidden("not authenticated")
-    messagesenvoyes = Message.objects.filter(auteur=user, hasAuteur=True).distinct().values(
+    messagesenvoyesQuery = Message.objects.filter(auteur=user, hasAuteur=True).distinct().values(
         'date', 'auteur__first_name', 'auteur__last_name', 'luPar', 'listedestinataires', 'titre', 'corps', 'pk').order_by('-date')
+
+    messagesenvoyes = [{'pk':x['pk'],
+            'date':x['date'],
+            'author':x['auteur__first_name'].title()+" "+x['auteur__last_name'].upper(),
+            'readBy':x['luPar'],
+            'recipients':x['listedestinataires',
+            'title':x['titre'],
+            'body':x['corps']]} for x in messagesenvoyesQuery]
     return HttpResponse(json.dumps(list(messagesenvoyes), default=date_serial))
 
 
