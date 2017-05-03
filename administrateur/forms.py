@@ -4,6 +4,7 @@ from accueil.models import Classe, Matiere, Etablissement, Semaine, Colleur, Ele
 from django.forms.extras.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
+from django.db import transaction
 from ecolle.settings import RESOURCES_ROOT
 from xml.etree import ElementTree as etree
 from random import choice
@@ -36,16 +37,17 @@ class ColleurFormSetMdp(forms.BaseFormSet):
 	def save(self):
 		"""Sauvegarde en BDD les colleurs/users du formulaire"""
 		# on ne peut pas utiliser bulk_create ici, puisqu'on a besoin des pk pour les relation un-un et many-many
-		for form in self.forms:
-			colleur= Colleur(grade=form.cleaned_data['grade'],etablissement=form.cleaned_data['etablissement'])
-			colleur.save() # on sauvegarde en BDD pour avoir un pk, indispensable pour les relations many-many
-			# on ajoute les matières et les classes
-			colleur.matieres=form.cleaned_data['matiere']
-			colleur.classes=form.cleaned_data['classe']
-			# on crée le user
-			user = User(username=form.cleaned_data['username'],first_name=form.cleaned_data['first_name'].lower(),last_name=form.cleaned_data['last_name'].lower(),email=form.cleaned_data['email'],colleur=colleur)
-			user.set_password(form.cleaned_data['password'])
-			user.save()		
+		with transaction.atomic():
+			for form in self.forms:
+				colleur= Colleur(grade=form.cleaned_data['grade'],etablissement=form.cleaned_data['etablissement'])
+				colleur.save() # on sauvegarde en BDD pour avoir un pk, indispensable pour les relations many-many
+				# on ajoute les matières et les classes
+				colleur.matieres=form.cleaned_data['matiere']
+				colleur.classes=form.cleaned_data['classe']
+				# on crée le user
+				user = User(username=form.cleaned_data['username'],first_name=form.cleaned_data['first_name'].lower(),last_name=form.cleaned_data['last_name'].lower(),email=form.cleaned_data['email'],colleur=colleur)
+				user.set_password(form.cleaned_data['password'])
+				user.save()		
 
 class ColleurFormSet(forms.BaseFormSet):
 	def __init__(self,chaine_colleurs=[],*args,**kwargs):
@@ -71,22 +73,23 @@ class ColleurFormSet(forms.BaseFormSet):
 
 	def save(self):
 		"""Sauvegarde (mise à jour) en BDD les colleurs/users du formulaire"""
-		for colleur,form in zip(self.chaine_colleurs,self.forms):
-			colleur.grade=form.cleaned_data['grade']
-			colleur.etablissement=form.cleaned_data['etablissement']
-			colleur.classes=form.cleaned_data['classe']
-			colleur.matieres=form.cleaned_data['matiere']
-			colleur.save()
-			user=colleur.user
-			user.username=random_string()
-			user.first_name=form.cleaned_data['first_name'].lower()
-			user.last_name=form.cleaned_data['last_name'].lower()
-			user.email=form.cleaned_data['email']
-			user.username = form.cleaned_data['username']
-			user.is_active=form.cleaned_data['is_active']
-			if form.cleaned_data['password']:
-				user.set_password(form.cleaned_data['password'])
-			user.save()
+		with transaction.atomic():
+			for colleur,form in zip(self.chaine_colleurs,self.forms):
+				colleur.grade=form.cleaned_data['grade']
+				colleur.etablissement=form.cleaned_data['etablissement']
+				colleur.classes=form.cleaned_data['classe']
+				colleur.matieres=form.cleaned_data['matiere']
+				colleur.save()
+				user=colleur.user
+				user.username=random_string()
+				user.first_name=form.cleaned_data['first_name'].lower()
+				user.last_name=form.cleaned_data['last_name'].lower()
+				user.email=form.cleaned_data['email']
+				user.username = form.cleaned_data['username']
+				user.is_active=form.cleaned_data['is_active']
+				if form.cleaned_data['password']:
+					user.set_password(form.cleaned_data['password'])
+				user.save()
 
 class EleveFormSet(forms.BaseFormSet):
 	def __init__(self,chaine_eleves=[],*args,**kwargs):
@@ -112,35 +115,36 @@ class EleveFormSet(forms.BaseFormSet):
 
 	def save(self):
 		"""Sauvegarde (mise à jour) en BDD les eleves/users du formulaire"""
-		for eleve,form in zip(self.chaine_eleves,self.forms):
-			user=eleve.user
-			user.last_name=form.cleaned_data['last_name'].lower()
-			user.first_name=form.cleaned_data['first_name'].lower()
-			user.email=form.cleaned_data['email']
-			user.username = form.cleaned_data['username']
-			if form.cleaned_data['password']:
-				user.set_password(form.cleaned_data['password'])
-			if eleve.classe != form.cleaned_data['classe']: # si l'élève change effectivement de classe, on le retire de son groupe
-				groupe = eleve.groupe
-				eleve.groupe = None
+		with transaction.atomic():
+			for eleve,form in zip(self.chaine_eleves,self.forms):
+				user=eleve.user
+				user.last_name=form.cleaned_data['last_name'].lower()
+				user.first_name=form.cleaned_data['first_name'].lower()
+				user.email=form.cleaned_data['email']
+				user.username = form.cleaned_data['username']
+				if form.cleaned_data['password']:
+					user.set_password(form.cleaned_data['password'])
+				if eleve.classe != form.cleaned_data['classe']: # si l'élève change effectivement de classe, on le retire de son groupe
+					groupe = eleve.groupe
+					eleve.groupe = None
+					eleve.save()
+					if groupe is not None and not Eleve.objects.filter(groupe=groupe).exists(): # si l'ancien groupe de l'élève est vide, on essaie de l'effacer
+						try:
+							groupe.delete()
+						except Exception:
+							pass
+				eleve.classe=form.cleaned_data['classe']
+				if form.cleaned_data['photo']:
+					eleve.photo=form.cleaned_data['photo']
+				elif form.cleaned_data is False:
+					eleve.photo=None
+				eleve.ddn=form.cleaned_data['ddn']
+				eleve.ldn=form.cleaned_data['ldn']
+				eleve.ine=form.cleaned_data['ine']
+				eleve.lv1=form.cleaned_data['lv1']
+				eleve.lv2=form.cleaned_data['lv2']
+				user.save()
 				eleve.save()
-				if groupe is not None and not Eleve.objects.filter(groupe=groupe).exists(): # si l'ancien groupe de l'élève est vide, on essaie de l'effacer
-					try:
-						groupe.delete()
-					except Exception:
-						pass
-			eleve.classe=form.cleaned_data['classe']
-			if form.cleaned_data['photo']:
-				eleve.photo=form.cleaned_data['photo']
-			elif form.cleaned_data is False:
-				eleve.photo=None
-			eleve.ddn=form.cleaned_data['ddn']
-			eleve.ldn=form.cleaned_data['ldn']
-			eleve.ine=form.cleaned_data['ine']
-			eleve.lv1=form.cleaned_data['lv1']
-			eleve.lv2=form.cleaned_data['lv2']
-			user.save()
-			eleve.save()
 
 class EleveFormSetMdp(forms.BaseFormSet):
 	def clean(self):
@@ -153,13 +157,14 @@ class EleveFormSetMdp(forms.BaseFormSet):
 			raise ValidationError("Deux identifiants identiques dans le formulaire")
 
 	def save(self):
-		for form in self.forms:
-			user = User(first_name=form.cleaned_data['first_name'].lower(),last_name=form.cleaned_data['last_name'].lower(),email=form.cleaned_data['email'], username = form.cleaned_data['username'])
-			user.set_password(form.cleaned_data['password'])
-			eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'],ddn=form.cleaned_data['ddn'],ldn=form.cleaned_data['ldn'],ine=form.cleaned_data['ine'],lv1=form.cleaned_data['lv1'],lv2=form.cleaned_data['lv2'])
-			eleve.save()
-			user.eleve=eleve
-			user.save()
+		with transaction.atomic():
+			for form in self.forms:
+				user = User(first_name=form.cleaned_data['first_name'].lower(),last_name=form.cleaned_data['last_name'].lower(),email=form.cleaned_data['email'], username = form.cleaned_data['username'])
+				user.set_password(form.cleaned_data['password'])
+				eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'],ddn=form.cleaned_data['ddn'],ldn=form.cleaned_data['ldn'],ine=form.cleaned_data['ine'],lv1=form.cleaned_data['lv1'],lv2=form.cleaned_data['lv2'])
+				eleve.save()
+				user.eleve=eleve
+				user.save()
 
 class AdminConnexionForm(forms.Form):
 	username = forms.CharField(label="identifiant")
