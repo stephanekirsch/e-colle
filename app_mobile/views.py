@@ -12,9 +12,9 @@ from django.db.models import Count
 def date_serial(obj):
     """convertit les dates en timestamp en vue d'une mise à plat au format json"""
     if isinstance(obj, date):
-        return int(obj.strftime('%s'))
+        return int(datetime.combine(obj,time(0,0)).replace(tzinfo=timezone.utc).timestamp())
     if isinstance(obj, datetime):
-        return int(obj.replace(tzinfo=timezone.utc).strftime('%s'))
+        return int(obj.replace(tzinfo=timezone.utc).timestamp())
     raise TypeError("Type not serializable")
 
 
@@ -27,13 +27,13 @@ def check(request):
 def checkeleve(user):
     """renvoie une erreur 403 si l'utilisateur n'est pas un élève connecté, avec une classe"""
     if not user.is_authenticated():
-        return HttpResponseForbidden("user not authenticated")
+        return False
     if not user.is_active:
-        return HttpResponseForbidden("user not activated")
+        return False
     if not user.eleve:
-        return HttpResponseForbidden("user not a student")
+        return False
     if not user.eleve.classe:
-        return HttpResponseForbidden("user has no class")
+        return False
 
 
 @csrf_exempt
@@ -60,7 +60,8 @@ def connect(request):
 def grades(request):
     """renvoie les notes de l'utilisateur connecté au format json"""
     user = request.user
-    checkeleve(user)
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
     return HttpResponse(json.dumps(
         Note.objects.noteEleve(user.eleve), default=date_serial))
 
@@ -68,14 +69,16 @@ def grades(request):
 def results(request):
     """renvoie les résultats de l'utilisateur connecté au format json"""
     user = request.user
-    checkeleve(user)
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
     return HttpResponse(json.dumps(
         list(Note.objects.bilanEleve(user.eleve, False, False))))
 
 
 def colles(request):
     user = request.user
-    checkeleve(user)
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
     classe = user.eleve.classe
     creneaux = list(Creneau.objects.filter(classe=classe).annotate(nb=Count(
         'colle')).filter(nb__gt=0).values_list('pk', 'jour', 'heure', 'salle'))
@@ -100,7 +103,8 @@ def colles(request):
 def programs(request):
     """renvoie les programmes de l'utilisateur connecté au format json"""
     user = request.user
-    checkeleve(user)
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
     programmes = Programme.objects.filter(classe=user.eleve.classe).values(
         'matiere__couleur', 'matiere__nom', 'semaine__numero', 'semaine__lundi', 'titre', 'fichier', 'detail').order_by('-semaine__lundi', 'matiere__nom')
     return HttpResponse(json.dumps(list(programmes), default=date_serial))
@@ -109,7 +113,8 @@ def programs(request):
 def agenda(request):
     """renvoie l'agenda des colles de l'utilisateur connecté au format json"""
     user = request.user
-    checkeleve(user)
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
     agendas = Colle.objects.agendaEleve(user.eleve, False)
     return HttpResponse(json.dumps([{'time': int(datetime.combine(agenda['jour'], time(agenda['heure'] // 4, 15 * (agenda['heure'] % 4))).replace(tzinfo=timezone.utc).timestamp()),
                                      'room':agenda['salle'],
@@ -124,7 +129,8 @@ def agenda(request):
 def messages(request):
     """renvoie les messages reçus par l'utilisateur connecté au format json"""
     user = request.user
-    checkeleve(user)
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
     messagesrecus = Destinataire.objects.filter(user=user).values('lu', 'reponses', 'message__pk', 'message__date',
                                                                   'message__auteur__first_name', 'message__auteur__last_name', 'message__luPar',
                                                                   'message__listedestinataires', 'message__titre', 'message__corps').order_by('-message__date')
@@ -134,7 +140,8 @@ def messages(request):
 def sentmessages(request):
     """renvoie les messages envoyés par l'utilisateur connecté au format json"""
     user = request.user
-    checkeleve(user)
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
     messagesenvoyes = Message.objects.filter(auteur=user, hasAuteur=True).distinct().values(
         'date', 'auteur__first_name', 'auteur__last_name', 'luPar', 'listedestinataires', 'titre', 'corps', 'pk').order_by('-date')
     return HttpResponse(json.dumps(list(messagesenvoyes), default=date_serial))
@@ -143,7 +150,8 @@ def sentmessages(request):
 def readmessage(request, message_id):
     """marque comme lu le message d'ont l'identifiant est message_id"""
     user = request.user
-    checkeleve(user)
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
     destinataire = get_object_or_404(
         Destinataire, message__pk=message_id, user=user)
     destinataire.lu = True
@@ -154,7 +162,8 @@ def readmessage(request, message_id):
 def deletemessage(request, message_id):
     """marque comme effacé le message d'ont l'identifiant est message_id"""
     user = request.user
-    checkeleve(user)
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
     message = get_object_or_404(Message, pk=message_id)
     if message.hasAuteur and message.auteur == user:
         if not message.messagerecu.all().count():
@@ -177,7 +186,8 @@ def answer(request, message_id, answerAll):
     La réponse est envoyée à tous si la variable booléenne ansewAll vaut True, et uniquement
     à l'expéditeur du message priginal sinon"""
     user = request.user
-    checkeleve(user)
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
     if request.method != 'POST' or 'body' not in request.POST or 'title' not in request.POST:
         raise Http404
     message = get_object_or_404(Message, pk=message_id, messagerecu__user=user)

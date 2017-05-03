@@ -26,6 +26,7 @@
 			<td>Sélectionner{{form2.colleur.errors}}</td>
 			<td>Nom</td>
 			<td>Prénom</td>
+			<td>Identifiant</td>
 			<td>Email</td>
 			<td>Date de naissance</td>
 			<td>Lieu de naissance</td>
@@ -42,6 +43,7 @@
 			<td>{{widget}}</td>
 			<td>{{eleve.user.last_name|upper}}</td>
 			<td>{{eleve.user.first_name|title}}</td>
+			<td>{{eleve.user.username}}</td>
 			<td>{{eleve.user.email}}</td>
 			<td>{% if eleve.ddn %}{{eleve.ddn|date:'d/m/Y'}}{% endif %}</td>
 			<td>{% if eleve.ldn %}{{eleve.ldn|title}}{% endif %}</td>
@@ -56,7 +58,7 @@
 		{% endfor %}
 		<tr class="plusclair">
 			<td><label for = "check">Tout cocher</label><br/><input type="checkbox" id="check"/></td>
-			<td colspan="2"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
+			<td colspan="3"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
 			<td colspan="3"><input type="submit" value="Modifier la sélection" name="modifier"/></td>
 			<td colspan="3"><input type="submit" value="Transférer la sélection en" name="transferer"/> {{ form2.klasse }}</td>
 			<td colspan="2"><input type="submit" value="passer la sélection en lv1" name="lv1"/>{{form2.lv1}}</td>

@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
-from administrateur.forms import ConfigForm, ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm
+from administrateur.forms import ConfigForm, EleveFormSet, EleveFormSetMdp, ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
@@ -295,7 +295,7 @@ def colleurmodif(request, chaine_colleurs):
 			formset.save()
 			return redirect('gestion_colleur')
 	else:
-		formset = Colleurformset(initial=[{'nom':colleur.user.last_name,'prenom':colleur.user.first_name,'identifiant':colleur.user.username,'email':colleur.user.email,'active':colleur.user.is_active,'grade':colleur.grade,'etablissement':colleur.etablissement,'matiere':colleur.matieres.all(),'classe':colleur.classes.all()} for colleur in listeColleurs])	
+		formset = Colleurformset(listeColleurs,initial=[{'last_name':colleur.user.last_name,'first_name':colleur.user.first_name,'username':colleur.user.username,'email':colleur.user.email,'active':colleur.user.is_active,'grade':colleur.grade,'etablissement':colleur.etablissement,'matiere':colleur.matieres.all(),'classe':colleur.classes.all()} for colleur in listeColleurs])	
 	return render(request,'administrateur/colleurmodif.html',{'formset':formset})
 
 @ip_filter
@@ -407,43 +407,17 @@ def elevecsv(request):
 def elevemodif(request, chaine_eleves):
 	"""Renvoie la vue de la page de modification des élèves dont l'id fait partie de chaine_eleves"""
 	listeEleves = Eleve.objects.filter(pk__in=[int(i) for i in chaine_eleves.split("-")]).order_by('user__last_name','user__first_name')
-	EleveFormSet = formset_factory(EleveForm,extra=0,max_num=listeEleves.count())
+	EleveFormset = formset_factory(EleveForm,extra=0,max_num=listeEleves.count(),formset=EleveFormSet)
 	if request.method == 'POST':
-		formset = EleveFormSet(request.POST,request.FILES)
+		formset = EleveFormset(listeEleves, request.POST, request.FILES)
 		if formset.is_valid():
-			for form,eleve in zip(formset,listeEleves):
-				user=eleve.user
-				user.last_name=form.cleaned_data['nom'].lower()
-				user.first_name=form.cleaned_data['prenom'].lower()
-				user.email=form.cleaned_data['email']
-				if form.cleaned_data['motdepasse']:
-					user.set_password(form.cleaned_data['motdepasse'])
-				if eleve.classe != form.cleaned_data['classe']: # si l'élève change effectivement de classe, on le retire de son groupe
-					groupe = eleve.groupe
-					eleve.groupe = None
-					eleve.save()
-					if groupe is not None and not Eleve.objects.filter(groupe=groupe).exists(): # si l'ancien groupe de l'élève est vide, on essaie de l'effacer
-						try:
-							groupe.delete()
-						except Exception:
-							pass
-				eleve.classe=form.cleaned_data['classe']
-				if form.cleaned_data['photo']:
-					eleve.photo=form.cleaned_data['photo']
-				elif form.cleaned_data is False:
-					eleve.photo=None
-				eleve.ddn=form.cleaned_data['ddn']
-				eleve.ldn=form.cleaned_data['ldn']
-				eleve.ine=form.cleaned_data['ine']
-				eleve.lv1=form.cleaned_data['lv1']
-				eleve.lv2=form.cleaned_data['lv2']
-				user.save()
-				eleve.save()
+			formset.save()
 			return redirect('gestion_eleve')
 	else:
-		formset = EleveFormSet(initial=[{'nom':eleve.user.last_name,'prenom':eleve.user.first_name,'ine':eleve.ine,\
-			'ddn': None if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),'identifiant':eleve.user.username,'email':eleve.user.email,\
-			'classe':eleve.classe,'photo':eleve.photo,'lv1':eleve.lv1,'lv2':eleve.lv2} for eleve in listeEleves])	
+		formset = EleveFormset(chaine_eleves=listeEleves,initial=[{'last_name':eleve.user.last_name,'first_name':eleve.user.first_name,'ine':eleve.ine,\
+			'ddn': None if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),'username':eleve.user.username,'email':eleve.user.email,\
+			'classe':eleve.classe,'photo':eleve.photo,'lv1':eleve.lv1,'lv2':eleve.lv2} for eleve in listeEleves])
+	print(formset.errors)
 	return render(request,'administrateur/elevemodif.html',{'formset':formset})
 
 @ip_filter
@@ -460,28 +434,21 @@ def elevesuppr(request, id_eleve):
 def eleveajout(request,initial=None):
 	"""Renvoie la vue de la page d'ajout d'élèves"""
 	if request.method=="POST":
-		EleveFormSet = formset_factory(EleveFormMdp,extra=0)
+		EleveFormset = formset_factory(EleveFormMdp,extra=0,formset=EleveFormSetMdp)
 		if "csv" in request.POST:
-			formset = EleveFormSet(initial=initial)
+			formset = EleveFormset(initial=initial)
 		else:
-			formset=EleveFormSet(request.POST,request.FILES)
+			formset=EleveFormset(request.POST,request.FILES)
 			if formset.is_valid():
-				for i,form in enumerate(formset):
-					user = User(first_name=form.cleaned_data['prenom'].lower(),last_name=form.cleaned_data['nom'].lower(),email=form.cleaned_data['email'])
-					user.set_password(form.cleaned_data['motdepasse'])
-					user.username=random_string()
-					eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'],ddn=form.cleaned_data['ddn'],ldn=form.cleaned_data['ldn'],ine=form.cleaned_data['ine'],lv1=form.cleaned_data['lv1'],lv2=form.cleaned_data['lv2'])
-					eleve.save()
-					user.eleve=eleve
-					user.save()
+				formset.save()
 				return redirect('gestion_eleve')
 	else:
 		try:
 			classe = Classe.objects.get(pk=request.session['classe'])
 		except Exception:
 			classe = None
-		EleveFormSet = formset_factory(EleveFormMdp,extra=0)
-		formset=EleveFormSet( initial = [{ 'classe' : classe}])
+		EleveFormset = formset_factory(EleveFormMdp,extra=0)
+		formset=EleveFormset( initial = [{ 'classe' : classe}])
 	return render(request,'administrateur/eleveajout.html',{'formset':formset})
 
 @ip_filter

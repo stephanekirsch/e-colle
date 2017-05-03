@@ -23,6 +23,7 @@
 			<td>Sélectionner{{form2.colleur.errors}}</td>
 			<td>Nom</td>
 			<td>Prénom</td>
+			<td>Identifiant</td>
 			<td>Email</td>
 			<td>Actif</td>
 			<td>Grade</td>
@@ -37,6 +38,7 @@
 			<td>{{widget}}</td>
 			<td>{{colleur.user.last_name|upper}}</td>
 			<td>{{colleur.user.first_name|title}}</td>
+			<td>{{colleur.user.username}}</td>
 			<td>{{colleur.user.email}}</td>
 			{% if colleur.user.is_active %}<td style="color:green;">✓</td> {% else %}<td style="color:red;">❌</td>{% endif %}
 			<td>{{listegrades| lookup:colleur.grade}}</td>
@@ -49,7 +51,7 @@
 		{% endfor %}
 		<tr class="plusclair">
 			<td><label for = "check">Tout cocher</label><br/><input type="checkbox" id="check"/></td>
-			<td colspan="5"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
+			<td colspan="6"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
 			<td colspan="6"><input type="submit" value="Modifier la sélection" name="modifier"/></td>
 		</tr>
 	</table>

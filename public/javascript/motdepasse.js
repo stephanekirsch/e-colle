@@ -10,9 +10,10 @@ function alea()
 }
 
 var csv = false;
-var listemdp = document.querySelectorAll("input[id$=motdepasse]");
-var listenom = document.querySelectorAll("input[id$=-nom]");
-var listeprenom = document.querySelectorAll("input[id$=prenom]");
+var listemdp = document.querySelectorAll("input[id$=password]");
+var listenom = document.querySelectorAll("input[id$=last_name]");
+var listeprenom = document.querySelectorAll("input[id$=first_name]");
+var listeidentifiant = document.querySelectorAll("input[id$=username]");
 var listeclasse = document.querySelectorAll("select[id$=classe]");
 var listematiere = document.querySelectorAll("select[id$=matiere]");
 var matiere = false;
@@ -22,15 +23,22 @@ if (listematiere[0]) {
 var titre = document.getElementById('titre');
 var td = document.createElement("td");
 var lien = document.createElement("a");
-lien.innerHTML = "génération aléatoire des mots de passe";
+lien.innerHTML = "générer mots de passe";
 td.appendChild(lien);
 lien.href="#";
 titre.parentNode.appendChild(td);
+var td2 = document.createElement("td");
+var lien2 = document.createElement("a");
+lien2.innerHTML = "générer identifiants";
+td2.appendChild(lien2);
+lien2.href="#";
+titre.parentNode.appendChild(td2);
+
 
 function createlien(){
 	var td2 = document.createElement("td");
 	var lien2 = document.createElement("a");
-	lien2.innerHTML = "fichier csv (nom/prenom/mot de passe)";
+	lien2.innerHTML = "fichier csv";
 	td2.appendChild(lien2);
 	lien2.href="#";
 	titre.parentNode.appendChild(td2);
@@ -40,7 +48,7 @@ function createlien(){
 }
 
 function changeMdp(){
-	listemdp = document.querySelectorAll("input[id$=motdepasse]");
+	listemdp = document.querySelectorAll("input[id$=password]");
 	for (var i = listemdp.length - 1; i >= 0; i--) {
 		listemdp[i].value = alea();
 	};
@@ -51,18 +59,36 @@ function changeMdp(){
 	}
 }
 
+function createUsername(){
+	// on recrée les listes qui ont pu gagner des éléments
+	listenom = document.querySelectorAll("input[id$=last_name]");
+	listeprenom = document.querySelectorAll("input[id$=first_name]");
+	listeidentifiant = document.querySelectorAll("input[id$=username]");
+	for (var i = 0; i < listeidentifiant.length; i++) {
+		if (listeidentifiant[i].value == ""){
+			listeidentifiant[i].value = listeprenom[i].value.toLowerCase()+"."+listenom[i].value.toLowerCase();
+
+	}
+		}
+}
+
 lien.addEventListener('click',function(){
 	changeMdp();
 },false)
 
+lien2.addEventListener('click',function(){
+	createUsername();
+},false)
+
 function createcsv(){
-	var listemdp = document.querySelectorAll("input[id$=motdepasse]");
-	var listenom = document.querySelectorAll("input[id$=-nom]");
-	var listeprenom = document.querySelectorAll("input[id$=prenom]");
+	var listemdp = document.querySelectorAll("input[id$=password]");
+	var listenom = document.querySelectorAll("input[id$=last_name]");
+	var listeprenom = document.querySelectorAll("input[id$=first_name]");
+	var listeidentifiant = document.querySelectorAll("input[id$=username]");
 	var listeclasse = document.querySelectorAll("select[id$=classe]");
 	var listematiere = document.querySelectorAll("select[id$=matiere]");
 	var a = window.document.createElement('a');
-	var innerBlob = "nom,prenom";
+	var innerBlob = "nom,prenom,identifiant";
 	if (matiere){
 		innerBlob+=",matieres,classes";
 	} else {
@@ -71,7 +97,7 @@ function createcsv(){
 	innerBlob+=',mot de passe\n';
 	if (matiere){
 		for (var i = 0 ; i < listenom.length; i++) {
-			innerBlob += listenom[i].value.toUpperCase()+','+listeprenom[i].value.toLowerCase()+',';
+			innerBlob += listenom[i].value.toUpperCase()+','+listeprenom[i].value.toLowerCase()+','+listeidentifiant[i].value+',';
 			var classes = ""
 			for (var j = 0; j<listeclasse[i].options.length; j++) {
 				if (listeclasse[i].options[j].selected){
@@ -92,7 +118,7 @@ function createcsv(){
 		};
 	} else {
 		for (var i = 0 ; i < listenom.length; i++) {
-		innerBlob += listenom[i].value.toUpperCase()+','+listeprenom[i].value.toLowerCase()+','+listeclasse[i][parseInt(listeclasse[i].selectedIndex)].innerHTML+','+listemdp[i].value+'\n';
+		innerBlob += listenom[i].value.toUpperCase()+','+listeprenom[i].value.toLowerCase()+','+listeidentifiant[i].value+','+listeclasse[i][parseInt(listeclasse[i].selectedIndex)].innerHTML+','+listemdp[i].value+'\n';
 		};
 	}
 	a.href = window.URL.createObjectURL(new Blob([innerBlob], {type: 'text/csv'}));

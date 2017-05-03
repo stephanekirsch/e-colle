@@ -1,21 +1,24 @@
 <tr>
-	<th> {{ form.nom.label_tag }} </th>
-	<td> {{ form.nom.errors }} {{form.nom}}</td>
-	<th> {{ form.prenom.label_tag }} </th>
-	<td> {{ form.prenom.errors }} {{form.prenom}}</td>
+	<th> {{ form.last_name.label_tag }} </th>
+	<td> {{ form.last_name.errors }} {{form.last_name}}</td>
+	<th> {{ form.first_name.label_tag }} </th>
+	<td> {{ form.first_name.errors }} {{form.first_name}}</td>
 </tr>
 <tr>
-	<th> {{ form.motdepasse.label_tag }} </th>
-	<td> {{ form.motdepasse.errors }} {{form.motdepasse}}</td>
+	<th>Identifiant</th>
+	<td> {{ form.username.errors }} {{form.username}}</td>
+	<th> {{ form.password.label_tag }} </th>
+	<td> {{ form.password.errors }} {{form.password}}</td>
+</tr>
+<tr>
 	<th> {{ form.email.label_tag }} </th>
 	<td> {{ form.email.errors }} {{form.email}}</td>
-</tr>
-<tr>
-
 	<th> {{ form.grade.label_tag }} </th>
 	<td> {{ form.grade.errors }} {{form.grade}}</td>
+</tr>
+<tr>
 	<th> {{ form.etablissement.label_tag }} </th>
-	<td> {{ form.etablissement.errors }} {{form.etablissement}}</td>
+	<td colspan="3"> {{ form.etablissement.errors }} {{form.etablissement}}</td>
 </tr>
 {% if form.active %}
 <tr>

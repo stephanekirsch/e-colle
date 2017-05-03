@@ -24,6 +24,15 @@ class ConfigForm(forms.ModelForm):
 		super().save()
 
 class ColleurFormSetMdp(forms.BaseFormSet):
+	def clean(self):
+		"""vérifie si on n'a pas deux identifiants identiques dans le groupe de formulaires"""
+		if any(self.errors):
+			return
+		print(len(self.forms))
+		usernames = [form.cleaned_data['username'] for form in self.forms]
+		if len(usernames) != len(set(usernames)):
+			raise ValidationError("Deux identifiants identiques dans le formulaire")
+
 	def save(self):
 		"""Sauvegarde en BDD les colleurs/users du formulaire"""
 		# on ne peut pas utiliser bulk_create ici, puisqu'on a besoin des pk pour les relation un-un et many-many
@@ -34,15 +43,32 @@ class ColleurFormSetMdp(forms.BaseFormSet):
 			colleur.matieres=form.cleaned_data['matiere']
 			colleur.classes=form.cleaned_data['classe']
 			# on crée le user
-			user = User(username=random_string(),first_name=form.cleaned_data['prenom'].lower(),last_name=form.cleaned_data['nom'].lower(),email=form.cleaned_data['email'],colleur=colleur)
-			user.set_password(form.cleaned_data['motdepasse'])
+			user = User(username=form.cleaned_data['username'],first_name=form.cleaned_data['first_name'].lower(),last_name=form.cleaned_data['last_name'].lower(),email=form.cleaned_data['email'],colleur=colleur)
+			user.set_password(form.cleaned_data['password'])
 			user.save()		
 
 class ColleurFormSet(forms.BaseFormSet):
 	def __init__(self,chaine_colleurs=[],*args,**kwargs):
 		super().__init__(*args,**kwargs)
 		self.chaine_colleurs=chaine_colleurs
-				
+
+	def get_form_kwargs(self, index):
+		"""déterminer l'argument nommé 'pk' à passer en paramtre du formulaire"""
+		kwargs = super().get_form_kwargs(index)
+		if self.chaine_colleurs:
+			kwargs['pk'] = self.chaine_colleurs[index].pk
+		else:
+			kwargs['pk'] = 0
+		return kwargs
+
+	def clean(self):
+		"""vérifie si on n'a pas deux identifiants identiques dans le groupe de formulaires"""
+		if any(self.errors):
+			return
+		usernames = {form.cleaned_data['username'] for form in self.forms}
+		if len(usernames) != len(self.chaine_colleurs):
+			raise ValidationError("Deux identifiants identiques dans le formulaire")
+
 	def save(self):
 		"""Sauvegarde (mise à jour) en BDD les colleurs/users du formulaire"""
 		for colleur,form in zip(self.chaine_colleurs,self.forms):
@@ -53,12 +79,86 @@ class ColleurFormSet(forms.BaseFormSet):
 			colleur.save()
 			user=colleur.user
 			user.username=random_string()
-			user.first_name=form.cleaned_data['prenom'].lower()
-			user.last_name=form.cleaned_data['nom'].lower()
+			user.first_name=form.cleaned_data['first_name'].lower()
+			user.last_name=form.cleaned_data['last_name'].lower()
 			user.email=form.cleaned_data['email']
-			user.is_active=form.cleaned_data['active']
-			if form.cleaned_data['motdepasse']:
-				user.set_password(form.cleaned_data['motdepasse'])
+			user.username = form.cleaned_data['username']
+			user.is_active=form.cleaned_data['is_active']
+			if form.cleaned_data['password']:
+				user.set_password(form.cleaned_data['password'])
+			user.save()
+
+class EleveFormSet(forms.BaseFormSet):
+	def __init__(self,chaine_eleves=[],*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		self.chaine_eleves = chaine_eleves
+
+	def get_form_kwargs(self, index):
+		"""déterminer l'argument nommé 'pk' à passer en paramtre du formulaire"""
+		kwargs = super().get_form_kwargs(index)
+		if self.chaine_eleves:
+			kwargs['pk'] = self.chaine_eleves[index].pk
+		else:
+			kwargs['pk'] = 0
+		return kwargs
+
+	def clean(self):
+		"""vérifie si on n'a pas deux identifiants identiques dans le groupe de formulaires"""
+		if any(self.errors):
+			return
+		usernames = {form.cleaned_data['username'] for form in self.forms}
+		if len(usernames) != len(self.chaine_eleves):
+			raise ValidationError("Deux identifiants identiques dans le formulaire")
+
+	def save(self):
+		"""Sauvegarde (mise à jour) en BDD les eleves/users du formulaire"""
+		for eleve,form in zip(self.chaine_eleves,self.forms):
+			user=eleve.user
+			user.last_name=form.cleaned_data['last_name'].lower()
+			user.first_name=form.cleaned_data['first_name'].lower()
+			user.email=form.cleaned_data['email']
+			user.username = form.cleaned_data['username']
+			if form.cleaned_data['password']:
+				user.set_password(form.cleaned_data['password'])
+			if eleve.classe != form.cleaned_data['classe']: # si l'élève change effectivement de classe, on le retire de son groupe
+				groupe = eleve.groupe
+				eleve.groupe = None
+				eleve.save()
+				if groupe is not None and not Eleve.objects.filter(groupe=groupe).exists(): # si l'ancien groupe de l'élève est vide, on essaie de l'effacer
+					try:
+						groupe.delete()
+					except Exception:
+						pass
+			eleve.classe=form.cleaned_data['classe']
+			if form.cleaned_data['photo']:
+				eleve.photo=form.cleaned_data['photo']
+			elif form.cleaned_data is False:
+				eleve.photo=None
+			eleve.ddn=form.cleaned_data['ddn']
+			eleve.ldn=form.cleaned_data['ldn']
+			eleve.ine=form.cleaned_data['ine']
+			eleve.lv1=form.cleaned_data['lv1']
+			eleve.lv2=form.cleaned_data['lv2']
+			user.save()
+			eleve.save()
+
+class EleveFormSetMdp(forms.BaseFormSet):
+	def clean(self):
+		"""vérifie si on n'a pas deux identifiants identiques dans le groupe de formulaires"""
+		if any(self.errors):
+			return
+		print(len(self.forms))
+		usernames = [form.cleaned_data['username'] for form in self.forms]
+		if len(usernames) != len(set(usernames)):
+			raise ValidationError("Deux identifiants identiques dans le formulaire")
+
+	def save(self):
+		for form in self.forms:
+			user = User(first_name=form.cleaned_data['first_name'].lower(),last_name=form.cleaned_data['last_name'].lower(),email=form.cleaned_data['email'], username = form.cleaned_data['username'])
+			user.set_password(form.cleaned_data['password'])
+			eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'],ddn=form.cleaned_data['ddn'],ldn=form.cleaned_data['ldn'],ine=form.cleaned_data['ine'],lv1=form.cleaned_data['lv1'],lv2=form.cleaned_data['lv2'])
+			eleve.save()
+			user.eleve=eleve
 			user.save()
 
 class AdminConnexionForm(forms.Form):
@@ -129,71 +229,85 @@ class JourFerieForm(forms.ModelForm):
 		widgets = {'date':SelectDateWidget()}
 
 class ColleurForm(forms.Form):
-	LISTE_GRADE=((0,"autre"),(1,"certifié"),(2,"bi-admissible"),(3,"agrégé"),(4,"chaire supérieure"))
-	nom = forms.CharField(max_length=30)
-	prenom = forms.CharField(label="Prénom",max_length=30)
-	motdepasse = forms.CharField(label="Mot de passe",max_length=30,required=False)
-	active = forms.BooleanField(label="actif",required=False)
-	email = forms.EmailField(label="email(facultatif)",max_length=50,required=False)
-	grade = forms.ChoiceField(choices=LISTE_GRADE)
-	etablissement = forms.ModelChoiceField(queryset=Etablissement.objects.order_by('nom'),empty_label="inconnu",required=False)
-	matiere = forms.ModelMultipleChoiceField(label="Matière(s)",queryset=Matiere.objects.order_by('nom'), required=False)
-	classe = forms.ModelMultipleChoiceField(label="Classe(s)",queryset=Classe.objects.order_by('annee','nom'),required=False)
+	def __init__(self,*args,**kwargs):
+		self.pk = kwargs.pop('pk')
+		super().__init__(*args,**kwargs)
+		LISTE_GRADE=((0,"autre"),(1,"certifié"),(2,"bi-admissible"),(3,"agrégé"),(4,"chaire supérieure"))
+		self.fields['last_name'] = forms.CharField(label="Nom",max_length=30)
+		self.fields['first_name'] = forms.CharField(label="Prénom",max_length=30)
+		self.fields['password'] = forms.CharField(label="Mot de passe",max_length=30,required=False)
+		self.fields['is_active'] = forms.BooleanField(label="actif",required=False)
+		self.fields['email'] = forms.EmailField(label="email(facultatif)",max_length=50,required=False)
+		self.fields['username'] = forms.CharField(label="Identifiant",max_length=150,required = True)
+		self.fields['grade'] = forms.ChoiceField(choices=LISTE_GRADE)
+		self.fields['etablissement'] = forms.ModelChoiceField(queryset=Etablissement.objects.order_by('nom'),empty_label="inconnu",required=False)
+		self.fields['matiere'] = forms.ModelMultipleChoiceField(label="Matière(s)",queryset=Matiere.objects.order_by('nom'), required=False)
+		self.fields['classe'] = forms.ModelMultipleChoiceField(label="Classe(s)",queryset=Classe.objects.order_by('annee','nom'),required=False)
 
 	# validation du mot de passe
 	def clean_motdepasse(self):
 		user=User()
-		if 'prenom' in self.cleaned_data:
-			user.first_name=self.cleaned_data['prenom']
-		if 'nom' in self.cleaned_data:
-			user.last_name=self.cleaned_data['nom']
-		data = self.cleaned_data['motdepasse']
+		if 'first_name' in self.cleaned_data:
+			user.first_name=self.cleaned_data['first_name']
+		if 'last_name' in self.cleaned_data:
+			user.last_name=self.cleaned_data['last_name']
+		data = self.cleaned_data['password']
 		if data:
 			validate_password(data,user)
 		return data
 
-class ColleurFormMdp(forms.Form):
+class ColleurFormMdp(forms.ModelForm):
 	LISTE_GRADE=enumerate(["autre","certifié","bi-admissible","agrégé","chaire supérieure"])
-	nom = forms.CharField(max_length=30)
-	prenom = forms.CharField(label="Prénom",max_length=30)
-	motdepasse = forms.CharField(label="Mot de passe",max_length=30,required=True)
-	email = forms.EmailField(label="email(facultatif)",max_length=50,required=False)
 	grade = forms.ChoiceField(choices=LISTE_GRADE)
 	etablissement = forms.ModelChoiceField(queryset=Etablissement.objects.order_by('nom'),empty_label="inconnu",required=False)
 	matiere = forms.ModelMultipleChoiceField(label="Matière(s)",queryset=Matiere.objects.order_by('nom'))
 	classe = forms.ModelMultipleChoiceField(label="Classe(s)",queryset=Classe.objects.order_by('annee','nom'),required=False)
+	class Meta:
+		model = User
+		fields=['first_name','last_name','username','password','email','is_active']
 
 	# validation du mot de passe
-	def clean_motdepasse(self):
+	def clean_password(self):
 		user=User()
-		if 'prenom' in self.cleaned_data:
-			user.first_name=self.cleaned_data['prenom']
-		if 'nom' in self.cleaned_data:
-			user.last_name=self.cleaned_data['nom']
-		data = self.cleaned_data['motdepasse']
+		if 'first_name' in self.cleaned_data:
+			user.first_name=self.cleaned_data['first_name']
+		if 'last_name' in self.cleaned_data:
+			user.last_name=self.cleaned_data['last_name']
+		data = self.cleaned_data['password']
 		validate_password(data,user)
 		return data
 
 class EleveForm(forms.Form):
-	nom = forms.CharField(label="Nom",max_length=30)
-	prenom = forms.CharField(label="Prénom",max_length=30)
-	motdepasse = forms.CharField(label="Mot de passe",max_length=30,required=False)
-	ddn = forms.DateField(label="Date de naissance (pour ECTS, facultatif)", required=False,input_formats=['%d/%m/%Y','%j/%m/%Y','%d/%n/%Y','%j/%n/%Y'],widget=forms.TextInput(attrs={'placeholder': 'jj/mm/aaaa'}))
-	ldn = forms.CharField(label="lieu de naissance (pour ECTS, facultatif)",required=False,max_length=50)
-	ine = forms.CharField(label="N° étudiant INE (pour ECTS, facultatif)",required=False,max_length=11)
-	email = forms.EmailField(label="Email(Facultatif)",max_length=50,required=False)
-	photo = forms.ImageField(label="photo(jpg/png, 300x400)",required=False)
-	classe = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
-	lv1 = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=1).order_by('nom'),empty_label='----',required=False)
-	lv2 = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=2).order_by('nom'),empty_label='----',required=False)
+	def __init__(self,*args,**kwargs):
+		self.pk = kwargs.pop('pk')
+		super().__init__(*args,**kwargs)
+		self.fields['last_name'] = forms.CharField(label="Nom",max_length=30, required = True)
+		self.fields['first_name'] = forms.CharField(label="Prénom",max_length=30, required = True)
+		self.fields['username'] = forms.CharField(label="Identifiant",max_length=150,required = True)
+		self.fields['password'] = forms.CharField(label="Mot de passe",max_length=30,required=False)
+		self.fields['email'] = forms.EmailField(label="Email(Facultatif)",max_length=50,required=False)
+		self.fields['ddn'] = forms.DateField(label="Date de naissance (pour ECTS, facultatif)", required=False,input_formats=['%d/%m/%Y','%j/%m/%Y','%d/%n/%Y','%j/%n/%Y'],widget=forms.TextInput(attrs={'placeholder': 'jj/mm/aaaa'}))
+		self.fields['ldn'] = forms.CharField(label="lieu de naissance (pour ECTS, facultatif)",required=False,max_length=50)
+		self.fields['ine'] = forms.CharField(label="N° étudiant INE (pour ECTS, facultatif)",required=False,max_length=11)
+		self.fields['photo'] = forms.ImageField(label="photo(jpg/png, 300x400)",required=False)
+		self.fields['classe'] = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
+		self.fields['lv1'] = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=1).order_by('nom'),empty_label='----',required=False)
+		self.fields['lv2'] = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=2).order_by('nom'),empty_label='----',required=False)
+
+	def clean_username(self):
+		print("clean_username")
+		data = self.cleaned_data['username']
+		if User.objects.filter(username = data).exclude(eleve__pk=self.pk).exists(): # si l'identifiant existe déjà
+			raise ValidationError("identifiant déjà existant")
+		return data
 
 	def clean_motdepasse(self):
 		user=User()
-		if 'prenom' in self.cleaned_data:
-			user.first_name=self.cleaned_data['prenom']
-		if 'nom' in self.cleaned_data:
-			user.last_name=self.cleaned_data['nom']
-		data = self.cleaned_data['motdepasse']
+		if 'first_name' in self.cleaned_data:
+			user.first_name=self.cleaned_data['first_name']
+		if 'last_name' in self.cleaned_data:
+			user.last_name=self.cleaned_data['last_name']
+		data = self.cleaned_data['password']
 		if data:
 			validate_password(data,user)
 		return data
@@ -224,14 +338,12 @@ class EleveForm(forms.Form):
 			except Exception:
 				raise ValidationError("les 10 premiers caractères doivent être des chiffres")
 			if not (65 <= ord(data[-1]) <= 90):
-				raise ValidationError("le dernier caractère est une lettre ASCII majuscule")
+				raise ValidationError("le dernier caractère est une lettre majuscule")
 		return data
 
-class EleveFormMdp(forms.Form):
-	nom = forms.CharField(label="Nom",max_length=30)
-	prenom = forms.CharField(label="Prénom",max_length=30)
-	motdepasse = forms.CharField(label="Mot de passe",max_length=30,required=True)
-	email = forms.EmailField(label="Email(Facultatif)",max_length=50,required=False)
+
+
+class EleveFormMdp(forms.ModelForm):
 	ddn = forms.DateField(label="Date de naissance (pour ECTS, facultatif)", required=False,input_formats=['%d/%m/%Y','%j/%m/%Y','%d/%n/%Y','%j/%n/%Y'],widget=forms.TextInput(attrs={'placeholder': 'jj/mm/aaaa'}))
 	ldn = forms.CharField(label="lieu de naissance (pour ECTS, facultatif)",required=False,max_length=50)
 	ine = forms.CharField(label="N° étudiant INE (pour ECTS, facultatif)",required=False,max_length=11)
@@ -239,6 +351,9 @@ class EleveFormMdp(forms.Form):
 	classe = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
 	lv1 = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=1).order_by('nom'),empty_label='----',required=False)
 	lv2 = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=2).order_by('nom'),empty_label='----',required=False)
+	class Meta:
+		model = User
+		fields=['first_name','last_name','username','password','email']
 
 	def clean_lv1(self):
 		data = self.cleaned_data['lv1']

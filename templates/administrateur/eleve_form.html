@@ -1,28 +1,30 @@
 <tr>
-	<th> {{ form.nom.label_tag }} </th>
-	<td> {{ form.nom.errors }} {{form.nom}}</td>
-	<th> {{ form.prenom.label_tag }} </th>
-	<td> {{ form.prenom.errors }} {{form.prenom}}</td>
+	<th> {{ form.last_name.label_tag }}</th>
+	<td> {{ form.last_name.errors }} {{form.last_name}}</td>
+	<th> {{ form.first_name.label_tag }} </th>
+	<td> {{ form.first_name.errors }} {{form.first_name}}</td>
 </tr>
 <tr>
-	<th> {{ form.motdepasse.label_tag }} </th>
-	<td> {{ form.motdepasse.errors }} {{form.motdepasse}}</td>
+	<th>Identifiant</th>
+	<td> {{ form.username.errors }} {{form.username}}</td>
+	<th> {{ form.password.label_tag }} </th>
+	<td> {{ form.password.errors }} {{form.password}}</td>
+</tr>
+<tr>
 	<th> {{ form.email.label_tag }} </th>
 	<td> {{ form.email.errors }} {{form.email}}</td>
-</tr>
-<tr>
 	<th> {{ form.lv1.label_tag }} </th>
 	<td> {{ form.lv1.errors }} {{form.lv1}}</td>
+</tr>
+<tr>
 	<th> {{ form.lv2.label_tag }} </th>
 	<td> {{ form.lv2.errors }} {{form.lv2}}</td>
-</tr>
-<tr>
 	<th> {{ form.ddn.label_tag }} </th>
 	<td> {{ form.ddn.errors }} {{form.ddn}}</td>
-	<th> {{ form.ldn.label_tag }} </th>
-	<td> {{ form.ldn.errors }} {{form.ldn}}</td>
 </tr>
 <tr>
+	<th> {{ form.ldn.label_tag }} </th>
+	<td> {{ form.ldn.errors }} {{form.ldn}}</td>
 	<th> {{ form.ine.label_tag }} </th>
 	<td colspan="3"> {{ form.ine.errors }} {{form.ine}}</td>
 </tr>
@@ -32,3 +34,4 @@
 	<th> {{ form.classe.label_tag }} </th>
 	<td> {{ form.classe.errors }} {{form.classe}}</td>
 </tr>
+<input type="hidden" value={{ form.pk }} />

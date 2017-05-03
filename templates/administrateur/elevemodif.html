@@ -1,5 +1,6 @@
 {% extends 'administrateur/action.html' %}
 {% load static %}
+{% load customfilter%}
 {% block body %}
 	<table class="accueil"><tr><td id="titre">Modification d'élèves</td></tr></table>
 	<form method="post" enctype="multipart/form-data">
@@ -7,8 +8,11 @@
 	{{ formset.management_form }}
 	<table class="tableausimple">
 	<tr><td colspan="4">(Mot de passe inchangé si non renseigné)</td></tr>
-		{% for form in formset %}
-		<tr><th colspan="4">{{ form.initial.prenom|title}} {{form.initial.nom|upper}} {% with form.initial.photo as photo %}{% if photo %}<img alt="photo élève" class="photo" src="{{ photo.url }}"/>{% endif %}{% endwith %}</th></tr>
+		{% if formset.non_form_errors %}
+		<tr><td colspan="4">{{ formset.non_form_errors }}</td></tr>
+		{% endif %}
+		{% for form, eleve in formset|tzip:formset.chaine_eleves %}
+		<tr><th colspan="4">{{ eleve.user.first_name|title}} {{eleve.user.last_name|upper}} {% with eleve.photo as photo %}{% if photo %}<img alt="photo élève" class="photo" src="{{ photo.url }}"/>{% endif %}{% endwith %}</th></tr>
 		{% include "administrateur/eleve_form.html" %}
 		{% endfor %}
 		<tr><td colspan="4"><input type="submit"/></td></tr>
