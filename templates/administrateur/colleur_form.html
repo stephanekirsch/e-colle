@@ -20,10 +20,10 @@
 	<th> {{ form.etablissement.label_tag }} </th>
 	<td colspan="3"> {{ form.etablissement.errors }} {{form.etablissement}}</td>
 </tr>
-{% if form.active %}
+{% if form.is_active %}
 <tr>
-	<th> {{ form.active.label_tag }} </th>
-	<td colspan="3"> {{ form.active.errors }} {{form.active}}</td>
+	<th> {{ form.is_active.label_tag }} </th>
+	<td colspan="3"> {{ form.is_active.errors }} {{form.is_active}}</td>
 </tr>
 {% endif %}
 <tr>

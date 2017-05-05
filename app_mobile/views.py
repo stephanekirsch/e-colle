@@ -52,7 +52,7 @@ def connect(request):
                                             'classe_name': classe.nom,
                                             'classe_year': classe.annee,
                                             'group': user.eleve.groupe.nom}))
-        return HttpResponse("invalid")
+        return HttpResponse("invalide")
     else:
         return HttpResponseForbidden("access denied")
 
@@ -142,14 +142,14 @@ def messages(request):
                                                                   'message__auteur__first_name', 'message__auteur__last_name', 'message__luPar',
                                                                   'message__listedestinataires', 'message__titre', 'message__corps').order_by('-message__date')
     messagesrecus = [{'read':x['lu'],
-            'answers':x[responses],
+            'answers':x['reponses'],
             'pk':x['message__pk'],
             'date':x['message__date'],
             'author':x['message__auteur__first_name'].title()+" "+x['message__auteur__last_name'].upper(),
             'readBy':x['message__luPar'],
-            'recipients':x['message__listedestinataires',
+            'recipients':x['message__listedestinataires'],
             'title':x['message__titre'],
-            'body':x['message__corps']]} for x in messagesrecusQuery]
+            'body':x['message__corps']} for x in messagesrecusQuery]
     return HttpResponse(json.dumps(messagesrecus, default=date_serial))
 
 
@@ -165,9 +165,9 @@ def sentmessages(request):
             'date':x['date'],
             'author':x['auteur__first_name'].title()+" "+x['auteur__last_name'].upper(),
             'readBy':x['luPar'],
-            'recipients':x['listedestinataires',
+            'recipients':x['listedestinataires'],
             'title':x['titre'],
-            'body':x['corps']]} for x in messagesenvoyesQuery]
+            'body':x['corps']} for x in messagesenvoyesQuery]
     return HttpResponse(json.dumps(list(messagesenvoyes), default=date_serial))
 
 
