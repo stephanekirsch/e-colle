@@ -415,7 +415,7 @@ def elevemodif(request, chaine_eleves):
 			return redirect('gestion_eleve')
 	else:
 		formset = EleveFormset(chaine_eleves=listeEleves,initial=[{'last_name':eleve.user.last_name,'first_name':eleve.user.first_name,'ine':eleve.ine,\
-			'ddn': None if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),'username':eleve.user.username,'email':eleve.user.email,\
+			'ldn': eleve.ldn,'ddn': None if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),'username':eleve.user.username,'email':eleve.user.email,\
 			'classe':eleve.classe,'photo':eleve.photo,'lv1':eleve.lv1,'lv2':eleve.lv2} for eleve in listeEleves])
 	print(formset.errors)
 	return render(request,'administrateur/elevemodif.html',{'formset':formset})
