@@ -65,11 +65,8 @@ function createUsername(){
 	listeprenom = document.querySelectorAll("input[id$=first_name]");
 	listeidentifiant = document.querySelectorAll("input[id$=username]");
 	for (var i = 0; i < listeidentifiant.length; i++) {
-		if (listeidentifiant[i].value == ""){
-			listeidentifiant[i].value = listeprenom[i].value.toLowerCase()+"."+listenom[i].value.toLowerCase();
-
+		listeidentifiant[i].value = (listeprenom[i].value.toLowerCase()+"."+listenom[i].value.toLowerCase()).replace(/ /g,"-");
 	}
-		}
 }
 
 lien.addEventListener('click',function(){

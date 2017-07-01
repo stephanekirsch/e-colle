@@ -295,7 +295,7 @@ def colleurmodif(request, chaine_colleurs):
 			formset.save()
 			return redirect('gestion_colleur')
 	else:
-		formset = Colleurformset(listeColleurs,initial=[{'last_name':colleur.user.last_name,'first_name':colleur.user.first_name,'username':colleur.user.username,'email':colleur.user.email,'active':colleur.user.is_active,'grade':colleur.grade,'etablissement':colleur.etablissement,'matiere':colleur.matieres.all(),'classe':colleur.classes.all()} for colleur in listeColleurs])	
+		formset = Colleurformset(listeColleurs,initial=[{'last_name':colleur.user.last_name,'first_name':colleur.user.first_name,'username':colleur.user.username,'email':colleur.user.email,'is_active':colleur.user.is_active,'grade':colleur.grade,'etablissement':colleur.etablissement,'matiere':colleur.matieres.all(),'classe':colleur.classes.all()} for colleur in listeColleurs])	
 	return render(request,'administrateur/colleurmodif.html',{'formset':formset})
 
 @ip_filter

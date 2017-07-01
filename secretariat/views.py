@@ -311,7 +311,7 @@ def ramassagePdf(request,id_ramassage):
 				for colleur, decomptes in listeColleurs:
 					data[ligneColleur][3]=colleur
 					for i in range(len(effectifs)):
-						data[ligneColleur][i+4]="{}h{:02d}".format(decomptes[i]//60,decomptes[i]%60)
+						data[ligneColleur][i+4]="{},{:02d}h".format(decomptes[i]//60,(1+decomptes[i]%60*5)//3)
 					ligneColleur+=1
 					if ligneColleur==24 and nbKolleurs>23: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau
 						t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel]+[largeurcel]*len(effectifs),rowHeights=min((1+nbKolleurs),24)*[hauteurcel])
