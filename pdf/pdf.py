@@ -289,7 +289,7 @@ def attestationects(form,elev,classe):
 			pdf.drawCentredString(pdf.format[0]/2,pdf.y, "{}".format(eleve))
 			pdf.y -= 50
 			pdf.setFont("Helvetica",11)
-			pdf.drawString(2*cm,pdf.y, "né(e) le {} à {}".format(eleve.ddn.strftime('%d/%m/%Y')),eleve.ldn.title())
+			pdf.drawString(2*cm,pdf.y, "né(e) le {} à {}".format(eleve.ddn.strftime('%d/%m/%Y'),eleve.ldn.title()))
 			pdf.y -= 15
 			pdf.drawString(2*cm,pdf.y, "n° INE: {}".format(eleve.ine))
 			pdf.y -= 50

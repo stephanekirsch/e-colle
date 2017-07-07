@@ -451,9 +451,9 @@ class SelectEleveForm(forms.Form):
 	def __init__(self,klasse=None, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		if klasse:
-			query = Eleve.objects.filter(classe=klasse).select_related('user','classe').order_by('classe__nom','user__last_name','user__first_name')
+			query = Eleve.objects.filter(classe=klasse).select_related('user','classe','lv1','lv2').order_by('classe__nom','user__last_name','user__first_name')
 		else:
-			query=Eleve.objects.select_related('user','classe').order_by('classe__nom','user__last_name','user__first_name')
+			query=Eleve.objects.select_related('user','classe','lv1','lv2').order_by('classe__nom','user__last_name','user__first_name')
 		self.fields['eleve'] = CustomMultipleChoiceField(queryset=query, required=True,widget = forms.CheckboxSelectMultiple)
 		self.fields['eleve'].empty_label=None
 		self.fields['klasse'] = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),required=False)
