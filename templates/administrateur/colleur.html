@@ -33,20 +33,20 @@
 			<td>Modifier</td>
 			<td>Supprimer</td>
 		</tr>
-		{% for colleur,widget in form2.fields.colleur.queryset|tzip:form2.colleur %}
+		{% for colleur,widget in colleurs|tzip:form2.colleur %}
 		<tr>
 			<td>{{widget}}</td>
-			<td>{{colleur.user.last_name|upper}}</td>
-			<td>{{colleur.user.first_name|title}}</td>
-			<td>{{colleur.user.username}}</td>
-			<td>{{colleur.user.email}}</td>
-			{% if colleur.user.is_active %}<td style="color:green;">✓</td> {% else %}<td style="color:red;">❌</td>{% endif %}
+			<td>{{colleur.nom|upper}}</td>
+			<td>{{colleur.prenom|title}}</td>
+			<td>{{colleur.identifiant}}</td>
+			<td>{{colleur.email}}</td>
+			{% if colleur.actif %}<td style="color:green;">✓</td> {% else %}<td style="color:red;">❌</td>{% endif %}
 			<td>{{listegrades| lookup:colleur.grade}}</td>
-			<td>{% with colleur.etablissement as etab %}{% if etab %}{{colleur.etablissement|title}}{% endif %}{% endwith %}</td>
-			<td>{% for matiere in colleur.matieres.all %}{% if not forloop.first %}<br>{% endif %}{{matiere}}{% endfor %}</td>
-			<td>{% for classe in colleur.classes.all %}{% if not forloop.first %}<br>{% endif %}{{classe.nom}}{% endfor %}</td>
-			<td><a class="bouton" href="{% url 'modif_colleur' colleur.pk %}">Modifier</a></td>
-			<td><a class="bouton" href="{% url 'suppr_colleur' colleur.pk %}">Supprimer</a></td>
+			<td>{% if colleur.etablissement %}{{colleur.etablissement|title}}{% endif %}</td>
+			<td>{{matieres|matiereNext:colleur.nbMatieres|safe}}</td>
+			<td>{{classes|classeNext:colleur.nbClasses|safe}}</td>
+			<td><a class="bouton" href="{% url 'modif_colleur' colleur.id %}">Modifier</a></td>
+			<td><a class="bouton" href="{% url 'suppr_colleur' colleur.id %}">Supprimer</a></td>
 		</tr>
 		{% endfor %}
 		<tr class="plusclair">

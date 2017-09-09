@@ -443,7 +443,7 @@ class SelectColleurForm(forms.Form):
 			query = query.filter(matieres=matiere)
 		if classe:
 			query = query.filter(classes=classe)
-		query=query.select_related('user','etablissement').prefetch_related('matieres','classes').order_by('user__last_name','user__first_name')
+		query=query.order_by('user__last_name','user__first_name','user__pk')
 		self.fields['colleur'] = CustomMultipleChoiceField(queryset=query, required=True,widget = forms.CheckboxSelectMultiple)
 		self.fields['colleur'].empty_label=None
 

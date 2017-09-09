@@ -11,10 +11,13 @@ from django.db.models import Count
 
 def date_serial(obj):
     """convertit les dates en timestamp en vue d'une mise à plat au format json"""
-    if isinstance(obj, date):
-        return int(datetime.combine(obj,time(0,0)).replace(tzinfo=timezone.utc).timestamp())
     if isinstance(obj, datetime):
-        return int(obj.replace(tzinfo=timezone.utc).timestamp())
+        print(obj)
+        return int(obj.timestamp())
+    if isinstance(obj, date):
+        print(obj)
+        return int(datetime.combine(obj,time(0,0)).replace(tzinfo=timezone.utc).timestamp())
+    
     raise TypeError("Type not serializable")
 
 

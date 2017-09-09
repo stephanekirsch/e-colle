@@ -282,7 +282,8 @@ def colleur(request):
 			return redirect('gestion_colleur')
 		elif "modifier" in request.POST:
 			return redirect('modif_colleur', "-".join([str(colleur.pk) for colleur in form2.cleaned_data['colleur']]))
-	return render (request,'administrateur/colleur.html',{'form':form,'form2':form2, 'listegrades':["inconnu","certifié","bi-admissible","agrégé","chaire supérieure"]})
+	colleurs, matieres, classes = Colleur.objects.listeColleurs(matiere,classe)
+	return render (request,'administrateur/colleur.html',{'form':form,'form2':form2,'colleurs':colleurs,'matieres':iter(matieres), 'classes':iter(classes), 'listegrades':["inconnu","certifié","bi-admissible","agrégé","chaire supérieure"]})
 
 @ip_filter
 def colleurmodif(request, chaine_colleurs):
@@ -417,7 +418,6 @@ def elevemodif(request, chaine_eleves):
 		formset = EleveFormset(chaine_eleves=listeEleves,initial=[{'last_name':eleve.user.last_name,'first_name':eleve.user.first_name,'ine':eleve.ine,\
 			'ldn': eleve.ldn,'ddn': None if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),'username':eleve.user.username,'email':eleve.user.email,\
 			'classe':eleve.classe,'photo':eleve.photo,'lv1':eleve.lv1,'lv2':eleve.lv2} for eleve in listeEleves])
-	print(formset.errors)
 	return render(request,'administrateur/elevemodif.html',{'formset':formset})
 
 @ip_filter

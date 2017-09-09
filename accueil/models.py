@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from datetime import date, timedelta
 import locale
 from django.db.models.signals import post_delete, post_save
+from django.db import transaction
 from django.dispatch import receiver
 import os
 from ecolle.settings import MEDIA_ROOT, IMAGEMAGICK, BDD
@@ -278,12 +279,84 @@ class Groupe(models.Model):
 	def __str__(self):
 		return self.nom
 
+class ColleurManager(models.Manager):
+	def listeColleurs(self,matiere,classe):
+		base  = self
+		if matiere is not None:
+			base = base.filter(matieres=matiere)
+		if classe is not None:
+			base = base.filter(classes=classe)
+		# pour éviter de multiples accès à la BDD (même avec optimisation avec prefetch_related)
+		# on récupère en 3 requêtes les colleurs avec leur(s) classe(s) et leur(s) matiere(s).
+		if matiere is None:
+			if classe is None:
+				where = ""
+			else:
+				where = "WHERE cl.id = %s"
+		else:
+			if classe is None:
+				where = "WHERE m.id = %s"
+			else:
+				where = "WHERE m.id = %s AND cl.id = %s"
+		requete = """SELECT u.first_name prenom, u.last_name nom, u.username identifiant, u.email email, u.is_active actif,
+				  c.grade grade, c.id id, e.nom etablissement,u.id user_id, COUNT(DISTINCT m2.id) nbMatieres, COUNT(DISTINCT cl2.id) nbClasses FROM
+				  accueil_colleur c
+				  INNER JOIN accueil_user u
+				  ON u.colleur_id = c.id
+				  LEFT OUTER JOIN accueil_etablissement e
+				  ON c.etablissement_id = e.id
+				  {}
+				  {}
+				  LEFT OUTER JOIN accueil_colleur_matieres cm2
+				  ON cm2.colleur_id = c.id
+				  LEFT OUTER JOIN accueil_matiere m2
+				  ON cm2.matiere_id = m2.id
+				  LEFT OUTER JOIN accueil_colleur_classes cc2
+				  ON cc2.colleur_id = c.id
+				  LEFT OUTER JOIN accueil_classe cl2
+				  ON cc2.classe_id = cl2.id
+				  {}
+				  GROUP BY u.id, c.id
+				  ORDER BY u.last_name, u.first_name, c.id
+				  """.format("" if matiere is None else """LEFT OUTER JOIN accueil_colleur_matieres cm
+				  ON cm.colleur_id = c.id
+				  LEFT OUTER JOIN accueil_matiere m
+				  ON cm.matiere_id = m.id""","" if classe is None else """LEFT OUTER JOIN accueil_colleur_classes cc
+				  ON cc.colleur_id = c.id
+				  LEFT OUTER JOIN accueil_classe cl
+				  ON cc.classe_id = cl.id""", where)
+		requete2 = """SELECT m.nom, m.temps, m.lv 
+				  FROM accueil_colleur c
+				  INNER JOIN accueil_user u
+				  ON u.colleur_id = c.id
+				  {}
+				  LEFT OUTER JOIN accueil_colleur_matieres cm2
+				  ON cm2.colleur_id = c.id
+				  LEFT OUTER JOIN accueil_matiere m2
+				  ON cm2.matiere_id = m2.id
+				  {}
+				  GROUP BY u.id, c.id
+				  ORDER BY u.last_name, u.first_name, u.id
+				  """.format("" if matiere is None else """LEFT OUTER JOIN accueil_colleur_matieres cm
+				  ON cm.colleur_id = c.id
+				  LEFT OUTER JOIN accueil_matiere m
+				  ON cm.matiere_id = m.id""", where)
+		with transaction.atomic():
+			with connection.cursor() as cursor:
+				cursor.execute(requete,[x.id for x in (matiere, classe) if x is not None])
+				colleurs = dictfetchall(cursor)
+			matieres = base.values('matieres__nom','matieres__temps','matieres__lv').order_by('user__last_name','user__first_name','user__pk','matieres__nom')
+			classes = base.values_list('classes__nom',flat=True).order_by('user__last_name','user__first_name','user__pk','classes__nom')
+		return colleurs,matieres,classes
+
+
 class Colleur(models.Model):
 	LISTE_GRADES=[(0,"autre"),(1,"certifié"),(2,"bi-admissible"),(3,"agrégé"),(4,"chaire supérieure")]
 	matieres = models.ManyToManyField(Matiere, verbose_name="Matière(s)")
 	classes = models.ManyToManyField(Classe, verbose_name="Classe(s)")
 	grade = models.PositiveSmallIntegerField(choices=LISTE_GRADES, default=3)
 	etablissement = models.ForeignKey(Etablissement, verbose_name="Établissement", null=True,blank=True, on_delete=models.PROTECT)
+	objects = ColleurManager()
 	
 	def allprofs(self):
 		return self.colleurprof.prefetch_related('classe')

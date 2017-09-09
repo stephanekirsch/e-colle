@@ -23,7 +23,6 @@ EMAIL_SECRETARIAT = ''
 # (typiquement des adresse locales), False sinon
 IP_FILTRE_ADMIN = True
 
-
 # liste des adresses autorisées pour la partie admin si IP_FILTRE_ADMIN == True
 # à renseigner avec des REGEXP.
 IP_FILTRE_ADRESSES = ('^127\.0\.0\.1$')
@@ -39,10 +38,15 @@ ADMINS = (
 
 # les nom de domaine autorisés pour accéder à e-colle
 # démarrer par un '.' pour les sous-domaines (par exemple '.e-colle.fr')
-ALLOWED_HOSTS = ['stefwin','localhost']
+ALLOWED_HOSTS = []
+
+INTERNAL_IPS= ['127.0.0.1']
 
 # une clé secrète de 50 caractères. À modifier à la configuration
 SECRET_KEY = 'cg(ip)m3z77z3v!5wo&cl8^4!rk9t0++5wld+@i(kifb!z-k0p'
+
+# fuseau horaire, à changer le cas échéant
+TIME_ZONE = 'Europe/Paris'
 
 DATABASES = {
     'default': {
@@ -122,7 +126,7 @@ MEDIA_URL = '/media/'
 
 STATIC_URL = '/static/'
 
-DEBUG = False
+DEBUG = True
 
 APPEND_SLASH = False
 
@@ -153,6 +157,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 )
 
 ROOT_URLCONF = 'ecolle.urls'
@@ -163,6 +168,6 @@ LANGUAGE_CODE = 'fr_FR'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 AUTH_USER_MODEL = "accueil.User"
