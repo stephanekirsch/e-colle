@@ -384,7 +384,7 @@ def eleve(request):
 @ip_filter
 def elevecsv(request):
 	"""Renvoie la vue de la page d'ajout d'élèves via un fichier CSV"""
-	form = CsvForm(request.POST or None, request.FILES or None,initial = {'nom':'Nom','prenom':'Prénom', 'ddn': 'Date de naissance', 'ldn': 'Commune de naissance', 'ine': 'Numéro INE','email':'Adresse mail'})
+	form = CsvForm(request.POST or None, request.FILES or None,initial = {'nom':'Nom','prenom':'Prénom', 'ddn': 'Date de naissance', 'ldn': 'Commune', 'ine': 'Numéro INE','email':'Adresse mail'})
 	if form.is_valid():
 		try:
 			with TextIOWrapper(form.cleaned_data['fichier'].file,encoding = 'utf8') as fichiercsv:
@@ -396,8 +396,9 @@ def elevecsv(request):
 				if not(nom in ligne and prenom in ligne):
 					messages.error("Les intitulés des champs nom et/ou prénom sont inexacts")
 				else:
-					initial = [{'nom': ligneLoc[nom],'prenom':ligneLoc[prenom],'ddn':None if ddn not in ligneLoc else ligneLoc[ddn],'ldn':None if ldn not in ligneLoc else ligneLoc[ldn],\
+					initial = [{'last_name': ligneLoc[nom],'first_name':ligneLoc[prenom],'ddn':None if ddn not in ligneLoc else ligneLoc[ddn],'ldn':None if ldn not in ligneLoc else ligneLoc[ldn],\
 					'ine':'' if ine not in ligneLoc else ligneLoc[ine],'email':'' if email not in ligneLoc else ligneLoc[email],'classe':form.cleaned_data['classe']} for ligneLoc in reader]
+					print(initial)
 					return eleveajout(request,initial=initial)
 		except Exception:
 				messages.error(request,"Le fichier doit être un fichier CSV valide, encodé en UTF-8")
@@ -436,6 +437,7 @@ def eleveajout(request,initial=None):
 	if request.method=="POST":
 		EleveFormset = formset_factory(EleveFormMdp,extra=0,formset=EleveFormSetMdp)
 		if "csv" in request.POST:
+			print(initial)
 			formset = EleveFormset(initial=initial)
 		else:
 			formset=EleveFormset(request.POST,request.FILES)

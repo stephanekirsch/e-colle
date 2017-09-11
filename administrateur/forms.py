@@ -151,7 +151,6 @@ class EleveFormSetMdp(forms.BaseFormSet):
 		"""vérifie si on n'a pas deux identifiants identiques dans le groupe de formulaires"""
 		if any(self.errors):
 			return
-		print(len(self.forms))
 		usernames = [form.cleaned_data['username'] for form in self.forms]
 		if len(usernames) != len(set(usernames)):
 			raise ValidationError("Deux identifiants identiques dans le formulaire")
