@@ -1,8 +1,8 @@
 #!/bin/bash
-CHEMINBACKUP='/xxxxxxxxxxxxxxxxxxx/backup' # chemin absolu vers l'intérieur du répertoire backup
-CHEMINECOLLE='/xxxxxxxxxxxxxxxxxxxxxxx/e-colle' # chemin absolu vers l'intérieur du répertoire e-colle
+CHEMINBACKUP="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" # chemin absolu vers l'intérieur du répertoire backup
+CHEMINECOLLE="$(dirname "$CHEMINBACKUP")" # chemin absolu vers l'intérieur du répertoire e-colle
 
-python3 "$CHEMINECOLLE/manage.py" dumpdata --format json > ecolle.json
+python3 "$CHEMINECOLLE/manage.py" dumpdata --exclude=auth --exclude=contenttypes --exclude=sessions --format json > ecolle.json
 
 xz -f9 "ecolle.json"
 jour=`date "+%w"`
