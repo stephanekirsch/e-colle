@@ -140,7 +140,7 @@ def creneauSuppr(request,id_creneau,id_semin,id_semax):
 	if not Config.objects.get_config().modif_secret_col:
 		return HttpResponseForbidden("Accès non autorisé")
 	creneau=get_object_or_404(Creneau,pk=id_creneau)
-	return mixtecreneausuppr(request.user,creneau,id_semin,id_semax)
+	return mixtecreneausuppr(request,creneau,id_semin,id_semax)
 
 @user_passes_test(is_secret, login_url='accueil')
 def creneauModif(request,id_creneau,id_semin,id_semax):

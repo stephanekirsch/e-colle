@@ -81,7 +81,7 @@ def mixtecreneaudupli(user,creneau,id_semin,id_semax):
 	creneau.pk=None
 	creneau.salle=None
 	creneau.save()
-	return redirect('colloscopemodif_colleur' if user.colleur else 'colloscopemodif_colleur',creneau.classe.pk,id_semin,id_semax)
+	return redirect('colloscopemodif_colleur' if user.colleur else 'colloscopemodif_secret',creneau.classe.pk,id_semin,id_semax)
 
 def mixteajaxcompat(classe):
 	LISTE_JOURS=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche']
