@@ -102,7 +102,7 @@ def note(request,id_classe):
 		del eleves_groupes[:value['nb']]
 	eleves=Eleve.objects.filter(classe=classe,groupe__isnull=True).values('pk','user__first_name','user__last_name').order_by('user__last_name','user__first_name')
 	modulo = eleves.count() % 3
-	return render(request,"colleur/note.html",{'notes':Note.objects.listeNotes(classe,matiere,colleur),'classe':classe,'eleves':eleves,'groupes':nom_groupes,'modulo':modulo})
+	return render(request,"colleur/note.html",{'notes':Note.objects.listeNotes(colleur,classe,matiere),'classe':classe,'eleves':eleves,'groupes':nom_groupes,'modulo':modulo})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def noteEleve(request,id_eleve,id_classe,colle=None):
@@ -458,10 +458,8 @@ def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_el
 def agenda(request):
 	"""Renvoie la vue de la page de l'agenda"""
 	jour=date.today()
-	semaine=jour+timedelta(days=-jour.weekday())
-	semainemin=semaine+timedelta(days=-21)
-	groupes,colles = Colle.objects.agenda(request.user.colleur,semainemin)
-	return render(request,"colleur/agenda.html",{'colles':colles,'groupes':groupes,'media_url':MEDIA_URL,'jour':jour,'semaine':semaine})
+	colles = Colle.objects.agenda(request.user.colleur)
+	return render(request,"colleur/agenda.html",{'colles':colles,'media_url':MEDIA_URL,'jour':jour})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def colleNote(request,id_colle):

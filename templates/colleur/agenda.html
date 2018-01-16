@@ -16,18 +16,18 @@
 </tr>
 {% for colle in colles %}
 <tr>
-	<td>{{colle.lundi|addtime:colle.jour|date:"l j F"}}</td>
+	<td>{{colle.jour|date:"l j F"}}</td>
 	<td>{{colle.heure|heure}}</td>
-	<td style="background-color:{% if colle.lundi < semaine or colle.lundi == semaine and colle.jour <= jour.weekday %}grey{% else %}{{colle.couleur}}{% endif %}">{{colle.nom_matiere|title}}</td>
+	<td style="background-color:{% if colle.jour <= jour %}grey{% else %}{{colle.couleur}}{% endif %}">{{colle.nom_matiere|title}}</td>
 	<td>{{ colle.nom_classe |default_if_none:''}}</td>
 	<td>{% if colle.fichier != None and colle.fichier != "" %}<a href="{{media_url}}{{colle.fichier}}">{% if colle.titre %}{{colle.titre}}{% endif %}</a>{% elif colle.titre %}{{ colle.titre }}{% endif %}{% if colle.detail %}<div class="popup">{{colle.detail|linebreaksbr}}</div>{% endif %}</td>
-	{% if colle.temps == 20 %}
-	<td>{{colle.nom_groupe}}<div class="popup">{{ groupes|lookup:colle.pk }}</div></td>
-	{% elif colle.temps == 30 %}
+	{% if colle.nom_groupe %}
+	<td>{{colle.nom_groupe}}<div class="popup">{{ colle.groupe }}</div></td>
+	{% elif colle.prenom_eleve %}
 	<td>{{colle.prenom_eleve|title}} {{colle.nom_eleve|upper}}</td>
 	{% endif %}
 	<td>{% if colle.salle %}{{colle.salle}}{% endif %}</td>
-	<td>{% if colle.lundi < semaine or colle.lundi == semaine and colle.jour <= jour.weekday %}{% if colle.nbnotes == 0 %}{% if colle.temps == 20 %}<a href="{% url 'collenote_colleur' colle.pk %}">{% elif colle.temps == 30 %}<a href="{% url 'collenoteeleve_colleur' colle.pk %}">{% elif colle.temps == 60 %}<a href="{% url 'collenoteeleve_colleur' colle.pk %}">{% endif %}Noter</a>{% endif %}{% endif %}</td>
+	<td>{% if colle.jour <= jour %}{% if colle.nbnotes == 0 %}{% if colle.temps == 20 %}<a href="{% url 'collenote_colleur' colle.pk %}">{% elif colle.temps == 30 %}<a href="{% url 'collenoteeleve_colleur' colle.pk %}">{% elif colle.temps == 60 %}<a href="{% url 'collenoteeleve_colleur' colle.pk %}">{% endif %}Noter</a>{% endif %}{% endif %}</td>
 </tr>
 {% endfor %}
 </table>

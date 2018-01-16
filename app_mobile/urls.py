@@ -19,4 +19,5 @@ urlpatterns = [
     url(r'^deletemessage/(\d+)$', views.deletemessage,
         name="delete_message_app_mobile"),
     url(r'^answer/(\d+)-(\d+)$', views.answer, name="answer_app_mobile"),
+    url(r'^colleurgrades$', views.colleurGrades, name="colleur_grades_app_mobile"),
 ]

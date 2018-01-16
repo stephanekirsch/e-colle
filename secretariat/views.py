@@ -337,13 +337,13 @@ def ramassagePdf(request,id_ramassage):
 							data[1][0]=matiere.title()
 							if ligneMat>2:
 								LIST_STYLE.add('SPAN',(0,1),(0,min(ligneMat-1,23)))
-							if ligneEtab>=1:
+							if ligneEtab>1:
 								data[1][1]='Inconnu' if not etablissement else etablissement.title()
-								if ligneEtab>=2:
+								if ligneEtab>2:
 									LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab,23)))
-								if ligneGrade>=1:
+								if ligneGrade>1:
 									data[1][2]=grade
-									if ligneGrade>=2:
+									if ligneGrade>2:
 										LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade,23)))
 	t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel]+[largeurcel]*len(effectifs),rowHeights=min((1+nbKolleurs),24)*[hauteurcel])
 	t.setStyle(LIST_STYLE)

@@ -2,7 +2,7 @@ from django.shortcuts import HttpResponse, get_object_or_404
 from django.http import HttpResponseForbidden, Http404
 from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
-from accueil.models import Note, Programme, Colle, Message, Destinataire, Creneau, Semaine, Groupe, Matiere
+from accueil.models import Note, Programme, Colle, Message, Destinataire, Creneau, Semaine, Groupe, Matiere, Classe
 from django.utils import timezone
 import json
 from datetime import date, datetime, time
@@ -39,26 +39,70 @@ def checkeleve(user):
         return False
     return True
 
+def checkcolleur(user):
+    """renvoie une erreur 403 si l'utilisateur n'est pas un élève connecté, avec une classe"""
+    if not user.is_authenticated():
+        return False
+    if not user.is_active:
+        return False
+    if not user.colleur:
+        return False
+    return True
+
 
 @csrf_exempt
 def connect(request):
-    """connecte l'élève si les identifiants sont exacts, et renvoie le cookie de session"""
+    """connecte l'élève/le colleur si les identifiants sont exacts, et renvoie le cookie de session
+    ainsi que certaines données de l'utilisateur"""
     if request.method == 'POST':
         user = authenticate(username=request.POST['username'],
                             password=request.POST['password'])
-        if user is not None and user.eleve is not None and user.eleve.classe is not None:
-            login(request, user)
-            classe = user.eleve.classe
-            return HttpResponse(json.dumps({'name': user.first_name.title() + " " + user.last_name.upper(),
-                                            'id': user.eleve.pk,
-                                            'classe_id': classe.pk,
-                                            'classe_name': classe.nom,
-                                            'classe_year': classe.annee,
-                                            'group': user.eleve.groupe.nom}))
+        if user is not None:
+            if user.eleve is not None and user.eleve.classe is not None:
+                login(request, user)
+                classe = user.eleve.classe
+                return HttpResponse(json.dumps({'name': user.first_name.title() + " " + user.last_name.upper(),
+                                                'student_id': user.eleve.pk,
+                                                'classe_id': classe.pk,
+                                                'classe_name': classe.nom,
+                                                'classe_year': classe.annee,
+                                                'group': "" if user.eleve.groupe is None else user.eleve.groupe.nom}))
+            if user.colleur is not None:
+                login(request, user)
+                matieres = user.colleur.matieres.order_by('pk')
+                classes = user.colleur.classes.order_by('pk')
+                return HttpResponse(json.dumps({'name': user.first_name.title() + " " + user.last_name.upper(),
+                                                'colleur_id': user.colleur.pk,
+                                                'classes_id': "__".join([str(classe.pk) for classe in classes]),
+                                                'classes_name': "__".join([classe.nom for classe in classes]),
+                                                'subjects_id': "__".join([str(matiere.pk) for matiere in matieres]),
+                                                'subjects_name': "__".join([str(matiere) for matiere in matieres]),
+                                                'subjects_color': "__".join([matiere.couleur for matiere in matieres])})) 
         return HttpResponse("invalide")
     else:
         return HttpResponseForbidden("access denied")
 
+
+# ------------------------- PARTIE MIXTE ----------------------------
+
+def agenda(request):
+    """renvoie l'agenda des colles de l'utilisateur connecté au format json"""
+    user = request.user
+    if checkeleve(user):
+        agendas = Colle.objects.agendaEleve(user.eleve, False)
+        return HttpResponse(json.dumps([{'time': int(datetime.combine(agenda['jour'], time(agenda['heure'] // 4, 15 * (agenda['heure'] % 4))).replace(tzinfo=timezone.utc).timestamp()),
+                                         'room':agenda['salle'],
+                                         'week':agenda['numero'],
+                                         'subject':agenda['nom_matiere'],
+                                         'color':agenda['couleur'],
+                                         'colleur':agenda['prenom'].title() + " " + agenda['nom'].upper(),
+                                         'program':agenda['titre'],
+                                         'file':agenda['fichier']} for agenda in agendas]))
+    if checkcolleur(user):
+        return HttpResponse(json.dumps(Colle.objects.agenda(user.colleur,False), default=date_serial))
+    return HttpResponseForbidden("not authenticated")
+
+# ------------------------- PARTIE ELEVES ----------------------------
 
 def grades(request):
     """renvoie les notes de l'utilisateur connecté au format json"""
@@ -74,8 +118,6 @@ def grades(request):
         'grade':x['note'],
         'comment':x['commentaire']} for x in Note.objects.noteEleve(user.eleve)]
         , default=date_serial))
-
-    
 
 def results(request):
     """renvoie les résultats de l'utilisateur connecté au format json"""
@@ -119,22 +161,6 @@ def programs(request):
     programmes = Programme.objects.filter(classe=user.eleve.classe).values(
         'matiere__couleur', 'matiere__nom', 'semaine__numero', 'semaine__lundi', 'titre', 'fichier', 'detail').order_by('-semaine__lundi', 'matiere__nom')
     return HttpResponse(json.dumps(list(programmes), default=date_serial))
-
-
-def agenda(request):
-    """renvoie l'agenda des colles de l'utilisateur connecté au format json"""
-    user = request.user
-    if not checkeleve(user):
-       return HttpResponseForbidden("not authenticated")
-    agendas = Colle.objects.agendaEleve(user.eleve, False)
-    return HttpResponse(json.dumps([{'time': int(datetime.combine(agenda['jour'], time(agenda['heure'] // 4, 15 * (agenda['heure'] % 4))).replace(tzinfo=timezone.utc).timestamp()),
-                                     'room':agenda['salle'],
-                                     'subject':agenda['nom_matiere'],
-                                     'color':agenda['couleur'],
-                                     'colleur':agenda['prenom'].title() + " " + agenda['nom'].upper(),
-                                     'program':agenda['titre'],
-                                     'file':agenda['fichier']} for agenda in agendas]))
-
 
 def messages(request):
     """renvoie les messages reçus par l'utilisateur connecté au format json"""
@@ -244,3 +270,13 @@ def answer(request, message_id, answerAll):
         reponse.save()
     return HttpResponse(json.dumps({'pk': reponse.pk, 'date': int(reponse.date.strftime(
         '%s')), 'listedestinataires': reponse.listedestinataires, 'titre': reponse.titre, 'corps': reponse.corps}))
+
+# ------------------------- PARTIE COLLEURS ----------------------------
+
+def colleurGrades(request):
+    """renvoie les notes de l'utilisateur connecté au format json"""
+    user = request.user
+    if not checkcolleur(user):
+        return HttpResponseForbidden("not authenticated")
+    return HttpResponse(json.dumps(Note.objects.listeNotesApp(user.colleur)
+        , default=date_serial))
