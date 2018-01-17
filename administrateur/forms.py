@@ -217,14 +217,8 @@ class EleveForm(forms.Form):
 		if data:
 			if len(data) != 11:
 				raise ValidationError("le numéro d'étudiant comporte 11 caractères")
-			try:
-				l=int(data[:-1])
-				if l<=0 or not isinstance(l,int):
-					raise ValidationError("les 10 premiers caractères doivent être des chiffres")
-			except Exception:
-				raise ValidationError("les 10 premiers caractères doivent être des chiffres")
-			if not (65 <= ord(data[-1]) <= 90):
-				raise ValidationError("le dernier caractère est une lettre ASCII majuscule")
+			if any( not( 48 <= ord(x) <= 57) or not ( 65 <= x <= 90) for x in data):
+				raise ValidationError("le numéro d'étudiant ne comporte que des chiffres et des lettres majuscules")
 		return data
 
 class EleveFormMdp(forms.Form):
