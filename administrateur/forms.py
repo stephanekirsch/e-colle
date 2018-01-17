@@ -217,7 +217,7 @@ class EleveForm(forms.Form):
 		if data:
 			if len(data) != 11:
 				raise ValidationError("le numéro d'étudiant comporte 11 caractères")
-			if any( not( 48 <= ord(x) <= 57) or not ( 65 <= ord(x) <= 90) for x in data):
+			if any( not( "0" <= x <= "9" ) and not ( "A" <= x <= "Z") for x in data):
 				raise ValidationError("le numéro d'étudiant ne comporte que des chiffres et des lettres majuscules")
 		return data
 
