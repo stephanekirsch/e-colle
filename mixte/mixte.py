@@ -157,6 +157,7 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
 			groupeseleves=list(Groupe.objects.filter(classe=creneau.classe,groupeeleve__lv1=matiere).distinct().order_by('nom'))
 		elif matiere.lv == 2:
 			groupeseleves=list(Groupe.objects.filter(classe=creneau.classe,groupeeleve__lv2=matiere).distinct().order_by('nom'))
+		groupeseleves.sort(key = lambda x:int(x.nom))
 		rang=groupeseleves.index(groupe)
 	elif matiere.temps == 30:
 		if matiere.lv == 0:

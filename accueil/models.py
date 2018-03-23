@@ -117,7 +117,7 @@ class Classe(models.Model):
 		"""renvoie la liste des logins des élèves de la classe ordonnés par ordre alphabétique"""
 		if hasattr(self,'listeLoginsEleves'):
 			return self.listeLoginsEleves
-		eleves = self.classeeleve.annotate(login=Lower(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1))))
+		eleves = self.classeeleve.order_by('user__last_name','user__first_name').annotate(login=Lower(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1))))
 		listeLogins = []
 		lastlogin = False
 		indice=1
@@ -491,7 +491,7 @@ class Programme(models.Model):
 
 class NoteManager(models.Manager):
 	def listeNotesApp(self,colleur):
-		requete = "SELECT s.numero semaine, p.titre, n.date_colle, n.heure, u.first_name prenom, u.last_name nom, n.note, n.commentaire, n.matiere_id, n.classe_id\
+		requete = "SELECT s.numero semaine, p.titre, n.id, n.date_colle, n.heure, u.first_name prenom, u.last_name nom, n.note, n.commentaire, n.matiere_id, n.classe_id , n.rattrapee\
 				   FROM accueil_note n\
 				   LEFT OUTER JOIN accueil_eleve e\
 				   ON n.eleve_id = e.id\
@@ -500,14 +500,14 @@ class NoteManager(models.Manager):
 				   INNER JOIN accueil_semaine s\
 				   ON n.semaine_id=s.id\
 				   LEFT OUTER JOIN accueil_programme p\
-				   ON p.semaine_id = s.id AND p.matiere_id = n.matiere_id\
+				   ON p.semaine_id = s.id AND p.matiere_id = n.matiere_id AND p.classe_id = n.classe_id\
 				   WHERE n.colleur_id= %s\
 				   ORDER BY s.numero DESC, n.date_colle DESC, n.heure DESC"
 		with connection.cursor() as cursor:
 			cursor.execute(requete,(colleur.pk,))
 			notes = dictfetchall(cursor)
-			return [{"grade":note["note"],"subject_id":note["matiere_id"],"classe_id":note["classe_id"],"comment":note["commentaire"],"week":note["semaine"],"title":note["titre"],
-			"name":"Élève fictif" if not note["nom"] else "{} {}".format(note["prenom"].title(),note["nom"].upper()), "date":int(datetime.combine(note["date_colle"], time(note["heure"] // 4, 15 * (note["heure"] % 4))).replace(tzinfo=timezone.utc).timestamp())} for note in notes]
+			return [{"id":note["id"],"catchup": note["rattrapee"], "grade":note["note"],"subject_id":note["matiere_id"],"classe_id":note["classe_id"],"comment":note["commentaire"],"week":note["semaine"],"title":note["titre"],
+			"name":"Élève fictif" if not note["nom"] else "{} {}".format(note["prenom"].title(),note["nom"].upper()), "date":datetime.combine(note["date_colle"], time(note["heure"] // 4, 15 * note["heure"]%4)).replace(tzinfo=timezone.utc).timestamp()} for note in notes]
 
 	def listeNotes(self,colleur,classe,matiere):
 		requete = "SELECT n.id pk, s.numero semaine, p.titre, p.detail, n.date_colle, n.heure, u.first_name prenom, u.last_name nom, n.note, n.commentaire\

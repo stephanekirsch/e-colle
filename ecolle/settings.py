@@ -38,7 +38,7 @@ ADMINS = (
 
 # les nom de domaine autorisés pour accéder à e-colle
 # démarrer par un '.' pour les sous-domaines (par exemple '.e-colle.fr')
-ALLOWED_HOSTS = ['stefwin','localhost']
+ALLOWED_HOSTS = []
 
 INTERNAL_IPS= ['127.0.0.1']
 
@@ -55,7 +55,7 @@ DATABASES = {
         # La suite est à laisser vide si vous utilisez SQlite
         'USER': 'e-colle',  # le nom de l'utilisateur ayant droits
         # sur la base de données.
-        'PASSWORD': 'Nh8Joc8ujjgdlsHz',  # le mot de passe de l'utilisateur
+        'PASSWORD': '',  # le mot de passe de l'utilisateur
         'HOST': 'localhost',  # l'adresse IP de la base de données.
         'PORT': '',  # vide par défaut. À renseigner si la BDD se trouve
         # sur un port particulier.
@@ -126,7 +126,7 @@ MEDIA_URL = '/media/'
 
 STATIC_URL = '/static/'
 
-DEBUG = True
+DEBUG = False
 
 APPEND_SLASH = False
 
