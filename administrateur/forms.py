@@ -136,7 +136,7 @@ class EleveFormSet(forms.BaseFormSet):
 				eleve.classe=form.cleaned_data['classe']
 				if form.cleaned_data['photo']:
 					eleve.photo=form.cleaned_data['photo']
-				elif form.cleaned_data is False:
+				elif form.cleaned_data['photo'] is False:
 					eleve.photo=None
 				eleve.ddn=form.cleaned_data['ddn']
 				eleve.ldn=form.cleaned_data['ldn']

@@ -317,7 +317,7 @@ class ColleurManager(models.Manager):
 				  LEFT OUTER JOIN accueil_classe cl2
 				  ON cc2.classe_id = cl2.id
 				  {}
-				  GROUP BY u.id, c.id
+				  GROUP BY u.id, c.id, e.id
 				  ORDER BY u.last_name, u.first_name, c.id
 				  """.format("" if matiere is None else """LEFT OUTER JOIN accueil_colleur_matieres cm
 				  ON cm.colleur_id = c.id

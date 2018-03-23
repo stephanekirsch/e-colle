@@ -43,8 +43,8 @@
 			{% if colleur.actif %}<td style="color:green;">✓</td> {% else %}<td style="color:red;">❌</td>{% endif %}
 			<td>{{listegrades| lookup:colleur.grade}}</td>
 			<td>{% if colleur.etablissement %}{{colleur.etablissement|title}}{% endif %}</td>
-			<td>{{matieres|matiereNext:colleur.nbMatieres|safe}}</td>
-			<td>{{classes|classeNext:colleur.nbClasses|safe}}</td>
+			<td>{{matieres|matiereNext:colleur.nbmatieres|safe}}</td>
+			<td>{{classes|classeNext:colleur.nbclasses|safe}}</td>
 			<td><a class="bouton" href="{% url 'modif_colleur' colleur.id %}">Modifier</a></td>
 			<td><a class="bouton" href="{% url 'suppr_colleur' colleur.id %}">Supprimer</a></td>
 		</tr>
