@@ -221,7 +221,7 @@ class Classe(models.Model):
 
 	def dictGroupes(self,noms=True):
 		dictgroupes = dict()
-		if noms:
+		if noms is True:
 			groupes = Groupe.objects.filter(classe=self).prefetch_related('groupeeleve','groupeeleve__user')
 			listegroupes = {groupe.pk: (groupe.nom,"; ".join(["{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper()) for eleve in groupe.groupeeleve.all()])) for groupe in groupes}
 			for matiere in self.matieres.filter(temps=20):
@@ -262,7 +262,7 @@ class Etablissement(models.Model):
 		return self.nom
 
 class Groupe(models.Model):
-	nom = models.CharField(max_length = 2)
+	nom = models.PositiveSmallIntegerField(choices = list(zip(range(1,31),range(1,31))), verbose_name = "Nom")
 	classe = models.ForeignKey(Classe,related_name="classegroupe", on_delete=models.PROTECT)
 
 	class Meta:
@@ -278,7 +278,7 @@ class Groupe(models.Model):
 			return Eleve.objects.filter(groupe=self,lv2=matiere).exists()
 
 	def __str__(self):
-		return self.nom
+		return str(self.nom)
 
 class ColleurManager(models.Manager):
 	def listeColleurs(self,matiere,classe):
