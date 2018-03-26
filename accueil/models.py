@@ -731,7 +731,7 @@ class ColleManager(models.Manager):
 				   LEFT OUTER JOIN accueil_note n\
 				   ON n.matiere_id = m.id AND n.colleur_id = c.id AND n.semaine_id=s.id AND n.jour = cr.jour AND n.heure = cr.heure\
 				   WHERE c.id=%s AND s.lundi >= %s\
-				   GROUP BY co.id, g.nom, g.id, cl.nom, s.lundi, cr.jour, cr.heure, cr.salle, m.id, m.nom, m.couleur, m.lv, m.temps, u2.first_name, u2.last_name, p.titre, p.detail, p.fichier\
+				   GROUP BY co.id, g.nom, g.id, cl.nom, s.id, cr.jour, cr.heure, cr.salle, m.id, m.nom, m.couleur, m.lv, m.temps, u2.first_name, u2.last_name, p.titre, p.detail, p.fichier\
 				   ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'),"p.detail detail," if detail else "")
 		with connection.cursor() as cursor:
 			cursor.execute(requete,(colleur.pk,semainemin))
