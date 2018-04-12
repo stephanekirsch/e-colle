@@ -56,8 +56,8 @@ def mixtecolloscopemodif(request,classe,semin,semax,creneaumodif):
 			else:
 				form.save()
 		return redirect('colloscopemodif_colleur' if request.user.colleur else 'colloscopemodif_secret',classe.pk,semin.pk,semax.pk)
-	matieres = list(classe.matieres.filter(colleur__classes=classe).values_list('pk','nom','couleur','temps').annotate(nb=Count("colleur")))
-	colleurs = list(Classe.objects.filter(pk=classe.pk,matieres__colleur__classes=classe).values_list('matieres__colleur__pk','matieres__colleur__user__username','matieres__colleur__user__first_name','matieres__colleur__user__last_name').order_by("matieres__nom","matieres__colleur__user__last_name","matieres__colleur__user__first_name"))
+	matieres = list(classe.matieres.filter(colleur__classes=classe, colleur__user__is_active = True).values_list('pk','nom','couleur','temps').annotate(nb=Count("colleur")))
+	colleurs = list(Colleur.objects.exclude(matieres = None).filter(classes=classe,user__is_active = True).values_list('pk','user__first_name','user__last_name').order_by("matieres__nom", "matieres__pk", "user__last_name", "user__first_name"))
 	groupes = Groupe.objects.filter(classe=classe)
 	matieresgroupes = [[groupe for groupe in groupes if groupe.haslangue(matiere)] for matiere in classe.matieres.filter(colleur__classes=classe)]
 	listeColleurs = []
@@ -66,6 +66,7 @@ def mixtecolloscopemodif(request,classe,semin,semax,creneaumodif):
 		del colleurs[:x[4]]
 	largeur=str(650+42*creneaux.count())+'px'
 	hauteur=str(27*(len(matieres)+classe.classeeleve.count()+Colleur.objects.filter(classes=classe).count()))+'px'
+	print(json.dumps(classe.dictElevespk()))
 	return render(request,'mixte/colloscopeModif.html',
 	{'semin':semin,'semax':semax,'form1':form1,'form':form,'form2':form2,'largeur':largeur,'hauteur':hauteur,'groupes':groupes,'matieres':zip(matieres,listeColleurs,matieresgroupes),'creneau':creneaumodif\
 	,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'dictColleurs':classe.dictColleurs(semin,semax),'dictGroupes':json.dumps(classe.dictGroupes(False)),'dictEleves':json.dumps(classe.dictElevespk())})
@@ -104,7 +105,7 @@ def mixteajaxcolloscope(matiere,colleur,groupe,semaine,creneau):
 	if semaine.lundi+timedelta(days=creneau.jour) in feries:
 		return HttpResponse("jour férié")
 	Colle(semaine=semaine,creneau=creneau,groupe=groupe,colleur=colleur,matiere=matiere).save()
-	return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':'+groupe.nom)
+	return HttpResponse("{}:{}".format(creneau.classe.dictColleurs()[colleur.pk],groupe.nom))
 
 def mixteajaxcolloscopeeleve(matiere,colleur, id_eleve,semaine,creneau,login):
 	try:
@@ -132,7 +133,7 @@ def mixteajaxcolloscopeeffacer(semaine,creneau):
 	return HttpResponse("efface")
 
 def mixteajaxmajcolleur(matiere,classe):
-	colleurs=Colleur.objects.filter(matieres=matiere,classes=classe).values('id','user__first_name','user__last_name','user__username').order_by('user__first_name','user__last_name')
+	colleurs=Colleur.objects.filter(user__is_active=True,matieres=matiere,classes=classe).values('id','user__first_name','user__last_name','user__username').order_by('user__first_name','user__last_name')
 	colleurs=[{'nom': value['user__first_name'].title()+" "+value['user__last_name'].upper()+' ('+classe.dictColleurs()[value['id']]+')','id':value['id']} for value in colleurs]
 	return HttpResponse(json.dumps([matiere.temps]+colleurs))
 

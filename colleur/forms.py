@@ -177,7 +177,7 @@ class ColleForm(forms.Form):
 		query1=classe.matieres.all()
 		query2=Colleur.objects.none()
 		query3=Groupe.objects.filter(classe=classe).order_by('nom')
-		query4=Eleve.objects.all()
+		query4=Eleve.objects.filter(classe=classe).all()
 		try:
 			self.fields['matiere']=forms.ModelChoiceField(queryset=query1,empty_label=None,initial=query1[0])
 		except Exception:

@@ -102,7 +102,7 @@
 	<li style="background-color:{{matiere.2}}">{{matiere.1|title}}
 		<ul class="niveau3">
 		{% for colleur in colleurs %}
-			<li style="background-color:{{matiere.2}}">{{colleur.2|title}} {{colleur.3|upper}} ({{classe.dictColleurs|lookup:colleur.0}})
+			<li style="background-color:{{matiere.2}}">{{colleur.1|title}} {{colleur.2|upper}} ({{classe.dictColleurs|lookup:colleur.0}})
 				{% if matiere.3 == 20 %}
 				<ul class="niveau4">
 				{% for groupe in groupes %}

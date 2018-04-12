@@ -115,9 +115,7 @@ class Classe(models.Model):
 
 	def loginsEleves(self):
 		"""renvoie la liste des logins des élèves de la classe ordonnés par ordre alphabétique"""
-		if hasattr(self,'listeLoginsEleves'):
-			return self.listeLoginsEleves
-		eleves = self.classeeleve.order_by('user__last_name','user__first_name').annotate(login=Lower(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1))))
+		eleves = self.classeeleve.order_by('user__last_name','user__first_name').annotate(login=Lower(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1)))).order_by('login','user__last_name','user__first_name').select_related('user')
 		listeLogins = []
 		lastlogin = False
 		indice=1
@@ -132,8 +130,9 @@ class Classe(models.Model):
 				indice=1
 				listeLogins.append(login)
 			lastlogin=login
-		self.listeLoginsEleves = list(zip(eleves,listeLogins))
-		return self.listeLoginsEleves
+		elevesLogin = list(zip(eleves,listeLogins))
+		elevesLogin.sort(key = lambda x:(x[0].user.last_name,x[0].user.first_name))
+		return elevesLogin
 
 	def loginMatiereEleves(self):
 		matiereeleves = []
@@ -159,27 +158,17 @@ class Classe(models.Model):
 
 	def dictEleves(self):
 		"""renvoie un dictionnaire dont les clés sont les id des élèves de la classe, et les valeurs le login correspondant"""
-		if hasattr(self,'dictAttrEleves'):
-			return self.dictAttrEleves
 		dictEleves={}
 		for eleve,login in self.loginsEleves():
 			dictEleves[eleve.pk]=login
-		self.dictAttrEleves = dictEleves
 		return dictEleves
 
 	def loginsColleurs(self,semin=None,semax=None):
 		"""renvoie la liste des logins des colleurs de la classe, qui ont des colles entre les semaines semin et semax, ordonnés par ordre alphabétique"""
 		if semin is None or semax is None:
-			if hasattr(self,'listeLoginsColleurs'):
-				return getattr(self,'listeLoginsColleurs')
-			colleurs = self.colleur_set.annotate(login=Upper(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1)))).order_by('user__last_name','user__first_name')
+			colleurs = self.colleur_set.filter(user__is_active = True).annotate(login=Upper(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1)))).order_by('login','user__last_name','user__first_name')
 		else:
-			if hasattr(self,'listeLoginsColleurs_{}_{}'.format(semin.pk,semax.pk)):
-				return getattr(self,'listeLoginsColleurs_{}_{}'.format(semin.pk,semax.pk))
-			colleurs = self.colleur_set.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi)).distinct().annotate(login=Upper(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1)))).order_by('user__last_name','user__first_name')
-		listeLogins = []
-		lastlogin = False
-		indice=1
+			colleurs = self.colleur_set.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi)).distinct().annotate(login=Upper(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1)))).order_by('login', 'user__last_name','user__first_name')
 		listeLogins = []
 		lastlogin = False
 		indice=1
@@ -194,30 +183,14 @@ class Classe(models.Model):
 				indice=1
 				listeLogins.append(login)
 			lastlogin=login
-		if semin is None or semax is None:
-			setattr(self,'listeLoginsColleurs',list(zip(colleurs,listeLogins)))
-			return getattr(self,'listeLoginsColleurs')
-		else:
-			setattr(self,'listeLoginsColleurs_{}_{}'.format(semin.pk,semax.pk),list(zip(colleurs,listeLogins)))
-			return getattr(self,'listeLoginsColleurs_{}_{}'.format(semin.pk,semax.pk))
+		return list(zip(colleurs,listeLogins))
 
 	def dictColleurs(self,semin=None,semax=None):
 		"""renvoie un dictionnaire dont les clés sont les id des colleurs de la classe, et les valeurs le login correspondant"""
-		if semin is None or semax is None:
-			if hasattr(self,'dictAttrColleurs'):
-				return getattr(self,'dictAttrColleurs')
-		else:
-			if hasattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk)):
-				return getattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk))
 		dictColleurs={}
 		for colleur,login in self.loginsColleurs(semin,semax):
 			dictColleurs[colleur.pk]=login
-		if semin is None or semax is None:
-			setattr(self,'dictAttrColleurs',dictColleurs)
-			return getattr(self,'dictAttrColleurs')
-		else:
-			setattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk),dictColleurs)
-			return getattr(self,'dictAttrColleurs_{}_{}'.format(semin.pk,semax.pk))
+		return dictColleurs
 
 	def dictGroupes(self,noms=True):
 		dictgroupes = dict()
@@ -300,7 +273,7 @@ class ColleurManager(models.Manager):
 			else:
 				where = "WHERE m.id = %s AND cl.id = %s"
 		requete = """SELECT u.first_name prenom, u.last_name nom, u.username identifiant, u.email email, u.is_active actif,
-				  c.grade grade, c.id id, e.nom etablissement,u.id user_id, COUNT(DISTINCT m2.id) nbMatieres, COUNT(DISTINCT cl2.id) nbClasses FROM
+				  c.grade grade, c.id id, e.nom etablissement,u.id user_id, COUNT(DISTINCT m2.id) nb_matieres, COUNT(DISTINCT cl2.id) nb_classes FROM
 				  accueil_colleur c
 				  INNER JOIN accueil_user u
 				  ON u.colleur_id = c.id
@@ -491,12 +464,8 @@ class Programme(models.Model):
 
 class NoteManager(models.Manager):
 	def listeNotesApp(self,colleur):
-		requete = "SELECT s.numero semaine, p.titre, n.id, n.date_colle, n.heure, u.first_name prenom, u.last_name nom, n.note, n.commentaire, n.matiere_id, n.classe_id , n.rattrapee\
+		requete = "SELECT s.numero semaine, p.titre, n.id, n.date_colle, n.heure, n.note, n.commentaire, n.matiere_id, n.classe_id, n.eleve_id, n.rattrapee\
 				   FROM accueil_note n\
-				   LEFT OUTER JOIN accueil_eleve e\
-				   ON n.eleve_id = e.id\
-				   LEFT OUTER JOIN accueil_user u\
-				   ON u.eleve_id = e.id\
 				   INNER JOIN accueil_semaine s\
 				   ON n.semaine_id=s.id\
 				   LEFT OUTER JOIN accueil_programme p\
@@ -506,8 +475,8 @@ class NoteManager(models.Manager):
 		with connection.cursor() as cursor:
 			cursor.execute(requete,(colleur.pk,))
 			notes = dictfetchall(cursor)
-			return [{"id":note["id"],"catchup": note["rattrapee"], "grade":note["note"],"subject_id":note["matiere_id"],"classe_id":note["classe_id"],"comment":note["commentaire"],"week":note["semaine"],"title":note["titre"],
-			"name":"Élève fictif" if not note["nom"] else "{} {}".format(note["prenom"].title(),note["nom"].upper()), "date":datetime.combine(note["date_colle"], time(note["heure"] // 4, 15 * note["heure"]%4)).replace(tzinfo=timezone.utc).timestamp()} for note in notes]
+			return [[note["id"], note["matiere_id"], note["classe_id"], note["note"],  note["commentaire"], note["semaine"], note["titre"], datetime.combine(note["date_colle"],
+				time(note["heure"] // 4, 15 * (note["heure"] % 4))).replace(tzinfo=timezone.utc).timestamp(), note["eleve_id"], note["rattrapee"]] for note in notes]
 
 	def listeNotes(self,colleur,classe,matiere):
 		requete = "SELECT n.id pk, s.numero semaine, p.titre, p.detail, n.date_colle, n.heure, u.first_name prenom, u.last_name nom, n.note, n.commentaire\
