@@ -676,8 +676,8 @@ class ColleManager(models.Manager):
 		return jours,creneaux,colles,semaines
 
 	def agenda(self,colleur,detail=True):
-		semainemin = date.today()+timedelta(days=-27)
-		requete = "SELECT COUNT(n.id) nbnotes, co.id pk, g.nom nom_groupe, cl.nom nom_classe, {} jour, s.numero, cr.heure heure, cr.salle salle, m.id, m.nom nom_matiere, m.couleur couleur, m.lv lv, u2.first_name prenom_eleve, u2.last_name nom_eleve, p.titre titre, {} p.fichier fichier\
+		semainemin = date.today()+timedelta(days=-28)
+		requete = "SELECT COUNT(n.id) nbnotes, co.id pk, g.nom nom_groupe, cl.nom nom_classe, {} jour, s.numero, cr.heure heure, cr.salle salle, m.id, m.nom nom_matiere, m.couleur couleur, m.lv lv, m.temps, u2.first_name prenom_eleve, u2.last_name nom_eleve, p.titre titre, {} p.fichier fichier\
 				   FROM accueil_colle co\
 				   INNER JOIN accueil_creneau cr\
 				   ON co.creneau_id = cr.id\
@@ -709,7 +709,9 @@ class ColleManager(models.Manager):
 		groupes = {}
 		for colle in groupeseleve:
 			groupes[colle.pk] = "; ".join(["{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper()) for eleve in colle.groupe.groupeeleve.all() if not colle.matiere.lv or colle.matiere.lv==1 and eleve.lv1 == colle.matiere or colle.matiere.lv==2 and eleve.lv2 == colle.matiere])
-		return [{"nbnotes":colle["nbnotes"], "nom_groupe":colle["nom_groupe"], "nom_classe":colle["nom_classe"], "jour":colle["jour"], "numero": colle["numero"], "heure":colle["heure"], "salle":colle["salle"], "nom_matiere":colle["nom_matiere"], "couleur":colle["couleur"], "eleve": None if colle["prenom_eleve"] is None else "{} {}".format(colle['prenom_eleve'].title(),colle['nom_eleve'].upper()), "nom_groupe":colle["nom_groupe"], "titre":colle["titre"], "fichier":colle["fichier"], "groupe":groupes[colle["pk"]], "detail":colle["detail"] if detail else ""} for colle in colles]
+		return [{"nbnotes":colle["nbnotes"], "nom_groupe":colle["nom_groupe"], "nom_classe":colle["nom_classe"], "jour":colle["jour"], "numero": colle["numero"], "heure":colle["heure"], "salle":colle["salle"], "nom_matiere":colle["nom_matiere"], "couleur":colle["couleur"],
+		"eleve": None if colle["prenom_eleve"] is None else "{} {}".format(colle['prenom_eleve'].title(),colle['nom_eleve'].upper()), "titre":colle["titre"], "fichier":colle["fichier"], "groupe": None if colle["nom_groupe"] is None else groupes[colle["pk"]],
+		"detail":colle["detail"] if detail else "", "temps": colle["temps"], "pk": colle["pk"]} for colle in colles]
 
 	def agendaEleve(self,eleve,detail=True):
 		requete = "SELECT s.lundi lundi, s.numero, {} jour, cr.heure heure, cr.salle salle, m.nom nom_matiere, m.couleur couleur, u.first_name prenom, u.last_name nom, p.titre titre, {} p.fichier fichier\

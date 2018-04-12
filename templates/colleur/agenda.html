@@ -23,8 +23,10 @@
 	<td>{% if colle.fichier != None and colle.fichier != "" %}<a href="{{media_url}}{{colle.fichier}}">{% if colle.titre %}{{colle.titre}}{% endif %}</a>{% elif colle.titre %}{{ colle.titre }}{% endif %}{% if colle.detail %}<div class="popup">{{colle.detail|linebreaksbr}}</div>{% endif %}</td>
 	{% if colle.nom_groupe %}
 	<td>{{colle.nom_groupe}}<div class="popup">{{ colle.groupe }}</div></td>
-	{% elif colle.prenom_eleve %}
-	<td>{{colle.prenom_eleve|title}} {{colle.nom_eleve|upper}}</td>
+	{% elif colle.eleve %}
+	<td>{{colle.eleve}}</td>
+	{% else %}
+	<td>{{colle.nom_classe}}</td>
 	{% endif %}
 	<td>{% if colle.salle %}{{colle.salle}}{% endif %}</td>
 	<td>{% if colle.jour <= jour %}{% if colle.nbnotes == 0 %}{% if colle.temps == 20 %}<a href="{% url 'collenote_colleur' colle.pk %}">{% elif colle.temps == 30 %}<a href="{% url 'collenoteeleve_colleur' colle.pk %}">{% elif colle.temps == 60 %}<a href="{% url 'collenoteeleve_colleur' colle.pk %}">{% endif %}Noter</a>{% endif %}{% endif %}</td>
