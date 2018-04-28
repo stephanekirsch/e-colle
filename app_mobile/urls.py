@@ -12,8 +12,8 @@ urlpatterns = [
     url(r'^colles$', views.colles, name="colles_app_mobile"),
     url(r'^programs$', views.programs, name="programs_app_mobile"),
     url(r'^messages$', views.messages, name="messages_app_mpbile"),
-    url(r'^sentmessages$', views.sentmessages,
-        name="sent_messages_app_mobile"),
+    # url(r'^sentmessages$', views.sentmessages,
+    #     name="sent_messages_app_mobile"),
     url(r'^readmessage/(\d+)$', views.readmessage,
         name="read_message_app_mobile"),
     url(r'^deletemessage/(\d+)$', views.deletemessage,
@@ -23,4 +23,6 @@ urlpatterns = [
     url(r'^deletegrade/(\d+)$', views.deletegrade, name="delete_grade_app_mobile"),
     url(r'^addsinglegrade$', views.addsinglegrade, name="add_single_grade_app_mobile"),
     url(r'^addgroupgrades$', views.addgroupgrades, name="add_group_grades_app_mobile"),
+    url(r'^adddraftgrades$', views.adddraftgrades, name="add_draft_grades_app_mobile"),
+    url(r'^addmessage$', views.addmessage, name="add_message_app_mobile")
 ]

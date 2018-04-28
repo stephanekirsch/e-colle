@@ -254,6 +254,26 @@ class Groupe(models.Model):
 		return str(self.nom)
 
 class ColleurManager(models.Manager):
+	def listeColleurClasse(self, colleur):
+		requete = """SELECT DISTINCT colcla.id, colcla.colleur_id, colcla.classe_id FROM accueil_colleur_matieres colmat
+					INNER JOIN accueil_colleur col ON col.id = colmat.colleur_id
+					INNER JOIN accueil_colleur_classes colcla ON col.id = colcla.colleur_id
+					INNER JOIN accueil_prof pr ON pr.classe_id = colcla.classe_id AND pr.matiere_id = colmat.matiere_id
+					WHERE pr.colleur_id = %s OR colcla.colleur_id = %s AND colmat.colleur_id = %s"""
+		with connection.cursor() as cursor:
+			cursor.execute(requete,[colleur.id, colleur.id, colleur.id])
+			return cursor.fetchall()
+
+	def listeColleurMatiere(self, colleur):
+		requete = """SELECT DISTINCT colmat.id, colmat.colleur_id, colmat.matiere_id FROM accueil_colleur_matieres colmat
+					INNER JOIN accueil_colleur col ON col.id = colmat.colleur_id
+					INNER JOIN accueil_colleur_classes colcla ON col.id = colcla.colleur_id
+					INNER JOIN accueil_prof pr ON pr.classe_id = colcla.classe_id AND pr.matiere_id = colmat.matiere_id
+					WHERE pr.colleur_id = %s OR colcla.colleur_id = %s AND colmat.colleur_id = %s"""
+		with connection.cursor() as cursor:
+			cursor.execute(requete,[colleur.id, colleur.id, colleur.id])
+			return cursor.fetchall()
+
 	def listeColleurs(self,matiere,classe):
 		base  = self
 		if matiere is not None:
@@ -464,18 +484,16 @@ class Programme(models.Model):
 
 class NoteManager(models.Manager):
 	def listeNotesApp(self,colleur):
-		requete = "SELECT s.numero semaine, p.titre, n.id, n.date_colle, n.heure, n.note, n.commentaire, n.matiere_id, n.classe_id, n.eleve_id, n.rattrapee\
+		requete = "SELECT s.numero semaine, n.id, n.date_colle, n.heure, n.note, n.commentaire, n.matiere_id, n.classe_id, n.eleve_id, n.rattrapee\
 				   FROM accueil_note n\
 				   INNER JOIN accueil_semaine s\
 				   ON n.semaine_id=s.id\
-				   LEFT OUTER JOIN accueil_programme p\
-				   ON p.semaine_id = s.id AND p.matiere_id = n.matiere_id AND p.classe_id = n.classe_id\
 				   WHERE n.colleur_id= %s\
 				   ORDER BY s.numero DESC, n.date_colle DESC, n.heure DESC"
 		with connection.cursor() as cursor:
 			cursor.execute(requete,(colleur.pk,))
 			notes = dictfetchall(cursor)
-			return [[note["id"], note["matiere_id"], note["classe_id"], note["note"],  note["commentaire"], note["semaine"], note["titre"], datetime.combine(note["date_colle"],
+			return [[note["id"], note["matiere_id"], note["classe_id"], note["note"],  note["commentaire"], note["semaine"], datetime.combine(note["date_colle"],
 				time(note["heure"] // 4, 15 * (note["heure"] % 4))).replace(tzinfo=timezone.utc).timestamp(), note["eleve_id"], note["rattrapee"]] for note in notes]
 
 	def listeNotes(self,colleur,classe,matiere):

@@ -2,7 +2,7 @@ from django.shortcuts import HttpResponse, get_object_or_404
 from django.http import HttpResponseForbidden, Http404
 from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
-from accueil.models import Note, Programme, Colle, Message, Destinataire, Creneau, Semaine, Groupe, Matiere, Classe, Eleve
+from accueil.models import Note, Programme, Colle, Message, Destinataire, Creneau, Semaine, Groupe, Matiere, Classe, Eleve, User, Prof, Colleur
 from django.utils import timezone
 import json
 from datetime import date, datetime, time, timedelta
@@ -75,7 +75,8 @@ def connect(request):
                                                 'classes_name': "__".join([classe.nom for classe in classes]),
                                                 'subjects_id': "__".join([str(matiere.pk) for matiere in matieres]),
                                                 'subjects_name': "__".join([str(matiere) for matiere in matieres]),
-                                                'subjects_color': "__".join([matiere.couleur for matiere in matieres])})) 
+                                                'subjects_color': "__".join([matiere.couleur for matiere in matieres])
+                                                }))
         return HttpResponse("invalide")
     else:
         return HttpResponseForbidden("access denied")
@@ -162,9 +163,10 @@ def programs(request):
 # ------------------------- PARTIE MESSAGES ----------------------------
 
 def messages(request):
-    """renvoie les messages reçus par l'utilisateur (élève) connecté au format json"""
+    """renvoie les messages reçus par l'utilisateur connecté au format json"""
     user = request.user
-    if not checkeleve(user):
+    if not checkeleve(user) and not checkcolleur(user):
+        return HttpResponseForbidden("not authenticated")
         return HttpResponseForbidden("not authenticated")
     messagesrecusQuery = Destinataire.objects.filter(user=user).values('lu', 'reponses', 'message__pk', 'message__date',
                                                                   'message__auteur__first_name', 'message__auteur__last_name', 'message__luPar',
@@ -178,17 +180,8 @@ def messages(request):
             'recipients':x['message__listedestinataires'],
             'title':x['message__titre'],
             'body':x['message__corps']} for x in messagesrecusQuery]
-    return HttpResponse(json.dumps(messagesrecus, default=date_serial))
-
-
-def sentmessages(request):
-    """renvoie les messages envoyés par l'utilisateur (élève) connecté au format json"""
-    user = request.user
-    if not checkeleve(user):
-        return HttpResponseForbidden("not authenticated")
     messagesenvoyesQuery = Message.objects.filter(auteur=user, hasAuteur=True).distinct().values(
         'date', 'auteur__first_name', 'auteur__last_name', 'luPar', 'listedestinataires', 'titre', 'corps', 'pk').order_by('-date')
-
     messagesenvoyes = [{'pk':x['pk'],
             'date':x['date'],
             'author':x['auteur__first_name'].title()+" "+x['auteur__last_name'].upper(),
@@ -196,8 +189,7 @@ def sentmessages(request):
             'recipients':x['listedestinataires'],
             'title':x['titre'],
             'body':x['corps']} for x in messagesenvoyesQuery]
-    return HttpResponse(json.dumps(list(messagesenvoyes), default=date_serial))
-
+    return HttpResponse(json.dumps({'messagesrecus':messagesrecus, 'messagesenvoyes': messagesenvoyes}, default=date_serial))
 
 def readmessage(request, message_id):
     """marque comme lu le message d'ont l'identifiant est message_id"""
@@ -206,8 +198,12 @@ def readmessage(request, message_id):
         return HttpResponseForbidden("not authenticated")
     destinataire = get_object_or_404(
         Destinataire, message__pk=message_id, user=user)
-    destinataire.lu = True
-    destinataire.save()
+    message = get_object_or_404(Message, pk = message_id)
+    if not destinataireList.lu:
+        destinataire.lu = True
+        destinataire.save()
+        message.luPar += "{} {};".format(user.first_name.title(),user.last_name.upper())
+        message.save()
     return HttpResponse("read")
 
 
@@ -278,6 +274,8 @@ def colleurDonnees(request):
     if not checkcolleur(user):
         return HttpResponseForbidden("not authenticated")
     classes = user.colleur.classes.all()
+    colleurclasses = Colleur.objects.listeColleurClasse(user.colleur)
+    colleurmatieres = Colleur.objects.listeColleurMatiere(user.colleur)
     creneaux = list(Creneau.objects.filter(classe__in=classes).annotate(nb=Count(
         'colle')).filter(nb__gt=0).values_list('pk', 'classe__pk', 'jour', 'heure', 'salle'))
     semaines = list(Semaine.objects.filter(
@@ -297,18 +295,11 @@ def colleurDonnees(request):
         eleves.extend(eleves_classe)
     colleurs = [[colleur[0].pk, colleur[0].user.first_name.title() + " " + colleur[0].user.last_name.upper(), colleur[1], order]
                 for order, colleur in enumerate(classe.loginsColleurs())]
-    messagesrecusQuery = Destinataire.objects.filter(user=user).values('lu', 'reponses', 'message__pk', 'message__date',
-                                                                  'message__auteur__first_name', 'message__auteur__last_name', 'message__luPar',
-                                                                  'message__listedestinataires', 'message__titre', 'message__corps').order_by('-message__date')
-    messagesrecus = [[x['message__pk'], x['message__auteur__first_name'].title()+" "+x['message__auteur__last_name'].upper(),
-    x['message__date'], x['message__titre'], x['message__corps'], x['lu'], x['message__luPar'], x['message__listedestinataires'],
-    x['reponses']] for x in messagesrecusQuery]
-    messagesenvoyesQuery = Message.objects.filter(auteur=user, hasAuteur=True).distinct().values(
-        'date', 'auteur__first_name', 'auteur__last_name', 'luPar', 'listedestinataires', 'titre', 'corps', 'pk').order_by('-date')
-    messagesenvoyes = [[x['pk'], x['auteur__first_name'].title()+" "+x['auteur__last_name'].upper(), x['date'], x['titre'],
-    x['corps'], x['luPar'], x['listedestinataires']] for x in messagesenvoyesQuery]
+    pp = Classe.objects.filter(profprincipal = user.colleur)
+    profs = Prof.objects.filter(classe__in = user.colleur.classes.all(), matiere__in = user.colleur.matieres.all()).values_list('colleur__pk','classe__pk','matiere__pk')
+    profspp = Prof.objects.filter(classe__in = pp).values_list('colleur__pk','classe__pk','matiere__pk')
 
-    return HttpResponse(json.dumps({'messagesenvoyes': messagesenvoyes, 'messages': messagesrecus,'notes': Note.objects.listeNotesApp(user.colleur),
+    return HttpResponse(json.dumps({'colleurmatieres': colleurmatieres, 'colleurclasses': colleurclasses,'classes': list(classes.values_list('id','nom')),'pp': list(pp.values_list('id')), 'profs': list(profs | profspp), 'notes': Note.objects.listeNotesApp(user.colleur),
         'programmes': list(Programme.objects.filter(classe__in=user.colleur.classes.all()).order_by('-semaine__lundi').values_list('matiere__pk',
         'classe__pk', 'semaine__numero', 'semaine__lundi', 'titre', 'detail', 'fichier')), 'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
                                     'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs}, default=date_serial))
@@ -332,10 +323,16 @@ def addsinglegrade(request):
         return HttpResponseForbidden("not authenticated")
     if request.method != 'POST' or 'week' not in request.POST or 'day' not in request.POST or 'hour' not in request.POST \
         or 'student' not in request.POST or 'catchup' not in request.POST or 'date' not in request.POST or 'grade' not in request.POST \
-        or 'comment' not in request.POST or 'subject' not in request.POST or 'classe' not in request.POST or 'pk' not in request.POST:
+        or 'comment' not in request.POST or 'subject' not in request.POST or 'classe' not in request.POST or 'pk' not in request.POST \
+        or 'draft_id' not in request.POST:
         raise Http404
     if request.POST['pk'] != "0":
         note = get_object_or_404(Note, pk=int(request.POST['pk']))
+    elif request.POST['draft_id'] != "0":
+        try:
+            note = Note.objects.get(pk=int(request.POST['draft_id']))
+        except Exception:
+            note = Note()
     else:
         note = Note()
     note.semaine = get_object_or_404(Semaine, numero = int(request.POST['week']))
@@ -447,3 +444,130 @@ def addgroupgrades(request):
         program = ""
     date_colle = int(datetime.combine(note1.date_colle, time(note1.heure // 4, 15 * (note1.heure % 4))).replace(tzinfo=timezone.utc).timestamp())
     return HttpResponse(json.dumps({'pk1': note1.pk, 'pk2': note2.pk, 'pk3': note3.pk, 'program': program, 'date': date_colle}, default=date_serial))
+
+@csrf_exempt
+def adddraftgrades(request):
+    """ajoute les notes d'un groupe dans la base de donnée"""
+    user = request.user
+    if not checkcolleur(user):
+        return HttpResponseForbidden("not authenticated")
+    if request.method != 'POST' or 'draftCount' not in request.POST:
+        raise Http404
+    listeNotesRow = [] # rowid des brouillons sucessifs
+    listeNotesId = [] # id des brouillons une fois sauvegardés (si ils le sont, sinon 0)
+    try:
+        nbNotes = int(request.POST['draftCount'])
+        for i in range(nbNotes):
+            rowid = int(request.POST['row{}'.format(i)])
+            listeNotesRow.append(rowid)
+            draft_id = int(request.POST['draft{}'.format(i)])
+            if draft_id in listeNotesId: # si on a déjà enregistré un brouillon pour cette note, on n'enregistre pas le suivant
+                listeNotesId.append(0)
+            else: # sinon on essaie d'enregistrer la note
+                if draft_id != 0:
+                    try:
+                        note = Note.objects.get(pk=draft_id)
+                    except DoesNotExist:
+                        note = Note()
+                else:
+                    note = Note()
+                try:
+                    note.semaine = Semaine.objects.get(numero = int(request.POST['week{}'.format(i)]))
+                    note.matiere = Matiere.objects.get(pk = int(request.POST['subject{}'.format(i)]))
+                    note.classe = Classe.objects.get(pk = int(request.POST['classe{}'.format(i)]))
+                    note.jour = int(request.POST['day{}'.format(i)])
+                    note.heure = int(request.POST['hour{}'.format(i)])
+                    note.note = int(request.POST['grade{}'.format(i)])
+                    note.rattrapee = False if request.POST['catchup{}'.format(i)] == "false" else True
+                    eleve_id = int(request.POST['student{}'.format(i)])
+                    note.eleve = None if eleve_id == 0 else Eleve.objects.get(pk = eleve_id)
+                    date_colle = int(request.POST['date{}'.format(i)])
+                except Exception:
+                    listeNotesId.append(0)
+                    continue
+                note.colleur = user.colleur
+                if note.classe not in user.colleur.classes.all() or note.matiere not in user.colleur.matieres.all():
+                    listeNotesId.append(0)
+                    continue
+                if not note.rattrapee:
+                    note.date_colle = note.semaine.lundi + timedelta(days = note.jour)
+                else:
+                    note.date_colle = datetime.utcfromtimestamp(date_colle)
+                nbNotesColleur=Note.objects.filter(date_colle=note.date_colle,colleur=note.colleur,heure=note.heure)
+                if note.pk:
+                    nbNotesColleur = nbNotesColleur.exclude(pk=note.pk)
+                nbNotesColleur = nbNotesColleur.count()
+                if nbNotesColleur >= 3:
+                    listeNotesId.append(0)
+                    continue
+                nbNotesEleve=Note.objects.filter(semaine=note.semaine,matiere=note.matiere,colleur=user.colleur,eleve=note.eleve).count()
+                if nbNotesEleve !=0 and note.eleve is not None and not note.pk:
+                    listeNotesId.append(0)
+                    continue
+                try:
+                    note.commentaire = request.POST['comment{}'.format(i)]
+                except Exception:
+                    listeNotesId.append(0)
+                    continue
+                note.save()
+                listeNotesId.append(note.pk)
+    except Exception :
+        raise Http404
+    return HttpResponse(json.dumps([listeNotesRow,listeNotesId]))
+
+@csrf_exempt
+def addmessage(request):
+    """ajoute un message emvoyé par l"utilisateur (colleur)"""
+    user = request.user
+    if not checkcolleur(user):
+        return HttpResponseForbidden("not authenticated")
+    if request.method != 'POST' or 'title' not in request.POST or 'body' not in request.POST or 'recipients' not in request.POST:
+        raise Http404
+    title = request.POST['title']
+    body = request.POST['body']
+    destinataires = set()
+    try:
+        destinataireList = [[int(x) for x in y.split("-")] for y in request.POST['recipients'].split("_")]
+    except Exception:
+        raise Http404
+    for genre, pk, matiere_pk in destinataireList:
+        if genre == 1: # élève
+            try:
+                destinataires.add(User.objects.get(eleve__pk = pk))
+            except Exception as e:
+                pass
+        elif genre == 2: # colleur
+            try:
+                destinataires.add(User.objects.get(colleur__pk = pk))
+            except Exception:
+                pass
+        elif genre == 3: # groupe
+            try:
+                destinataires |= {eleve.user for eleve in Eleve.objects.filter(groupe__pk = pk)}
+            except Exception as e:
+                return HttpResponse(str(e))
+        elif genre == 4: # tous les élèves d'une classe
+            try:
+                destinataires |= {eleve.user for eleve in Eleve.objects.filter(classe__pk = pk)}
+            except Exception:
+                pass
+        elif genre == 5: # tous les profs d'une classe
+            try:
+                destinataires |= {colleur.user for colleur in Colleur.objects.filter(colleurprof__classe__pk = pk)}
+            except Exception:
+                pass
+        elif genre == 6: # tous les colleurs d'une classe et d'une matière
+            try:
+                destinataires |= {colleur.user for colleur in Colleur.objects.filter(classes__pk = pk, matieres__pk = matiere_pk)}
+            except Exception:
+                pass
+    if not destinataires:
+            return HttpResponse("Il faut au moins un destinataire")
+    else:
+        destinataires.discard(user)
+        message = Message(auteur=user,listedestinataires="; ".join(["{} {}".format(destinataire.first_name.title(),destinataire.last_name.upper()) for destinataire in destinataires]),titre=request.POST['title'],corps=request.POST['body'])
+        message.save()
+        for personne in destinataires:
+            Destinataire(user=personne,message=message).save()
+    return HttpResponse(json.dumps({'pk': message.pk, 'date': int(message.date.strftime(
+        '%s')), 'listedestinataires': message.listedestinataires, 'titre': message.titre, 'corps': message.corps}))

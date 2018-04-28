@@ -11,7 +11,7 @@ class ConnexionForm(forms.Form):
 
 class GroupeMultipleChoiceField(forms.ModelMultipleChoiceField):
 	def label_from_instance(self,groupe,*args,**kwargs):
-		return groupe.nom+": "+"/".join([str(eleve.user.last_name.upper()) for eleve in groupe.groupeeleve.all()])
+		return "{}: ".format(groupe.nom)+"/".join([str(eleve.user.last_name.upper()) for eleve in groupe.groupeeleve.all()])
 
 class UserForm(forms.Form):
 	email = forms.EmailField(label="Email",max_length=75,required=False)
