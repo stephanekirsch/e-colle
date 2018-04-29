@@ -46,7 +46,7 @@ INTERNAL_IPS= ['127.0.0.1']
 SECRET_KEY = 'cg(ip)m3z77z3v!5wo&cl8^4!rk9t0++5wld+@i(kifb!z-k0p'
 
 # fuseau horaire, à changer le cas échéant
-TIME_ZONE = 'America/Cayenne'
+TIME_ZONE = 'Europe/Paris'
 
 DATABASES = {
     'default': {
