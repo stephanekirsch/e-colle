@@ -81,27 +81,18 @@ def connect(request):
     else:
         return HttpResponseForbidden("access denied")
 
+# ------------------------- PARTIE ELEVES ----------------------------
 
-# ------------------------- PARTIE MIXTE ----------------------------
-
-def agenda(request):
+def agendaprograms(request):
     """renvoie l'agenda des colles de l'utilisateur connecté au format json"""
     user = request.user
-    if checkeleve(user):
-        agendas = Colle.objects.agendaEleve(user.eleve, False)
-        return HttpResponse(json.dumps([{'time': int(datetime.combine(agenda['jour'], time(agenda['heure'] // 4, 15 * (agenda['heure'] % 4))).replace(tzinfo=timezone.utc).timestamp()),
-                                         'room':agenda['salle'],
-                                         'week':agenda['numero'],
-                                         'subject':agenda['nom_matiere'],
-                                         'color':agenda['couleur'],
-                                         'colleur':agenda['prenom'].title() + " " + agenda['nom'].upper(),
-                                         'program':agenda['titre'],
-                                         'file':agenda['fichier']} for agenda in agendas]))
-    if checkcolleur(user):
-        return HttpResponse(json.dumps(Colle.objects.agenda(user.colleur,False), default=date_serial))
-    return HttpResponseForbidden("not authenticated")
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
+    agendas = Colle.objects.agendaEleveApp(user.eleve)
+    programmes = Programme.objects.filter(classe=user.eleve.classe).values('pk',
+        'matiere__couleur', 'matiere__nom', 'semaine__numero', 'semaine__lundi', 'titre', 'fichier', 'detail').order_by('-semaine__lundi', 'matiere__nom')
 
-# ------------------------- PARTIE ELEVES ----------------------------
+    return HttpResponse(json.dumps({'agendas': agendas, 'programs': list(programmes)}, default=date_serial))
 
 def grades(request):
     """renvoie les notes de l'utilisateur connecté au format json"""
@@ -151,15 +142,6 @@ def colles(request):
     return HttpResponse(json.dumps({'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
                                     'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs}, default=date_serial))
 
-def programs(request):
-    """renvoie les programmes de l'utilisateur connecté au format json"""
-    user = request.user
-    if not checkeleve(user):
-        return HttpResponseForbidden("not authenticated")
-    programmes = Programme.objects.filter(classe=user.eleve.classe).values(
-        'matiere__couleur', 'matiere__nom', 'semaine__numero', 'semaine__lundi', 'titre', 'fichier', 'detail').order_by('-semaine__lundi', 'matiere__nom')
-    return HttpResponse(json.dumps(list(programmes), default=date_serial))
-
 # ------------------------- PARTIE MESSAGES ----------------------------
 
 def messages(request):
@@ -199,7 +181,7 @@ def readmessage(request, message_id):
     destinataire = get_object_or_404(
         Destinataire, message__pk=message_id, user=user)
     message = get_object_or_404(Message, pk = message_id)
-    if not destinataireList.lu:
+    if not destinataire.lu:
         destinataire.lu = True
         destinataire.save()
         message.luPar += "{} {};".format(user.first_name.title(),user.last_name.upper())

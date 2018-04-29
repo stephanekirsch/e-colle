@@ -693,9 +693,9 @@ class ColleManager(models.Manager):
 			del precolles[:longueur]
 		return jours,creneaux,colles,semaines
 
-	def agenda(self,colleur,detail=True):
+	def agenda(self,colleur):
 		semainemin = date.today()+timedelta(days=-28)
-		requete = "SELECT COUNT(n.id) nbnotes, co.id pk, g.nom nom_groupe, cl.nom nom_classe, {} jour, s.numero, cr.heure heure, cr.salle salle, m.id, m.nom nom_matiere, m.couleur couleur, m.lv lv, m.temps, u2.first_name prenom_eleve, u2.last_name nom_eleve, p.titre titre, {} p.fichier fichier\
+		requete = "SELECT COUNT(n.id) nbnotes, co.id pk, g.nom nom_groupe, cl.nom nom_classe, {} jour, s.numero, cr.heure heure, cr.salle salle, m.id, m.nom nom_matiere, m.couleur couleur, m.lv lv, m.temps, u2.first_name prenom_eleve, u2.last_name nom_eleve, p.titre titre, p.detail detail, p.fichier fichier\
 				   FROM accueil_colle co\
 				   INNER JOIN accueil_creneau cr\
 				   ON co.creneau_id = cr.id\
@@ -719,7 +719,7 @@ class ColleManager(models.Manager):
 				   ON n.matiere_id = m.id AND n.colleur_id = c.id AND n.semaine_id=s.id AND n.jour = cr.jour AND n.heure = cr.heure\
 				   WHERE c.id=%s AND s.lundi >= %s\
 				   GROUP BY co.id, g.nom, g.id, cl.nom, s.id, cr.jour, cr.heure, cr.salle, m.id, m.nom, m.couleur, m.lv, m.temps, u2.first_name, u2.last_name, p.titre, p.detail, p.fichier\
-				   ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'),"p.detail detail," if detail else "")
+				   ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'))
 		with connection.cursor() as cursor:
 			cursor.execute(requete,(colleur.pk,semainemin))
 			colles = dictfetchall(cursor)
@@ -731,8 +731,8 @@ class ColleManager(models.Manager):
 		"eleve": None if colle["prenom_eleve"] is None else "{} {}".format(colle['prenom_eleve'].title(),colle['nom_eleve'].upper()), "titre":colle["titre"], "fichier":colle["fichier"], "groupe": None if colle["nom_groupe"] is None else groupes[colle["pk"]],
 		"detail":colle["detail"] if detail else "", "temps": colle["temps"], "pk": colle["pk"]} for colle in colles]
 
-	def agendaEleve(self,eleve,detail=True):
-		requete = "SELECT s.lundi lundi, s.numero, {} jour, cr.heure heure, cr.salle salle, m.nom nom_matiere, m.couleur couleur, u.first_name prenom, u.last_name nom, p.titre titre, {} p.fichier fichier\
+	def agendaEleve(self,eleve):
+		requete = "SELECT s.lundi lundi, s.numero, {} jour, cr.heure heure, cr.salle salle, m.nom nom_matiere, m.couleur couleur, u.first_name prenom, u.last_name nom, p.titre titre, p.detail detail, p.fichier fichier\
 				   FROM accueil_colle co\
 				   INNER JOIN accueil_creneau cr\
 				   ON co.creneau_id = cr.id\
@@ -751,11 +751,44 @@ class ColleManager(models.Manager):
 				   LEFT OUTER JOIN accueil_programme p\
 				   ON (p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = %s)\
 				   WHERE e.id=%s AND s.lundi >= %s\
-				   ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'),'p.detail detail,' if detail else '')
+				   ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'))
 		with connection.cursor() as cursor:
 			cursor.execute(requete,(eleve.classe.pk,eleve.pk,date.today()+timedelta(days=-27)))
 			colles = dictfetchall(cursor)
 		return colles
+
+	def agendaEleveApp(self,eleve):
+		requete = "SELECT s.numero, {} jour, cr.heure heure, cr.salle salle, m.nom nom_matiere, m.couleur couleur, u.first_name prenom, u.last_name nom, p.id id_programme\
+				   FROM accueil_colle co\
+				   INNER JOIN accueil_creneau cr\
+				   ON co.creneau_id = cr.id\
+				   INNER JOIN accueil_matiere m\
+				   ON co.matiere_id = m.id\
+				   INNER JOIN accueil_semaine s\
+				   ON co.semaine_id=s.id\
+				   INNER JOIN accueil_colleur c\
+				   ON co.colleur_id=c.id\
+				   INNER JOIN accueil_user u\
+				   ON u.colleur_id=c.id\
+				   LEFT OUTER JOIN accueil_groupe g\
+				   ON co.groupe_id = g.id\
+				   INNER JOIN accueil_eleve e\
+				   ON e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id) OR e.id=co.eleve_id\
+				   LEFT OUTER JOIN accueil_programme p\
+				   ON (p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = %s)\
+				   WHERE e.id=%s AND s.lundi >= %s\
+				   ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'))
+		with connection.cursor() as cursor:
+			cursor.execute(requete,(eleve.classe.pk,eleve.pk,date.today()+timedelta(days=-27)))
+			colles = dictfetchall(cursor)
+		return [{'time': int(datetime.combine(agenda['jour'], time(agenda['heure'] // 4, 15 * (agenda['heure'] % 4))).replace(tzinfo=timezone.utc).timestamp()),
+                                     'room':agenda['salle'],
+                                     'week':agenda['numero'],
+                                     'subject':agenda['nom_matiere'],
+                                     'color':agenda['couleur'],
+                                     'colleur':agenda['prenom'].title() + " " + agenda['nom'].upper(),
+                                     'program':agenda['id_programme']
+                                     } for agenda in colles]
 
 	def compatEleve(self,id_classe):
 		requete = "SELECT COUNT(DISTINCT co.id) nbColles, COUNT(g.id), s.numero numero, cr.jour jour, cr.heure heure, u.first_name prenom, u.last_name nom\
