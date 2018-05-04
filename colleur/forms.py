@@ -3,7 +3,7 @@ from django import forms
 from accueil.models import Colleur, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS
 from django.db.models import Q
 from datetime import date, timedelta
-from django.forms.extras.widgets import SelectDateWidget
+from django.forms.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from xml.etree import ElementTree as etree
 from ecolle.settings import RESOURCES_ROOT
