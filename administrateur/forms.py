@@ -77,8 +77,8 @@ class ColleurFormSet(forms.BaseFormSet):
 			for colleur,form in zip(self.chaine_colleurs,self.forms):
 				colleur.grade=form.cleaned_data['grade']
 				colleur.etablissement=form.cleaned_data['etablissement']
-				colleur.classes=form.cleaned_data['classe']
-				colleur.matieres=form.cleaned_data['matiere']
+				colleur.classes.set(form.cleaned_data['classe'])
+				colleur.matieres.set(form.cleaned_data['matiere'])
 				colleur.save()
 				user=colleur.user
 				user.username=random_string()
