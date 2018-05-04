@@ -21,7 +21,7 @@ def random_string():
 
 def is_admin(user):
 	"""Renvoie True si l'utilisateur courant est l'administateur, False sinon"""
-	return user.username=="admin"
+	return user.is_authenticated and user.username=="admin"
 
 def ip_filter(func):
 	"""Décorateur qui combine deux vérifications: l'utilisateur courant est l'administrateur

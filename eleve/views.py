@@ -13,7 +13,7 @@ from django.http import Http404
 
 def is_eleve(user):
 	"""Renvoie True si l'utilisateur est un élève, False sinon"""
-	if user.is_authenticated():
+	if user.is_authenticated:
 		return bool(user.eleve)
 	return False
 

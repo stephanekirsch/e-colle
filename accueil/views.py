@@ -12,7 +12,7 @@ import re
 def home(request):
 	"""Renvoie la vue d'accueil ou, si l'utilisateur est déjà identifié, redirige vers la section adéquate"""
 	user=request.user
-	if user.is_authenticated():
+	if user.is_authenticated:
 		if user.username=="admin":
 			return redirect('action_admin')
 		elif user.username=="Secrétariat":

@@ -15,7 +15,7 @@ import csv
 
 def is_secret(user):
 	"""Renvoie True si l'utilisateur est le secrétariat, False sinon"""
-	return user.is_authenticated() and user.username=="Secrétariat"
+	return user.is_authenticated and user.username=="Secrétariat"
 
 def is_secret_ects(user):
 	"""Renvoie True si l'utilisateur est le secrétariat et ECTS activé, False sinon"""

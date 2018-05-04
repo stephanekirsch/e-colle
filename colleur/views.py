@@ -17,7 +17,7 @@ from ecolle.settings import MEDIA_ROOT, MEDIA_URL, IMAGEMAGICK
 
 def is_colleur(user):
 	"""Renvoie True si l'utilisateur est authentifié et est un colleur, False sinon"""
-	if user.is_authenticated() and user.is_active:
+	if user.is_authenticated and user.is_active:
 		return bool(user.colleur)
 	return False
 

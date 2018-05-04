@@ -27,7 +27,7 @@ def check(request):
 
 def checkeleve(user):
     """renvoie une erreur 403 si l'utilisateur n'est pas un élève connecté, avec une classe"""
-    if not user.is_authenticated():
+    if not user.is_authenticated:
         return False
     if not user.is_active:
         return False
@@ -39,7 +39,7 @@ def checkeleve(user):
 
 def checkcolleur(user):
     """renvoie une erreur 403 si l'utilisateur n'est pas un élève connecté, avec une classe"""
-    if not user.is_authenticated():
+    if not user.is_authenticated:
         return False
     if not user.is_active:
         return False

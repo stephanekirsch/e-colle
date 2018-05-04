@@ -57,19 +57,19 @@ def matiereNext(iterateur, nb):
             mat=["exception"]
     return "<br>".join(matieres)
 
-@register.assignment_tag
+@register.simple_tag
 def get_mathjax():
     return Config.objects.get_config().mathjax
 
-@register.assignment_tag
+@register.simple_tag
 def get_ects():
     return Config.objects.get_config().ects
 
-@register.assignment_tag
+@register.simple_tag
 def get_modifgroupe():
     return Config.objects.get_config().modif_secret_groupe
 
-@register.assignment_tag
+@register.simple_tag
 def get_classes():
     return Classe.objects.all()
 
