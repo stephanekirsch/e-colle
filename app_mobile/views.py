@@ -20,9 +20,9 @@ def date_serial(obj):
 
 
 def check(request):
-    """renvoie la chaîne de caractère 'success'
+    """renvoie la version de e-colle 
     pour indiquer à l'app mobile que le serveur fonctionne"""
-    return HttpResponse("success")
+    return HttpResponse("2.0")
 
 
 def checkeleve(user):
