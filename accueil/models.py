@@ -176,9 +176,11 @@ class Classe(models.Model):
 			dictEleves[eleve.pk]=login
 		return dictEleves
 
-	def loginsColleurs(self,semin=None,semax=None):
+	def loginsColleurs(self,semin=None,semax=None,colleur=None):
 		"""renvoie la liste des logins des colleurs de la classe, qui ont des colles entre les semaines semin et semax, ordonnés par ordre alphabétique"""
-		if semin is None or semax is None:
+		if colleur is not None:
+			colleurs = Colleur.objects.filter(user__is_active = True, classes__in = colleur.classes.all()).distinct().annotate(login=Upper(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1)))).order_by('login','user__last_name','user__first_name')
+		elif semin is None or semax is None:
 			colleurs = self.colleur_set.filter(user__is_active = True).annotate(login=Upper(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1)))).order_by('login','user__last_name','user__first_name')
 		else:
 			colleurs = self.colleur_set.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi)).distinct().annotate(login=Upper(Concat(Substr('user__first_name',1,1),Substr('user__last_name',1,1)))).order_by('login', 'user__last_name','user__first_name')

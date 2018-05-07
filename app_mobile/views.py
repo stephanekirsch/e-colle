@@ -276,7 +276,7 @@ def colleurDonnees(request):
                0 if not eleve[0].lv1 else eleve[0].lv1.pk, 0 if not eleve[0].lv2 else eleve[0].lv2.pk, classe.pk, order] for order, eleve in enumerate(classe.loginsEleves())]
         eleves.extend(eleves_classe)
     colleurs = [[colleur[0].pk, colleur[0].user.first_name.title() + " " + colleur[0].user.last_name.upper(), colleur[1], order]
-                for order, colleur in enumerate(classe.loginsColleurs())]
+                for order, colleur in enumerate(classe.loginsColleurs(colleur = user.colleur))]
     pp = Classe.objects.filter(profprincipal = user.colleur)
     profs = Prof.objects.filter(classe__in = user.colleur.classes.all(), matiere__in = user.colleur.matieres.all()).values_list('colleur__pk','classe__pk','matiere__pk')
     profspp = Prof.objects.filter(classe__in = pp).values_list('colleur__pk','classe__pk','matiere__pk')
