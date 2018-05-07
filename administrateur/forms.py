@@ -216,6 +216,11 @@ class MatiereForm(forms.ModelForm):
 		model = Matiere
 		fields=['nom','lv','couleur','temps']
 
+	def save(self):
+		classe = super().save(commit=False)
+		classe.nomcomplet = str(classe)
+		classe.save()
+
 class EtabForm(forms.ModelForm):
 	class Meta:
 		model = Etablissement

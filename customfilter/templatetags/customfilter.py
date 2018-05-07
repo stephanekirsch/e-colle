@@ -38,25 +38,6 @@ def image(fichier):
 def tzip(l1, l2):
     return zip(l1,l2)
 
-@register.filter
-def classeNext(iterateur, nb):
-    if nb == 0:
-        next(iterateur)
-        return ""
-    return "<br>".join([next(iterateur) for i in range(nb)])
-
-@register.filter
-def matiereNext(iterateur, nb):
-    dico = {20:'Gr',30:'So',60:'Cl'}
-    matieres=[""]*nb
-    for i in range(nb):
-        try:
-            mat = next(iterateur)
-            matieres[i] = mat['matieres__nom'].title() + "({})".format("/".join([dico[mat['matieres__temps']]] + (["LV{}".format(mat['matieres__lv'])] if mat['matieres__lv'] else []))) 
-        except Exception:
-            mat=["exception"]
-    return "<br>".join(matieres)
-
 @register.simple_tag
 def get_mathjax():
     return Config.objects.get_config().mathjax

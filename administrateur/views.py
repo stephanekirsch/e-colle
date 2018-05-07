@@ -282,8 +282,8 @@ def colleur(request):
 			return redirect('gestion_colleur')
 		elif "modifier" in request.POST:
 			return redirect('modif_colleur', "-".join([str(colleur.pk) for colleur in form2.cleaned_data['colleur']]))
-	colleurs, matieres, classes = Colleur.objects.listeColleurs(matiere,classe)
-	return render (request,'administrateur/colleur.html',{'form':form,'form2':form2,'colleurs':colleurs,'matieres':iter(matieres), 'classes':iter(classes), 'listegrades':["inconnu","certifié","bi-admissible","agrégé","chaire supérieure"]})
+	colleurs = Colleur.objects.listeColleurs(matiere,classe)
+	return render (request,'administrateur/colleur.html',{'form':form,'form2':form2,'colleurs':colleurs, 'listegrades':["inconnu","certifié","bi-admissible","agrégé","chaire supérieure"]})
 
 @ip_filter
 def colleurmodif(request, chaine_colleurs):

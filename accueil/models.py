@@ -45,6 +45,18 @@ def date_moins_date(date1,date2):
 	else:
 		return "" # à compléter par ce qu'il faut dans le cas ou vous utilisez un SGBD qui n'est ni mysql, ni postgresql, ni sqlite ni oracle
 
+def group_concat(arg):
+	"""renvoie une chaîne de caractères correspondant à la syntaxe SQL qui permet d'utiliser une fonction d'agrégation qui concatène des chaînes"""
+	if BDD == 'postgresql' or BDD == 'postgresql_psycopg2':
+		return "STRING_AGG(DISTINCT {0:}, ',' ORDER BY {0:})".format(arg)
+	elif BDD == 'mysql':
+		return "GROUP_CONCAT(DISTINCT {0:} ORDER BY {0:})".format(arg)
+	elif BDD == 'sqlite3':
+		return "GROUP_CONCAT(DISTINCT {})".format(arg)
+	else:
+		return "" # à compléter par ce qu'il faut dans le cas ou vous utilisez un SGBD qui n'est ni mysql, ni postgresql, ni sqlite
+
+
 class ConfigManager(models.Manager):
 	def get_config(self):
 		try:
@@ -83,6 +95,7 @@ class Matiere(models.Model):
 		('#20B2AA',"Vert marin clair"),('#008B8B',"Cyan foncé"),('#008080',"Vert sarcelle"),('#5F9EA0',"Bleu pétrole"),('#B0E0E6',"Bleu poudre"),('#ADD8E6',"Bleu clair"),('#87CEFA',"Bleu azur clair"),('#87CEEB',"Bleu azur"),('#00BFFF',"Bleu azur profond"),
 		('#1E90FF',"Bleu toile"),('#B0C4DE',"Bleu acier clair"),('#6495ED',"Bleuet"),('#4682B4',"Bleu acier"),('#4169E1',"Bleu royal"),('#0000FF',"Bleu"),('#0000CD',"Bleu moyen"),('#00008B',"Bleu foncé"),('#000080',"Bleu marin"),('#191970',"Bleu de minuit"),)
 	nom = models.CharField(max_length = 20)
+	nomcomplet = models.CharField(max_length = 30, default="")
 	couleur = models.CharField(max_length = 7, choices=LISTE_COULEURS, default='#696969')
 	CHOIX_TEMPS = ((20,'20 min (par groupe de 3)'),(30,'30 min (solo)'),(60,'60 min (informatique)'))
 	temps = models.PositiveSmallIntegerField(choices=CHOIX_TEMPS,verbose_name="minutes/colle/élève",default=20)
@@ -281,7 +294,7 @@ class ColleurManager(models.Manager):
 		if classe is not None:
 			base = base.filter(classes=classe)
 		# pour éviter de multiples accès à la BDD (même avec optimisation avec prefetch_related)
-		# on récupère en 3 requêtes les colleurs avec leur(s) classe(s) et leur(s) matiere(s).
+		# on fait la requête à la main avec fonction d'aggrégation pour concaténer les classes/matières 
 		if matiere is None:
 			if classe is None:
 				where = ""
@@ -293,8 +306,7 @@ class ColleurManager(models.Manager):
 			else:
 				where = "WHERE m.id = %s AND cl.id = %s"
 		requete = """SELECT u.first_name prenom, u.last_name nom, u.username identifiant, u.email email, u.is_active actif,
-				  c.grade grade, c.id id, e.nom etablissement,u.id user_id, COUNT(DISTINCT m2.id) nb_matieres, COUNT(DISTINCT cl2.id) nb_classes FROM
-				  accueil_colleur c
+				  c.grade grade, c.id id, e.nom etablissement, u.id user_id, {}, {} FROM accueil_colleur c
 				  INNER JOIN accueil_user u
 				  ON u.colleur_id = c.id
 				  LEFT OUTER JOIN accueil_etablissement e
@@ -312,36 +324,19 @@ class ColleurManager(models.Manager):
 				  {}
 				  GROUP BY u.id, c.id, e.id
 				  ORDER BY u.last_name, u.first_name, c.id
-				  """.format("" if matiere is None else """LEFT OUTER JOIN accueil_colleur_matieres cm
+				  """.format(group_concat("m2.nomcomplet") + " matieres", group_concat('cl2.nom') + " classes", "" if matiere is None else """LEFT OUTER JOIN accueil_colleur_matieres cm
 				  ON cm.colleur_id = c.id
 				  LEFT OUTER JOIN accueil_matiere m
 				  ON cm.matiere_id = m.id""","" if classe is None else """LEFT OUTER JOIN accueil_colleur_classes cc
 				  ON cc.colleur_id = c.id
 				  LEFT OUTER JOIN accueil_classe cl
 				  ON cc.classe_id = cl.id""", where)
-		requete2 = """SELECT m.nom, m.temps, m.lv 
-				  FROM accueil_colleur c
-				  INNER JOIN accueil_user u
-				  ON u.colleur_id = c.id
-				  {}
-				  LEFT OUTER JOIN accueil_colleur_matieres cm2
-				  ON cm2.colleur_id = c.id
-				  LEFT OUTER JOIN accueil_matiere m2
-				  ON cm2.matiere_id = m2.id
-				  {}
-				  GROUP BY u.id, c.id
-				  ORDER BY u.last_name, u.first_name, u.id
-				  """.format("" if matiere is None else """LEFT OUTER JOIN accueil_colleur_matieres cm
-				  ON cm.colleur_id = c.id
-				  LEFT OUTER JOIN accueil_matiere m
-				  ON cm.matiere_id = m.id""", where)
 		with transaction.atomic():
+			arguments = [x.id for x in (matiere, classe) if x is not None]
 			with connection.cursor() as cursor:
-				cursor.execute(requete,[x.id for x in (matiere, classe) if x is not None])
+				cursor.execute(requete, arguments)
 				colleurs = dictfetchall(cursor)
-			matieres = base.values('matieres__nom','matieres__temps','matieres__lv').order_by('user__last_name','user__first_name','user__pk','matieres__nom')
-			classes = base.values_list('classes__nom',flat=True).order_by('user__last_name','user__first_name','user__pk','classes__nom')
-		return colleurs,matieres,classes
+		return colleurs
 
 
 class Colleur(models.Model):
