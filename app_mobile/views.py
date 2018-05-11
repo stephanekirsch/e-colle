@@ -2,7 +2,7 @@ from django.shortcuts import HttpResponse, get_object_or_404
 from django.http import HttpResponseForbidden, Http404
 from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
-from accueil.models import Note, Programme, Colle, Message, Destinataire, Creneau, Semaine, Groupe, Matiere, Classe, Eleve, User, Prof, Colleur
+from accueil.models import Config, Note, Programme, Colle, Message, Destinataire, Creneau, Semaine, Groupe, Matiere, Classe, Eleve, User, Prof, Colleur
 from django.utils import timezone
 import json
 from datetime import date, datetime, time, timedelta
@@ -22,11 +22,16 @@ def date_serial(obj):
 def check(request):
     """renvoie la version de e-colle 
     pour indiquer à l'app mobile que le serveur fonctionne"""
+    if not Config.objects.get_config().app_mobile:
+        raise Http404
     return HttpResponse("2.0")
 
 
 def checkeleve(user):
-    """renvoie une erreur 403 si l'utilisateur n'est pas un élève connecté, avec une classe"""
+    """renvoie False si l'utilisateur n'est pas un élève connecté, avec une classe, True sinon et lève une erreur 404
+    si l'app_mobile n'est pas activée dans la configuration"""
+    if not Config.objects.get_config().app_mobile:
+        raise Http404
     if not user.is_authenticated:
         return False
     if not user.is_active:
@@ -38,7 +43,10 @@ def checkeleve(user):
     return True
 
 def checkcolleur(user):
-    """renvoie une erreur 403 si l'utilisateur n'est pas un élève connecté, avec une classe"""
+    """renvoie False si l'utilisateur n'est pas un colleur connecté, True sinon et lève une erreur 404
+    si l'app_mobile n'est pas activée dans la configuration"""
+    if not Config.objects.get_config().app_mobile:
+        raise Http404
     if not user.is_authenticated:
         return False
     if not user.is_active:
@@ -52,6 +60,8 @@ def checkcolleur(user):
 def connect(request):
     """connecte l'élève/le colleur si les identifiants sont exacts, et renvoie le cookie de session
     ainsi que certaines données de l'utilisateur"""
+    if not Config.objects.get_config().app_mobile:
+        raise Http404
     if request.method == 'POST':
         user = authenticate(username=request.POST['username'],
                             password=request.POST['password'])
@@ -148,7 +158,6 @@ def messages(request):
     """renvoie les messages reçus par l'utilisateur connecté au format json"""
     user = request.user
     if not checkeleve(user) and not checkcolleur(user):
-        return HttpResponseForbidden("not authenticated")
         return HttpResponseForbidden("not authenticated")
     messagesrecusQuery = Destinataire.objects.filter(user=user).values('lu', 'reponses', 'message__pk', 'message__date',
                                                                   'message__auteur__first_name', 'message__auteur__last_name', 'message__luPar',
