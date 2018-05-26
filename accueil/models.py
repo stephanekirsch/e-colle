@@ -707,6 +707,8 @@ class ColleManager(models.Manager):
 				   ON co.groupe_id = g.id\
 				   LEFT OUTER JOIN accueil_eleve e\
 				   ON co.eleve_id = e.id\
+				   LEFT OUTER JOIN accueil_eleve e2\
+				   ON e2.groupe_id = g.id\
 				   LEFT OUTER JOIN accueil_user u2\
 				   ON u2.eleve_id = e.id\
 				   LEFT OUTER JOIN accueil_classe cl\
@@ -714,7 +716,7 @@ class ColleManager(models.Manager):
 				   LEFT OUTER JOIN accueil_programme p\
 				   ON (p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = cl.id)\
 				   LEFT OUTER JOIN accueil_note n\
-				   ON n.matiere_id = m.id AND n.colleur_id = c.id AND n.semaine_id=s.id AND n.jour = cr.jour AND n.heure = cr.heure\
+				   ON n.matiere_id = m.id AND n.colleur_id = c.id AND n.semaine_id=s.id AND (n.eleve_id = e.id OR n.eleve_id = e2.id)\
 				   WHERE c.id=%s AND s.lundi >= %s\
 				   GROUP BY co.id, g.nom, g.id, cl.nom, s.id, cr.jour, cr.heure, cr.salle, m.id, m.nom, m.couleur, m.lv, m.temps, u2.first_name, u2.last_name, p.titre, p.detail, p.fichier\
 				   ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'))
