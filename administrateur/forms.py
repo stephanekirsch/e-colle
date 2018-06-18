@@ -42,8 +42,8 @@ class ColleurFormSetMdp(forms.BaseFormSet):
 				colleur= Colleur(grade=form.cleaned_data['grade'],etablissement=form.cleaned_data['etablissement'])
 				colleur.save() # on sauvegarde en BDD pour avoir un pk, indispensable pour les relations many-many
 				# on ajoute les matières et les classes
-				colleur.matieres=form.cleaned_data['matiere']
-				colleur.classes=form.cleaned_data['classe']
+				colleur.matieres.set(form.cleaned_data['matiere'])
+				colleur.classes.set(form.cleaned_data['classe'])
 				# on crée le user
 				user = User(username=form.cleaned_data['username'],first_name=form.cleaned_data['first_name'].lower(),last_name=form.cleaned_data['last_name'].lower(),email=form.cleaned_data['email'],colleur=colleur)
 				user.set_password(form.cleaned_data['password'])
