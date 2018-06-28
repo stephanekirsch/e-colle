@@ -141,13 +141,13 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accueil',
-    'administrateur',
-    'eleve',
-    'colleur',
-    'secretariat',
-    'app_mobile',
-    'customfilter',
+    'accueil.apps.accueilConfig',
+    'administrateur.apps.administrateurConfig',
+    'eleve.apps.eleveConfig',
+    'colleur.apps.colleurConfig',
+    'secretariat.apps.secretariatConfig',
+    'app_mobile.apps.appMobileConfig',
+    'customfilter.apps.customfilterConfig',
 )
 
 MIDDLEWARE = (
