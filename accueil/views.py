@@ -46,7 +46,7 @@ def deconnexion(request):
 def profil(request):
 	"""Renvoie la vue du profil où on peut modifier son email et/ou son mot de passe"""
 	user=request.user
-	if not user.is_authenticated():
+	if not user.is_authenticated:
 		return HttpResponseForbidden("Vous devez être connecté pour accéder à cette page")
 	profprincipal = bool(user.colleur and Classe.objects.filter(profprincipal=user.colleur))
 	if profprincipal:
