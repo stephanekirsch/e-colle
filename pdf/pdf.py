@@ -445,7 +445,7 @@ def creditsects(form,elev,classe):
 	La durée du programme est de 2 ans.<br/>
 	<b><i>3.3. Conditions d’accès:</i></b><br/>
 	Entrée sélective après le baccalauréat s’effectuant dans le cadre d’une procédure nationale d’admission.<br/>
-	Cf: <a href="http://www.admission-postbac.fr" color="blue">http://www.admission-postbac.fr</a>"""
+	Cf: <a href="http://www.parcoursup.fr" color="blue">http://www.parcoursup.fr</a>"""
 	p6=Paragraph(texte,style)
 	texte="""4. Information sur les contenus et les résultats obtenus"""
 	p7=Paragraph(texte,styleTitre)
