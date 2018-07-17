@@ -438,7 +438,7 @@ def addgroupgrades(request):
 
 @csrf_exempt
 def adddraftgrades(request):
-    """ajoute les notes d'un groupe dans la base de donnée"""
+    """ajoute les brouillons de notes dans la base de donnée en insérant / mettant à jour"""
     user = request.user
     if not checkcolleur(user):
         return HttpResponseForbidden("not authenticated")
