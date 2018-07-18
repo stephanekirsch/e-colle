@@ -16,7 +16,8 @@
 		<td>De</td>
 		<td>à</td>
 		<td>Supprimer</td>
-		<td>PDF</td>
+		<td>PDF par année/effectif</td>
+		<td>PDF par classe</td>
 	</tr>
 	{% for ramassage in ramassages %}
 	<tr>
@@ -24,6 +25,7 @@
 		<td>{{ramassage.moisFin|date:"E Y"}}</td>
 		<td><a href="{% url 'ramassagesuppr' ramassage.pk %}">Supprimer</a></td>
 		<td><a href="{% url 'ramassagepdf' ramassage.pk %}"><img src="{% static 'images/iconePDF.png' %}"></img></a></td>
+		<td><a href="{% url 'ramassagepdfparclasse' ramassage.pk %}"><img src="{% static 'images/iconePDF.png' %}"></img></a></td>
 	</tr>
 	{% endfor %}
 </table>

@@ -893,6 +893,54 @@ class RamassageManager(models.Manager):
 		effectifs = [x for x,boolean in zip(effectifs,effectif_classe) if boolean is not False]
 		return listeDecompte,effectifs
 
+	def decompteParClasse(self,moisMin,moisMax):
+		"""Renvoie, pour chaque classe, la liste des colleurs avec leur nombre d'heures de colle entre les mois moisMin et moisMax, s'ils en ont effectué"""
+		LISTE_GRADES=["inconnu","certifié","bi-admissible","agrégé","chaire sup"]
+		classes = Classe.objects.all()
+		listeClasses = []
+		for classe in classes:
+			compte = Note.objects.filter(date_colle__range=(moisMin, moisMax)).filter( Q(classe=classe.pk) | Q(eleve__classe = classe.pk) | Q(eleve__groupe__classe=classe.pk) ).annotate(nom_matiere=Lower('matiere__nom')).values_list('nom_matiere','colleur__etablissement__nom','colleur__grade','colleur__user__last_name','colleur__user__first_name').order_by('nom_matiere','colleur__etablissement__nom','colleur__grade','colleur__user__last_name','colleur__user__first_name').annotate(temps=Sum('matiere__temps'))
+			lastMatiere = lastEtab = lastGrade = lastColleur = False
+			nbEtabs=nbGrades=nbColleurs=1
+			listeDecompte, listeEtablissements, listeGrades, listeColleurs = [], [], [], [] 
+			for matiere, etab, grade, nom, prenom, temps in compte:
+				if lastMatiere and matiere!=lastMatiere: # si on change de matière
+					listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),temps))
+					listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
+					listeEtablissements.append((lastEtab,listeGrades,nbGrades))
+					listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
+					listeColleurs,listeGrades,listeEtablissements = [], [], []
+					nbColleurs=nbGrades=nbEtabs=1
+				elif lastEtab is not False and etab!=lastEtab: # si on change d'établissement mais pas de matière
+					listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),temps))
+					listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
+					listeEtablissements.append((lastEtab,listeGrades,nbGrades))
+					listeColleurs,listeGrades = [],[]
+					nbColleurs=nbGrades=1
+					nbEtabs+=1
+				elif lastGrade and lastGrade!=grade: # si on change de grade, mais pas d'établissement ni de matière
+					listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),temps))
+					listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
+					listeColleurs=[]
+					nbColleurs=1
+					nbEtabs+=1
+					nbGrades+=1
+				elif lastColleur and (nom,prenom)!=lastColleur: # si on change de colleur, mais pas de grade, ni d'établissement, ni de matière
+					listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),temps))
+					nbColleurs+=1
+					nbGrades+=1
+					nbEtabs+=1
+				lastColleur, lastGrade, lastEtab, lastMatiere = (nom,prenom), grade, etab, matiere
+			if lastColleur:
+				listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),temps))
+				listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
+				listeEtablissements.append((lastEtab,listeGrades,nbGrades))
+				listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
+			listeClasses.append(listeDecompte)
+		return listeClasses, classes
+
+
+
 class Ramassage(models.Model):
 	def incremente_mois(moment):
 		"""ajoute un mois à moment"""

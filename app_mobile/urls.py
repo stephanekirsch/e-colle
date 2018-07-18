@@ -11,8 +11,6 @@ urlpatterns = [
     url(r'^results$', views.results, name="results_app_mobile"),
     url(r'^colles$', views.colles, name="colles_app_mobile"),
     url(r'^messages$', views.messages, name="messages_app_mpbile"),
-    # url(r'^sentmessages$', views.sentmessages,
-    #     name="sent_messages_app_mobile"),
     url(r'^readmessage/(\d+)$', views.readmessage,
         name="read_message_app_mobile"),
     url(r'^deletemessage/(\d+)$', views.deletemessage,

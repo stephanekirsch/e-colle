@@ -508,7 +508,7 @@ def adddraftgrades(request):
 
 @csrf_exempt
 def addmessage(request):
-    """ajoute un message emvoyé par l"utilisateur (colleur)"""
+    """ajoute un message envoyé par l"utilisateur (colleur)"""
     user = request.user
     if not checkcolleur(user):
         return HttpResponseForbidden("not authenticated")

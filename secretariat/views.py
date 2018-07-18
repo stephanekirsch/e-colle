@@ -271,7 +271,7 @@ def ramassageSuppr(request,id_ramassage):
 
 @user_passes_test(is_secret, login_url='login_secret')
 def ramassagePdf(request,id_ramassage):
-	"""Renvoie le fichier PDF du ramassage correspondant au ramassage dont l'id est id_ramassage"""
+	"""Renvoie le fichier PDF du ramassage par année/effectif correspondant au ramassage dont l'id est id_ramassage"""
 	ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
 	LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
 	response = HttpResponse(content_type='application/pdf')
@@ -350,6 +350,93 @@ def ramassagePdf(request,id_ramassage):
 	w,h=t.wrapOn(pdf,0,0)
 	t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-hauteurcel/2)
 	pdf.finDePage()
+	pdf.save()
+	fichier = pdf.buffer.getvalue()
+	pdf.buffer.close()
+	response.write(fichier)
+	return response
+
+@user_passes_test(is_secret, login_url='login_secret')
+def ramassagePdfParClasse(request,id_ramassage):
+	"""Renvoie le fichier PDF du ramassage par classe correspondant au ramassage dont l'id est id_ramassage"""
+	ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
+	LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
+	response = HttpResponse(content_type='application/pdf')
+	debut=ramassage.moisDebut
+	fin=Ramassage.incremente_mois(ramassage.moisFin)-timedelta(days=1)
+	listeClasses, classes = Ramassage.objects.decompteParClasse(debut,fin)
+	nomfichier="ramassageParclasse{}_{}-{}_{}.pdf".format(debut.month,debut.year,fin.month,fin.year)
+	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
+	pdf = easyPdf(titre="Ramassage des colles de {} {} à {} {}".format(LISTE_MOIS[debut.month],debut.year,LISTE_MOIS[fin.month],fin.year),marge_x=30,marge_y=30)
+	largeurcel=(pdf.format[0]-2*pdf.marge_x)/10
+	hauteurcel=30
+	for classe, listeClasse in zip(classes,listeClasses):
+		pdf.debutDePage(soustitre = classe.nom)
+		nbKolleurs=sum([z for x,y,z in listeClasse])
+		LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
+											,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))
+											,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+											,('ALIGN',(0,0),(-1,-1),'CENTRE')
+											,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
+											,('SIZE',(0,0),(-1,-1),8)])
+		data = [["Matière","Établissement","Grade","Colleur", "heures"]]+[[""]*5 for i in range(min(22,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
+		ligneMat=ligneEtab=ligneGrade=ligneColleur=1
+		for matiere, listeEtabs, nbEtabs in listeClasse:
+			data[ligneMat][0]=matiere.title()
+			if nbEtabs>1:
+				LIST_STYLE.add('SPAN',(0,ligneMat),(0,min(ligneMat+nbEtabs-1,22)))
+			ligneMat+=nbEtabs
+			for etablissement, listeGrades, nbGrades in listeEtabs:
+				data[ligneEtab][1]='Inconnu' if not etablissement else etablissement.title()
+				if nbGrades>1:
+					LIST_STYLE.add('SPAN',(1,ligneEtab),(1,min(ligneEtab+nbGrades-1,22)))
+				ligneEtab+=nbGrades
+				for grade, listeColleurs, nbColleurs in listeGrades:
+					data[ligneGrade][2]=grade
+					if nbColleurs>1:
+						LIST_STYLE.add('SPAN',(2,ligneGrade),(2,min(ligneGrade+nbColleurs-1,22)))
+					ligneGrade+=nbColleurs
+					for colleur, decomptes in listeColleurs:
+						data[ligneColleur][3]=colleur
+						data[ligneColleur][4]="{},{:02d}h".format(decomptes//60,(1+decomptes%60*5)//3)
+						ligneColleur+=1
+						if ligneColleur==23 and nbKolleurs>22: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau
+							t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel, largeurcel],rowHeights=min((1+nbKolleurs),23)*[hauteurcel])
+							t.setStyle(LIST_STYLE)
+							w,h=t.wrapOn(pdf,0,0)
+							t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-hauteurcel/2)
+							pdf.finDePage()
+							# on redémarre sur une nouvelle page
+							pdf.debutDePage(soustitre = classe.nom)
+							LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
+											,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))
+											,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+											,('ALIGN',(0,0),(-1,-1),'CENTRE')
+											,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
+											,('SIZE',(0,0),(-1,-1),8)])
+							nbKolleurs-=22
+							data = [["Matière","Établissement","Grade","Colleur", "heures"]]+[[""]*5 for i in range(min(22,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
+							ligneEtab-=22
+							ligneGrade-=22
+							ligneMat-=22
+							ligneColleur=1
+							if ligneMat>1:
+								data[1][0]=matiere.title()
+								if ligneMat>2:
+									LIST_STYLE.add('SPAN',(0,1),(0,min(ligneMat-1,22)))
+								if ligneEtab>1:
+									data[1][1]='Inconnu' if not etablissement else etablissement.title()
+									if ligneEtab>2:
+										LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab,22)))
+									if ligneGrade>1:
+										data[1][2]=grade
+										if ligneGrade>2:
+											LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade,22)))
+		t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel,largeurcel],rowHeights=min((1+nbKolleurs),23)*[hauteurcel])
+		t.setStyle(LIST_STYLE)
+		w,h=t.wrapOn(pdf,0,0)
+		t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-hauteurcel/2)
+		pdf.finDePage()
 	pdf.save()
 	fichier = pdf.buffer.getvalue()
 	pdf.buffer.close()
