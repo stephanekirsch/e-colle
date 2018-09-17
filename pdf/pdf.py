@@ -192,7 +192,7 @@ def Pdf(classe,semin,semax):
 		colleurs=Colle.objects.filter(creneau__classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).values('colleur').distinct().order_by('colleur__user__last_name','colleur__user__first_name')
 		for colleur_id in colleurs:
 			colleur=get_object_or_404(Colleur,pk=colleur_id['colleur'])
-			data+=[["{}. {} ({})".format(colleur.user.first_name[0].title(),colleur.user.last_name.upper(),classe.dictColleurs(semin,semax)[colleur.pk])]]
+			data+=[["{}. {} ({})".format("" if not colleur.user.first_name else colleur.user.first_name[0].title(),colleur.user.last_name.upper(),classe.dictColleurs(semin,semax)[colleur.pk])]]
 		LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
 										,('VALIGN',(0,0),(-1,-1),'MIDDLE')
 										,('ALIGN',(0,0),(-1,-1),'CENTRE')
