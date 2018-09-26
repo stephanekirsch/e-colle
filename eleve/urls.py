@@ -3,7 +3,7 @@ from django.conf.urls import url
 from . import views
 
 urlpatterns = [
-url(r'^(\d+)$', views.connec,name="login_eleve"),
+url(r'^$', views.connec,name="login_eleve"),
 url(r'^action$', views.action,name="action_eleve"),
 url(r'^action/bilan$', views.bilan,name="bilan_eleve"),
 url(r'^action/note$', views.note,name="note_eleve"),

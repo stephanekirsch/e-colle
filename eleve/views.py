@@ -17,22 +17,21 @@ def is_eleve(user):
 		return bool(user.eleve)
 	return False
 
-def connec(request, id_classe):
+def connec(request):
 	"""Renvoie la vue de la page de connexion des élèves. Si l'élève est déjà connecté, redirige vers la page d'accueil des élèves"""
-	classe=get_object_or_404(Classe,pk=id_classe)
 	if is_eleve(request.user):
 		return redirect('action_eleve')
 	error = False
-	form = EleveConnexionForm(classe,request.POST or None)
+	form = EleveConnexionForm(request.POST or None)
 	if form.is_valid():
 		username=form.cleaned_data['eleve'].user.username
-		user = authenticate(username=username,password=form.cleaned_data['password'])
-		if user:
+		user = authenticate(username=form.cleaned_data['username'],password=form.cleaned_data['password'])
+		if user and user.is_active and user.eleve:
 			login(request,user)
 			return redirect('action_eleve')
 		else:
 			error = True
-	return render(request,'eleve/home.html',{'form':form, 'classe':classe, 'error':error})
+	return render(request,'eleve/home.html',{'form':form, 'error':error})
 
 @user_passes_test(is_eleve, login_url='accueil')
 def action(request):

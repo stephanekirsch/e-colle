@@ -3,7 +3,7 @@ from django.conf.urls import url
 from . import views
 
 urlpatterns = [
-url(r'^(\d+)$', views.connec,name="login_colleur"),
+url(r'^$', views.connec,name="login_colleur"),
 url(r'^action$', views.action,name="action_colleur"),
 url(r'^action/note/(\d+)$', views.note,name="note_colleur"),
 url(r'^action/note/eleve/(\d+)/(\d+)$', views.noteEleve,name="noteeleve_colleur"),

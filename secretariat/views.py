@@ -270,6 +270,27 @@ def ramassageSuppr(request,id_ramassage):
 	return redirect('ramassage')
 
 @user_passes_test(is_secret, login_url='login_secret')
+def ramassageCSV(request,id_ramassage):
+	"""Renvoie le fichier CSV du ramassage par année/effectif correspondant au ramassage dont l'id est id_ramassage"""
+	ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
+	LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
+	response = HttpResponse(content_type='text/csv')
+	debut=ramassage.moisDebut
+	fin=Ramassage.incremente_mois(ramassage.moisFin)-timedelta(days=1)
+	listeDecompte,effectifs=Ramassage.objects.decompte(debut,fin)
+	nomfichier="ramassage{}_{}-{}_{}.csv".format(debut.month,debut.year,fin.month,fin.year)
+	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
+	writer = csv.writer(response)
+	writer.writerow(["Matière","Établissement","Grade","Colleur"]+["{}è. ann.  {}".format(annee,effectif) for annee,effectif in effectifs])
+	for matiere, listeEtabs, nbEtabs in listeDecompte:
+		for etablissement, listeGrades, nbGrades in listeEtabs:
+			for grade, listeColleurs, nbColleurs in listeGrades:
+				for colleur, decomptes in listeColleurs:
+					writer.writerow([matiere.title(),'Inconnu' if not etablissement else etablissement.title(),
+						grade, colleur] + ["{},{:02d}".format(decomptes[i]//60,(1+decomptes[i]%60*5)//3) for i in range(len(effectifs))])
+	return response
+
+@user_passes_test(is_secret, login_url='login_secret')
 def ramassagePdf(request,id_ramassage):
 	"""Renvoie le fichier PDF du ramassage par année/effectif correspondant au ramassage dont l'id est id_ramassage"""
 	ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
@@ -357,6 +378,29 @@ def ramassagePdf(request,id_ramassage):
 	return response
 
 @user_passes_test(is_secret, login_url='login_secret')
+def ramassageCSVParClasse(request,id_ramassage):
+	"""Renvoie le fichier CSV du ramassage par classe correspondant au ramassage dont l'id est id_ramassage"""
+	ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
+	LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
+	response = HttpResponse(content_type='text/csv')
+	debut=ramassage.moisDebut
+	fin=Ramassage.incremente_mois(ramassage.moisFin)-timedelta(days=1)
+	listeClasses, classes = Ramassage.objects.decompteParClasse(debut,fin)
+	nomfichier="ramassageCSVParclasse{}_{}-{}_{}.csv".format(debut.month,debut.year,fin.month,fin.year)
+	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
+	writer = csv.writer(response)
+	writer.writerow(["Classe","Matière","Établissement","Grade","Colleur","heures"])
+	for classe, listeClasse in zip(classes,listeClasses):
+		for matiere, listeEtabs, nbEtabs in listeClasse:
+			for etablissement, listeGrades, nbGrades in listeEtabs:
+				for grade, listeColleurs, nbColleurs in listeGrades:
+					for colleur, decomptes in listeColleurs:
+						writer.writerow([classe.nom, matiere.title(),'Inconnu' if not etablissement else etablissement.title(),
+						grade, colleur,"{},{:02d}".format(decomptes//60,(1+decomptes%60*5)//3)])
+	return response
+
+
+@user_passes_test(is_secret, login_url='login_secret')
 def ramassagePdfParClasse(request,id_ramassage):
 	"""Renvoie le fichier PDF du ramassage par classe correspondant au ramassage dont l'id est id_ramassage"""
 	ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
@@ -365,7 +409,7 @@ def ramassagePdfParClasse(request,id_ramassage):
 	debut=ramassage.moisDebut
 	fin=Ramassage.incremente_mois(ramassage.moisFin)-timedelta(days=1)
 	listeClasses, classes = Ramassage.objects.decompteParClasse(debut,fin)
-	nomfichier="ramassageParclasse{}_{}-{}_{}.pdf".format(debut.month,debut.year,fin.month,fin.year)
+	nomfichier="ramassagePdfParclasse{}_{}-{}_{}.pdf".format(debut.month,debut.year,fin.month,fin.year)
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
 	pdf = easyPdf(titre="Ramassage des colles de {} {} à {} {}".format(LISTE_MOIS[debut.month],debut.year,LISTE_MOIS[fin.month],fin.year),marge_x=30,marge_y=30)
 	largeurcel=(pdf.format[0]-2*pdf.marge_x)/10

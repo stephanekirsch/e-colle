@@ -2,28 +2,8 @@
 {% block nav %}
 <div id="nav"> 
 	<ul id="menu">
-		<li> 
-			<a href="#" title="consulter le(s) programme(s) de colle ou ses notes de colle">Élève</a>
-			{% with classes as listeclasses %}
-				{% if listeclasses %}
-				<ul>{% for classe in listeclasses %}
-					<li><a href="{% url 'login_eleve' classe.pk %}">{{classe.nom}}</a></li>
-					{% endfor %}
-				</ul>
-				{% endif %}
-			{% endwith %}
-		</li>
-		<li> 
-			<a href="#" title="entrer les notes de colle ou le programme de colle">Colleur</a>
-			{% with matieres as listematieres %}
-				{% if listematieres %}
-				<ul>{% for matiere in listematieres %}
-					<li><a style="{% for i in 'xxxx' %} background: {% cycle '' '-moz-' '-o-' '-webkit-'%}linear-gradient(top,  {{matiere.couleur}},  #0f0f0f) ;{% endfor %}" href="{% url 'login_colleur' matiere.pk %}">{{matiere.nom|title}}</a></li>
-					{% endfor %}
-				</ul>
-				{% endif %}
-			{% endwith %}
-		</li>
+		<li><a href="{% url 'login_eleve' %}" title="consulter le(s) programme(s) de colle ou ses notes de colle">Élève</a></li>
+		<li><a href="{% url 'login_colleur' %}" title="entrer les notes de colle ou le programme de colle">Colleur</a></li>
 		<li><a href="{% url 'login_secret' %}" title ="décompte des heures des colleurs" >Secrétariat</a></li>
 		{% if show_admin %}
 		<li><a href="{% url 'login_admin' %}" title="gérer les bases de données colleurs/élèves">Administrateur</a></li>

@@ -47,23 +47,21 @@ def is_profprincipal(user,classe=False):
 	else:
 		return bool(user.colleur.classeprofprincipal.all())
 
-def connec(request, id_matiere):
+def connec(request):
 	"""Renvoie la vue de la page de connexion des colleurs. Si le colleur est déjà connecté, redirige vers la page d'accueil des colleurs"""
-	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	if is_colleur(request.user):
 		return redirect('action_colleur')
 	error = False
-	form = ColleurConnexionForm(matiere,request.POST or None)
+	form = ColleurConnexionForm(request.POST or None)
 	if form.is_valid():
-		username=form.cleaned_data['colleur'].user.username
-		user = authenticate(username=username,password=form.cleaned_data['password'])
-		if user is not None and user.is_active:
+		user = authenticate(username=form.cleaned_data['username'],password=form.cleaned_data['password'])
+		if user is not None and user.is_active and user.colleur and user.colleur.matieres.all():
 			login(request,user)
-			request.session['matiere']=Matiere.objects.filter(nom__iexact=matiere.nom,colleur=request.user.colleur)[0].pk
+			request.session['matiere']=user.colleur.matieres.all()[0].pk
 			return redirect('action_colleur')
 		else:
 			error = True
-	return render(request,'colleur/home.html',{'form':form, 'matiere':matiere,'error':error})
+	return render(request,'colleur/home.html',{'form':form, 'error':error})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def changemat(request,id_mat):
