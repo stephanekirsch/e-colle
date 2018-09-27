@@ -378,7 +378,7 @@ def ramassagePdf(request,id_ramassage):
 	return response
 
 @user_passes_test(is_secret, login_url='login_secret')
-def ramassageCSVParClasse(request,id_ramassage):
+def ramassageCSVParClasse(request, id_ramassage, total):
 	"""Renvoie le fichier CSV du ramassage par classe correspondant au ramassage dont l'id est id_ramassage"""
 	ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
 	LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
@@ -390,13 +390,27 @@ def ramassageCSVParClasse(request,id_ramassage):
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
 	writer = csv.writer(response)
 	writer.writerow(["Classe","Matière","Établissement","Grade","Colleur","heures"])
+	total = int(total)
 	for classe, listeClasse in zip(classes,listeClasses):
+		totalclasse = 0
 		for matiere, listeEtabs, nbEtabs in listeClasse:
+			totalmatiere = 0
 			for etablissement, listeGrades, nbGrades in listeEtabs:
 				for grade, listeColleurs, nbColleurs in listeGrades:
 					for colleur, decomptes in listeColleurs:
 						writer.writerow([classe.nom, matiere.title(),'Inconnu' if not etablissement else etablissement.title(),
 						grade, colleur,"{},{:02d}".format(decomptes//60,(1+decomptes%60*5)//3)])
+						totalmatiere += decomptes
+			totalclasse += totalmatiere
+			if total:
+				print(total)
+				writer.writerow([""]*6)
+				writer.writerow([classe.nom, "total {}".format(matiere.title()), "", "", "", "{},{:02d}".format(totalmatiere//60,(1+totalmatiere%60*5)//3)])
+		if total:
+			writer.writerow([""]*6)
+			writer.writerow(["total {}".format(classe.nom), "", "", "", "", "{},{:02d}".format(totalclasse//60,(1+totalclasse%60*5)//3)])
+			writer.writerow([""]*6)
+			writer.writerow([""]*6)
 	return response
 
 

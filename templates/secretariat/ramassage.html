@@ -20,6 +20,7 @@
 		<td>PDF par classe</td>
 		<td>CSV par année/effectif</td>
 		<td>CSV par classe</td>
+		<td>CSV par classe avec totaux</td>
 	</tr>
 	{% for ramassage in ramassages %}
 	<tr>
@@ -29,7 +30,8 @@
 		<td><a href="{% url 'ramassagepdf' ramassage.pk %}"><img src="{% static 'images/iconePDF.png' %}"></img></a></td>
 		<td><a href="{% url 'ramassagepdfparclasse' ramassage.pk %}"><img src="{% static 'images/iconePDF.png' %}"></img></a></td>
 		<td><a href="{% url 'ramassagecsv' ramassage.pk %}"><img src="{% static 'images/csv.png' %}"></img></a></td>
-		<td><a href="{% url 'ramassagecsvparclasse' ramassage.pk %}"><img src="{% static 'images/csv.png' %}"></img></a></td>
+		<td><a href="{% url 'ramassagecsvparclasse' ramassage.pk 0 %}"><img src="{% static 'images/csv.png' %}"></img></a></td>
+		<td><a href="{% url 'ramassagecsvparclasse' ramassage.pk 1 %}"><img src="{% static 'images/csv.png' %}"></img></a></td>
 	</tr>
 	{% endfor %}
 </table>
