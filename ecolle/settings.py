@@ -50,12 +50,12 @@ TIME_ZONE = 'Europe/Paris'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',  # le SGBD choisi
+        'ENGINE': 'django.db.backends.postgresql',  # le SGBD choisi
         'NAME': 'e-colle',  # le nom de la base de données
         # La suite est à laisser vide si vous utilisez SQlite
         'USER': 'e-colle',  # le nom de l'utilisateur ayant droits
         # sur la base de données.
-        'PASSWORD': '',  # le mot de passe de l'utilisateur
+        'PASSWORD': 'hv4nztde',  # le mot de passe de l'utilisateur
         'HOST': 'localhost',  # l'adresse IP de la base de données.
         'PORT': '',  # vide par défaut. À renseigner si la BDD se trouve
         # sur un port particulier.
@@ -126,7 +126,7 @@ MEDIA_URL = '/media/'
 
 STATIC_URL = '/static/'
 
-DEBUG = False
+DEBUG = True
 
 APPEND_SLASH = False
 

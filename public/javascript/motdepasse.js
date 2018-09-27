@@ -65,7 +65,7 @@ function createUsername(){
 	listeprenom = document.querySelectorAll("input[id$=first_name]");
 	listeidentifiant = document.querySelectorAll("input[id$=username]");
 	for (var i = 0; i < listeidentifiant.length; i++) {
-		listeidentifiant[i].value = (listeprenom[i].value.toLowerCase()+"."+listenom[i].value.toLowerCase()).replace(/ /g,"-");
+		listeidentifiant[i].value = (listeprenom[i].value.toLowerCase()+"."+listenom[i].value.toLowerCase()).replace(/ /g,"-").replace(/'/g,"");
 	}
 }
 

@@ -395,11 +395,11 @@ class EleveFormMdp(forms.ModelForm):
 			if len(data) != 11:
 				raise ValidationError("le numéro d'étudiant comporte 11 caractères")
 			try:
-				l=int(data[:-1])
+				l=int(data[:-2])
 				if l<=0 or not isinstance(l,int):
-					raise ValidationError("les 10 premiers caractères doivent être des chiffres")
+					raise ValidationError("les 9 premiers caractères doivent être des chiffres")
 			except Exception:
-				raise ValidationError("les 10 premiers caractères doivent être des chiffres")
+				raise ValidationError("les 9 premiers caractères doivent être des chiffres")
 			if not (65 <= ord(data[-1]) <= 90):
 				raise ValidationError("le dernier caractère est une lettre ASCII majuscule")
 		return data
