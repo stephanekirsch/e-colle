@@ -565,8 +565,7 @@ class NoteManager(models.Manager):
 				moyennes[i+1]['rang']=moyennes[i]['rang']
 		for moyenne in moyennes:
 			elevesdict[moyenne['eleve__id']][2:]=[moyenne['note__avg'],moyenne['rang']]
-		eleves = list(elevesdict.values())
-		eleves.sort(key=lambda x:(x[1],x[0]))
+		eleves = [elevesdict[eleve.pk] for eleve in listeEleves] 
 		for elevemoy,eleve in zip(eleves,listeEleves):
 			note=dict()
 			note['eleve']=eleve
