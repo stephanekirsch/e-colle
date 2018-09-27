@@ -396,6 +396,8 @@ def elevecsv(request):
 				if not(nom in ligne and prenom in ligne):
 					messages.error("Les intitulés des champs nom et/ou prénom sont inexacts")
 				else:
+					fichiercsv.seek(0)
+					next(reader)
 					initial = [{'last_name': ligneLoc[nom],'first_name':ligneLoc[prenom],'ddn':None if ddn not in ligneLoc else ligneLoc[ddn],'ldn':None if ldn not in ligneLoc else ligneLoc[ldn],\
 					'ine':'' if ine not in ligneLoc else ligneLoc[ine],'email':'' if email not in ligneLoc else ligneLoc[email],'classe':form.cleaned_data['classe']} for ligneLoc in reader]
 					return eleveajout(request,initial=initial)
