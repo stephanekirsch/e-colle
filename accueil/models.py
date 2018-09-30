@@ -63,7 +63,7 @@ class ConfigManager(models.Manager):
 			config = self.all()[0]
 		except Exception:
 			config = Config(nom_etablissement="",modif_secret_col=False,modif_secret_groupe=False,modif_prof_col=True,modif_prof_groupe=True,\
-			default_modif_col=False,default_modif_groupe=False,mathjax=True,ects=False,nom_adresse_etablissement="",academie="",ville="",app_mobile=False)
+			default_modif_col=False,default_modif_groupe=False,mathjax=True,ects=False,nom_adresse_etablissement="",academie="",ville="",app_mobile=False,remuneration_horaire=False)
 		return config
 
 
@@ -81,6 +81,7 @@ class Config(models.Model):
 	ville = models.CharField(verbose_name = "Ville de l'établissement", max_length=40,blank=True)
 	academie = models.CharField(verbose_name = "Académie de l'établissement", max_length=40,blank=True)
 	app_mobile = models.BooleanField(verbose_name="Application mobile",default=False)
+	remuneration_horaire = models.BooleanField(verbose_name="Rémunération des colles par heures pleines",default=True)
 	objects = ConfigManager()
 
 class Matiere(models.Model):
@@ -547,7 +548,7 @@ class NoteManager(models.Manager):
 			listeHeures.append((listeEleves,heure,nbeleves))
 			nbheures += nbeleves
 			listeDates.append((listeHeures,date_colle,nbheures))
-			nbdates+=nbheures	
+			nbdates+=nbheures
 			listeNotes.append((listeDates,semaine,titre,detail,nbdates))
 		return listeNotes
 
@@ -679,7 +680,7 @@ class ColleManager(models.Manager):
 						ON jf.date = {}\
 						WHERE cr.classe_id=%s AND s.lundi BETWEEN %s AND %s \
 						ORDER BY s.lundi, cr.jour, cr.heure, cr.salle, cr.id".format("" if modif else "DISTINCT","" if modif else ", g.id groupe, u.last_name nom, u.first_name prenom, {} jourbis".format(date_plus_jour('s.lundi','cr.jour')),"" if modif else "INNER JOIN accueil_colle c \
-						ON c.creneau_id=cr.id INNER JOIN accueil_semaine s2	ON (c.semaine_id=s2.id AND s2.lundi BETWEEN %s AND %s)",date_plus_jour('s.lundi','cr.jour'))
+						ON c.creneau_id=cr.id INNER JOIN accueil_semaine s2 ON (c.semaine_id=s2.id AND s2.lundi BETWEEN %s AND %s)",date_plus_jour('s.lundi','cr.jour'))
 		with connection.cursor() as cursor:
 			cursor.execute(requete, ([] if modif else [semin.lundi,semax.lundi])+[classe.pk,semin.lundi,semax.lundi])
 			precolles = dictfetchall(cursor)
@@ -838,7 +839,8 @@ class RamassageManager(models.Manager):
 	def decompte(self,moisMin,moisMax):
 		"""Renvoie la liste des colleurs avec leur nombre d'heures de colle entre les mois moisMin et moisMax, trié par année/effectif de classe"""
 		LISTE_GRADES=["inconnu","certifié","bi-admissible","agrégé","chaire sup"]
-		compte = Note.objects.filter(date_colle__range=(moisMin,moisMax)).annotate(nom_matiere=Lower('matiere__nom')).values_list('nom_matiere','colleur__etablissement__nom','colleur__grade','colleur__user__last_name','colleur__user__first_name','classe__id').order_by('nom_matiere','colleur__etablissement__nom','colleur__grade','colleur__user__last_name','colleur__user__first_name').annotate(temps=Sum('matiere__temps'))
+		compte = Note.objects.filter(date_colle__range=(moisMin,moisMax)).annotate(nom_matiere=Lower('matiere__nom')).values_list('nom_matiere','colleur__etablissement__nom','colleur__grade','colleur__user__last_name','colleur__user__first_name','classe_id','semaine__numero','jour','heure','matiere__temps').order_by('nom_matiere','colleur__etablissement__nom','colleur__grade','colleur__user__last_name','colleur__user__first_name').annotate(nombre=Count('eleve_id'))
+
 		classes = Classe.objects.annotate(eleve_compte=Count('classeeleve'))
 		effectif_classe = [False]*6
 		for classe in classes:
@@ -852,8 +854,9 @@ class RamassageManager(models.Manager):
 		effectifs_classe = {classe.pk:effectif_classe[int(20<=classe.eleve_compte<=35)+2*int(35<classe.eleve_compte)+3*classe.annee-3] for classe in classes}
 		lastMatiere = lastEtab = lastGrade = lastColleur = False
 		nbEtabs=nbGrades=nbColleurs=1
+
 		listeDecompte, listeEtablissements, listeGrades, listeColleurs, listeTemps= [], [], [], [], [0]*nb_decompte
-		for matiere, etab, grade, nom, prenom, classe, temps in compte:
+		for matiere, etab, grade, nom, prenom, classe, semaine,jour,heure, temps,nombre in compte:
 			if lastMatiere and matiere!=lastMatiere: # si on change de matière
 				listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),listeTemps))
 				listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
@@ -881,7 +884,11 @@ class RamassageManager(models.Manager):
 				nbColleurs+=1
 				nbGrades+=1
 				nbEtabs+=1
-			listeTemps[effectifs_classe[classe]]+=temps
+
+			if temps == 20 and Config.objects.get_config().remuneration_horaire:
+				listeTemps[effectifs_classe[classe]]+=temps*3
+			else:
+				listeTemps[effectifs_classe[classe]]+=temps*nombre
 			lastColleur, lastGrade, lastEtab, lastMatiere = (nom,prenom), grade, etab, matiere
 		if lastColleur:
 			listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),listeTemps))
@@ -890,6 +897,7 @@ class RamassageManager(models.Manager):
 			listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
 		effectifs= list(zip([1]*3+[2]*3,["eff<20","20≤eff≤35","eff>35"]*2))
 		effectifs = [x for x,boolean in zip(effectifs,effectif_classe) if boolean is not False]
+
 		return listeDecompte,effectifs
 
 	def decompteParClasse(self,moisMin,moisMax):
@@ -898,11 +906,13 @@ class RamassageManager(models.Manager):
 		classes = Classe.objects.all()
 		listeClasses = []
 		for classe in classes:
-			compte = Note.objects.filter(date_colle__range=(moisMin, moisMax)).filter( Q(classe=classe.pk) | Q(eleve__classe = classe.pk) | Q(eleve__groupe__classe=classe.pk) ).annotate(nom_matiere=Lower('matiere__nom')).values_list('nom_matiere','colleur__etablissement__nom','colleur__grade','colleur__user__last_name','colleur__user__first_name').order_by('nom_matiere','colleur__etablissement__nom','colleur__grade','colleur__user__last_name','colleur__user__first_name').annotate(temps=Sum('matiere__temps'))
-			lastMatiere = lastEtab = lastGrade = lastColleur = lastTemps = False
+			compte = Note.objects.filter(date_colle__range=(moisMin, moisMax)).filter( Q(classe=classe.pk) | Q(eleve__classe = classe.pk) | Q(eleve__groupe__classe=classe.pk) ).annotate(nom_matiere=Lower('matiere__nom')).values_list('nom_matiere','colleur__etablissement__nom','colleur__grade','colleur__user__last_name','colleur__user__first_name','semaine__numero','jour','heure','matiere__temps').order_by('nom_matiere','colleur__etablissement__nom','colleur__grade','colleur__user__last_name','colleur__user__first_name').annotate(nombre=Count('eleve_id'))
+
+			lastMatiere = lastEtab = lastGrade = lastColleur = False
+			lastTemps = 0
 			nbEtabs=nbGrades=nbColleurs=1
 			listeDecompte, listeEtablissements, listeGrades, listeColleurs = [], [], [], [] 
-			for matiere, etab, grade, nom, prenom, temps in compte:
+			for matiere, etab, grade, nom, prenom, semaine,jour,heure, temps,nombre in compte:
 				if lastMatiere and matiere!=lastMatiere: # si on change de matière
 					listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),lastTemps))
 					listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
@@ -910,6 +920,7 @@ class RamassageManager(models.Manager):
 					listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
 					listeColleurs,listeGrades,listeEtablissements = [], [], []
 					nbColleurs=nbGrades=nbEtabs=1
+					lastTemps = 0
 				elif lastEtab is not False and etab!=lastEtab: # si on change d'établissement mais pas de matière
 					listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),lastTemps))
 					listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
@@ -917,6 +928,7 @@ class RamassageManager(models.Manager):
 					listeColleurs,listeGrades = [],[]
 					nbColleurs=nbGrades=1
 					nbEtabs+=1
+					lastTemps = 0
 				elif lastGrade and lastGrade!=grade: # si on change de grade, mais pas d'établissement ni de matière
 					listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),lastTemps))
 					listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
@@ -924,12 +936,18 @@ class RamassageManager(models.Manager):
 					nbColleurs=1
 					nbEtabs+=1
 					nbGrades+=1
+					lastTemps = 0
 				elif lastColleur and (nom,prenom)!=lastColleur: # si on change de colleur, mais pas de grade, ni d'établissement, ni de matière
 					listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),lastTemps))
 					nbColleurs+=1
 					nbGrades+=1
 					nbEtabs+=1
-				lastColleur, lastGrade, lastEtab, lastMatiere, lastTemps = (nom,prenom), grade, etab, matiere, temps
+					lastTemps = 0
+				lastColleur, lastGrade, lastEtab, lastMatiere = (nom,prenom), grade, etab, matiere
+				if temps == 20 and Config.objects.get_config().remuneration_horaire:
+					lastTemps += temps * 3
+				else:
+					lastTemps += temps * nombre
 			if lastColleur:
 				listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),lastTemps))
 				listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
@@ -937,7 +955,6 @@ class RamassageManager(models.Manager):
 				listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
 			listeClasses.append(listeDecompte)
 		return listeClasses, classes
-
 
 
 class Ramassage(models.Model):

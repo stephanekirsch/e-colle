@@ -18,7 +18,7 @@ class ConfigForm(forms.ModelForm):
 	class Meta:
 		model = Config
 		fields=['nom_etablissement','app_mobile','modif_secret_col','modif_secret_groupe','modif_prof_col','default_modif_col',\
-		'modif_prof_groupe','default_modif_groupe','mathjax','ects','nom_adresse_etablissement','ville','academie']
+		'modif_prof_groupe','default_modif_groupe','mathjax','ects','nom_adresse_etablissement','ville','academie','remuneration_horaire']
 
 	def save(self):
 		Config.objects.all().delete()

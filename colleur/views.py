@@ -485,9 +485,24 @@ def decompte(request):
 		listeclasses=[]
 		for classe in classes:
 			nbcolles=[]
+			
+			tpstotal = 0
 			for mois in listemois:
-				nbcolles.append(Note.objects.filter(colleur=colleur,matiere__nom__iexact=matiere,classe=classe,date_colle__month=mois.month,date_colle__year=mois.year).aggregate(temps=Sum('matiere__temps')))
-			total=Note.objects.filter(colleur=colleur,matiere__nom__iexact=matiere,classe=classe).aggregate(temps=Sum('matiere__temps'))
+				tps = 0
+				lcolles = Note.objects.filter(colleur=colleur,matiere__nom__iexact=matiere,classe=classe,date_colle__month=mois.month,date_colle__year=mois.year).values_list('semaine__numero','jour','heure','matiere__temps').annotate(nombre=Count('eleve_id'))
+				for sem,jour,heure,matieretemps,nombre in lcolles:
+					print(matieretemps)
+					print(nombre)
+					if matieretemps == 20 and Config.objects.get_config().remuneration_horaire:
+						tps += matieretemps * 3
+					else:
+						tps += matieretemps * nombre 
+				ret = {}
+				ret['temps'] = tps
+				nbcolles.append(ret)
+				tpstotal += tps
+			total = {'temps': tpstotal}
+
 			listeclasses.append((classe,nbcolles,total))
 		listematieres.append((matiere,listeclasses,listemois))
 		listematieres.sort(key=lambda x:x[0])
