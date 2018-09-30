@@ -407,8 +407,8 @@ def ramassageCSVParClasse(request, id_ramassage, total):
 				print(total)
 				writer.writerow([""]*6)
 				writer.writerow([classe.nom, "total {}".format(matiere.title()), "", "", "", "{},{:02d}".format(totalmatiere//60,(1+totalmatiere%60*5)//3)])
+				writer.writerow([""]*6)
 		if total:
-			writer.writerow([""]*6)
 			writer.writerow(["total {}".format(classe.nom), "", "", "", "", "{},{:02d}".format(totalclasse//60,(1+totalclasse%60*5)//3)])
 			writer.writerow([""]*6)
 			writer.writerow([""]*6)
