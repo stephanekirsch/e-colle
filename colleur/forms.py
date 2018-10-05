@@ -117,10 +117,10 @@ class GroupeForm(forms.Form):
 		self.fields['eleve1'] = forms.ModelChoiceField(label="Deuxième élève",queryset=query,empty_label="Élève fictif",required=False)
 		self.fields['eleve2'] = forms.ModelChoiceField(label="Troisième élève",queryset=query,empty_label="Élève fictif",required=False)
 		query = Matiere.objects.filter(matieresclasse=classe,lv=1).distinct()
-		if query.count()>1:
+		if query.exists():
 			self.fields['lv1'] = MatiereChoiceField(label="LV1",queryset=query,empty_label="Tout",required=False)
 		query = Matiere.objects.filter(matieresclasse=classe,lv=2).distinct()
-		if query.count()>1:
+		if query.exists():
 			self.fields['lv2'] = MatiereChoiceField(label="LV2",queryset=query,empty_label="Tout",required=False)
 		
 	def clean_nom(self):
