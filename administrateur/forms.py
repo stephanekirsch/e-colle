@@ -200,7 +200,7 @@ class ClasseGabaritForm(forms.ModelForm):
 				if query.exists():
 					matiere = query[0]
 				else:
-					matiere = Matiere(nom=matiere.get("nom"),temps=matiere.get("temps"),lv=(matiere.get('lv') or 0),couleur=choice(list(zip(*Matiere.LISTE_COULEURS))[0]))
+					matiere = Matiere(nom=matiere.get("nom"),temps=int(matiere.get("temps")),lv=(matiere.get('lv') or 0),couleur=choice(list(zip(*Matiere.LISTE_COULEURS))[0]))
 					matiere.nomcomplet=str(matiere)
 					matiere.save()
 				listeMatieres.append(matiere)
