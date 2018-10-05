@@ -10,9 +10,6 @@ from xml.etree import ElementTree as etree
 from random import choice
 from os import path
 
-def random_string():
-	"""renvoie une chaine de caractères aléatoires contenant des lettres ou des chiffres ou un des symboles _+-.@"""
-	return "".join([choice("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_+-.@0123456789") for i in range (30)])
 
 class ConfigForm(forms.ModelForm):
 	class Meta:
@@ -81,7 +78,6 @@ class ColleurFormSet(forms.BaseFormSet):
 				colleur.matieres.set(form.cleaned_data['matiere'])
 				colleur.save()
 				user=colleur.user
-				user.username=random_string()
 				user.first_name=form.cleaned_data['first_name'].lower()
 				user.last_name=form.cleaned_data['last_name'].lower()
 				user.email=form.cleaned_data['email']
@@ -205,6 +201,7 @@ class ClasseGabaritForm(forms.ModelForm):
 					matiere = query[0]
 				else:
 					matiere = Matiere(nom=matiere.get("nom"),temps=matiere.get("temps"),lv=(matiere.get('lv') or 0),couleur=choice(list(zip(*Matiere.LISTE_COULEURS))[0]))
+					matiere.nomcomplet=str(matiere)
 					matiere.save()
 				listeMatieres.append(matiere)
 			nouvelleClasse.matieres.add(*listeMatieres)
