@@ -34,10 +34,14 @@ function majSelectLangues() // met à jour les listes déroulantes des selects
 		selectCourant.name="eleve"+String(i);
 		var eleve_id = current.lastElementChild.value;
 		current.replaceChild(selectCourant.cloneNode(true),current.lastElementChild);
-		for (var j = current.lastElementChild.length - 1; j > 0; j--) {
-			if (current.lastElementChild[j].value == parseInt(eleve_id))
-			{
-				current.lastElementChild.selectedIndex = j;
+		if (eleve_id == "") {
+			current.lastElementChild.selectedIndex = 0;
+		} else {
+			for (var j = current.lastElementChild.length - 1; j > 0; j--) {
+				if (current.lastElementChild[j].value == parseInt(eleve_id))
+				{
+					current.lastElementChild.selectedIndex = j;
+				}
 			}
 		}
 		current = current.parentNode.nextElementSibling.firstElementChild.nextElementSibling;
