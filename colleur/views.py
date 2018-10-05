@@ -47,23 +47,21 @@ def is_profprincipal(user,classe=False):
 	else:
 		return bool(user.colleur.classeprofprincipal.all())
 
-def connec(request, id_matiere):
+def connec(request):
 	"""Renvoie la vue de la page de connexion des colleurs. Si le colleur est déjà connecté, redirige vers la page d'accueil des colleurs"""
-	matiere=get_object_or_404(Matiere,pk=id_matiere)
 	if is_colleur(request.user):
 		return redirect('action_colleur')
 	error = False
-	form = ColleurConnexionForm(matiere,request.POST or None)
+	form = ColleurConnexionForm(request.POST or None)
 	if form.is_valid():
-		username=form.cleaned_data['colleur'].user.username
-		user = authenticate(username=username,password=form.cleaned_data['password'])
-		if user is not None and user.is_active:
+		user = authenticate(username=form.cleaned_data['username'],password=form.cleaned_data['password'])
+		if user is not None and user.is_active and user.colleur and user.colleur.matieres.all():
 			login(request,user)
-			request.session['matiere']=Matiere.objects.filter(nom__iexact=matiere.nom,colleur=request.user.colleur)[0].pk
+			request.session['matiere']=user.colleur.matieres.all()[0].pk
 			return redirect('action_colleur')
 		else:
 			error = True
-	return render(request,'colleur/home.html',{'form':form, 'matiere':matiere,'error':error})
+	return render(request,'colleur/home.html',{'form':form, 'error':error})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def changemat(request,id_mat):
@@ -131,7 +129,7 @@ def noteEleve(request,id_eleve,id_classe,colle=None):
 	if form.is_valid():
 		form.save()
 		return redirect('note_colleur',classe.pk)
-	return render(request,"colleur/noteEleve.html",{'eleve':eleve,'form':form,'classe':classe,'matiere':matiere})
+	return render(request,"colleur/noteEleve.html",{'eleve':eleve,'form':form,'classe':classe,'matiere':matiere, 'info': matiere.temps == 60})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def noteGroupe(request,id_groupe,colle=None):
@@ -473,7 +471,8 @@ def colleNoteEleve(request,id_colle):
 	"""Récupère la colle dont l'id est id_colle puis redirige vers la page de notation de l'élève sur la colle concernée"""
 	colle=get_object_or_404(Colle,pk=id_colle,colleur=request.user.colleur,matiere__in=request.user.colleur.matieres.all())
 	request.session['matiere']=colle.matiere.pk # on met à jour la matière courante
-	return noteEleve(request,colle.eleve.pk,colle.eleve.classe.pk,colle)
+	print(colle.eleve)
+	return noteEleve(request, 0 if colle.eleve is None else colle.eleve.pk, colle.classe.pk if colle.eleve is None else colle.eleve.classe.pk, colle)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def decompte(request):
