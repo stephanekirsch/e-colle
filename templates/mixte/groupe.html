@@ -20,6 +20,8 @@
 		{% with groupe.groupeeleve.count as nb %}
 		{% if nb < 3 %}<td></td>
 		{% if nb < 2 %}<td></td>
+		{% if nb < 1 %}<td></td>
+		{% endif %}
 		{% endif %}
 		{% endif %}
 		{% endwith %}
