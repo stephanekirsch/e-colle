@@ -129,7 +129,7 @@ def noteEleve(request,id_eleve,id_classe,colle=None):
 	if form.is_valid():
 		form.save()
 		return redirect('note_colleur',classe.pk)
-	return render(request,"colleur/noteEleve.html",{'eleve':eleve,'form':form,'classe':classe,'matiere':matiere})
+	return render(request,"colleur/noteEleve.html",{'eleve':eleve,'form':form,'classe':classe,'matiere':matiere, 'info': matiere.temps == 60})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def noteGroupe(request,id_groupe,colle=None):
@@ -471,7 +471,8 @@ def colleNoteEleve(request,id_colle):
 	"""Récupère la colle dont l'id est id_colle puis redirige vers la page de notation de l'élève sur la colle concernée"""
 	colle=get_object_or_404(Colle,pk=id_colle,colleur=request.user.colleur,matiere__in=request.user.colleur.matieres.all())
 	request.session['matiere']=colle.matiere.pk # on met à jour la matière courante
-	return noteEleve(request,colle.eleve.pk,colle.eleve.classe.pk,colle)
+	print(colle.eleve)
+	return noteEleve(request, 0 if colle.eleve is None else colle.eleve.pk, colle.classe.pk if colle.eleve is None else colle.eleve.classe.pk, colle)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def decompte(request):
