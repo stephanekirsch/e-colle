@@ -19,6 +19,8 @@
 		{% endfor %}
 		{% if groupe.2 < 3 %}<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td>
 		{% if groupe.2 < 2 %}<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td>
+		{% if groupe.2 < 1 %}<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td>
+		{% endif %}
 		{% endif %}
 		{% endif %}
 	</tr>
@@ -32,12 +34,14 @@
 	{% cycle '<tr><td>' '<td>' '<td>' %}<a href="{% url 'noteeleve_colleur' eleve.pk classe.pk %}">{{eleve.user__first_name|title}} {{eleve.user__last_name|upper}}</a>{% cycle '</td>' '</td>' '</td></tr>' %}
 	{% endfor %}
 	{% if modulo == 1 %}
-		<td></td><td></td></tr>
+		<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td>
+		<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td></tr>
 	{% elif modulo == 2 %}
-	<td></td></tr>
+	<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td></tr>
 	{% endif %}
 </table>
-{% elif modulo == 0 %}
+{% endif %}
+{% if modulo == 0 %}
 <table class="tableausimple">
 	<tr>
 		<th>Élève fictif</th>
