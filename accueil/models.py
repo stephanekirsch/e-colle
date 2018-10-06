@@ -353,6 +353,13 @@ class Colleur(models.Model):
 	def allprofs(self):
 		return self.colleurprof.prefetch_related('classe')
 
+	def classeGroupes(self):
+		classes = set()
+		for prof in self.colleurprof.prefetch_related('classe').all():
+			if prof.modifgroupe or prof.classe.profprincipal == self:
+				classes.add(prof.classe)
+		return sorted(classes, key = lambda x:x.nom)
+
 	def modifgroupe(self):
 		if Config.objects.get_config().modif_prof_groupe:
 			for prof in self.colleurprof.all():

@@ -66,6 +66,7 @@ DATABASES = {
 #                        FIN INFORMATIONS À REMPLIR
 # =============================================================================
 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
 
 CHEMINVERSECOLLE = path.dirname(path.dirname(__file__))
 
