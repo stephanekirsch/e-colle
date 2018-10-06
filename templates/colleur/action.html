@@ -43,10 +43,8 @@
 		{% if user.colleur.modifgroupe %}
 		<li><a href="#">Groupes</a>
 			<ul>
-		{% for prof in user.colleur.allprofs.all %}
-			{% if prof.modifgroupe or prof.classe.profprincipal == user.colleur %}
-			<li><a href="{% url 'groupe_colleur' prof.classe.pk %}">{{prof.classe.nom}}</a></li>
-			{% endif %}
+		{% for classe in user.colleur.classeGroupes %}
+			<li><a href="{% url 'groupe_colleur' classe.pk %}">{{classe.nom}}</a></li>
 		{% endfor %}
 			</ul>
 		</li>
