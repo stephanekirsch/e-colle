@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from django.forms.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from xml.etree import ElementTree as etree
-from ecolle.settings import RESOURCES_ROOT
+from ecolle.settings import RESOURCES_ROOT,HEURE_DEBUT,HEURE_FIN,INTERVALLE
 from os.path import isfile,join
 
 class ColleurConnexionForm(forms.Form):
@@ -49,7 +49,7 @@ class NoteGroupeForm(forms.Form):
 		self.groupe=groupe
 		self.matiere=matiere
 		self.colleur=colleur
-		LISTE_HEURE=[(i,"{}h{:02d}".format(i//4,15*(i%4))) for i in range(24,89)]
+		LISTE_HEURE=[(i,"{}h{:02d}".format(i//60,(i%60))) for i in range(HEURE_DEBUT,HEURE_FIN,INTERVALLE)]
 		LISTE_JOUR=enumerate(["lundi","mardi","mercredi","jeudi","vendredi","samedi"])
 		LISTE_NOTE=[('',"---"),(21,"n.n"),(22,"Abs")]
 		LISTE_NOTE.extend(zip(range(21),range(21)))

@@ -5,7 +5,13 @@
 <head>
 	<meta charset="utf-8"/>
 	<link rel="icon" href="{% static 'images/calendar-48px.png' %}">
-	<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    {% if user.is_authenticated %}
+       {% with 'css/'|add:user.css as css_static %} 
+	     <link rel="stylesheet" href="{% static css_static %}" />
+       {% endwith %}
+    {% else %} 
+	   <link rel="stylesheet" href="{% static 'css/new_style.css' %}" />
+    {% endif %} 
 	<title>e-colle v2.0</title>
 {% load customfilter %}
 </head>

@@ -127,7 +127,7 @@ def Pdf(classe,semin,semax):
 			data[2][0]="Salle"
 			for cren in range(nbCreneauxLoc):
 				heure = creneaux[indcreneau+cren].heure
-				data[1][cren+1] = "{}h{:02d}".format(heure//4,15*(heure%4))
+				data[1][cren+1] = "{}h{:02d}".format(heure//60,(heure%60))
 				data[2][cren+1] = creneaux[indcreneau+cren].salle
 			#on places les colles dans le tableau, ainsi que les bonnes couleurs
 			for icren in range(indcreneau,indcreneau+nbCreneauxLoc):
