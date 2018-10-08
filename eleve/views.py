@@ -24,7 +24,6 @@ def connec(request):
 	error = False
 	form = EleveConnexionForm(request.POST or None)
 	if form.is_valid():
-		username=form.cleaned_data['eleve'].user.username
 		user = authenticate(username=form.cleaned_data['username'],password=form.cleaned_data['password'])
 		if user and user.is_active and user.eleve:
 			login(request,user)
