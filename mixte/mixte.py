@@ -201,7 +201,7 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
 				semainecolle=Semaine.objects.get(numero=numero)
 				if semainecolle.lundi + timedelta(days = creneau.jour) not in feries:
 					Colle.objects.filter(creneau=creneau,semaine=semainecolle).delete()
-					Colle(creneau=creneau,colleur=colleur,matiere=matiere,eleve=None,semaine=semainecolle).save()
+					Colle(creneau=creneau,colleur=colleur,matiere=matiere,eleve=None,semaine=semainecolle,classe = creneau.classe).save()
 					creneaux['semgroupe'].append({'semaine':semainecolle.pk,'groupe':""})
 			except Exception:
 				pass
