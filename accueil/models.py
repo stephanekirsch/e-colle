@@ -8,7 +8,7 @@ from django.db.models.signals import post_delete, post_save
 from django.db import transaction
 from django.dispatch import receiver
 import os
-from ecolle.settings import MEDIA_ROOT, IMAGEMAGICK, BDD
+from ecolle.settings import MEDIA_ROOT, IMAGEMAGICK, BDD, DEFAULT_CSS, HEURE_DEBUT, HEURE_FIN, INTERVALLE
 from PIL import Image
 from django.db.models import Count, Avg, Min, Max, Sum, F, Q, StdDev
 from django.db.models.functions import Lower, Upper, Concat, Substr
@@ -429,6 +429,8 @@ class User(AbstractUser):
 	eleve = models.OneToOneField(Eleve, null=True, on_delete=models.CASCADE)
 	colleur = models.OneToOneField(Colleur, null=True, on_delete=models.CASCADE)
 
+	css = models.CharField(verbose_name="Style préféré",default=DEFAULT_CSS,null=True,blank=True,max_length=50)
+
 	def totalmessages(self):
 		return Destinataire.objects.filter(user=self).count()
 
@@ -458,7 +460,9 @@ class Semaine(models.Model):
 		return "{}:{}/{}-{}/{}".format(self.numero,self.lundi.day,self.lundi.month,samedi.day,samedi.month)
 
 class Creneau(models.Model):
-	LISTE_HEURE=[(i,"{}h{:02d}".format(i//4,15*(i%4))) for i in range(24,89)] # une heure est représentée par le nombre de 1/4 d'heure depuis 0h00. entre 6h et 22h
+	LISTE_HEURE=[(i,"{}h{:02d}".format(i//60,(i%60))) for i in range(HEURE_DEBUT,HEURE_FIN,INTERVALLE)] 
+        # une heure est représentée par le nombre de minutes depuis
+        # minuit
 	LISTE_JOUR=enumerate(["lundi","mardi","mercredi","jeudi","vendredi","samedi"])
 	jour = models.PositiveSmallIntegerField(choices=LISTE_JOUR,default=0)
 	heure = models.PositiveSmallIntegerField(choices=LISTE_HEURE,default=24)
@@ -469,7 +473,7 @@ class Creneau(models.Model):
 		ordering=['jour','heure','salle','pk']
 
 	def __str__(self):
-		return "{}/{}/{}h{:02d}".format(self.classe.nom,semaine[self.jour],self.heure//4,15*(self.heure%4))
+		return "{}/{}/{}h{:02d}".format(self.classe.nom,semaine[self.jour],self.heure//60,(self.heure%60))
 
 class Programme(models.Model):
 	def update_name(instance, filename):
@@ -632,7 +636,7 @@ class NoteManager(models.Manager):
 
 class Note(models.Model):
 	LISTE_JOUR=enumerate(["lundi","mardi","mercredi","jeudi","vendredi","samedi"])
-	LISTE_HEURE=[(i,"{}h{:02d}".format(i//4,15*(i%4))) for i in range(24,89)]
+	LISTE_HEURE=[(i,"{}h{:02d}".format(i//60,(i%60))) for i in range(HEURE_DEBUT,HEURE_FIN,INTERVALLE)] 
 	LISTE_NOTE=[(21,"n.n"),(22,"Abs")]
 	LISTE_NOTE.extend(zip(range(21),range(21)))
 	colleur = models.ForeignKey(Colleur,on_delete=models.PROTECT)

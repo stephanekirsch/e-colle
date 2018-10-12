@@ -28,7 +28,7 @@ def heurecolle(temps):
 
 @register.filter
 def heure(heure):
-	return "{}h{:02d}".format(heure//4,15*(heure%4))
+	return "{}h{:02d}".format(heure//60,(heure%60))
 
 @register.filter
 def image(fichier):

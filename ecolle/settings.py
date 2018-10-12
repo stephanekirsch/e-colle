@@ -62,6 +62,17 @@ DATABASES = {
     }
 }
 
+# Style CSS par défaut.
+DEFAULT_CSS = "wstyle_css"
+
+# Horaires des colles
+# On écrit les heures en minutes depuis minuit.
+HEURE_DEBUT = 8*60
+HEURE_FIN = 20*60
+# L'intervalle entre deux créneaux, en minutes.
+INTERVALLE = 30
+
+
 # =============================================================================
 #                        FIN INFORMATIONS À REMPLIR
 # =============================================================================
