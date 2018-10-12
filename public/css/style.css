@@ -98,7 +98,7 @@ ul.accueil
 	background: -ms-linear-gradient(top,  #323232,  #5bbeff);
 	color:white; /* couleur du texte */
 	text-shadow: 2px 2px 2px black; /* quelques ombres sur le texte */
-	height:40px;
+	min-height:40px;
 	margin:0px;
 }
 .accueil li, .accueil td
