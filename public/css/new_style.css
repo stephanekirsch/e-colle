@@ -1,0 +1,589 @@
+html 
+{ 
+	margin:0;
+	padding:0;
+	background: #CCCBC6;
+	font-family: 'ubuntu', 'Trebuchet MS', Arial, sans-serif; 
+	font-size:12px;
+	color:black;
+}
+body
+{
+	margin: 0;
+	padding: 0;
+}
+ul /* on vire les points des listes */
+{
+	list-style:none;
+}
+a /* on vire la deco des liens */
+{
+	text-decoration:none;
+}
+#bloc /* bloc qui englobe tout */
+{
+	width:1240px;
+	margin:auto;
+	padding-top: 8px;
+}
+#bloc_page  /* bloc principal */
+{
+	display:inline-block; /* on transforme en inline-block pour mettre les div les uns à côtés des autres> */
+	vertical-align:top; /* on aligne les blocs par le haut */
+	width: 900px;
+}
+.cote /* styles des divs des côtés */
+{
+	display:inline-block;
+	vertical-align:top;
+	width:150px;
+	margin: 0px 5px;
+	padding:0px;
+}
+#header /* en-tête */
+{
+	margin: 0px 0px 20px 0px;
+	padding:0px;
+	width:900px;
+	background: #A9B7C0;
+	color:black;
+	border:solid 3px black; /* on met un p'tit bord noir */
+	text-align:center;
+}
+#header :link, #header :hover, #header :active, #header :visited {
+  color: inherit;
+}
+h1 /* titre de l'en-tête */
+{
+	margin-bottom:10px;
+	margin-top: 10px;
+	font-size: 50px ;
+}
+ul.accueil 
+{
+	width:150px;
+}
+.accueil /* pour le menu de déconnexion/accueil */
+{
+	margin: auto;
+	padding:0px;
+	line-height : 40px; /* on définit une hauteur pour chaque élément */
+	text-align : center; /* on centre le texte qui se trouve dans le div */
+	font-size : 14px; /* hauteur du texte : 14 pixels */
+	min-width : 150px; /* largeur */
+	color:white; /* couleur du texte */
+}
+.accueil a /* pour les liens du menu accueil/deconnexion */
+{
+	display : block; /* on change le type d'élément, les liens deviennent des balises de type block */
+	padding : 0; /* aucune marge intérieure */
+	background: #A9B7C0;
+	color:black; /* couleur du texte */
+	text-shadow: None; /* quelques ombres sur le texte */
+	min-height: 40px;
+	margin:0ex;
+	border: black 5px;
+}
+.accueil li, .accueil td
+{
+        color: black; 
+	background: #EFD9C1 ; /* si les dégradés non supportés */
+	padding: 0px;
+	min-width:150px;
+	margin:0.5ex;
+	border:solid 1px black; /* on met un p'tit bord noir */
+}
+.accueil a:hover, #menu a:hover /* pour les liens du menu accueil/deconnexion, quand la souris passe dessus */
+{
+	color: black; /* On passe le texte en noir... */
+	background: #EFD9C1 !important; /* si dégradé non supporté, fond gris */
+
+}
+.accueil li
+{
+	margin:2px 0px;
+	display:block;
+}
+#menu /* le menu de navigation */
+{
+	margin: 20px auto;
+	padding:0px;
+	text-align:center;
+}
+#menu a
+{
+	display : block; /* on change le type d'élément, les liens deviennent des balises de type block */
+	padding : 0; /* aucune marge intérieure */
+	margin:0px;
+	border: 1px solid black; /* on arrondit les angles */
+ 	background: #C7D8C6; /* si les dégradés non supportés */
+	color:black; /* couleur du texte */
+	width:96px;
+	font-weight : bold; /* on met le texte en gras */
+	font-size : 12.5px; /* taille du texte : 12.5 pixels */
+	line-height : 25px; /* on définit une hauteur pour chaque élément */
+}
+#menu  li
+{
+	padding:0px;
+	margin:0px;
+	display:inline-block;
+	vertical-align:top;
+	position:relative;
+}
+#menu ul
+{
+	padding:0px;
+	margin:0px;
+	display:none;
+}
+#menu li ul
+{
+	position:absolute;
+}
+#menu li ul li
+{
+	display:block;
+	margin:2px 0px;
+}
+#menu li:hover ul
+{
+	display:block;
+}
+.error /* pour les messages d'erreur */
+{
+	background-color:white;
+	color:#d80000;
+	position:relative;
+	float:center;
+	text-align:center;
+	margin:auto;
+	margin-top:20px;
+	margin-bottom:40px;
+	padding:0;
+	font-size:20px;
+}
+.info /* pour les messages de confirmation */
+{
+	color:white;
+	position:relative;
+	float:center;		
+	text-align:center;
+	margin:auto;
+	margin-top:20px;
+	margin-bottom:40px;
+	padding:0;
+	font-size:20px;
+}
+.tableausimple
+{
+	float:center;
+	border: solid 1px black !important;
+	background-color: #CCCBC6;
+	border-collapse: collapse;
+	padding:0;
+	margin-left:auto;
+	margin-right:auto;
+	margin-top:30px;
+	margin-bottom:30px;
+	text-align:center;
+}
+.tableausimple td,th
+{
+	/* border: solid 1px black !important; */ 
+	padding:3px;
+	min-width:30px;
+	vertical-align: middle;
+}
+.tableausimple td.semaine
+{
+	min-width:100px;
+}
+.tableausimple ul
+{
+	padding-left: 0;
+}
+.tableausimple ul li
+{
+	text-align: center;
+}
+
+td textarea, td label
+{
+	display: block;
+}
+.entete td, td.entete, .tableausimple th
+{
+	line-height : 40px; /* on définit une hauteur pour chaque élément */
+	text-align : center; /* on centre le texte qui se trouve dans le div */
+	font-weight : bold; /* on met le texte en gras */
+	font-size : 14px; /* hauteur du texte : 14 pixels */
+	padding: 0.5ex 1em; /* marge interne: 5px */
+	background: #C7D8C6; /* si les dégradés non supportés */
+	color: black; /* couleur du texte */
+  border-bottom: solid 1px black ; 
+}
+td.bouton
+{
+	font-size:12px;
+	padding:1px;
+}
+.bouton a
+{
+	display:inline-block;
+	width:100%;
+	background-color:#D0D0D0;
+	color:#505050;
+	border-radius:4px;
+}
+.bouton a:hover
+{
+	background-color:#E0E0E0;
+}
+a.image
+{
+	position:absolute;
+}
+a.image img
+{
+	position:absolute;
+	top: -585px;
+	left: -413px;
+	-webkit-transform-origin: 50% 50%;
+	-moz-transform-origin: 50% 50%;
+	-ms-transform-origin: 50% 50%;
+	-o-transform-origin: 50% 50%;
+	transform-origin: 50% 50%;
+	-webkit-transform: scale(0.1);
+	-moz-transform: scale(0.1);
+	-ms-transform: scale(0.1);
+	-o-transform: scale(0.1);
+	transform: scale(0.1);
+	
+}
+a.image:hover img
+{
+	-webkit-transition: transform;
+	-moz-transition: transform;
+	-ms-transition: transform;
+	-o-transition: transform;
+	transition: transform;
+	-webkit-transition-duration:3s;
+	-moz-transition-duration:3s;
+	-ms-transition-duration:3s;
+	-o-transition-duration:3s;
+	transition-duration:3s;
+	-webkit-transform:scale(1);
+	-moz-transform:scale(1);
+	-ms-transform:scale(1);
+	-o-transform:scale(1);
+	transform:scale(1);
+	z-index:100;
+}
+.photo
+{
+	height:100px;
+	border:1px solid black;
+	box-shadow: 2px 2px 4px black;
+	display: block;
+	margin: auto;
+	border-radius: 3px;
+}
+.prog_colle
+{
+	height:60px;
+	overflow: auto;
+	word-wrap: break-word;
+	text-align:left;
+	padding:auto;
+}
+.popup p
+{
+	width:400px;
+	max-height:100px;
+	overflow: auto;
+	word-wrap: break-word;
+}
+td div.popup
+{ 
+	display: none;  
+}
+td:hover div.popup 
+{ 
+	display:inline-block; 
+	position: absolute; 
+	margin-left:10px;
+	text-align:left;
+	background-color:black;
+	background-color:rgba(0,0,0,.7) !important;
+	border: solid 2px white;
+	color:white;
+	padding:5px;
+	border-radius:5px;
+	z-index:2;
+}
+div.popup ul
+{
+	list-style-type:disc;
+}
+div.popup ol li ol
+{
+	list-style-type:lower-latin;
+}
+div.popup ol li ol li ol
+{
+	list-style-type:lower-greek;
+}
+.plusclair
+{
+	background-color: #A9B7C0;
+}
+input, select
+{
+	font-size:12px;
+}
+.split2
+{
+	display:inline-block;
+	vertical-align:top;
+	width:448px;
+	margin:0;
+}
+td.matiere li
+{
+	list-style-type:none;
+}
+td.matiere ul
+{
+	padding:0;
+	margin:0;
+	width:41px;
+	line-height:26px;
+}
+td.matiere
+{
+	position:relative;
+	padding:0;
+	line-height:27px;
+}
+td.matiere:hover  li.niveau1
+{
+	background-color: black;
+	background-color: rgba(0,0,0,.4) !important;
+}
+td.matiere ul ul
+{
+	display:none;
+	position:absolute;
+	top:-78px;
+	left:41px;
+	z-index:2;
+}
+
+td.matiere:hover ul ul#niveau2
+{
+	display:block;
+	width:100px;
+	line-height:25px;
+}
+td.matiere ul ul li:hover ul.niveau3 
+{
+	display:block;
+	width:200px;
+	line-height:25px;
+}
+td.matiere ul.niveau3 li
+{
+	border: 1px solid black;
+}
+td.matiere ul ul ul
+{
+	top:-1px;
+	left:99px;
+	z-index:3;
+}
+td.matiere ul li
+{
+	position:relative;
+}
+td.matiere:hover ul ul li
+{
+	border: 1px solid transparent;
+}
+td.matiere ul ul li:hover
+{
+	border:1px solid white;
+}
+td.matiere ul ul ul li:hover ul.niveau4
+{
+	display:block;
+	width:200px;
+	line-height:25px;
+}
+td.matiere ul ul ul ul
+{
+	top:-1px;
+	left:199px;
+	z-index:4;
+	background-color:black;
+	color:white;
+}
+td.matiere ul ul ul ul li
+{
+	padding:0;
+	width:200px;
+}
+td.matiere ul ul a
+{
+	display:block;
+	color:white;
+	background-color:black;
+	width:98px;
+	margin:auto;
+	line-height:25px;
+	margin:0;
+}
+td.matiere ul ul ul ul a
+{
+	display:block;
+	color:white;
+	width:198px;
+	margin:auto;
+	line-height:25px;
+	margin:0;
+}
+div.colle
+{
+	position:fixed;
+	left:10px;
+	top:10px;
+	background-color:black;
+	background-color:rgba(0,0,0,.6) !important;
+	z-index:2;
+	padding:5px;
+	display:none;
+	color:white;
+	font-size:16px;
+	font-weight:bold;
+	text-align:left;
+	border-radius:10px;
+	border: 2px solid white;
+}
+td:hover div.colle
+{
+	display:block;
+}
+td.couleur
+{
+	width:50px;
+	border:1px solid black !important;
+}
+td.couleur div
+{
+	position:relative;
+	width:60px;
+	height:17px;
+}
+.couleur ul
+{
+	display:none;
+	position:absolute;
+	top:-16px;
+	left:13px;
+	width:300px;
+}
+.couleur ul li
+{
+	display:inline-block;
+	height:23px;
+	width:20px;
+	border:1px solid black;
+}
+.couleur:hover ul
+{
+	display:block;
+}
+.couleur ul li:hover
+{
+	border: 1px solid white;
+}
+.couleur li a
+{
+	display:block;
+	height:22px;
+	width:20px;
+}
+td.colloscope:hover
+{
+	background-color: black;
+	background-color: rgba(0,0,0,.4) !important;
+}
+footer
+{
+	position: fixed;
+	left: 10px;
+	bottom: 10px;
+	color: white;
+	font-size: 9px;
+}
+div#grise
+{
+	display: none;
+	position: fixed;
+	z-index: 100;
+	background-color: rgba(0,0,0,.9);
+	width:100%;
+	height:200%;
+	margin: 0;
+	padding: auto;
+}
+div#grise form
+{
+	position: fixed;
+	top:20%;
+	left:20%;
+	width:60%;
+	height:60%;
+}
+div#grise table.reservation
+{
+	border-collapse: collapse;
+	margin: auto;
+	text-align: center;
+	background-color: orange;
+	border: 1px solid black;
+	border-radius: 5px;
+}
+div#grise table.reservation td,div#grise table.reservation th, div#grise table.reservation tr
+{
+	border: 1px solid black;
+}
+.errorlist
+{
+	color:red;
+}
+
+table.tableausimple label
+{
+	display: inline-block;
+}
+
+textarea
+{
+	margin:auto;
+}
+
+div.scroll
+{
+	max-height:80px;
+	overflow-y:auto;
+	text-align: left;
+}
+
+div.bigscroll
+{
+	max-height:500px;
+	overflow-y:auto;
+	text-align: left;
+}
+
