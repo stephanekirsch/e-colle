@@ -63,7 +63,7 @@ DATABASES = {
 }
 
 # Style CSS par défaut.
-DEFAULT_CSS = "wstyle_css"
+DEFAULT_CSS = "style_css"
 
 # Horaires des colles
 # On écrit les heures en minutes depuis minuit.
