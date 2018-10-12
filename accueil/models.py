@@ -503,7 +503,7 @@ class NoteManager(models.Manager):
 			cursor.execute(requete,(colleur.pk,))
 			notes = dictfetchall(cursor)
 			return [[note["id"], note["matiere_id"], note["classe_id"], note["note"],  note["commentaire"], note["semaine"], datetime.combine(note["date_colle"],
-				time(note["heure"] // 4, 15 * (note["heure"] % 4))).replace(tzinfo=timezone.utc).timestamp(), note["eleve_id"], note["rattrapee"]] for note in notes]
+				time(note["heure"] // 4, 15 * (note["heure"] % 4))).replace(tzinfo=timezone.utc).timestamp(), note["eleve_id"], bool(note["rattrapee"])] for note in notes]
 
 	def listeNotes(self,colleur,classe,matiere):
 		requete = "SELECT n.id pk, s.numero semaine, p.titre, p.detail, n.date_colle, n.heure, u.first_name prenom, u.last_name nom, n.note, n.commentaire\
