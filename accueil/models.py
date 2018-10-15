@@ -839,7 +839,7 @@ def mois():
 		moisMax=Semaine.objects.aggregate(Max('lundi'))
 		moisMin=date(moisMin['lundi__min'].year,moisMin['lundi__min'].month,1)
 		moisMax=moisMax['lundi__max']+timedelta(days=5)
-		moisMax=date(moisMax.year+moisMax.month//12,moisMax.month+1,1)-timedelta(days=1)
+		moisMax=date(moisMax.year+moisMax.month//12,moisMax.month%12+1,1)-timedelta(days=1)
 	except Exception:
 		hui=date.today()
 		moisMin=moisMax=date(hui.year,hui.month,1)
