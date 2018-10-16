@@ -1,4 +1,9 @@
 from django.db import models
+from django.db import transaction,connection
+
+from .autre import group_concat,dictfetchall
+
+
 
 class ColleurManager(models.Manager):
     def listeColleurClasse(self, colleur):

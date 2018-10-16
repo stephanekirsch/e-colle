@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from . import Destinataire
+
 from ecolle.settings import DEFAULT_CSS
 
 class User(AbstractUser):

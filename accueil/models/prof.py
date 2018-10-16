@@ -1,4 +1,5 @@
 from django.db import models
+from .classe import Classe
 
 class ProfManager(models.Manager):
     def listeprofs(self):
