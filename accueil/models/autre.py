@@ -14,6 +14,8 @@ from django.db.models import Count, Avg, Min, Max, Sum, F, Q, StdDev
 from django.db.models.functions import Lower, Upper, Concat, Substr
 
 from .eleve import Eleve
+from .note import Note
+from .classe import Classe
 
 semaine = ["lundi", "mardi","mercredi","jeudi","vendredi","samedi","dimanche"]
 
@@ -51,6 +53,7 @@ def date_moins_date(date1,date2):
     else:
         return "" # à compléter par ce qu'il faut dans le cas ou vous utilisez 
                   # un SGBD qui n'est ni mysql, ni postgresql, ni sqlite ni oracle
+
 
 def group_concat(arg):
     """Renvoie une chaîne de caractères correspondant à la syntaxe SQL 
