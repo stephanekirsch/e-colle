@@ -57,7 +57,7 @@ def mixtecolloscopemodif(request,classe,semin,semax,creneaumodif):
 				form.save()
 		return redirect('colloscopemodif_colleur' if request.user.colleur else 'colloscopemodif_secret',classe.pk,semin.pk,semax.pk)
 	matieres = list(classe.matieres.filter(colleur__classes=classe, colleur__user__is_active = True).values_list('pk','nom','couleur','temps').annotate(nb=Count("colleur")))
-	colleurs = list(Colleur.objects.exclude(matieres = None).filter(classes=classe,user__is_active = True).values_list('pk','user__first_name','user__last_name').order_by("matieres__nom", "matieres__pk", "user__last_name", "user__first_name"))
+	colleurs = list(Colleur.objects.exclude(matieres = None).filter(classes=classe, matieres__in = classe.matieres.all(), user__is_active = True).values_list('pk','user__first_name','user__last_name').order_by("matieres__nom", "matieres__pk", "user__last_name", "user__first_name"))
 	groupes = Groupe.objects.filter(classe=classe)
 	matieresgroupes = [[groupe for groupe in groupes if groupe.haslangue(matiere)] for matiere in classe.matieres.filter(colleur__classes=classe)]
 	listeColleurs = []
