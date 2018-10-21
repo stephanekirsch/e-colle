@@ -172,6 +172,23 @@ class ClasseForm(forms.ModelForm):
 		fields=['nom','annee','matieres']
 		widgets = {'matieres':forms.CheckboxSelectMultiple}
 
+	def clean_matieres(self):
+		# Si la classe existe déjà on vérifie qu'on n'enleve pas une matiere qui a des notes ou des colles dans celle classe.
+		matieresPk = {x.pk for x in self.cleaned_data['matieres']}
+		matieresNotes = Note.objects.filter(classe=self.instance).values_list('matiere__pk','matiere__nomcomplet').distinct()
+		matieresNotesDict = dict(matieresNotes)
+		matieresNotesSet = set(matieresNotesDict.keys())
+		diff = matieresNotesSet - matieresPk
+		if diff:
+			raise ValidationError("Vous ne pouvez pas retirer la/les matière(s): {} elles contiennent des notes dans cette classe".format(", ".join(matieresNotesDict[x] for x in diff)))
+		matieresColles = set(Colle.objects.filter(creneau__classe=self.instance).values_list('matiere__pk', 'matiere__nomcomplet').distinct())
+		matieresCollesDict = dict(matieresColles)
+		matieresCollesSet = set(matieresCollesDict.keys())
+		diff = matieresCollesSet - matieresPk
+		if diff:
+			raise ValidationError("Vous ne pouvez pas retirer la/les matière(s): {} elles contiennent des colles dans cette classe".format(", ".join(matieresCollesDict[x] for x in diff)))
+		return self.cleaned_data['matieres']
+
 class ClasseGabaritForm(forms.ModelForm):
 	gabarit=forms.BooleanField(label="gabarit",required=False)
 	tree=etree.parse(path.join(RESOURCES_ROOT,'classes.xml')).getroot()
