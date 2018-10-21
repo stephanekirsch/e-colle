@@ -2,6 +2,7 @@ from django.db import models
 from django.db import transaction,connection
 
 from .autre import group_concat,dictfetchall
+from .config import Config
 
 
 

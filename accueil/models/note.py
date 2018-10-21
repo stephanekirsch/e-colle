@@ -1,5 +1,9 @@
-from django.db import models
+from django.db import models, connection
 from datetime import date
+from django.db.models import Avg, Min, Max, StdDev, Count
+from .autre import dictfetchall
+from .semaine import Semaine
+from .eleve import Eleve
 
 from ecolle.settings import HEURE_DEBUT, HEURE_FIN, INTERVALLE
 

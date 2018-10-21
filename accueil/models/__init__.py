@@ -1,4 +1,4 @@
-from .autre import Creneau,Programme,Ramassage,JourFerie,Message,Destinataire,MatiereECTS,NoteECTS,mois,Destinataire
+from .autre import Creneau,Programme,JourFerie,Message,Destinataire,MatiereECTS,NoteECTS,Destinataire
 from .config import Config
 from .matiere import Matiere
 from .classe import Classe
@@ -11,4 +11,5 @@ from .semaine import Semaine
 from .note import Note
 from .colle import Colle
 from .eleve import Eleve
+from .ramassage import Ramassage, mois
 

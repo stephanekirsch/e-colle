@@ -1,4 +1,6 @@
 from django.db import models
+from .groupe import Groupe
+from django.db.models.functions import Lower, Upper, Concat, Substr
 
 class Classe(models.Model):
     ANNEE_PREPA = (
