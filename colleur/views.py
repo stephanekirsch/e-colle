@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from colleur.forms import ColleurConnexionForm, NoteForm, ProgrammeForm, NoteGroupeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm
+from colleur.forms import ColleurConnexionForm, NoteForm, ProgrammeForm, NoteGroupeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm, SelectEleveNoteForm, NoteElevesHeadForm, NoteElevesTailForm, NoteElevesFormset
 from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, MatiereECTS, NoteECTS
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm
 from django.contrib import messages
@@ -79,6 +79,10 @@ def action(request):
 def note(request,id_classe):
 	"""Renvoie la vue de la page de gestion des notes"""
 	classe=get_object_or_404(Classe,pk=id_classe)
+	form = SelectEleveNoteForm(classe, request.POST or None)
+	if request.method == 'POST': # si on note plusieurs élèves à la fois sans passer par un groupe
+		if form.is_valid():
+			return redirect('noteeleves_colleur', id_classe, "-".join([str(eleve.pk) for eleve in form.cleaned_data['eleve']]))
 	colleur=request.user.colleur
 	matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=request.user.colleur)
 	if classe not in colleur.classes.all() or matiere.pk not in classe.matierespk():
@@ -98,9 +102,22 @@ def note(request,id_classe):
 	for value in groupes:
 		nom_groupes.append((value['nom'],value['pk'],value['nb'],[("{} {}".format(x['user__first_name'].title(),x['user__last_name'].upper()),x['pk'],x['lien']) for x in eleves_groupes[:value['nb']]],any(x['lien'] for x in eleves_groupes[:value['nb']])))
 		del eleves_groupes[:value['nb']]
-	eleves=Eleve.objects.filter(classe=classe,groupe__isnull=True).values('pk','user__first_name','user__last_name').order_by('user__last_name','user__first_name')
-	modulo = eleves.count() % 3
-	return render(request,"colleur/note.html",{'notes':Note.objects.listeNotes(colleur,classe,matiere),'classe':classe,'eleves':eleves,'groupes':nom_groupes,'modulo':modulo})
+	modulo = Eleve.objects.filter(classe=classe).count() % 3
+	return render(request,"colleur/note.html",{'form':form,'notes':Note.objects.listeNotes(colleur,classe,matiere),'classe':classe,'groupes':nom_groupes,'modulo':modulo})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def noteEleves(request, id_classe, eleves_str):
+	classe = get_object_or_404(Classe, pk=id_classe)
+	eleves = Eleve.objects.filter(pk__in = eleves_str.split("-"))
+	matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=request.user.colleur)
+	form = NoteElevesHeadForm(matiere, request.user.colleur, classe, request.POST or None)
+	NoteElevesformset = formset_factory(NoteElevesTailForm,extra=eleves.count(),max_num=3,formset=NoteElevesFormset)
+	formset = NoteElevesformset(form, eleves, request.POST or None)
+	if request.method == 'POST':
+		if formset.is_valid():
+			formset.save()
+			return redirect('note_colleur',id_classe)
+	return render(request,"colleur/noteEleves.html", {'form':form, 'formset':formset, 'classe':classe.nom, 'matiere':matiere})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def noteEleve(request,id_eleve,id_classe,colle=None):

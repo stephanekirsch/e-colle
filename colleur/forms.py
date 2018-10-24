@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from django.forms.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from xml.etree import ElementTree as etree
-from ecolle.settings import RESOURCES_ROOT,HEURE_DEBUT,HEURE_FIN,INTERVALLE
+from ecolle.settings import RESOURCES_ROOT
 from os.path import isfile,join
 
 class ColleurConnexionForm(forms.Form):
@@ -49,7 +49,7 @@ class NoteGroupeForm(forms.Form):
 		self.groupe=groupe
 		self.matiere=matiere
 		self.colleur=colleur
-		LISTE_HEURE=[(i,"{}h{:02d}".format(i//60,(i%60))) for i in range(HEURE_DEBUT,HEURE_FIN,INTERVALLE)]
+		LISTE_HEURE=[(i,"{}h{:02d}".format(i//4,15*(i%4))) for i in range(24,89)]
 		LISTE_JOUR=enumerate(["lundi","mardi","mercredi","jeudi","vendredi","samedi"])
 		LISTE_NOTE=[('',"---"),(21,"n.n"),(22,"Abs")]
 		LISTE_NOTE.extend(zip(range(21),range(21)))
@@ -272,3 +272,78 @@ class ECTSForm(forms.Form):
 		self.fields['etoile'] = forms.BooleanField(label="classe étoile",required=False)
 		if any(isfile(x) for x in imagesProviseur+imagesProviseurAdjoint): # si au moins un des tampons est présent
 			self.fields['tampon'] = forms.BooleanField(label='incrustuer le tampon/la signature',required=False)
+
+class SelectEleveNoteForm(forms.Form):
+	def __init__(self,classe,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		query = Eleve.objects.filter(classe=classe).select_related('user').order_by('user__last_name','user__first_name')
+		self.fields['eleve'] = forms.ModelMultipleChoiceField(queryset=query, required=True, widget = forms.CheckboxSelectMultiple)
+		self.fields['eleve'].empty_label = None
+
+	def clean_eleve(self):
+		eleves = self.cleaned_data['eleve']
+		print(eleves)
+		if eleves.count() == 0:
+			raise ValidationError('Il faut noter au moins un élève!')
+		if eleves.count() > 3:
+			raise ValidationError('vous ne pouvez pas noter plus de 3 élèves sur un même créneau')
+		return eleves
+
+class NoteElevesHeadForm(forms.Form):
+	def __init__(self, matiere, colleur, classe, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.matiere = matiere
+		self.colleur = colleur
+		self.classe = classe
+		LISTE_HEURE=[(i,"{}h{:02d}".format(i//4,15*(i%4))) for i in range(24,89)]
+		LISTE_JOUR=enumerate(["lundi","mardi","mercredi","jeudi","vendredi","samedi"])
+		self.fields['semaine']=forms.ModelChoiceField(label="Semaine",queryset=Semaine.objects.all(), empty_label=None)
+		self.fields['jour']=forms.ChoiceField(label="Jour",choices=LISTE_JOUR)
+		self.fields['heure']=forms.ChoiceField(label="Heure",choices=LISTE_HEURE)
+		self.fields['rattrapee']=forms.BooleanField(required=False)
+		self.fields['date_colle']=forms.DateField(label="date de rattrapage",widget=SelectDateWidget(years=[date.today().year+i-1 for i in range(10)]),initial=date.today)
+
+class NoteElevesTailForm(forms.Form):
+	def __init__(self, eleve, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		LISTE_NOTE=[('',"---"),(21,"n.n"),(22,"Abs")]
+		LISTE_NOTE.extend(zip(range(21),range(21)))
+		self.eleve = eleve
+		self.fields['note']=forms.ChoiceField(label="Note",choices=LISTE_NOTE,required=False)
+		self.fields['commentaire']=forms.CharField(label="Commentaire(facultatif)",widget=forms.Textarea,required=False)
+
+class NoteElevesFormset(forms.BaseFormSet):
+	def __init__(self, headForm, eleves, *args,**kwargs):
+		super().__init__(*args,**kwargs)
+		self.headForm = headForm
+		self.eleves = eleves
+
+	def get_form_kwargs(self, index):
+		"""déterminer l'argument nommé 'eleve' à passer en paramètre du formulaire"""
+		kwargs = super().get_form_kwargs(index)
+		if self.eleves:
+			kwargs['eleve'] = self.eleves[index]
+		else:
+			kwargs['eleve'] = None
+		return kwargs
+
+	def clean(self):
+		"""Vérifie que le colleur n'aura au final pas plus de 3 notes sur ce créneau et qu'il n'a pas déjà collé un des élève cette semaine dans cette matière"""
+		if not self.headForm.is_valid(): # on valide le formulaire de tête
+			raise ValidationError("erreur dans dans la semaine/date/jeure/jour")
+		if not self.headForm.cleaned_data['rattrapee']:
+			self.headForm.cleaned_data['date_colle']=self.headForm.cleaned_data['semaine'].lundi+timedelta(days=int(self.headForm.cleaned_data['jour']))
+		nbNotesColleur=Note.objects.filter(date_colle=self.headForm.cleaned_data['date_colle'],colleur=self.headForm.colleur,heure=self.headForm.cleaned_data['heure']).count()
+		if nbNotesColleur + len(self.eleves) > 3:
+			raise ValidationError("Vous avez trop des notes sur ce créneau horaire")
+		nbNotesEleve=Note.objects.filter(semaine=self.headForm.cleaned_data['semaine'],matiere=self.headForm.matiere,colleur=self.headForm.colleur,eleve__in=self.eleves).exists()
+		if nbNotesEleve:
+			raise ValidationError("Vous avez déjà noté un des élèves cette semaine dans cette matière")
+
+	def save(self):
+		"""sauvegarde en base de données les notes"""
+		notes=[Note(colleur=self.headForm.colleur,matiere=self.headForm.matiere,semaine=self.headForm.cleaned_data['semaine'],date_colle=self.headForm.cleaned_data['date_colle'],rattrapee=self.headForm.cleaned_data['rattrapee']\
+				,jour=self.headForm.cleaned_data['jour'], note=form.cleaned_data['note'],eleve=form.eleve,classe=self.headForm.classe,heure=self.headForm.cleaned_data['heure']\
+				,commentaire=form.cleaned_data['commentaire']) for form in self if 'note' in form.cleaned_data]
+		Note.objects.bulk_create(notes) # on sauvegarde toutes les notes en une seule requête
+		
