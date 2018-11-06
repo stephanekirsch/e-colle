@@ -99,10 +99,12 @@ def noteEleves(request, id_classe, eleves_str, noteColle=None):
 	eleves = Eleve.objects.filter(pk__in = ids, classe = classe)
 	total = eleves.count()+nbFictifs
 	form = NoteElevesHeadForm(matiere, request.user.colleur, classe, request.POST or None, instance = noteColle)
-	NoteElevesformset = formset_factory(NoteElevesTailForm,extra=total,max_num=3,formset=NoteElevesFormset)
-	formset = NoteElevesformset(form, list(eleves) + [None]*nbFictifs, request.POST or None)
-	if total == 1 and noteColle is not None and noteColle.pk: # si on modifie une note, on passe le reste de la note en paramètre du formset
-		formset.queryset = Note.objects.get(pk=noteColle.pk)
+	if total == 1 and noteColle is not None and noteColle.pk: # si on modifie une note
+		NoteElevesformset = formset_factory(NoteElevesTailForm,extra=0,max_num=1,formset=NoteElevesFormset)
+		formset = NoteElevesformset(form, list(eleves) + [None]*nbFictifs, request.POST or None, initial=[{'note':noteColle.note, 'commentaire':noteColle.commentaire}])
+	else:
+		NoteElevesformset = formset_factory(NoteElevesTailForm,extra=total,max_num=3,formset=NoteElevesFormset)
+		formset = NoteElevesformset(form, list(eleves) + [None]*nbFictifs, request.POST or None)
 	if request.method == 'POST':
 		if formset.is_valid():
 			formset.save()

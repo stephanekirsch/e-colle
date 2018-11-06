@@ -271,10 +271,16 @@ class NoteElevesFormset(forms.BaseFormSet):
 			raise ValidationError("erreur dans dans la semaine/date/jeure/jour")
 		if not self.headForm.cleaned_data['rattrapee']:
 			self.headForm.cleaned_data['date_colle']=self.headForm.cleaned_data['semaine'].lundi+timedelta(days=int(self.headForm.cleaned_data['jour']))
-		nbNotesColleur=Note.objects.filter(date_colle=self.headForm.cleaned_data['date_colle'],colleur=self.headForm.colleur,heure=self.headForm.cleaned_data['heure']).count()
+		nbNotesColleur=Note.objects.filter(date_colle=self.headForm.cleaned_data['date_colle'],colleur=self.headForm.colleur,heure=self.headForm.cleaned_data['heure'])
+		if self.headForm.instance.pk: # si on modifie une note:
+			nbNotesColleur = nbNotesColleur.exclude(pk = self.headForm.instance.pk)
+		nbNotesColleur = nbNotesColleur.count()
 		if nbNotesColleur + len(self.eleves) > 3:
 			raise ValidationError("Vous avez trop des notes sur ce créneau horaire")
-		nbNotesEleve=Note.objects.filter(semaine=self.headForm.cleaned_data['semaine'],matiere=self.headForm.matiere,colleur=self.headForm.colleur,eleve__in=self.eleves).exists()
+		nbNotesEleve=Note.objects.filter(semaine=self.headForm.cleaned_data['semaine'],matiere=self.headForm.matiere,colleur=self.headForm.colleur,eleve__in=self.eleves)
+		if self.headForm.instance.pk: # si on modifie une note:
+			nbNotesEleve = nbNotesEleve.exclude(pk = self.headForm.instance.pk)
+		nbNotesEleve = nbNotesEleve.exists()
 		if nbNotesEleve:
 			raise ValidationError("Vous avez déjà noté un des élèves cette semaine dans cette matière")
 
