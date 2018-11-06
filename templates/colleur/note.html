@@ -2,54 +2,39 @@
 {% load static %}
 {% load customfilter %}
 {% block body %}
-<table class="accueil"><tr><td>Notation de la classe de {{classe}}</td></tr></table>
-{% if groupes %}
-<table class="tableausimple">
-	<tr class="entete">
-		<td>Groupe</td>
-		<td>Élève n°1</td>
-		<td>Élève n°2</td>
-		<td>Élève n°3</td>
-	</tr>
-	{% for groupe in groupes %}
-	<tr {% cycle '' "class=plusclair" %}>
-		<td>{% if groupe.4 %}<a href="{% url 'notegroupe_colleur' groupe.1 %}">{% endif %}{{groupe.0}}{% if groupe.4 %}</a>{% endif %}</td>
-		{% for eleve in groupe.3 %}
-		<td>{% if eleve.2 %}<a href="{% url 'noteeleve_colleur' eleve.1 classe.pk %}">{% endif %}{{eleve.0}}{% if eleve.2 %}</a>{% endif %}</td>
-		{% endfor %}
-		{% if groupe.2 < 3 %}<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td>
-		{% if groupe.2 < 2 %}<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td>
-		{% if groupe.2 < 1 %}<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td>
-		{% endif %}
-		{% endif %}
-		{% endif %}
-	</tr>
-	{% endfor %}
-</table>
-{% endif %}
-<table class="tableausimple">
-	<tr>
-		<th>Élève fictif</th>
-		<td><a href="{% url 'noteeleve_colleur' 0 classe.pk %}">Élève fictif</a></td>
-	</tr>	
+
 </table>
 <form method="post">
 	{% csrf_token %}
 <table class="tableausimple">
-	<tr class="entete"><td colspan="3">Élèves</td></tr>
+	<tr class="entete"><td colspan="4">Élèves</td></tr>
+	{% with form.groupe|titer as groupe_iter %}
 	{% for widget in form.eleve %}
-	{% cycle '<tr><td>' '<td>' '<td>' '<tr class="plusclair"><td>' '<td>' '<td>' %}{{widget}}{% cycle '</td>' '</td>' '</td></tr>' '</td>' '</td>' '</td></tr>' %}
+	{% if forloop.first %}
+		<tr><td colspan="4">{{widget}}</td></tr>
+	{% else %}
+	{% cycle '0' '1' '2' '3' '4' '5' as rank silent %}
+		{% if rank  == '0' or rank == '3' %}
+			<tr {% if rank == '0' %}class="plusclair"{% endif%}>
+				<td>{% with groupe_iter|tnext as groupe %}
+						{% if groupe != None %}
+							{{groupe}}
+						{% endif %}
+					{% endwith %}
+				</td>
+				<td>{{widget}}</td>
+		{% elif rank == '1' or rank == '4' %}
+			<td>{{widget}}</td>
+		{% else %}
+			<td>{{widget}}</td></tr>
+		{% endif %}
+	{% endif%}
 	{% endfor %}
-	{% if modulo == 2 %}
-	<td></td></tr>
-	{% endif %}
-	{% if modulo == 1 %}
-	<td></td><td></td></tr>
-	{% endif %}
+	{% endwith %}
 	{% if form.errors %}
-	<tr><td colspan="3">{{ form.errors.eleve }}</td></tr>
+	<tr><td colspan="4">{{ form.errors.eleve }}</td></tr>
 	{% endif %}
-	<tr><td colspan="3"><input type="submit" value="Noter plusieurs élèves sur un même créneau"/></td></tr>
+	<tr><td colspan="4"><input type="submit" value="Noter"/></td></tr>
 </table>
 </form>
 
@@ -97,6 +82,7 @@
 {% endblock %}
 {% block javascript %}
 <script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/groupeeleves.js' %}"></script>
 {% get_mathjax as latex %}
 {% if latex %}
 {% include "mathjax.html" %}

@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from colleur.forms import ColleurConnexionForm, NoteForm, ProgrammeForm, NoteGroupeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm, SelectEleveNoteForm, NoteElevesHeadForm, NoteElevesTailForm, NoteElevesFormset
+from colleur.forms import ColleurConnexionForm, ProgrammeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm, SelectEleveNoteForm, NoteElevesHeadForm, NoteElevesTailForm, NoteElevesFormset
 from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, MatiereECTS, NoteECTS
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm
 from django.contrib import messages
@@ -80,99 +80,34 @@ def note(request,id_classe):
 	"""Renvoie la vue de la page de gestion des notes"""
 	classe=get_object_or_404(Classe,pk=id_classe)
 	form = SelectEleveNoteForm(classe, request.POST or None)
-	if request.method == 'POST': # si on note plusieurs élèves à la fois sans passer par un groupe
-		if form.is_valid():
-			return redirect('noteeleves_colleur', id_classe, "-".join([str(eleve.pk) for eleve in form.cleaned_data['eleve']]))
+	if form.is_valid():
+		return redirect('noteeleves_colleur', id_classe, "-".join([str(max(int(eleve),0)) for eleve in form.cleaned_data['eleve']]))
 	colleur=request.user.colleur
 	matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=request.user.colleur)
 	if classe not in colleur.classes.all() or matiere.pk not in classe.matierespk():
 		raise Http404
-	groupes = Groupe.objects.filter(classe=classe).values('nom','pk').annotate(nb=Count('groupeeleve'))
-	nom_groupes = []
-	eleves_groupes = list(Eleve.objects.filter(classe=classe,groupe__isnull=False).values('pk','user__first_name','user__last_name','lv1','lv2').order_by('groupe__nom','user__last_name','user__first_name'))
-	if matiere.lv == 0 :
-		for i in range(len(eleves_groupes)):
-			eleves_groupes[i]['lien'] = True
-	elif matiere.lv == 1:
-		for i in range(len(eleves_groupes)):
-			eleves_groupes[i]['lien'] = True if eleves_groupes[i]['lv1'] == matiere.pk else False
-	elif matiere.lv == 2:
-		for i in range(len(eleves_groupes)):
-			eleves_groupes[i]['lien'] = True if eleves_groupes[i]['lv2'] == matiere.pk else False
-	for value in groupes:
-		nom_groupes.append((value['nom'],value['pk'],value['nb'],[("{} {}".format(x['user__first_name'].title(),x['user__last_name'].upper()),x['pk'],x['lien']) for x in eleves_groupes[:value['nb']]],any(x['lien'] for x in eleves_groupes[:value['nb']])))
-		del eleves_groupes[:value['nb']]
-	modulo = Eleve.objects.filter(classe=classe).count() % 3
-	return render(request,"colleur/note.html",{'form':form,'notes':Note.objects.listeNotes(colleur,classe,matiere),'classe':classe,'groupes':nom_groupes,'modulo':modulo})
+	return render(request,"colleur/note.html",{'form':form,'notes':Note.objects.listeNotes(colleur,classe,matiere)})
 
 @user_passes_test(is_colleur, login_url='accueil')
-def noteEleves(request, id_classe, eleves_str):
-	classe = get_object_or_404(Classe, pk=id_classe)
-	eleves = Eleve.objects.filter(pk__in = eleves_str.split("-"))
+def noteEleves(request, id_classe, eleves_str, noteColle=None):
 	matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=request.user.colleur)
-	form = NoteElevesHeadForm(matiere, request.user.colleur, classe, request.POST or None)
-	NoteElevesformset = formset_factory(NoteElevesTailForm,extra=eleves.count(),max_num=3,formset=NoteElevesFormset)
-	formset = NoteElevesformset(form, eleves, request.POST or None)
+	classe = get_object_or_404(Classe, pk=id_classe, matieres=matiere)
+	if classe not in request.user.colleur.classes.all():
+		raise Http404
+	ids = [int(x) for x in eleves_str.split("-")]
+	nbFictifs = ids.count(0)
+	eleves = Eleve.objects.filter(pk__in = ids, classe = classe)
+	total = eleves.count()+nbFictifs
+	form = NoteElevesHeadForm(matiere, request.user.colleur, classe, request.POST or None, instance = noteColle)
+	NoteElevesformset = formset_factory(NoteElevesTailForm,extra=total,max_num=3,formset=NoteElevesFormset)
+	formset = NoteElevesformset(form, list(eleves) + [None]*nbFictifs, request.POST or None)
+	if total == 1 and noteColle is not None and noteColle.pk: # si on modifie une note, on passe le reste de la note en paramètre du formset
+		formset.queryset = Note.objects.get(pk=noteColle.pk)
 	if request.method == 'POST':
 		if formset.is_valid():
 			formset.save()
 			return redirect('note_colleur',id_classe)
 	return render(request,"colleur/noteEleves.html", {'form':form, 'formset':formset, 'classe':classe.nom, 'matiere':matiere})
-
-@user_passes_test(is_colleur, login_url='accueil')
-def noteEleve(request,id_eleve,id_classe,colle=None):
-	"""Renvoie la vue de la page de notation de l'élève dont l'id est id_eleve et dont la classe a pour id id_classe"""
-	# on renseigne aussi la classe dans l'éventualité d'un élève fictif(None) qui n'a pas de classe
-	try:
-		eleve=Eleve.objects.get(pk=id_eleve)
-	except Exception:
-		eleve=None
-	colleur=request.user.colleur
-	matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
-	if eleve is not None and eleve.classe not in colleur.classes.all():
-		raise Http404
-	try:
-		classe=eleve.classe
-	except Exception:
-		classe=Classe.objects.get(pk=id_classe)
-	if matiere.pk not in classe.matierespk():
-		raise Http404
-	note=Note(matiere=matiere,colleur=colleur,eleve=eleve,classe=classe)
-	if colle:
-		note.semaine=colle.semaine
-		note.jour=colle.creneau.jour
-		note.heure=colle.creneau.heure
-	form=NoteForm(request.POST or None,instance=note)
-	if form.is_valid():
-		form.save()
-		return redirect('note_colleur',classe.pk)
-	return render(request,"colleur/noteEleve.html",{'eleve':eleve,'form':form,'classe':classe,'matiere':matiere, 'info': matiere.temps == 60})
-
-@user_passes_test(is_colleur, login_url='accueil')
-def noteGroupe(request,id_groupe,colle=None):
-	"""Renvoie la vue de la page de notation de du groupe dont l'id est id_groupe.
-	Si colle est renseigné, les champs semaine/jour/heure sont préremplis avec ceux de la colle"""
-	groupe=get_object_or_404(Groupe,pk=id_groupe)
-	colleur=request.user.colleur
-	if groupe.classe not in colleur.classes.all():
-		raise Http404
-	if colle:
-		matiere=colle.matiere
-		form=NoteGroupeForm(groupe,matiere,colleur,request.POST or None, initial={'semaine':colle.semaine,'jour':colle.creneau.jour,'heure':colle.creneau.heure})
-	else:
-		matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
-		form=NoteGroupeForm(groupe,matiere,colleur,request.POST or None)
-	if matiere.lv == 0:
-		eleves=list(Eleve.objects.filter(groupe=groupe))
-	elif matiere.lv == 1:
-		eleves=list(Eleve.objects.filter(groupe=groupe,lv1=matiere))
-	elif matiere.lv == 2:
-		eleves=list(Eleve.objects.filter(groupe=groupe,lv2=matiere))
-	eleves+=[None]*(3-len(eleves))
-	if form.is_valid():
-		form.save()
-		return redirect('note_colleur', groupe.classe.pk)
-	return render(request,"colleur/noteGroupe.html",{'form':form,'groupe':groupe,'eleves':eleves,'matiere':matiere})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def noteModif(request,id_note):
@@ -181,15 +116,14 @@ def noteModif(request,id_note):
 	colleur=request.user.colleur
 	if note.colleur != colleur:
 		messages.error(request,"Vous n'êtes pas le colleur de cette colle")
-		return redirect('action_colleur')
+		return redirect('note_colleur')
 	elif note.matiere.pk != request.session['matiere']:
 		messages.error(request,"Ce n'est pas la bonne matière")
-		return redirect('action_colleur')
-	form = NoteForm(request.POST or None, instance=note)
-	if form.is_valid():
-		form.save()
-		return redirect('note_colleur', note.classe.pk)
-	return render(request,"colleur/noteEleve.html",{'eleve':note.eleve,'form':form,'classe':note.classe,'matiere':note.matiere})
+		return redirect('note_colleur')
+	elif note.classe not in request.user.colleur.classes.all():
+		messages.error(request,"Ce n'est pas la bonne classe")
+		return redirect('note_colleur')
+	return noteEleves(request, note.classe.pk, "0" if note.eleve is None else str(note.eleve.pk), note)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def noteSuppr(request,id_note):
@@ -481,16 +415,23 @@ def colleNote(request,id_colle):
 	"""Récupère la colle dont l'id est id_colle puis redirige vers la page de notation des groupes sur la colle concernée"""
 	colle=get_object_or_404(Colle,pk=id_colle,colleur=request.user.colleur,matiere__in=request.user.colleur.matieres.all()) # on récupère la colle
 	request.session['matiere']=colle.matiere.pk # on met à jour la matière courante
-	return noteGroupe(request,colle.groupe.pk,colle)
+	eleves = Eleve.objects.filter(groupe = colle.groupe)
+	if colle.matiere.lv == 1:
+		eleves = eleves.filter(lv1 == matiere)
+	elif colle.matiere.lv == 2:
+		eleves = eleves.filter(lv2 == matiere)
+	eleves_str = "-".join([str(x.pk) for x in eleves] + ["0"]*(3-eleves.count()))
+	note = Note(semaine = colle.semaine, jour = colle.creneau.jour, heure = colle.creneau.heure)
+	return noteEleves(request,colle.creneau.classe.pk,eleves_str,note)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def colleNoteEleve(request,id_colle):
 	"""Récupère la colle dont l'id est id_colle puis redirige vers la page de notation de l'élève sur la colle concernée"""
 	colle=get_object_or_404(Colle,pk=id_colle,colleur=request.user.colleur,matiere__in=request.user.colleur.matieres.all())
 	request.session['matiere']=colle.matiere.pk # on met à jour la matière courante
-	print(colle.eleve)
-	return noteEleve(request, 0 if colle.eleve is None else colle.eleve.pk, colle.classe.pk if colle.eleve is None else colle.eleve.classe.pk, colle)
-
+	note = Note(semaine = colle.semaine, jour = colle.creneau.jour, heure = colle.creneau.heure)
+	return noteEleves(request, colle.creneau.classe.pk, "0" if not colle.eleve else str(colle.eleve.pk), note)
+	
 @user_passes_test(is_colleur, login_url='accueil')
 def decompte(request):
 	"""Renvoie la vue de la page du décompte des colles"""

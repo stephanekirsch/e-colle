@@ -25,7 +25,7 @@
 		<td>S{{semaine.numero}}</td>
 	{% endfor %}
 	</tr>
-	{% for note in notes%}
+	{% for note in notes %}
 	<tr {% cycle "" "class=plusclair"%}>
 		<td>{{note.eleve}}</td>
 		{% if note.rang %}

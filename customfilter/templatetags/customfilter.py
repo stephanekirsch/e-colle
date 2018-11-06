@@ -11,7 +11,7 @@ def nometab(d):
 
 @register.filter
 def lookup(d,key):
-    return d[key]
+    return "" if key not in d else d[key]
 
 @register.filter
 def integer(n):
@@ -54,4 +54,13 @@ def get_modifgroupe():
 def get_classes():
     return Classe.objects.all()
 
+@register.filter
+def titer(obj):
+    return iter(obj)
 
+@register.filter
+def tnext(iterable):
+    try:
+        return next(iterable)
+    except Exception:
+        return None
