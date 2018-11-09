@@ -26,7 +26,8 @@ class Command(BaseCommand):
                             accueil_noteects,\
                             accueil_programme,\
                             accueil_ramassage,\
-                            accueil_semaine\
+                            accueil_semaine,\
+                            django_session,\
                             RESTART IDENTITY;")
                         cursor.execute("VACUUM;")
                     elif BDD == "mysql":
@@ -41,6 +42,7 @@ class Command(BaseCommand):
                             TRUNCATE TABLE accueil_programme;\
                             TRUNCATE TABLE accueil_ramassage;\
                             TRUNCATE TABLE accueil_semaine;\
+                            TRUNCATE TABLE django_session;\
                             SET FOREIGN_KEY_CHECKS = 1;")
                     else: # cas SQLite
                         with transaction.atomic():
@@ -56,6 +58,7 @@ class Command(BaseCommand):
                             cursor.execute("DELETE FROM accueil_programme;")
                             cursor.execute("DELETE FROM accueil_ramassage;")
                             cursor.execute("DELETE FROM accueil_semaine;")
+                            cursor.execute("DELETE FROM django_session;")
                         cursor.execute("VACUUM;")
                 except Exception as e:
                     self.stdout.write("La réinitialisation a échoué: {}".format(e))
