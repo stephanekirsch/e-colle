@@ -11,7 +11,10 @@ def nometab(d):
 
 @register.filter
 def lookup(d,key):
-    return "" if key not in d else d[key]
+    try:
+        return d[key]
+    except Exception:
+        return ""
 
 @register.filter
 def integer(n):
