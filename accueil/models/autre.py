@@ -165,13 +165,16 @@ def programme_post_save_function(sender, instance, **kwargs):
             # si le nom du fichier ne correspond pas à ses caractéristiques (semaine/classe/matière), ce qui signifie qu'un de ces 3 champs a été modifié, on met à jour le nom du fichier.
             update_name(instance)
     except Exception: # Dans le cas ou plus aucun fichier n'est lié au programme, on efface l'éventuel fichier présent avant la modification
-        nomfichier = os.path.join(MEDIA_ROOT,"programme","prog")+str(instance.semaine.pk)+"-"+str(instance.classe.pk)+"-"+str(instance.matiere.pk)+".pdf"
-        if os.path.isfile(nomfichier): # s'il y a bien un fichier, on l'efface
-            os.remove(nomfichier)
-        if IMAGEMAGICK:
-            nomimage=nomfichier.replace('programme','image').replace('pdf','jpg')
-            if os.path.isfile(nomimage): # s'il y a bien un fichier, on l'efface
-                os.remove(nomimage)
+        try:
+            nomfichier = os.path.join(MEDIA_ROOT,"programme","prog")+str(instance.semaine.pk)+"-"+str(instance.classe.pk)+"-"+str(instance.matiere.pk)+".pdf"
+            if os.path.isfile(nomfichier): # s'il y a bien un fichier, on l'efface
+                os.remove(nomfichier)
+            if IMAGEMAGICK:
+                nomimage=nomfichier.replace('programme','image').replace('pdf','jpg')
+                if os.path.isfile(nomimage): # s'il y a bien un fichier, on l'efface
+                    os.remove(nomimage)
+        except Exception as e:
+            pass
     
 def update_photo(eleve):
     try:

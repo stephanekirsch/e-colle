@@ -6,7 +6,8 @@ import os
 class Command(BaseCommand):
     help = """prépare la base de donnée pour une nouvelle année:
     efface les messages, les notes, les colles, les semaines etc ....
-    conserve les classes/colleurs/eleves/matières/établissements
+    conserve les classes/colleurs/eleves/matières/établissements.
+    Cela effaca aussi tous les fichiers
     Il est conseillé de faire une sauvegarde de la base de donnée
     avant de lancer cette commande"""
 
@@ -71,6 +72,14 @@ class Command(BaseCommand):
                     except Exception:
                         self.stdout.write("Les fichiers programmes n'ont pas pu tous être effacés,\
                             videz le répertoire media/programme à la main.")
+                    repertoire = os.path.join(MEDIA_ROOT,'image')
+                    try:
+                        for fichier in os.listdir(repertoire):
+                            if fichier != ".gitignore":
+                                os.remove(os.path.join(repertoire,fichier))
+                    except Exception:
+                        self.stdout.write("Les fichiers image n'ont pas pu tous être effacés,\
+                            videz le répertoire media/image à la main.")
                     self.stdout.write("Réinitialisation complète")
         else:
             self.stdout.write("abandon")
