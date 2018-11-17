@@ -1,37 +1,49 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Matiere, Classe, Semaine, Ramassage
+from django.db.models import Max
+from accueil.models import Matiere, Classe, Semaine, Ramassage, Note
 from datetime import date, timedelta
 from django.core.exceptions import ValidationError
 
 class RamassageForm(forms.ModelForm):
 	class Meta:
 		model = Ramassage
-		fields=['moisDebut','moisFin']
+		fields=['moisFin']
+
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		if Ramassage.objects.exists(): # s'il existe déjà des ramassages
+			maxmois = Ramassage.objects.aggregate(Max('moisFin'))['moisFin__max']
+			self.fields['moisFin'].choices = [(x,y) for x,y in self.fields['moisFin'].choices if x and x > maxmois]
+		else:
+			self.fields['moisFin'].choices = [(x,y) for x,y in self.fields['moisFin'].choices if x]
 
 	def clean(self):
-		"""Vérifie que moisDebut est antérieur à mois Fin, ainsi que l'unicité du couple moisDebut/moisFin"""
-		if self.cleaned_data['moisDebut'] > self.cleaned_data['moisFin']:
-			raise ValidationError('le mois de début doit être antérieur au mois de fin')
-		if Ramassage.objects.filter(moisDebut=self.cleaned_data['moisDebut'],moisFin=self.cleaned_data['moisFin']).exists():
-			raise ValidationError('Ce ramassage existe déjà',code="uniqueness violation")
+		"""Vérifie qu'il n'existe pas de ramassage d'un mois identique ou postérieur"""
+		if self.cleaned_data:
+			if Ramassage.objects.filter(moisFin=self.cleaned_data['moisFin']).exists():
+				raise ValidationError('Il existe déjà un ramassage pour ce mois.')
+			if Ramassage.objects.filter(moisFin__gt=self.cleaned_data['moisFin']).exists():
+				raise ValidationError('Il existe déjà un ramassage postérieur à ce mois')
+
+	def save(self):
+		"""Sauvegarde du ramassage (avec création du décompte associé)"""
+		Ramassage.objects.createOrUpdate(self.cleaned_data['moisFin'])
 
 class MoisForm(forms.Form):
-	def __init__(self,moisMin,moisMax, *args, **kwargs):
+	def __init__(self, moisMin, moisMax, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
 		nbMois=12*(moisMax.year-moisMin.year)+moisMax.month-moisMin.month+1
 		ListeMoisMin=[False]*nbMois
 		ListeMoisMax=[False]*nbMois
 		for i in range(nbMois):
-			mois=date(moisMin.year+(moisMin.month+i-1)//12,(moisMin.month+i-1)%12+1,1)
-			ListeMoisMin[i]=(mois,"{} {}".format(LISTE_MOIS[mois.month],mois.year))
-			if mois.month==12:
-				ListeMoisMax[i]=(date(mois.year,12,31),"{} {}".format(LISTE_MOIS[12],mois.year))
-			else:
-				ListeMoisMax[i]=(date(mois.year,mois.month+1,1)-timedelta(days=1),ListeMoisMin[i][1])
+			moisDebut=date(moisMin.year+(moisMin.month+i-1)//12,(moisMin.month+i-1)%12+1,1)
+			moisFin=date(moisMin.year+(moisMin.month+i)//12,(moisMin.month+i)%12+1,1) - timedelta(days=1)
+			ListeMoisMin[i]=(moisDebut,"{} {}".format(LISTE_MOIS[moisDebut.month],moisDebut.year))
+			ListeMoisMax[i]=(moisFin,"{} {}".format(LISTE_MOIS[moisFin.month],moisFin.year))
 		self.fields['moisMin']=forms.ChoiceField(choices=ListeMoisMin,initial=ListeMoisMin[0][0])
-		self.fields['moisMax']=forms.ChoiceField(choices=ListeMoisMax,initial=ListeMoisMax[nbMois-1][0])
+		self.fields['moisMax']=forms.ChoiceField(choices=ListeMoisMax,initial=ListeMoisMax[0][0])
 
 class MatiereClasseSelectForm(forms.Form):
 	matiere=forms.ModelChoiceField(label="Matière",queryset=Matiere.objects.order_by('nom'),required=True,empty_label=None)

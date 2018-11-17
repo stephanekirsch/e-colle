@@ -125,6 +125,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 MEDIA_ROOT = path.join(CHEMINVERSECOLLE, 'media')
+BACKUP_ROOT = path.join(CHEMINVERSECOLLE, 'backup')
 
 RESOURCES_ROOT = path.join(CHEMINVERSECOLLE, 'resources')
 

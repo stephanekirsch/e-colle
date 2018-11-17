@@ -13,8 +13,8 @@
 <table class="accueil"><tr><td>Ramassages effectués</td></tr></table>
 <table class="tableausimple" id="suppr">
 	<tr class="entete">
-		<td>De</td>
-		<td>à</td>
+		<td>Jusqu'à</td>
+		<td>Effectué le </td>
 		<td>Supprimer</td>
 		<td>PDF par année/effectif</td>
 		<td>PDF par classe</td>
@@ -25,9 +25,9 @@
 	</tr>
 	{% for ramassage in ramassages %}
 	<tr>
-		<td>{{ramassage.moisDebut|date:"E Y"}}</td>
 		<td>{{ramassage.moisFin|date:"E Y"}}</td>
-		<td><a href="{% url 'ramassagesuppr' ramassage.pk %}">Supprimer</a></td>
+		<td>{{ramassage.date|date:"d/m/Y à H\hi"}}</td>
+		<td>{% if forloop.last %}<a href="{% url 'ramassagesuppr' ramassage.pk %}">Supprimer</a>{% endif %}</td>
 		<td><a href="{% url 'ramassagepdf' ramassage.pk %}"><img src="{% static 'images/iconePDF.png' %}"></img></a></td>
 		<td><a href="{% url 'ramassagepdfparclasse' ramassage.pk 0 %}"><img src="{% static 'images/iconePDF.png' %}"></img></a></td>
 		<td><a href="{% url 'ramassagepdfparclasse' ramassage.pk 1 %}"><img src="{% static 'images/iconePDF.png' %}"></img></a></td>
