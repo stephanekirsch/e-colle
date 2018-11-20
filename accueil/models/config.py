@@ -53,7 +53,7 @@ class Config(models.Model):
             default=False
     )
     mathjax = models.BooleanField(
-            verbose_name="Mise en forme des formules mathématiques avec Mathjax",
+            verbose_name="Mise en forme des formules mathématiques avec Lateχ",
             default=True
     )
     ects = models.BooleanField(

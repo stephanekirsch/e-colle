@@ -1,11 +1,5 @@
 {% load static %}
-<script type="text/javascript" src="{% static 'javascript/tex2html.js' %}"></script>
-<script type="text/javascript">
-  window.MathJax = {
-    tex2jax: {
-      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
-      processEscapes: true
-    }
-  };
-</script>
-<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<link rel="stylesheet" href="{% static 'katex/katex.min.css' %}" ></link>
+<script defer type="text/javascript" src="{% static 'katex/katex.min.js' %}" ></script>
+<script defer type="text/javascript" src="{% static 'katex/contrib/auto-render.min.js' %}" onload="renderMathInElement(document.body, {delimiters:[{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+ 
