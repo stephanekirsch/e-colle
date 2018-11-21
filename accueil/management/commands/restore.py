@@ -5,7 +5,7 @@ from django.db import DEFAULT_DB_ALIAS
 from ecolle.settings import BACKUP_ROOT, MEDIA_ROOT
 import os
 import bz2
-import zipfile
+import tarfile
 import datetime
 
 class Command(BaseCommand):
@@ -28,7 +28,7 @@ class Command(BaseCommand):
 				num = int(num)
 				fichier = fichiers_bz2[num-1]
 				date = fichier.split("_")[1].split(".")[0]
-				fichier_media = "ecolle-media_{}.zip".format(date)
+				fichier_media = "ecolle-media_{}.tar.xz".format(date)
 				choix="1"
 				if os.path.isfile(os.path.join(BACKUP_ROOT,fichier_media)):
 					self.stdout.write("""Il existe une sauvegarde des fichiers media associée, que voulez-vous faire?
@@ -51,7 +51,7 @@ a. abandonner\n""")
 						if choix in "23":
 							self.stdout.write("Début restauration des fichiers media")
 							try:
-								archive_zip = zipfile.ZipFile(os.path.join(BACKUP_ROOT,fichier_media))
+								archive_zip = tarfile.open(os.path.join(BACKUP_ROOT,fichier_media),"r:xz")
 								archive_zip.extractall(MEDIA_ROOT)
 							except Exception as e:
 								self.stdout.write("Erreur lors de la restauration des fichiers media")

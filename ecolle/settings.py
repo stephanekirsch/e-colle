@@ -28,7 +28,7 @@ IP_FILTRE_ADMIN = True
 IP_FILTRE_ADRESSES = ('^127\.0\.0\.1$')
 
 # True pour faire des jpeg miniatures des pdf de colle. False sinon.
-IMAGEMAGICK = True
+IMAGEMAGICK = False
 
 # les couples nom/email du (des) administrateur(s) du site
 ADMINS = (

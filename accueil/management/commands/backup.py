@@ -2,7 +2,7 @@ from django.core.management.commands.dumpdata import Command as Backup
 from django.db import DEFAULT_DB_ALIAS
 from ecolle.settings import BACKUP_ROOT, MEDIA_ROOT
 import os
-import zipfile
+import tarfile
 import bz2
 import datetime
 
@@ -18,7 +18,7 @@ class Command(Backup):
         backup_media = options['backup_media']
         output = os.path.join(BACKUP_ROOT,'ecolle.json')
         bz2_output = os.path.join(BACKUP_ROOT,'ecolle_{}.json.bz2'.format(datetime.date.today().isoformat()))
-        media_output = os.path.join(BACKUP_ROOT,'ecolle-media_{}.zip'.format(datetime.date.today().isoformat()))
+        media_output = os.path.join(BACKUP_ROOT,'ecolle-media_{}.tar.xz'.format(datetime.date.today().isoformat()))
         self.stdout.write("Début de la sauvegarde de la base de donnée")
         super().handle(exclude=['auth' ,'contenttypes','sessions'], format='json',
             verbosity=1, indent=2, database=DEFAULT_DB_ALIAS, traceback=True,
@@ -35,12 +35,15 @@ class Command(Backup):
         self.stdout.write("Compression de la sauvegarde terminée (taux de compression: {:.02f}%)\n".format(compression))
         if backup_media:
             self.stdout.write("Début de la sauvegarde des fichiers media\n")
-            with zipfile.ZipFile(media_output, 'w') as archive_zip:
+            taille_repertoire = 0
+            with tarfile.open(media_output, 'w:xz') as archive_zip:
                 for folder, subfolders, files in os.walk(MEDIA_ROOT):
                     for file in files:
                         if (file != '.gitignore'):
-                           archive_zip.write(os.path.join(folder, file), os.path.relpath(os.path.join(folder,file), MEDIA_ROOT), compress_type = zipfile.ZIP_DEFLATED)
-            self.stdout.write("Sauvegarde des fichiers media terminée\n")
+                            taille_repertoire += os.path.getsize(os.path.join(folder, file))
+                            archive_zip.add(os.path.join(folder, file), os.path.relpath(os.path.join(folder,file), MEDIA_ROOT))
+            compression = (1-os.path.getsize(media_output)/taille_repertoire)*100
+            self.stdout.write("Sauvegarde des fichiers media terminée (taux de compression: {:.02f}%)\n".format(compression))
 
 
 
