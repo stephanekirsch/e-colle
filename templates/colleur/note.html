@@ -2,7 +2,7 @@
 {% load static %}
 {% load customfilter %}
 {% block body %}
-
+{% get_mathjax as latex %}
 </table>
 <form method="post">
 	{% csrf_token %}
@@ -53,7 +53,7 @@
 	{% for listeDates, semaine, titre, detail, nbDates in notes %}
 	<tr {% cycle '' 'class="plusclair"' as couleur %} >
 		<td rowspan="{{nbDates}}">Semaine n°{{semaine}}</td>
-		<td rowspan="{{nbDates}}">{% if titre %}{{titre}}{% endif %}{% if detail %}<div class="popup">{{detail|linebreaksbr}}</div>{% endif %}</td>
+		<td rowspan="{{nbDates}}">{% if titre %}{{titre}}{% endif %}{% if detail %}<div class="popup">{% if latex %}{{detail}}{% else %}{{detail|linebreaksbr}}{% endif %}</div>{% endif %}</td>
 		{% for listeHeures, dateColle, nbHeures in listeDates %}
 		{% if not forloop.first %}
 	<tr {{couleur}}>
@@ -70,7 +70,7 @@
 				{% endif %}
 		<td>{% if colle.0 %}{{colle.0}}{% else %}Élève fictif{% endif %}</td>
 		<td>{% if colle.1 == 22 %}Abs.{% elif colle.1 == 21 %}n.n.{% else %}{{colle.1}}{% endif %}</td>
-		<td>{% if colle.2 %}Lire<div class="popup">{{colle.2|linebreaksbr}}</div>{% endif %}</td>
+		<td>{% if colle.2 %}Lire<div class="popup">{% if latex %}{{colle.2}}{% else %}{{colle.2|linebreaksbr}}{% endif %}</div>{% endif %}</td>
 		<td><a href="{% url 'notemodif_colleur' colle.3 %}">Modifier</a></td>
 		<td><a href="{% url 'notesuppr_colleur' colle.3 %}">Supprimer</a></td>
 	</tr>
@@ -81,9 +81,9 @@
 </table>
 {% endblock %}
 {% block javascript %}
+{% get_mathjax as latex %}
 <script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
 <script type="text/javascript" src="{% static 'javascript/groupeeleves.js' %}"></script>
-{% get_mathjax as latex %}
 {% if latex %}
 {% include "mathjax.html" %}
 {% endif %}

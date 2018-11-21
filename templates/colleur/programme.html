@@ -2,6 +2,7 @@
 {% load static %}
 {% load customfilter %}
 {% block body %}
+{% get_mathjax as latex %}
 {% if form %}
 <table class="accueil"><tr><td>Ajouter un programme de colle</td></tr></table>
 <form method="post" enctype="multipart/form-data">
@@ -28,7 +29,7 @@
 	<tr>
 		<td>{{programme.semaine}}</td>
 		<td>{{programme.titre}}</td>
-		<td class="prog_colle">{{programme.detail|linebreaksbr}}</td>
+		<td class="prog_colle">{% if latex %}{{programme.detail}}{% else %}{{programme.detail|linebreaksbr}}{% endif %}</td>
 		{% if programme.fichier %}
 		<td style="height:200px;width:150px">{% if jpeg %}<a class="image" href="{{programme.fichier.url}}"><img src="{{programme.fichier.url|image}}" alt="mini jpeg programme"/></a>{% else %}<a href="{{programme.fichier.url}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a>{% endif %}</td>
 		{% else %}
@@ -43,8 +44,8 @@
 </table>
 {% endblock %}
 {% block javascript %}
-<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
 {% get_mathjax as latex %}
+<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
 {% if latex %}
 {% include "mathjax.html" %}
 {% endif %}

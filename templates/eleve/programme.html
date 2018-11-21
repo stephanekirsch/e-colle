@@ -2,6 +2,7 @@
 {% load static %}
 {% load customfilter %}
 {% block body %}
+{% get_mathjax as latex %}
 <table class="accueil"><tr><td>Liste des programmes de colle</td></tr></table>
 <form method="POST">
 	{% csrf_token %}
@@ -32,7 +33,7 @@
 		{% else %}
 		<td></td>
 		{% endif %}
-		<td class="prog_colle"><p>{{programme.detail|linebreaksbr}}</p></td>
+		<td class="prog_colle"><p>{% if latex %}{{programme.detail}}{% else %}{{programme.detail|linebreaksbr}}{% endif %}</p></td>
 	</tr>
 {% endfor %}
 </table>

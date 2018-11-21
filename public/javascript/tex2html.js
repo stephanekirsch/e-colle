@@ -80,7 +80,9 @@ function replace_backslah(texte){
 			} else if (texte.charAt(position+1) == " ") {
 				texte = texte.replaceAt(position," ",1);
 			}
-		}
+		 } else if (lettre == '\n' && environnement == 0) {
+                texte = texte.replaceAt(position,"<br>",1);
+            }
 		position++;
 		lettre = texte.charAt(position);
 	}
@@ -110,8 +112,6 @@ for (var i = 0; i < n; i++) {
 	texte=texte.replace(/\\vv/g,'\\vec');
 	texte=texte.replace(/<li>[\n|\r|<br>]*<\/li>/g,'');
 	texte=texte.replace(/<br>[\n|\r]+<br>/g,'<br>');
-	//texte=texte.replace(/\\textbf\{([^{^}]*)\}/g,'<b>$1</b>');
-	//texte=texte.replace(/\\textit\{([^{^}]*)\}/g,'<i>$1</i>');
 	texte=texte.replace(/\\begin\{displaymath\}/g,'\$\$');
 	texte=texte.replace(/\\end\{displaymath\}/g,'\$\$');
 	programmes[i].innerHTML=replace_backslah(replace_b_i(texte));

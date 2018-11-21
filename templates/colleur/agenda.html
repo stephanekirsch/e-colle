@@ -2,6 +2,7 @@
 {% load static %}
 {% load customfilter %}
 {% block body %}
+{% get_mathjax as latex %}
 <table class="accueil"><tr><td>Agenda</td></tr></table>
 <table class="tableausimple">
 <tr class="entete">
@@ -20,7 +21,7 @@
 	<td>{{colle.heure|heure}}</td>
 	<td style="background-color:{% if colle.jour <= jour %}grey{% else %}{{colle.couleur}}{% endif %}">{{colle.nom_matiere|title}}</td>
 	<td>{{ colle.nom_classe |default_if_none:''}}</td>
-	<td>{% if colle.fichier != None and colle.fichier != "" %}<a href="{{media_url}}{{colle.fichier}}">{% if colle.titre %}{{colle.titre}}{% endif %}</a>{% elif colle.titre %}{{ colle.titre }}{% endif %}{% if colle.detail %}<div class="popup">{{colle.detail|linebreaksbr}}</div>{% endif %}</td>
+	<td>{% if colle.fichier != None and colle.fichier != "" %}<a href="{{media_url}}{{colle.fichier}}">{% if colle.titre %}{{colle.titre}}{% endif %}</a>{% elif colle.titre %}{{ colle.titre }}{% endif %}{% if colle.detail %}<div class="popup">{% if latex %}{{colle.detail}}{% else %}{{colle.detail|linebreaksbr}}{% endif %}</div>{% endif %}</td>
 	{% if colle.nom_groupe %}
 	<td>{{colle.nom_groupe}}<div class="popup">{{ colle.groupe }}</div></td>
 	{% elif colle.eleve %}
