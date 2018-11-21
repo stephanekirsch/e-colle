@@ -83,7 +83,7 @@ class NoteManager(models.Manager):
         yield semaines
         listeEleves = list(Eleve.objects.filter(classe=classe).select_related('user'))
         elevesdict = {eleve.pk:[eleve.user.first_name.title(),eleve.user.last_name.upper(),"",""] for eleve in listeEleves}
-        moyennes = list(Note.objects.exclude(eleve=None,note__gt=20).filter(matiere=matiere,eleve__classe=classe).filter(semaine__lundi__range=[semin.lundi,semax.lundi]).values('eleve__id','eleve__user__first_name','eleve__user__last_name').annotate(Avg('note')).order_by('eleve__user__last_name','eleve__user__first_name'))
+        moyennes = list(Note.objects.exclude(eleve=None).exclude(note__gt=20).filter(matiere=matiere,eleve__classe=classe).filter(semaine__lundi__range=[semin.lundi,semax.lundi]).values('eleve__id','eleve__user__first_name','eleve__user__last_name').annotate(Avg('note')).order_by('eleve__user__last_name','eleve__user__first_name'))
         moyennes.sort(key=lambda x:x['note__avg'],reverse=True)
         for i,x in enumerate(moyennes):
             x['rang']=i+1

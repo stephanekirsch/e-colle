@@ -37,7 +37,7 @@
 		<td>{% if note.moyenne %}{{note.moyenne|floatformat:1}}{% endif %}</td>
 		{% for note in note.semaine %}
 		<td>{% for value in note %}{% if not forloop.first %};{% endif %}{% if value.note == 22 %}Abs{% elif value.note == 21 %}n.n.{% else %}{{value.note}}{% endif %}{% endfor %}
-		{% if note %}<div class="popup">{% for value in note %}{{value.colleur__user__first_name|title}} {{value.colleur__user__last_name|upper}}:{% if value.commentaire %}<br/> {%% if latex % }{{ value.commentaire}}{% else %}{{ value.commentaire|linebreaksbr}}{% endif %} <br/>{% endif %}{% endfor  %}</div>{% endif %}
+		{% if note %}<div class="popup">{% for value in note %}{{value.colleur__user__first_name|title}} {{value.colleur__user__last_name|upper}}:{% if value.commentaire %}<br/> {% if latex %}{{ value.commentaire}}{% else %}{{ value.commentaire|linebreaksbr}}{% endif %} <br/>{% endif %}{% endfor  %}</div>{% endif %}
 		</td>
 		{% endfor %}
 	</tr>
