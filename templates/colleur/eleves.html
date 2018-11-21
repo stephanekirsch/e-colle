@@ -2,6 +2,7 @@
 {% load static %}
 {% load customfilter %}
 {% block body %}
+{% get_mathjax as latex %}
 <form method="POST">
 {% csrf_token %}
 <table class="tableausimple">
@@ -43,7 +44,7 @@
 		{% with note as notew %}
 		<td>
 		{% for value in notew %}{% if not forloop.first %};{% endif %}{% if value.note == 22 %}Abs{% elif value.note == 21 %}n.n.{% else %}{{value.note}}{% endif %}{% endfor %}
-		{% if notew %}<div class="popup">{% for value in notew %}{{value.colleur}}:{% if value.commentaire %}<br/> {{ value.commentaire|linebreaksbr }}<br/>{% endif %}{% endfor  %}</div>{% endif %}
+		{% if notew %}<div class="popup">{% for value in notew %}{{value.colleur}}:{% if value.commentaire %}<br/>{% if latex%} {{ value.commentaire}}{% else %}{{ value.commentaire|linebreaksbr}}{% endif %}<br/>{% endif %}{% endfor  %}</div>{% endif %}
 		</td>
 		{% endwith %}
 		{% endfor %}

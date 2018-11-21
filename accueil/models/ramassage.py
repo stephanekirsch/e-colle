@@ -51,7 +51,7 @@ class RamassageManager(models.Manager):
         ON clma.classe_id = cl.id AND clma.matiere_id = ma.id\
         LEFT OUTER JOIN accueil_note no\
         ON no.colleur_id = co.id AND no.matiere_id = ma.id AND no.classe_id = cl.id\
-        WHERE u.is_active = TRUE AND no.date_colle <= %s\
+        WHERE u.is_active = 1 AND no.date_colle <= %s\
         GROUP BY co.id, ma.id, cl.id"
         with connection.cursor() as cursor:
             cursor.execute(requete,(moisFin,))
@@ -83,11 +83,11 @@ class RamassageManager(models.Manager):
             ON u.colleur_id = col.id\
             LEFT OUTER JOIN accueil_etablissement et\
             ON col.etablissement_id = et.id\
-            HAVING heures > 0\
+            WHERE COALESCE(dec2.temps,0) - COALESCE(dec1.temps,0) > 0\
             UNION ALL SELECT u.last_name, u.first_name, col.id colleur_id, ma.id matiere_id, ma.nom matiere_nom, cl.id classe_id, cl.nom, cl.annee,\
             col.grade, COALESCE(et.nom, 'Inconnu') etab, col.etablissement_id etab_id, COALESCE(dec2.temps,0) - COALESCE(dec1.temps,0) heures\
-            FROM accueil_decompte dec1\
-            RIGHT OUTER JOIN accueil_decompte dec2\
+            FROM accueil_decompte dec2\
+            LEFT OUTER JOIN accueil_decompte dec1\
             ON dec1.colleur_id = dec2.colleur_id AND dec1.classe_id = dec2.classe_id AND dec1.matiere_id = dec2.matiere_id\
             AND dec1.ramassage_id = %s AND dec2.ramassage_id=%s\
             INNER JOIN accueil_colleur col\
@@ -101,7 +101,7 @@ class RamassageManager(models.Manager):
             LEFT OUTER JOIN accueil_etablissement et\
             ON col.etablissement_id = et.id\
             WHERE dec1.id = NULL\
-            HAVING heures > 0\
+            AND COALESCE(dec2.temps,0) - COALESCE(dec1.temps,0) > 0\
             ORDER BY annee, classe_nom, matiere_nom, etab, grade, nom, prenom;"
             with connection.cursor() as cursor:
                 cursor.execute(requete,(ramassage_precedent.pk,ramassage.pk,ramassage_precedent.pk,ramassage.pk))
@@ -121,7 +121,7 @@ class RamassageManager(models.Manager):
             LEFT OUTER JOIN accueil_etablissement et\
             ON col.etablissement_id = et.id\
             WHERE  dec1.ramassage_id = %s\
-            HAVING heures > 0\
+            AND COALESCE(dec1.temps,0) > 0\
             ORDER BY annee, classe_nom, matiere_nom, etab, grade, nom, prenom;"
             with connection.cursor() as cursor:
                 cursor.execute(requete,(ramassage.pk,))
