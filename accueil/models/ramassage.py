@@ -10,6 +10,7 @@ from .classe import Classe
 from .semaine import Semaine
 from .colleur import Colleur
 from .matiere import Matiere
+from ecolle.settings import BDD
 
 
 def mois():
@@ -51,8 +52,8 @@ class RamassageManager(models.Manager):
         ON clma.classe_id = cl.id AND clma.matiere_id = ma.id\
         LEFT OUTER JOIN accueil_note no\
         ON no.colleur_id = co.id AND no.matiere_id = ma.id AND no.classe_id = cl.id\
-        WHERE u.is_active = 1 AND no.date_colle <= %s\
-        GROUP BY co.id, ma.id, cl.id"
+        WHERE u.is_active = {} AND no.date_colle <= %s\
+        GROUP BY co.id, ma.id, cl.id".format(1 if BDD == "sqlite3" else "TRUE")
         with connection.cursor() as cursor:
             cursor.execute(requete,(moisFin,))
             with transaction.atomic():
