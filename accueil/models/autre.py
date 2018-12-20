@@ -118,7 +118,7 @@ class JourFerie(models.Model):
 
 class Message(models.Model):
     date = models.DateTimeField(auto_now_add=True)
-    auteur = models.ForeignKey("User",null=True,on_delete=models.SET_NULL,related_name="messagesenvoyes")
+    auteur = models.ForeignKey("User", null=True, on_delete=models.CASCADE, related_name="messagesenvoyes")
     hasAuteur = models.BooleanField(default=True)
     luPar = models.TextField(verbose_name="lu par: ")
     listedestinataires = models.TextField(verbose_name="Liste des destinataires")

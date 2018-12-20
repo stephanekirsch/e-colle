@@ -1,0 +1,23 @@
+{% extends 'administrateur/action.html' %}
+{% load static %}
+{% block body %}
+    <table class="tableausimple">
+        <tr>
+            <th colspan="2">RGPD Colleur: {{colleur}}
+            </td>
+        </tr>
+        <tr>
+            <th>Données collectées</th>
+            <td><a href="{% url 'rgpd_colleur_pdf' colleur.pk %}"><img src="{% static 'images/iconePDF.png' %}"></img></a></td>
+        </tr>
+    </table>
+
+    <table class="accueil" >
+        <tr>
+            <td><a id="suppr" href="{% url 'colleur_force_efface' colleur.pk %}">Forcer l'effacement du colleur</a></td>
+        </tr>
+    </table>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/forcesuppressioncolleur.js' %}"></script>
+{% endblock %}

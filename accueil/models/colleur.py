@@ -1,5 +1,6 @@
 from django.db import models
 from django.db import transaction,connection
+from django.db.models import Q
 
 from .autre import group_concat,dictfetchall
 from .config import Config
@@ -27,24 +28,20 @@ class ColleurManager(models.Manager):
             cursor.execute(requete, [colleur.id, colleur.id, colleur.id])
             return cursor.fetchall()
 
-    def listeColleurs(self, matiere,classe):
-        base = self
-        if matiere is not None:
-            base = base.filter(matieres=matiere)
-        if classe is not None:
-            base = base.filter(classes=classe)
+    def listeColleurs(self, matiere,classe, pattern = ""):
         # pour éviter de multiples accès à la BDD (même avec optimisation avec prefetch_related)
-        # on fait la requête à la main avec fonction d'aggrégation pour concaténer les classes/matières 
-        if matiere is None:
-            if classe is None:
-                where = ""
-            else:
-                where = "WHERE cl.id = %s"
+        # on fait la requête à la main avec fonction d'aggrégation pour concaténer les classes/matières
+        where = []
+        if classe is not None:
+            where.append("cl.id = %s")
+        if matiere is not None:
+            where.append("m.id = %s")
+        if pattern:
+            where.append("LOWER(u.first_name) LIKE %s OR LOWER(u.last_name) LIKE %s")
+        if where:
+            where = "WHERE " + " AND ".join(where)
         else:
-            if classe is None:
-                where = "WHERE m.id = %s"
-            else:
-                where = "WHERE m.id = %s AND cl.id = %s"
+            where = ""
         requete = """SELECT u.first_name prenom, u.last_name nom, u.username identifiant, u.email email, u.is_active actif,
                   c.grade grade, c.id id, e.nom etablissement, u.id user_id, {}, {} FROM accueil_colleur c
                   INNER JOIN accueil_user u
@@ -72,7 +69,7 @@ class ColleurManager(models.Manager):
                   LEFT OUTER JOIN accueil_classe cl
                   ON cc.classe_id = cl.id""", where)
         with transaction.atomic():
-            arguments = [x.id for x in (matiere, classe) if x is not None]
+            arguments = [x.id for x in (matiere, classe) if x is not None] + 2*(["%{}%".format(pattern)] if pattern else [])
             with connection.cursor() as cursor:
                 cursor.execute(requete, arguments)
                 colleurs = dictfetchall(cursor)

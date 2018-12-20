@@ -155,7 +155,7 @@ class Note(models.Model):
     LISTE_HEURE=[(i,"{}h{:02d}".format(i//60,(i%60))) for i in range(HEURE_DEBUT,HEURE_FIN,INTERVALLE)] 
     LISTE_NOTE=[(21,"n.n"),(22,"Abs")]
     LISTE_NOTE.extend(zip(range(21),range(21)))
-    colleur = models.ForeignKey("Colleur",on_delete=models.PROTECT)
+    colleur = models.ForeignKey("Colleur",on_delete=models.PROTECT, null = True)
     matiere = models.ForeignKey("Matiere",on_delete=models.PROTECT)
     date_enreg = models.DateField(auto_now_add = True)
     semaine = models.ForeignKey("Semaine",related_name="semainenote",on_delete=models.PROTECT,blank=False)

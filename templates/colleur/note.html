@@ -7,7 +7,7 @@
 <form method="post">
 	{% csrf_token %}
 <table class="tableausimple">
-	<tr class="entete"><td colspan="4">Élèves</td></tr>
+	<tr class="entete"><td colspan="4">Élèves de {{classe.nom}}</td></tr>
 	{% with form.groupe|titer as groupe_iter %}
 	{% for widget in form.eleve %}
 	{% if forloop.first %}

@@ -1,0 +1,23 @@
+{% extends 'administrateur/action.html' %}
+{% load static %}
+{% block body %}
+    <table class="tableausimple">
+        <tr>
+            <th colspan="2">RGPD Étudiant: {{eleve}}
+            </td>
+        </tr>
+        <tr>
+            <th>Données collectées</th>
+            <td><a href="{% url 'rgpd_eleve_pdf' eleve.pk %}"><img src="{% static 'images/iconePDF.png' %}"></img></a></td>
+        </tr>
+    </table>
+
+    <table class="accueil" >
+        <tr>
+            <td><a id="suppr" href="{% url 'eleve_force_efface' eleve.pk %}">Forcer l'effacement de l'étudiant</a></td>
+        </tr>
+    </table>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/forcesuppression.js' %}"></script>
+{% endblock %}

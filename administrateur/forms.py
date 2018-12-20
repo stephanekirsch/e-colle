@@ -5,6 +5,7 @@ from django.forms.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
+from django.db.models import Q
 from ecolle.settings import RESOURCES_ROOT
 from xml.etree import ElementTree as etree
 from random import choice
@@ -454,24 +455,36 @@ class CustomMultipleChoiceField(forms.ModelMultipleChoiceField):
 		return ""
 
 class SelectColleurForm(forms.Form):
-	def __init__(self,matiere=None,classe=None, *args, **kwargs):
+	def __init__(self,matiere=None,classe=None, pattern = "", *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		query = Colleur.objects
 		if matiere:
 			query = query.filter(matieres=matiere)
 		if classe:
 			query = query.filter(classes=classe)
+		if pattern:
+			query = query.filter(Q(user__first_name__icontains=pattern) | Q(user__last_name__icontains=pattern))
 		query=query.order_by('user__last_name','user__first_name','user__pk')
 		self.fields['colleur'] = CustomMultipleChoiceField(queryset=query, required=True,widget = forms.CheckboxSelectMultiple)
 		self.fields['colleur'].empty_label=None
 
+class ChercheUserForm(forms.Form):
+	nom = forms.CharField(label = "Nom", required = False, max_length = 40)
+
+
 class SelectEleveForm(forms.Form):
-	def __init__(self,klasse=None, *args, **kwargs):
+	def __init__(self, klasse=None, tri = True, pattern = "", *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		if klasse:
-			query = Eleve.objects.filter(classe=klasse).select_related('user','classe','lv1','lv2').order_by('classe__nom','user__last_name','user__first_name')
+			query = Eleve.objects.filter(classe=klasse).select_related('user','classe','lv1','lv2')
 		else:
-			query=Eleve.objects.select_related('user','classe','lv1','lv2').order_by('classe__nom','user__last_name','user__first_name')
+			query = Eleve.objects.select_related('user','classe','lv1','lv2')
+		if pattern:
+			query = query.filter(Q(user__first_name__icontains=pattern) | Q(user__last_name__icontains=pattern))
+		if tri:
+			query = query.order_by('classe__nom','user__last_name','user__first_name')
+		else:
+			query = query.order_by('user__last_name','user__first_name','classe__nom')
 		self.fields['eleve'] = CustomMultipleChoiceField(queryset=query, required=True,widget = forms.CheckboxSelectMultiple)
 		self.fields['eleve'].empty_label=None
 		self.fields['klasse'] = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),required=False)

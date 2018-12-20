@@ -86,7 +86,7 @@ def note(request,id_classe):
 	matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=request.user.colleur)
 	if classe not in colleur.classes.all() or matiere.pk not in classe.matierespk():
 		raise Http404
-	return render(request,"colleur/note.html",{'form':form,'notes':Note.objects.listeNotes(colleur,classe,matiere)})
+	return render(request,"colleur/note.html",{'form':form,'classe':classe, 'notes':Note.objects.listeNotes(colleur,classe,matiere)})
 
 @user_passes_test(is_colleur, login_url='accueil')
 def noteEleves(request, id_classe, eleves_str, noteColle=None):

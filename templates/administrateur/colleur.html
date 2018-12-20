@@ -2,12 +2,20 @@
 {% load static %}
 {% load customfilter %}
 {% block body %}
-	<table class="accueil"><tr><td>Matière</td></tr></table>
+	<table class="accueil"><tr><td>Colleurs</td></tr></table>
 	<form method="post">
 	{% csrf_token %}
 	<table class="tableausimple">
 	{{ form.as_table }}
 	<tr><td colspan="2"><input type="submit" value="Envoyer" name = "selectmatiere"/></td></tr>
+	</table>
+	</form>
+	<form method="post">
+	{% csrf_token %}
+	<table class="tableausimple">
+	<tr><th colspan="2">Chercher un colleur</th></tr>
+	{{ form3.as_table }}
+	<tr><td colspan="2"><input type="submit" value="Chercher" name = "chercheuser"/></td></tr>
 	</table>
 	</form>
 	<table class="accueil">
@@ -32,6 +40,7 @@
 			<td>Classe(s)</td>
 			<td>Modifier</td>
 			<td>Supprimer</td>
+			<td>RGPD</td>
 		</tr>
 		{% for colleur,widget in colleurs|tzip:form2.colleur %}
 		<tr>
@@ -47,11 +56,12 @@
 			<td>{% if colleur.classes == None %}{% else %}{{colleur.classes|safe}}{% endif %}</td>
 			<td><a class="bouton" href="{% url 'modif_colleur' colleur.id %}">Modifier</a></td>
 			<td><a class="bouton" href="{% url 'suppr_colleur' colleur.id %}">Supprimer</a></td>
+			<td><a class="bouton" href="{% url 'rgpd_colleur' colleur.id %}">RGPD</a></td>
 		</tr>
 		{% endfor %}
 		<tr class="plusclair">
 			<td><label for = "check">Tout cocher</label><br/><input type="checkbox" id="check"/></td>
-			<td colspan="6"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
+			<td colspan="7"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
 			<td colspan="6"><input type="submit" value="Modifier la sélection" name="modifier"/></td>
 		</tr>
 	</table>
