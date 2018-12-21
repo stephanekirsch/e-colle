@@ -315,7 +315,7 @@ class Ramassage(models.Model):
         ordering=['moisFin']
 
 class Decompte(models.Model):
-    colleur = models.ForeignKey("Colleur", on_delete = models.PROTECT, null = False)
+    colleur = models.ForeignKey("Colleur", on_delete = models.CASCADE, null = False)
     matiere = models.ForeignKey("Matiere", on_delete = models.PROTECT, null = False)
     classe = models.ForeignKey("Classe", on_delete = models.PROTECT, null = False)
     ramassage = models.ForeignKey(Ramassage, on_delete = models.CASCADE, null = False)

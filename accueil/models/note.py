@@ -108,9 +108,9 @@ class NoteManager(models.Manager):
                    FROM accueil_note n\
                    INNER JOIN accueil_matiere m\
                    ON n.matiere_id=m.id\
-                   INNER JOIN accueil_colleur c\
+                   LEFT JOIN accueil_colleur c\
                    ON n.colleur_id=c.id\
-                   INNER JOIN accueil_user u\
+                   LEFT JOIN accueil_user u\
                    ON u.colleur_id=c.id\
                    INNER JOIN accueil_semaine s\
                    ON n.semaine_id = s.id\
