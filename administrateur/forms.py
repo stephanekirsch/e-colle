@@ -471,6 +471,9 @@ class SelectColleurForm(forms.Form):
 class ChercheUserForm(forms.Form):
 	nom = forms.CharField(label = "Nom", required = False, max_length = 40)
 
+	def clean_nom(self):
+		return self.cleaned_data['nom'].lower() # on passe tout en minuscule
+		
 
 class SelectEleveForm(forms.Form):
 	def __init__(self, klasse=None, tri = True, pattern = "", *args, **kwargs):
