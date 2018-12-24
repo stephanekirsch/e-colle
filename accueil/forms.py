@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Colleur, Groupe, Matiere, Destinataire, Message, Classe, Eleve
+from accueil.models import Colleur, Groupe, Matiere, Destinataire, Message, Classe, Eleve, User, Prof
 from administrateur.forms import CustomMultipleChoiceField
 from django.contrib.auth.password_validation import validate_password
 
@@ -13,15 +13,36 @@ class GroupeMultipleChoiceField(forms.ModelMultipleChoiceField):
 	def label_from_instance(self,groupe,*args,**kwargs):
 		return "{}: ".format(groupe.nom)+"/".join([str(eleve.user.last_name.upper()) for eleve in groupe.groupeeleve.all()])
 
-class UserForm(forms.Form):
-	email = forms.EmailField(label="Email",max_length=75,required=False)
-	motdepasse = forms.CharField(label="Mot de passe",widget=forms.PasswordInput,required=False)
+class ColleurForm(forms.Form):
+	def __init__(self,*args,**kwargs):
+		self.pk = kwargs.pop('pk')
+		super().__init__(*args,**kwargs)
+		LISTE_GRADE=((0,"autre"),(1,"certifié"),(2,"bi-admissible"),(3,"agrégé"),(4,"chaire supérieure"))
+		self.fields['last_name'] = forms.CharField(label="Nom",max_length=30)
+		self.fields['first_name'] = forms.CharField(label="Prénom",max_length=30)
+		self.fields['password'] = forms.CharField(label="Mot de passe",max_length=30,required=False)
+		self.fields['is_active'] = forms.BooleanField(label="actif",required=False)
+		self.fields['email'] = forms.EmailField(label="email(facultatif)",max_length=50,required=False)
 	
+
+class UserForm(forms.ModelForm):
+	motdepasse = forms.CharField(label="Mot de passe",max_length=30,required=False)
+	class Meta:
+		model = User
+		fields=['email','css']
+
 	def clean_motdepasse(self):
 		data = self.cleaned_data['motdepasse']
 		if data:
 			validate_password(data)
 		return data
+
+	def save(self):
+		user = self.instance
+		if self.cleaned_data['motdepasse']:
+			user.set_password(self.cleaned_data['motdepasse'])
+		user.save()
+
 
 class ColleurMultipleChoiceField(forms.ModelMultipleChoiceField):
 	def __init__(self,classe,matiere=False,*args,**kwargs):
@@ -35,10 +56,14 @@ class ColleurMultipleChoiceField(forms.ModelMultipleChoiceField):
 			chaine += " ("+ " et ".join([str(mat).title() for mat in Matiere.objects.filter(matiereprof__colleur=colleur,matiereprof__classe=self.classe)]) +")"
 		return chaine
 
-class UserProfprincipalForm(forms.Form):
+class UserProfprincipalForm(forms.ModelForm):
+	class Meta:
+		model = User
+		fields=['email','css']
+
 	def __init__(self,colleur,classes,*args,**kwargs):
 		super().__init__(*args,**kwargs)
-		self.fields['email']=forms.EmailField(label="Email",max_length=75)
+		self.classes = classes
 		self.fields['motdepasse']=forms.CharField(label="Mot de passe",widget=forms.PasswordInput,required=False)
 		for classe in classes:
 			self.fields["{}_groupe".format(classe.pk)] = ColleurMultipleChoiceField(classe,label="Droits de modifier les groupes de {}".format(classe.nom.upper()),queryset=Colleur.objects.filter(colleurprof__classe=classe,user__is_active=True).select_related('user').exclude(pk=colleur.pk),widget=forms.CheckboxSelectMultiple,required=False)
@@ -49,6 +74,23 @@ class UserProfprincipalForm(forms.Form):
 		if data:
 			validate_password(data)
 		return data
+
+	def save(self):
+		user = self.instance
+		if self.cleaned_data['motdepasse']:
+			user.set_password(self.cleaned_data['motdepasse'])
+		user.save()
+		for classe in self.classes:
+			for matiere in classe.matieres.all():
+				prof = Prof.objects.filter(classe=classe,matiere=matiere)
+				if prof and prof[0].colleur in self.cleaned_data["{}_groupe".format(classe.pk)]:
+					prof.update(modifgroupe=True)
+				else:
+					prof.update(modifgroupe=False)
+				if prof and prof[0].colleur in self.cleaned_data["{}_colloscope".format(classe.pk)]:
+					prof.update(modifcolloscope=True)
+				else:
+					prof.update(modifcolloscope=False)
 		
 class SelectMessageForm(forms.Form):
 	def __init__(self,user,recu=True,*args, **kwargs):

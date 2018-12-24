@@ -55,31 +55,14 @@ def profil(request):
 		for classe in classes:
 			initial["{}_groupe".format(classe.pk)] = Colleur.objects.filter(colleurprof__classe=classe,colleurprof__modifgroupe=True)
 			initial["{}_colloscope".format(classe.pk)] = Colleur.objects.filter(colleurprof__classe=classe,colleurprof__modifcolloscope=True)
-		form = UserProfprincipalForm(user.colleur,classes,request.POST or None,initial=initial)
+		form = UserProfprincipalForm(user.colleur,classes,request.POST or None,instance = user)
 		if form.is_valid():
-			user.email=form.cleaned_data['email']
-			if form.cleaned_data['motdepasse']:
-				user.set_password(form.cleaned_data['motdepasse'])
-			user.save()
-			for classe in classes:
-				for matiere in classe.matieres.all():
-					prof = Prof.objects.filter(classe=classe,matiere=matiere)
-					if prof and prof[0].colleur in form.cleaned_data["{}_groupe".format(classe.pk)]:
-						prof.update(modifgroupe=True)
-					else:
-						prof.update(modifgroupe=False)
-					if prof and prof[0].colleur in form.cleaned_data["{}_colloscope".format(classe.pk)]:
-						prof.update(modifcolloscope=True)
-					else:
-						prof.update(modifcolloscope=False)
+			form.save()
 			return redirect('accueil')
 	else:
-		form=UserForm(request.POST or None,initial={'email':user.email})
+		form=UserForm(request.POST or None,instance = user)
 		if form.is_valid():
-			user.email=form.cleaned_data['email']
-			if form.cleaned_data['motdepasse']:
-				user.set_password(form.cleaned_data['motdepasse'])
-			user.save()
+			form.save()
 			return redirect('accueil')
 	return render(request,"accueil/profil.html",{'form':form})
 

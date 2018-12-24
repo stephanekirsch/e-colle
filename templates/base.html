@@ -7,7 +7,7 @@
 	<link rel="icon" href="{% static 'images/calendar-48px.png' %}">
     {% if user.is_authenticated %}
        {% with 'css/'|add:user.css as css_static %} 
-	     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+	     <link rel="stylesheet" href="{% static css_static %}" />
        {% endwith %}
     {% else %} 
 	   <link rel="stylesheet" href="{% static 'css/new_style.css' %}" />

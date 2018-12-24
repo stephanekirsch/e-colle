@@ -8,13 +8,11 @@ from ecolle.settings import DEFAULT_CSS
 class User(AbstractUser):
     eleve = models.OneToOneField("Eleve", null=True, on_delete=models.CASCADE)
     colleur = models.OneToOneField("Colleur", null=True, on_delete=models.CASCADE)
-
     css = models.CharField(
         verbose_name="Style préféré",
-        default=DEFAULT_CSS,
-        null=True,
-        blank=True,
-        max_length=50
+        default = DEFAULT_CSS,
+        choices = ((DEFAULT_CSS, 'classique'), ('new_style.css', 'épuré')),
+        max_length = 50,
     )
 
     def totalmessages(self):
