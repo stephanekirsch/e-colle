@@ -368,11 +368,11 @@ def ramassagePdf(request,id_ramassage):
                             if ligneEtab>1:
                                 data[1][1]='Inconnu' if not etablissement else etablissement.title()
                                 if ligneEtab>2:
-                                    LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab,23)))
+                                    LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab-1,23)))
                                 if ligneGrade>1:
                                     data[1][2]=grade
                                     if ligneGrade>2:
-                                        LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade,23)))
+                                        LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade-1,23)))
     t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel]+[largeurcel]*len(effectifs),rowHeights=min((1+nbKolleurs),24)*[hauteurcel])
     t.setStyle(LIST_STYLE)
     w,h=t.wrapOn(pdf,0,0)
@@ -520,11 +520,11 @@ def ramassagePdfParClasse(request,id_ramassage,total):
                                 if ligneEtab>1:
                                     data[1][1]='Inconnu' if not etablissement else etablissement.title()
                                     if ligneEtab>2:
-                                        LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab,22)))
+                                        LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab-1,22)))
                                     if ligneGrade>1:
                                         data[1][2]=grade
                                         if ligneGrade>2:
-                                            LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade,22)))
+                                            LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade-1,22)))
             # fin matière
             totalclasse += totalmatiere
             if total:
