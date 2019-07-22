@@ -24,7 +24,7 @@ def check(request):
     pour indiquer à l'app mobile que le serveur fonctionne"""
     if not Config.objects.get_config().app_mobile:
         raise Http404
-    return HttpResponse("2.0")
+    return HttpResponse("2.1")
 
 
 def checkeleve(user):
