@@ -22,22 +22,26 @@
 		<td>CSV par année/effectif</td>
 		<td>CSV par classe</td>
 		<td>CSV par classe avec totaux</td>
+		<td>ramassage par mois</td>
 	</tr>
 	{% for ramassage in ramassages %}
 	<tr>
 		<td>{{ramassage.moisFin|date:"E Y"}}</td>
 		<td>{{ramassage.date|date:"d/m/Y à H\hi"}}</td>
 		<td>{% if forloop.last %}<a href="{% url 'ramassagesuppr' ramassage.pk %}">Supprimer</a>{% endif %}</td>
-		<td><a href="{% url 'ramassagepdf' ramassage.pk %}"><img src="{% static 'images/iconePDF.png' %}"></img></a></td>
-		<td><a href="{% url 'ramassagepdfparclasse' ramassage.pk 0 %}"><img src="{% static 'images/iconePDF.png' %}"></img></a></td>
-		<td><a href="{% url 'ramassagepdfparclasse' ramassage.pk 1 %}"><img src="{% static 'images/iconePDF.png' %}"></img></a></td>
-		<td><a href="{% url 'ramassagecsv' ramassage.pk %}"><img src="{% static 'images/csv.png' %}"></img></a></td>
-		<td><a href="{% url 'ramassagecsvparclasse' ramassage.pk 0 %}"><img src="{% static 'images/csv.png' %}"></img></a></td>
-		<td><a href="{% url 'ramassagecsvparclasse' ramassage.pk 1 %}"><img src="{% static 'images/csv.png' %}"></img></a></td>
+		<td><a href="{% url 'ramassagepdf' ramassage.pk 0 %}"><img src="{% static 'images/iconePDF.png' %}"/></a></td>
+		<td><a href="{% url 'ramassagepdfparclasse' ramassage.pk 0 %}"><img src="{% static 'images/iconePDF.png' %}"/></a></td>
+		<td><a href="{% url 'ramassagepdfparclasse' ramassage.pk 1 %}"><img src="{% static 'images/iconePDF.png' %}"/></a></td>
+		<td><a href="{% url 'ramassagecsv' ramassage.pk 0 %}"><img src="{% static 'images/csv.png' %}"/></a></td>
+		<td><a href="{% url 'ramassagecsvparclasse' ramassage.pk 0 %}"><img src="{% static 'images/csv.png' %}"/></a></td>
+		<td><a href="{% url 'ramassagecsvparclasse' ramassage.pk 1 %}"><img src="{% static 'images/csv.png' %}"/></a></td>
+		{% if forloop.first %}
+		<td rowspan="{{hauteur}}"><input type="checkbox" id="checkbox"></td>
+		{% endif %}
 	</tr>
 	{% endfor %}
 </table>
 {% endblock %}
 {% block javascript %}
-<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/parmois.js' %}"></script>
 {% endblock %}

@@ -10,8 +10,8 @@ from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixteco
 from django.http import Http404, HttpResponse,  HttpResponseForbidden
 from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
 from reportlab.platypus import Table, TableStyle
-from datetime import timedelta
-from django.db.models import Max
+from datetime import timedelta, date
+from django.db.models import Max, Min
 import csv
 
 def is_secret(user):
@@ -261,7 +261,7 @@ def ramassage(request):
         form.save()
         return redirect('ramassage')
     ramassages=Ramassage.objects.all()
-    return render(request,"secretariat/ramassage.html",{'form':form,'ramassages':ramassages})
+    return render(request,"secretariat/ramassage.html",{'form':form,'ramassages':ramassages,'hauteur':len(ramassages)})
 
 @user_passes_test(is_secret, login_url='login_secret')
 def ramassageSuppr(request,id_ramassage):
@@ -271,8 +271,9 @@ def ramassageSuppr(request,id_ramassage):
     return redirect('ramassage')
 
 @user_passes_test(is_secret, login_url='login_secret')
-def ramassageCSV(request,id_ramassage):
+def ramassageCSV(request,id_ramassage,parMois = 0):
     """Renvoie le fichier CSV du ramassage par année/effectif correspondant au ramassage dont l'id est id_ramassage"""
+    parMois = int(parMois)
     ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
     LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
     response = HttpResponse(content_type='text/csv')
@@ -281,35 +282,47 @@ def ramassageCSV(request,id_ramassage):
     else:
         debut = ramassage.moisFin
     fin = ramassage.moisFin
-    listeDecompte, effectifs = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = False)
+    listeDecompte, effectifs = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = False, parMois =parMois)
     nomfichier="ramassage{}_{}-{}_{}.csv".format(debut.month,debut.year,fin.month,fin.year)
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
     writer = csv.writer(response)
-    writer.writerow(["Matière","Établissement","Grade","Colleur"]+["{}è. ann.  {}".format(annee,effectif) for annee,effectif in effectifs])
+    writer.writerow(["Matière","Établissement","Grade","Colleur"]+ (["mois"] if parMois else []) +["{}è. ann.  {}".format(annee,effectif) for annee,effectif in effectifs])
     for matiere, listeEtabs, nbEtabs in listeDecompte:
         for etablissement, listeGrades, nbGrades in listeEtabs:
             for grade, listeColleurs, nbColleurs in listeGrades:
-                for colleur_nom, colleur_prenom, decomptes in listeColleurs:
-                    writer.writerow([matiere.title(), etablissement.title(),
-                        grade, "{} {}".format(colleur_nom, colleur_prenom)] + ["{:.02f}".format(decomptes[i]/60).replace('.',',') for i in range(len(effectifs))])
+                if parMois:
+                    for colleur_nom, colleur_prenom, listeMois, nbMois in listeColleurs:
+                        for mois, decomptes in listeMois:
+                            writer.writerow([matiere.title(), etablissement.title(),
+                                grade, "{} {}".format(colleur_nom, colleur_prenom), LISTE_MOIS[mois%12+1]] + ["{:.02f}".format(decomptes[i]/60).replace('.',',') for i in range(len(effectifs))])
+                else:               
+                    for colleur_nom, colleur_prenom, decomptes in listeColleurs:
+                        writer.writerow([matiere.title(), etablissement.title(),
+                            grade, "{} {}".format(colleur_nom, colleur_prenom)] + ["{:.02f}".format(decomptes[i]/60).replace('.',',') for i in range(len(effectifs))])
     return response
 
 @user_passes_test(is_secret, login_url='login_secret')
-def ramassagePdf(request,id_ramassage):
+def ramassagePdf(request, id_ramassage, parMois = 0):
     """Renvoie le fichier PDF du ramassage par année/effectif correspondant au ramassage dont l'id est id_ramassage"""
+    parMois = int(parMois) // 2
     ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
     LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
+    LISTE_MOIS_COURT=["jan","fev","mar","avr","mai","juin","juil","aou","sep","oct","nov","dec"]
     response = HttpResponse(content_type='application/pdf')
     if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists(): #s'il existe un ramassage antérieur
         debut = Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).aggregate(Max('moisFin'))['moisFin__max']+timedelta(days=1)
     else:
-        debut = ramassage.moisFin
+        if Note.objects.exists():
+            debut = Note.objects.aggregate(Min('date_colle'))['date_colle__min'].replace(day=1)
+        else:
+            debut = date.today().replace(day=1)
     fin = ramassage.moisFin
-    listeDecompte, effectifs = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = False)
+    moisdebut = 12*debut.year+debut.month-1
+    listeDecompte, effectifs = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = False, parMois=parMois)
     nomfichier="ramassage{}_{}-{}_{}.pdf".format(debut.month,debut.year,fin.month,fin.year)
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
     pdf = easyPdf(titre="Ramassage des colles de {} {} à {} {}".format(LISTE_MOIS[debut.month],debut.year,LISTE_MOIS[fin.month],fin.year),marge_x=30,marge_y=30)
-    largeurcel=(pdf.format[0]-2*pdf.marge_x)/(9+len(effectifs))
+    largeurcel=(pdf.format[0]-2*pdf.marge_x)/(9+parMois+len(effectifs))
     hauteurcel=30
     nbKolleurs=sum([z for x,y,z in listeDecompte])
     pdf.debutDePage()
@@ -319,8 +332,8 @@ def ramassagePdf(request,id_ramassage):
                                         ,('ALIGN',(0,0),(-1,-1),'CENTRE')
                                         ,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
                                         ,('SIZE',(0,0),(-1,-1),8)])
-    data = [["Matière","Établissement","Grade","Colleur"]+["{}è. ann.\n{}".format(annee,effectif) for annee,effectif in effectifs]]+[[""]*(4+len(effectifs)) for i in range(min(23,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
-    ligneMat=ligneEtab=ligneGrade=ligneColleur=1
+    data = [["Matière","Établissement","Grade","Colleur"] + (["Mois"] if parMois else []) + ["{}è. ann.\n{}".format(annee,effectif) for annee,effectif in effectifs]]+[[""]*(4+parMois+len(effectifs)) for i in range(min(23,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
+    ligneMat=ligneEtab=ligneGrade=ligneColleur=ligneMois=1
     for matiere, listeEtabs, nbEtabs in listeDecompte:
         data[ligneMat][0]=matiere.title()
         if nbEtabs>1:
@@ -336,44 +349,95 @@ def ramassagePdf(request,id_ramassage):
                 if nbColleurs>1:
                     LIST_STYLE.add('SPAN',(2,ligneGrade),(2,min(ligneGrade+nbColleurs-1,23)))
                 ligneGrade+=nbColleurs
-                for colleur_nom, colleur_prenom, decomptes in listeColleurs:
-                    data[ligneColleur][3]="{} {}".format(colleur_nom, colleur_prenom)
-                    for i in range(len(effectifs)):
-                        data[ligneColleur][i+4]="{:.02f}h".format(decomptes[i]/60).replace('.',',')
-                    ligneColleur+=1
-                    if ligneColleur==24 and nbKolleurs>23: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau
-                        t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel]+[largeurcel]*len(effectifs),rowHeights=min((1+nbKolleurs),24)*[hauteurcel])
-                        t.setStyle(LIST_STYLE)
-                        w,h=t.wrapOn(pdf,0,0)
-                        t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-hauteurcel/2)
-                        pdf.finDePage()
-                        # on redémarre sur une nouvelle page
-                        pdf.debutDePage()
-                        LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
-                                        ,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))
-                                        ,('VALIGN',(0,0),(-1,-1),'MIDDLE')
-                                        ,('ALIGN',(0,0),(-1,-1),'CENTRE')
-                                        ,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
-                                        ,('SIZE',(0,0),(-1,-1),8)])
-                        nbKolleurs-=23
-                        data = [["Matière","Établissement","Grade","Colleur"]+["{}è. ann.\n{}".format(annee,effectif) for annee,effectif in effectifs]]+[[""]*(4+len(effectifs)) for i in range(min(23,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
-                        ligneEtab-=23
-                        ligneGrade-=23
-                        ligneMat-=23
-                        ligneColleur=1
-                        if ligneMat>1:
-                            data[1][0]=matiere.title()
-                            if ligneMat>2:
-                                LIST_STYLE.add('SPAN',(0,1),(0,min(ligneMat-1,23)))
-                            if ligneEtab>1:
-                                data[1][1]='Inconnu' if not etablissement else etablissement.title()
-                                if ligneEtab>2:
-                                    LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab-1,23)))
-                                if ligneGrade>1:
-                                    data[1][2]=grade
-                                    if ligneGrade>2:
-                                        LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade-1,23)))
-    t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel]+[largeurcel]*len(effectifs),rowHeights=min((1+nbKolleurs),24)*[hauteurcel])
+                if parMois:
+                    for colleur_nom, colleur_prenom, listeMois, nbMois in listeColleurs:
+                        data[ligneColleur][3]="{} {}".format(colleur_nom, colleur_prenom)
+                        if nbMois>1:
+                            LIST_STYLE.add('SPAN',(3,ligneColleur),(3,min(ligneColleur+nbMois-1,23)))
+                        ligneColleur+=nbMois
+                        for mois, decomptes in listeMois:
+                            if mois < moisdebut:
+                                LIST_STYLE.add('TEXTCOLOR',(4,ligneMois),(4+len(effectifs),ligneMois),(1,0,0))
+                            data[ligneMois][4]=LISTE_MOIS_COURT[mois%12]
+                            for i in range(len(effectifs)):
+                                data[ligneMois][i+5]="{:.02f}h".format(decomptes[i]/60).replace('.',',')
+                            ligneMois+=1
+                            if ligneMois==24 and nbKolleurs>23: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau
+                                t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel,largeurcel]+[largeurcel]*len(effectifs),rowHeights=min((1+nbKolleurs),24)*[hauteurcel])
+                                t.setStyle(LIST_STYLE)
+                                w,h=t.wrapOn(pdf,0,0)
+                                t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-hauteurcel/2)
+                                pdf.finDePage()
+                                # on redémarre sur une nouvelle page
+                                pdf.debutDePage()
+                                LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
+                                                ,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))
+                                                ,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+                                                ,('ALIGN',(0,0),(-1,-1),'CENTRE')
+                                                ,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
+                                                ,('SIZE',(0,0),(-1,-1),8)])
+                                nbKolleurs-=23
+                                data = [["Matière","Établissement","Grade","Colleur","Mois"]+["{}è. ann.\n{}".format(annee,effectif) for annee,effectif in effectifs]]+[[""]*(5+len(effectifs)) for i in range(min(23,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
+                                ligneEtab-=23
+                                ligneGrade-=23
+                                ligneMat-=23
+                                ligneColleur-=23
+                                ligneMois=1
+                                if ligneMat>1:
+                                    data[1][0]=matiere.title()
+                                    if ligneMat>2:
+                                        LIST_STYLE.add('SPAN',(0,1),(0,min(ligneMat-1,23)))
+                                    if ligneEtab>1:
+                                        data[1][1]='Inconnu' if not etablissement else etablissement.title()
+                                        if ligneEtab>2:
+                                            LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab-1,23)))
+                                        if ligneGrade>1:
+                                            data[1][2]=grade
+                                            if ligneGrade>2:
+                                                LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade-1,23)))
+                                            if ligneColleur>1:
+                                                data[1][3]= "{} {}".format(colleur_nom, colleur_prenom)
+                                                if ligneColleur>2:
+                                                    LIST_STYLE.add('SPAN',(3,1),(3,min(ligneColleur-1,23)))
+                else:
+                    for colleur_nom, colleur_prenom, decomptes in listeColleurs:
+                        data[ligneColleur][3]="{} {}".format(colleur_nom, colleur_prenom)
+                        for i in range(len(effectifs)):
+                            data[ligneColleur][i+4]="{:.02f}h".format(decomptes[i]/60).replace('.',',')
+                        ligneColleur+=1
+                        if ligneColleur==24 and nbKolleurs>23: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau
+                            t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel]+[largeurcel]*len(effectifs),rowHeights=min((1+nbKolleurs),24)*[hauteurcel])
+                            t.setStyle(LIST_STYLE)
+                            w,h=t.wrapOn(pdf,0,0)
+                            t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-hauteurcel/2)
+                            pdf.finDePage()
+                            # on redémarre sur une nouvelle page
+                            pdf.debutDePage()
+                            LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
+                                            ,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))
+                                            ,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+                                            ,('ALIGN',(0,0),(-1,-1),'CENTRE')
+                                            ,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
+                                            ,('SIZE',(0,0),(-1,-1),8)])
+                            nbKolleurs-=23
+                            data = [["Matière","Établissement","Grade","Colleur"]+["{}è. ann.\n{}".format(annee,effectif) for annee,effectif in effectifs]]+[[""]*(4+len(effectifs)) for i in range(min(23,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
+                            ligneEtab-=23
+                            ligneGrade-=23
+                            ligneMat-=23
+                            ligneColleur=1
+                            if ligneMat>1:
+                                data[1][0]=matiere.title()
+                                if ligneMat>2:
+                                    LIST_STYLE.add('SPAN',(0,1),(0,min(ligneMat-1,23)))
+                                if ligneEtab>1:
+                                    data[1][1]='Inconnu' if not etablissement else etablissement.title()
+                                    if ligneEtab>2:
+                                        LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab-1,23)))
+                                    if ligneGrade>1:
+                                        data[1][2]=grade
+                                        if ligneGrade>2:
+                                            LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade-1,23)))
+    t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel]+[largeurcel]*(parMois+len(effectifs)),rowHeights=min((1+nbKolleurs),24)*[hauteurcel])
     t.setStyle(LIST_STYLE)
     w,h=t.wrapOn(pdf,0,0)
     t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-hauteurcel/2)
@@ -385,9 +449,10 @@ def ramassagePdf(request,id_ramassage):
     return response
 
 @user_passes_test(is_secret, login_url='login_secret')
-def ramassageCSVParClasse(request, id_ramassage, total):
+def ramassageCSVParClasse(request, id_ramassage, totalParmois):
     """Renvoie le fichier CSV du ramassage par classe correspondant au ramassage dont l'id est id_ramassage
     si total vaut 1, les totaux par classe et matière sont calculés"""
+    parmois, total = divmod(int(totalParmois),2)
     ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
     if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists():# s'il existe un ramassage antérieur
         moisDebut = Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).aggregate(Max('moisFin'))['moisFin__max'] + timedelta(days=1)
@@ -395,18 +460,20 @@ def ramassageCSVParClasse(request, id_ramassage, total):
         moisDebut = ramassage.moisFin
     LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
     response = HttpResponse(content_type='text/csv')
-    decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = True, parClasse = True)
+    decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = True, parClasse = True, parMois = bool(parmois))
     LISTE_GRADES=["inconnu","certifié","bi-admissible","agrégé","chaire sup"]
     nomfichier="ramassageCSVParclasse{}_{}-{}_{}.csv".format(moisDebut.month,moisDebut.year,ramassage.moisFin.month,ramassage.moisFin.year)
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
     writer = csv.writer(response)
-    writer.writerow(["Classe","Matière","Établissement","Grade","Nom","Prénom","heures"])
-    total = int(total)
+    entete = ["Classe","Matière","Établissement","Grade","Nom","Prénom","heures"]
+    if parmois:
+        entete[-1:-1] = ["mois"]
+    writer.writerow(entete)
     if not total:
         for decompte in decomptes:
             heures = int(decompte['heures'])
             writer.writerow([decompte['classe_nom'], decompte['matiere_nom'], decompte['etab'].title(),
-                            LISTE_GRADES[decompte['grade']], decompte['nom'], decompte['prenom'],"{:.02f}".format(heures/60).replace('.',',')])
+                            LISTE_GRADES[decompte['grade']], decompte['nom'], decompte['prenom']] + ([LISTE_MOIS[decompte["mois"]%12+1]] if parmois else []) + ["{:.02f}".format(heures/60).replace('.',',')])
     elif len(decomptes) > 0:
         last_classe, last_classe_nom, last_matiere, last_matiere_nom = decomptes[0]['classe_id'], decomptes[0]['classe_nom'], decomptes[0]['matiere_id'], decomptes[0]['matiere_nom']
         total_classe, total_matiere = 0, 0
@@ -414,35 +481,36 @@ def ramassageCSVParClasse(request, id_ramassage, total):
             classe, matiere = decompte['classe_id'], decompte['matiere_id']
             heures = decompte['heures']
             if matiere != last_matiere or classe != last_classe: # si on change de matière ou de classe, on met le total matière
-                writer.writerow([""]*6)
-                writer.writerow([last_classe_nom, "total {}".format(last_matiere_nom.title()), "", "", "", "", "{:.02f}".format(total_matiere/60).replace('.',',')])
-                writer.writerow([""]*6)
+                writer.writerow([""]*(6+parmois))
+                writer.writerow([last_classe_nom, "total {}".format(last_matiere_nom.title())]+[""]*(4+parmois) +["{:.02f}".format(total_matiere/60).replace('.',',')])
+                writer.writerow([""]*(6+parmois))
                 total_classe += total_matiere
                 total_matiere = 0
             if classe != last_classe: # si on change de classe, on met le total classe
-                writer.writerow(["total {}".format(last_classe_nom), "", "", "", "", "", "{:.02f}".format(total_classe/60).replace('.',',')])
-                writer.writerow([""]*6)
-                writer.writerow([""]*6)
+                writer.writerow(["total {}".format(last_classe_nom)]+[""]*(5+parmois) +["{:.02f}".format(total_classe/60).replace('.',',')])
+                writer.writerow([""]*(6+parmois))
+                writer.writerow([""]*(6+parmois))
                 total_classe = 0
             heures = int(decompte['heures'])
             writer.writerow([decompte['classe_nom'], decompte['matiere_nom'], decompte['etab'].title(),
-                        LISTE_GRADES[decompte['grade']], decompte['nom'], decompte['prenom'],"{:.02f}".format(heures/60).replace('.',',')])
+                        LISTE_GRADES[decompte['grade']], decompte['nom'], decompte['prenom']] + ([LISTE_MOIS[decompte["mois"]%12+1]] if parmois else []) + ["{:.02f}".format(heures/60).replace('.',',')])
             total_matiere += heures
             last_classe, last_classe_nom, last_matiere, last_matiere_nom = decompte['classe_id'], decompte['classe_nom'], decompte['matiere_id'], decompte['matiere_nom']
-        writer.writerow([""]*6)
-        writer.writerow([last_classe_nom, "total {}".format(last_matiere_nom.title()), "", "", "", "", "{:.02f}".format(total_matiere/60).replace('.',',')])
-        writer.writerow([""]*6)
+        writer.writerow([""]*(6+parmois))
+        writer.writerow([last_classe_nom, "total {}".format(last_matiere_nom.title())]+[""]*(4+parmois) +["{:.02f}".format(total_matiere/60).replace('.',',')])
+        writer.writerow([""]*(6+parmois))
         total_classe += total_matiere
-        writer.writerow(["total {}".format(last_classe_nom), "", "", "", "", "", "{:.02f}".format(total_classe/60).replace('.',',')])
-        writer.writerow([""]*6)
-        writer.writerow([""]*6)
+        writer.writerow(["total {}".format(last_classe_nom)]+[""]*(5+parmois) +["{:.02f}".format(total_classe/60).replace('.',',')])
+        writer.writerow([""]*(6+parmois))
+        writer.writerow([""]*(6+parmois))
     return response
 
 
 @user_passes_test(is_secret, login_url='login_secret')
-def ramassagePdfParClasse(request,id_ramassage,total):
+def ramassagePdfParClasse(request,id_ramassage,totalParmois):
     """Renvoie le fichier PDF du ramassage par classe correspondant au ramassage dont l'id est id_ramassage
     si total vaut 1, les totaux par classe et matière sont calculés"""
+    parmois, total = divmod(int(totalParmois),2)
     ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
     LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
     response = HttpResponse(content_type='application/pdf')
@@ -451,11 +519,12 @@ def ramassagePdfParClasse(request,id_ramassage,total):
     else:
         debut = ramassage.moisFin
     fin = ramassage.moisFin
-    decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = True)
+    moisdebut = 12*debut.year+debut.month-1
+    decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = True, parMois=bool(parmois))
     nomfichier="ramassagePdfParclasse{}_{}-{}_{}.pdf".format(debut.month,debut.year,fin.month,fin.year)
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
     pdf = easyPdf(titre="Ramassage des colles de {} {} à {} {}".format(LISTE_MOIS[debut.month],debut.year,LISTE_MOIS[fin.month],fin.year),marge_x=30,marge_y=30)
-    largeurcel=(pdf.format[0]-2*pdf.marge_x)/10
+    largeurcel=(pdf.format[0]-2*pdf.marge_x)/(10+parmois)
     hauteurcel=30
     total=int(total)
     for classe, listeClasse, nbMatieres in decomptes:
@@ -470,8 +539,8 @@ def ramassagePdfParClasse(request,id_ramassage,total):
                                             ,('ALIGN',(0,0),(-1,-1),'CENTRE')
                                             ,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
                                             ,('SIZE',(0,0),(-1,-1),8)])
-        data = [["Matière","Établissement","Grade","Colleur", "heures"]]+[[""]*5 for i in range(min(22,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
-        ligneMat=ligneEtab=ligneGrade=ligneColleur=1
+        data = [["Matière","Établissement","Grade","Colleur"] + (["mois"] if parmois else []) + ["heures"]]+[[""]*(5+parmois) for i in range(min(22,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
+        ligneMat=ligneEtab=ligneGrade=ligneColleur=ligneMois=1
         for matiere, listeEtabs, nbEtabs in listeClasse:
             totalmatiere = 0
             data[ligneMat][0]=matiere.title()
@@ -488,49 +557,101 @@ def ramassagePdfParClasse(request,id_ramassage,total):
                     if nbColleurs>1:
                         LIST_STYLE.add('SPAN',(2,ligneGrade),(2,min(ligneGrade+nbColleurs-1,22)))
                     ligneGrade+=nbColleurs
-                    for colleur, heures in listeColleurs:
-                        totalmatiere += heures
-                        data[ligneColleur][3]=colleur
-                        data[ligneColleur][4]="{:.02f}h".format(heures/60).replace('.',',')
-                        ligneColleur+=1
-                        if ligneColleur==23 and nbKolleurs>22: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau
-                            t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel, largeurcel],rowHeights=min((1+nbKolleurs),23)*[hauteurcel])
-                            t.setStyle(LIST_STYLE)
-                            w,h=t.wrapOn(pdf,0,0)
-                            t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-hauteurcel/2)
-                            pdf.finDePage()
-                            # on redémarre sur une nouvelle page
-                            pdf.debutDePage(soustitre = classe.nom)
-                            LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
-                                            ,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))
-                                            ,('VALIGN',(0,0),(-1,-1),'MIDDLE')
-                                            ,('ALIGN',(0,0),(-1,-1),'CENTRE')
-                                            ,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
-                                            ,('SIZE',(0,0),(-1,-1),8)])
-                            nbKolleurs-=22
-                            data = [["Matière","Établissement","Grade","Colleur", "heures"]]+[[""]*5 for i in range(min(22,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
-                            ligneEtab-=22
-                            ligneGrade-=22
-                            ligneMat-=22
-                            ligneColleur=1
-                            if ligneMat>1:
-                                data[1][0]=matiere.title()
-                                if ligneMat>2:
-                                    LIST_STYLE.add('SPAN',(0,1),(0,min(ligneMat-1,22)))
-                                if ligneEtab>1:
-                                    data[1][1]='Inconnu' if not etablissement else etablissement.title()
-                                    if ligneEtab>2:
-                                        LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab-1,22)))
-                                    if ligneGrade>1:
-                                        data[1][2]=grade
-                                        if ligneGrade>2:
-                                            LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade-1,22)))
+                    if parmois:# si on ramassage pour chaque mois
+                        for colleur, listeMois, nbMois in listeColleurs:
+                            data[ligneColleur][3]=colleur
+                            if nbMois>1:
+                                LIST_STYLE.add('SPAN',(3,ligneColleur),(3,min(ligneColleur+nbMois-1,22)))
+                            ligneColleur+=nbMois
+                            for mois, heures in listeMois:
+                                totalmatiere += heures
+                                if mois<moisdebut:
+                                    LIST_STYLE.add('TEXTCOLOR',(4,ligneMois),(5,ligneMois),(1,0,0))
+                                data[ligneMois][4]=LISTE_MOIS[mois%12+1]
+                                data[ligneMois][5]="{:.02f}h".format(heures/60).replace('.',',')
+                                ligneMois+=1
+                                if ligneMois==23 and nbKolleurs>22: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau
+                                    t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel, largeurcel, largeurcel],rowHeights=min((1+nbKolleurs),23)*[hauteurcel])
+                                    t.setStyle(LIST_STYLE)
+                                    w,h=t.wrapOn(pdf,0,0)
+                                    t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-hauteurcel/2)
+                                    pdf.finDePage()
+                                    # on redémarre sur une nouvelle page
+                                    pdf.debutDePage(soustitre = classe.nom)
+                                    LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
+                                                    ,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))
+                                                    ,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+                                                    ,('ALIGN',(0,0),(-1,-1),'CENTRE')
+                                                    ,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
+                                                    ,('SIZE',(0,0),(-1,-1),8)])
+                                    nbKolleurs-=22
+                                    data = [["Matière","Établissement","Grade","Colleur", "heures"]]+[[""]*5 for i in range(min(22,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
+                                    ligneEtab-=22
+                                    ligneGrade-=22
+                                    ligneMat-=22
+                                    ligneColleur-=22
+                                    ligneMois = 1
+                                    if ligneMat>1:
+                                        data[1][0]=matiere.title()
+                                        if ligneMat>2:
+                                            LIST_STYLE.add('SPAN',(0,1),(0,min(ligneMat-1,22)))
+                                        if ligneEtab>1:
+                                            data[1][1]='Inconnu' if not etablissement else etablissement.title()
+                                            if ligneEtab>2:
+                                                LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab-1,22)))
+                                            if ligneGrade>1:
+                                                data[1][2]=grade
+                                                if ligneGrade>2:
+                                                    LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade-1,22)))
+                                                if ligneColleur>1:
+                                                    data[1][3]=colleur
+                                                    if ligneColleur>2:
+                                                        LIST_STYLE.add('SPAN',(3,1),(3,min(ligneColleur-1,22)))
+            # fin matière
+                    else:# si on ne ramasse pas pour chaque mois mais globalement sur la période de ramassage
+                        for colleur, heures in listeColleurs:
+                            totalmatiere += heures
+                            data[ligneColleur][3]=colleur
+                            data[ligneColleur][4]="{:.02f}h".format(heures/60).replace('.',',')
+                            ligneColleur+=1
+                            if ligneColleur==23 and nbKolleurs>22: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau
+                                t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel, largeurcel],rowHeights=min((1+nbKolleurs),23)*[hauteurcel])
+                                t.setStyle(LIST_STYLE)
+                                w,h=t.wrapOn(pdf,0,0)
+                                t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-hauteurcel/2)
+                                pdf.finDePage()
+                                # on redémarre sur une nouvelle page
+                                pdf.debutDePage(soustitre = classe.nom)
+                                LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
+                                                ,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))
+                                                ,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+                                                ,('ALIGN',(0,0),(-1,-1),'CENTRE')
+                                                ,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
+                                                ,('SIZE',(0,0),(-1,-1),8)])
+                                nbKolleurs-=22
+                                data = [["Matière","Établissement","Grade","Colleur", "heures"]]+[[""]*5 for i in range(min(22,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
+                                ligneEtab-=22
+                                ligneGrade-=22
+                                ligneMat-=22
+                                ligneColleur=1
+                                if ligneMat>1:
+                                    data[1][0]=matiere.title()
+                                    if ligneMat>2:
+                                        LIST_STYLE.add('SPAN',(0,1),(0,min(ligneMat-1,22)))
+                                    if ligneEtab>1:
+                                        data[1][1]='Inconnu' if not etablissement else etablissement.title()
+                                        if ligneEtab>2:
+                                            LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab-1,22)))
+                                        if ligneGrade>1:
+                                            data[1][2]=grade
+                                            if ligneGrade>2:
+                                                LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade-1,22)))
             # fin matière
             totalclasse += totalmatiere
             if total:
-                LIST_STYLE.add('SPAN',(0,ligneColleur),(3,ligneColleur))
+                LIST_STYLE.add('SPAN',(0,ligneColleur),(3+parmois,ligneColleur))
                 LIST_STYLE.add('BACKGROUND',(0,ligneColleur),(-1,ligneColleur),(.8,.8,.8))
-                data[ligneColleur] = ["total {}".format(matiere.title()),"","","","{:.02f}h".format(totalmatiere/60).replace('.',',')]
+                data[ligneColleur] = ["total {}".format(matiere.title())]+[""]*(3+parmois)+["{:.02f}h".format(totalmatiere/60).replace('.',',')]
                 ligneEtab+=1
                 ligneGrade+=1
                 ligneMat+=1
@@ -557,9 +678,9 @@ def ramassagePdfParClasse(request,id_ramassage,total):
                     ligneColleur=1
         # fin classe
         if total:
-            LIST_STYLE.add('SPAN',(0,ligneColleur),(3,ligneColleur))
+            LIST_STYLE.add('SPAN',(0,ligneColleur),(3+parmois,ligneColleur))
             LIST_STYLE.add('BACKGROUND',(0,ligneColleur),(-1,ligneColleur),(.7,.7,.7))
-            data[ligneColleur] = ["total {}".format(classe),"","","","{:.02f}h".format(totalclasse/60).replace('.',',')]
+            data[ligneColleur] = ["total {}".format(classe)]+[""]*(3+parmois)+["{:.02f}h".format(totalclasse/60).replace('.',',')]
             ligneEtab+=1
             ligneGrade+=1
             ligneMat+=1
