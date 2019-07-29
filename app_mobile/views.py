@@ -80,7 +80,7 @@ def connect(request):
                                                 'heure_debut': HEURE_DEBUT,
                                                 'heure_fin': HEURE_FIN,
                                                 'intervalle': INTERVALLE}))
-            if user.colleur is not None:
+            if user.colleur is not None and user.colleur.is_active:
                 login(request, user)
                 matieres = user.colleur.matieres.order_by('pk')
                 classes = user.colleur.classes.order_by('pk')
