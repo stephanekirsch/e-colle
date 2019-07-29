@@ -7,6 +7,7 @@ from django.utils import timezone
 import json
 from datetime import date, datetime, time, timedelta
 from django.db.models import Count
+from ecolle.settings import HEURE_DEBUT, HEURE_FIN, INTERVALLE
 
 
 def date_serial(obj):
@@ -24,7 +25,7 @@ def check(request):
     pour indiquer à l'app mobile que le serveur fonctionne"""
     if not Config.objects.get_config().app_mobile:
         raise Http404
-    return HttpResponse("2.1")
+    return HttpResponse("ok")
 
 
 def checkeleve(user):
@@ -74,7 +75,11 @@ def connect(request):
                                                 'classe_id': classe.pk,
                                                 'classe_name': classe.nom,
                                                 'classe_year': classe.annee,
-                                                'group': "" if user.eleve.groupe is None else user.eleve.groupe.nom}))
+                                                'group': "" if user.eleve.groupe is None else user.eleve.groupe.nom,
+                                                'version': "2.1",
+                                                'heure_debut': HEURE_DEBUT,
+                                                'heure_fin': HEURE_FIN,
+                                                'intervalle': INTERVALLE}))
             if user.colleur is not None:
                 login(request, user)
                 matieres = user.colleur.matieres.order_by('pk')
@@ -85,8 +90,11 @@ def connect(request):
                                                 'classes_name': "__".join([classe.nom for classe in classes]),
                                                 'subjects_id': "__".join([str(matiere.pk) for matiere in matieres]),
                                                 'subjects_name': "__".join([str(matiere) for matiere in matieres]),
-                                                'subjects_color': "__".join([matiere.couleur for matiere in matieres])
-                                                }))
+                                                'subjects_color': "__".join([matiere.couleur for matiere in matieres]),
+                                                'version': "2.1",
+                                                'heure_debut': HEURE_DEBUT,
+                                                'heure_fin': HEURE_FIN,
+                                                'intervalle': INTERVALLE}))
         return HttpResponse("invalide")
     else:
         return HttpResponseForbidden("access denied")

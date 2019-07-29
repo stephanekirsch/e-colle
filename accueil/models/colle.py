@@ -136,7 +136,7 @@ class ColleManager(models.Manager):
         with connection.cursor() as cursor:
             cursor.execute(requete,(eleve.classe.pk,eleve.pk,date.today()+timedelta(days=-27)))
             colles = dictfetchall(cursor)
-        return [{'time': int(datetime.combine(agenda['jour'], time(agenda['heure'] // 4, 15 * (agenda['heure'] % 4))).replace(tzinfo=timezone.utc).timestamp()),
+        return [{'time': int(datetime.combine(agenda['jour'], time(*divmod(agenda['heure'],60))).replace(tzinfo=timezone.utc).timestamp()),
                                      'room':agenda['salle'],
                                      'week':agenda['numero'],
                                      'subject':agenda['nom_matiere'],
