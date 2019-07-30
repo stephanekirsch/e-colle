@@ -20,6 +20,7 @@ class Command(BaseCommand):
                         # on vide les tables en question et on redémarre les ids à 1. 
                         cursor.execute("TRUNCATE accueil_colle,\
                             accueil_creneau,\
+                            accueil_decompte,\
                             accueil_destinataire,\
                             accueil_jourferie,\
                             accueil_message,\
@@ -35,6 +36,7 @@ class Command(BaseCommand):
                         cursor.execute("SET FOREIGN_KEY_CHECKS = 0;\
                             TRUNCATE TABLE accueil_colle;\
                             TRUNCATE TABLE accueil_creneau;\
+                            TRUNCATE TABLE accueil_decompte;\
                             TRUNCATE TABLE accueil_destinataire;\
                             TRUNCATE TABLE accueil_jourferie;\
                             TRUNCATE TABLE accueil_message;\
@@ -49,9 +51,9 @@ class Command(BaseCommand):
                         with transaction.atomic():
                             cursor.execute("DELETE FROM accueil_colle;")
                             cursor.execute("DELETE FROM accueil_creneau;")
+                            cursor.execute("DELETE FROM accueil_decompte;")
                             cursor.execute("DELETE FROM accueil_destinataire;")
                             cursor.execute("DELETE FROM accueil_jourferie;")
-                            cursor.execute("DELETE FROM accueil_destinataire;")
                             cursor.execute("DELETE FROM accueil_jourferie;")
                             cursor.execute("DELETE FROM accueil_message;")
                             cursor.execute("DELETE FROM accueil_note;")

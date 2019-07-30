@@ -47,7 +47,8 @@ a. abandonner\n""")
 							repertoires = [os.path.join(MEDIA_ROOT, x) for x in ('programme','image','photos')]
 							for repertoire in repertoires:
 								for fichiermedia in os.listdir(repertoire):
-									os.remove(os.path.join(repertoire,fichiermedia))
+									if fichiermedia  != ".gitignore":
+										os.remove(os.path.join(repertoire,fichiermedia))
 						if choix in "23":
 							self.stdout.write("Début restauration des fichiers media")
 							try:
