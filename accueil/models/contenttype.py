@@ -7,13 +7,13 @@ def fileformat(taille):
     if taille < 1000:
         return "{} bytes".format(taille)
     if taille < 1000000:
-        return "{:.03f} kB".format(taille/1000).rstrip("0").rstrip(".")
+        return "{:.03f}".format(taille/1000).rstrip("0").rstrip(".") + " kB"
     if taille < 10**9:
-        return "{:.03f} MB".format(taille/1000000).rstrip("0").rstrip(".")
+        return "{:.03f}".format(taille/1000000).rstrip("0").rstrip(".") + " MB"
     if taille < 10**12:
-        return "{:.03f} GB".format(taille/1000000000).rstrip("0").rstrip(".")
+        return "{:.03f}".format(taille/1000000000).rstrip("0").rstrip(".") + " GB"
     if taille < 10**15:
-        return "{:.03f} TB".format(taille/1000000000000).rstrip("0").rstrip(".")
+        return "{:.03f}".format(taille/1000000000000).rstrip("0").rstrip(".") + " TB"
 
 class ContentTypeRestrictedFileField(FileField):
     """
