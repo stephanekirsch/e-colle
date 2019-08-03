@@ -11,11 +11,15 @@ from ecolle.settings import MEDIA_ROOT, IMAGEMAGICK, BDD, \
                             HEURE_DEBUT, HEURE_FIN, INTERVALLE
 from PIL import Image
 from django.db.models import Sum, F
+from random import choice
 
 from .eleve import Eleve
 from .classe import Classe
 
 semaine = ["lundi", "mardi","mercredi","jeudi","vendredi","samedi","dimanche"]
+
+def texte_aleatoire(taille):
+    return "".join(choice("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789") for i in range(taille))
 
 def dictfetchall(cursor):
     """Renvoie les lignes du curseur sous forme de dictionnaire"""
@@ -85,7 +89,7 @@ class Creneau(models.Model):
 
 class Programme(models.Model):
     def update_name(instance, filename):
-        return "programme/prog"+str(instance.semaine.pk)+"-"+str(instance.classe.pk)+"-"+str(instance.matiere.pk)+".pdf"
+        return "programme/prog" + texte_aleatoire(20) + ".pdf"
     semaine = models.ForeignKey("Semaine",related_name="semaineprogramme",on_delete=models.PROTECT)
     classe = models.ForeignKey("Classe",related_name="classeprogramme",on_delete=models.PROTECT)
     matiere = models.ForeignKey("Matiere",related_name="matiereprogramme",on_delete=models.PROTECT)
@@ -131,15 +135,6 @@ class Destinataire(models.Model):
     lu= models.BooleanField(default=False)
     reponses = models.PositiveSmallIntegerField(default=0)
 
-def update_name(programme):
-    nomimage=programme.fichier.name.replace('programme','image').replace('pdf','jpg')
-    nouveaufichier="programme/prog"+str(programme.semaine.pk)+"-"+str(programme.classe.pk)+"-"+str(programme.matiere.pk)+".pdf"
-    nouvelleimage=nouveaufichier.replace('programme','image').replace('pdf','jpg')
-    os.rename(os.path.join(MEDIA_ROOT,programme.fichier.name),os.path.join(MEDIA_ROOT,nouveaufichier))
-    os.rename(os.path.join(MEDIA_ROOT,nomimage),os.path.join(MEDIA_ROOT,nouvelleimage))
-    programme.fichier.name=nouveaufichier
-    programme.save()
-
 @receiver(post_delete, sender=Programme)
 def programme_post_delete_function(sender, instance, **kwargs):
     if instance.fichier and instance.fichier.name is not None:
@@ -155,26 +150,14 @@ def programme_post_delete_function(sender, instance, **kwargs):
 def programme_post_save_function(sender, instance, **kwargs):
     try:
         nomfichier=instance.fichier.name # on récupère le nom du fichier joint
-        if IMAGEMAGICK:
+        if IMAGEMAGICK and nomfichier: # si le fichier existe et qu'on fait des mini images
             nomimage=nomfichier.replace('programme','image').replace('pdf','jpg') # on récupère le nom de l'éventuelle image correspondante, lève une exception s'il n'y a pas de pdf car replace n'est pas une méthode de NoneType
             if not os.path.isfile(os.path.join(MEDIA_ROOT,nomimage)): # si l'image n'existe pas
                 # on convertit la première page du pdf en jpg (échoue avec une exception s'il n'y pas pas de pdf ou si imagemagick n'est pas installé)
                 os.system("convert -density 200 "+os.path.join(MEDIA_ROOT,nomfichier)+"[0] "+os.path.join(MEDIA_ROOT,nomimage))  
                 os.system("convert -resize 50% "+os.path.join(MEDIA_ROOT,nomimage)+" "+os.path.join(MEDIA_ROOT,nomimage))
-        if nomfichier != os.path.join("programme","prog")+str(instance.semaine.pk)+"-"+str(instance.classe.pk)+"-"+str(instance.matiere.pk)+".pdf":
-            # si le nom du fichier ne correspond pas à ses caractéristiques (semaine/classe/matière), ce qui signifie qu'un de ces 3 champs a été modifié, on met à jour le nom du fichier.
-            update_name(instance)
-    except Exception: # Dans le cas ou plus aucun fichier n'est lié au programme, on efface l'éventuel fichier présent avant la modification
-        try:
-            nomfichier = os.path.join(MEDIA_ROOT,"programme","prog")+str(instance.semaine.pk)+"-"+str(instance.classe.pk)+"-"+str(instance.matiere.pk)+".pdf"
-            if os.path.isfile(nomfichier): # s'il y a bien un fichier, on l'efface
-                os.remove(nomfichier)
-            if IMAGEMAGICK:
-                nomimage=nomfichier.replace('programme','image').replace('pdf','jpg')
-                if os.path.isfile(nomimage): # s'il y a bien un fichier, on l'efface
-                    os.remove(nomimage)
-        except Exception as e:
-            pass
+    except Exception: # Dans le cas ou plus aucun fichier n'est lié au programme, exception silencieuse
+        pass
     
 def update_photo(eleve):
     try:
