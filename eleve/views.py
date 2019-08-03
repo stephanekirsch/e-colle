@@ -58,6 +58,7 @@ def note(request):
 	else:
 		matiere=None
 	eleve = request.user.eleve
+	print(Note.objects.noteEleve(eleve,matiere))
 	return render(request,'eleve/note.html',{'form':form,'matiere':matiere,'notes':Note.objects.noteEleve(eleve,matiere)})
 
 @user_passes_test(is_eleve, login_url='accueil')
@@ -68,10 +69,11 @@ def programme(request):
 	if form.is_valid():
 		matiere=form.cleaned_data['matiere']
 	eleve = request.user.eleve
-	programmes = Programme.objects.filter(classe=eleve.classe)
+	programmes = Programme.objects.filter(classe=eleve.classe).prefetch_related('semaine')
 	if matiere:
 		programmes=programmes.filter(matiere=matiere)
-	programmes=programmes.values('matiere__couleur','matiere__nom','semaine__numero','titre','fichier','detail').order_by('-semaine__lundi','matiere__nom')
+	programmes = programmes.annotate(semainemax=Max('semaine')).select_related('matiere').order_by('-semainemax','matiere__nom')
+	#programmes=programmes.values('matiere__couleur','matiere__nom','semaine__numero','titre','fichier','detail').order_by('-semaine__lundi','matiere__nom')
 	return render(request,'eleve/programme.html',{'form':form,'matiere':matiere,'programmes':programmes,'media_url':MEDIA_URL,'jpeg':IMAGEMAGICK})
 
 @user_passes_test(is_eleve, login_url='accueil')

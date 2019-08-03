@@ -19,6 +19,22 @@ class ProgrammeForm(forms.ModelForm):
     class Meta:
         model = Programme
         fields=['semaine','titre','detail','fichier']
+        widgets = {'semaine':forms.CheckboxSelectMultiple}
+
+
+    def clean_semaine(self):# on vérifie que les semaines choisies ne chevauchent pas de semaines d'un programme existant.
+        semaines = self.cleaned_data['semaine']
+        query = Programme.objects.filter(semaine__in=semaines)
+        if self.instance.pk: # si c'est une modification:
+            query = query.exclude(pk=self.instance.pk)
+        if query.exists():
+            raise ValidationError(
+            "Il existe déjà un programme de colle sur une des semaines sélectionnées",
+            code='uniqueness violation',
+            params={'value': semaines},
+            )
+        return semaines
+
 
     def clean(self):
         super().clean()

@@ -2,11 +2,5 @@
 {% load static %}
 {% block body %}
 <table class="accueil"><tr><td>Modifier un programme de colle de {{programme.classe}} en {{programme.matiere.nom|title}}</td></tr></table>
-<form method="post" enctype="multipart/form-data">
-	<table class="tableausimple">
-		{% csrf_token %}
-		{{ form.as_table }}
-		<tr><td colspan="2"><input type="submit"/></td></tr>
-	</table>
-</form>
+{% include "colleur/programmeform.html" %}
 {% endblock %}

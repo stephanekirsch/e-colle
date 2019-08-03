@@ -16,7 +16,7 @@
 	{% if not matiere %}
 	<td>Matière</td>
 	{% endif %}
-	<td>Semaine</td>
+	<td>Semaine(s)</td>
 	<td>Titre</td>
 	<td>Fichier</td>
 	<td>Programme</td>
@@ -24,9 +24,9 @@
 {% for programme in programmes %}
 	<tr>
 		{% if not matiere %}
-		<td style="background-color:{{programme.matiere__couleur}}">{{programme.matiere__nom|title}}</td>
+		<td style="background-color:{{programme.matiere.couleur}}">{{programme.matiere.nom|title}}</td>
 		{% endif %}
-		<td>n°{{programme.semaine__numero}}</td>
+		<td>n°{% for sem in programme.semaine.all %}{{sem.numero}}{% if not forloop.last %}-{% endif %}{% endfor %}</td>
 		<td>{{programme.titre|title}}</td>
 		{% if programme.fichier %}
 		<td style="height:200px;width:150px">{% if jpeg %}<a class="image" href="{{media_url}}{{programme.fichier}}"><img src="{{media_url}}{{programme.fichier|image}}" alt="mini jpeg programme"/></a>{% else %}<a href="{{media_url}}{{programme.fichier}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a>{% endif %}</td>

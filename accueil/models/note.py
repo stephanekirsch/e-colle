@@ -30,8 +30,10 @@ class NoteManager(models.Manager):
                    ON u.eleve_id = e.id\
                    INNER JOIN accueil_semaine s\
                    ON n.semaine_id=s.id\
+                   LEFT OUTER JOIN accueil_programme_semaine ps\
+                   ON ps.semaine_id = s.id\
                    LEFT OUTER JOIN accueil_programme p\
-                   ON p.semaine_id = s.id AND p.classe_id= %s AND p.matiere_id = %s\
+                   ON p.classe_id= %s AND p.matiere_id = %s AND ps.programme_id = p.id\
                    WHERE n.classe_id = %s AND n.colleur_id= %s AND n.matiere_id = %s\
                    ORDER BY s.numero DESC, n.date_colle DESC, n.heure DESC"
         with connection.cursor() as cursor:
@@ -113,9 +115,11 @@ class NoteManager(models.Manager):
                    LEFT JOIN accueil_user u\
                    ON u.colleur_id=c.id\
                    INNER JOIN accueil_semaine s\
-                   ON n.semaine_id = s.id\
+                   ON n.semaine_id=s.id\
+                   LEFT OUTER JOIN accueil_programme_semaine ps\
+                   ON ps.semaine_id = s.id\
                    LEFT OUTER JOIN accueil_programme p\
-                   ON p.semaine_id = s.id AND p.classe_id = n.classe_id AND p.matiere_id=m.id\
+                   ON p.classe_id= n.classe_id AND p.matiere_id = m.id AND ps.programme_id = p.id\
                    WHERE n.eleve_id = %s "
         if matiere:
             requete+="AND m.id = %s "

@@ -90,15 +90,12 @@ class Creneau(models.Model):
 class Programme(models.Model):
     def update_name(instance, filename):
         return "programme/prog" + texte_aleatoire(20) + ".pdf"
-    semaine = models.ForeignKey("Semaine",related_name="semaineprogramme",on_delete=models.PROTECT)
+    semaine = models.ManyToManyField("Semaine",verbose_name="Semaine(s)",blank=False)
     classe = models.ForeignKey("Classe",related_name="classeprogramme",on_delete=models.PROTECT)
     matiere = models.ForeignKey("Matiere",related_name="matiereprogramme",on_delete=models.PROTECT)
     titre = models.CharField(max_length = 50)
     detail = models.TextField(verbose_name="Détails",null=True,blank=True)
     fichier = models.FileField(verbose_name="Fichier(pdf)",upload_to=update_name,null=True,blank=True)
-
-    class Meta:
-        unique_together=('semaine','classe','matiere') # un programme maximum par semaine/classe/matière
 
     def __str__(self):
         return self.titre.title()
