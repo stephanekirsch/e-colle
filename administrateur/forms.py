@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Classe, Matiere, Etablissement, Semaine, Colleur, Eleve, JourFerie, User, Prof, Config,  Note,  Colle
+from accueil.models import Classe, Matiere, Etablissement, Semaine, Colleur, Eleve, JourFerie, User, Prof, Config,  Note,  Colle, RestrictedImageField
 from django.forms.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
@@ -319,7 +319,7 @@ class EleveForm(forms.Form):
         self.fields['ddn'] = forms.DateField(label="Date de naissance (pour ECTS, facultatif)", required=False,input_formats=['%d/%m/%Y','%j/%m/%Y','%d/%n/%Y','%j/%n/%Y'],widget=forms.TextInput(attrs={'placeholder': 'jj/mm/aaaa'}))
         self.fields['ldn'] = forms.CharField(label="lieu de naissance (pour ECTS, facultatif)",required=False,max_length=50)
         self.fields['ine'] = forms.CharField(label="N° étudiant INE (pour ECTS, facultatif)",required=False,max_length=11)
-        self.fields['photo'] = forms.ImageField(label="photo(jpg/png, 300x400)",required=False)
+        self.fields['photo'] = RestrictedImageField(label="photo(jpg/png, 300x400)",required=False,max_upload_size=5000000)
         self.fields['classe'] = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
         self.fields['lv1'] = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=1).order_by('nom'),empty_label='----',required=False)
         self.fields['lv2'] = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=2).order_by('nom'),empty_label='----',required=False)
@@ -375,7 +375,7 @@ class EleveFormMdp(forms.ModelForm):
     ddn = forms.DateField(label="Date de naissance (pour ECTS, facultatif)", required=False,input_formats=['%d/%m/%Y','%j/%m/%Y','%d/%n/%Y','%j/%n/%Y'],widget=forms.TextInput(attrs={'placeholder': 'jj/mm/aaaa'}))
     ldn = forms.CharField(label="lieu de naissance (pour ECTS, facultatif)",required=False,max_length=50)
     ine = forms.CharField(label="N° étudiant INE (pour ECTS, facultatif)",required=False,max_length=11)
-    photo = forms.ImageField(label="photo(jpg/png, 300x400)",required=False)
+    photo = RestrictedImageField(label="photo(jpg/png, 300x400)",required=False,max_upload_size=5000000)
     classe = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
     lv1 = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=1).order_by('nom'),empty_label='----',required=False)
     lv2 = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=2).order_by('nom'),empty_label='----',required=False)

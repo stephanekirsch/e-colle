@@ -11,4 +11,5 @@ from .note import Note
 from .colle import Colle
 from .eleve import Eleve
 from .ramassage import Ramassage, mois, Decompte
+from .contenttype import RestrictedImageField
 

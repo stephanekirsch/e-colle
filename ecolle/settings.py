@@ -28,7 +28,7 @@ IP_FILTRE_ADMIN = True
 IP_FILTRE_ADRESSES = ('^127\.0\.0\.1$')
 
 # True pour faire des jpeg miniatures des pdf de colle. False sinon.
-IMAGEMAGICK = False
+IMAGEMAGICK = True
 
 # les couples nom/email du (des) administrateur(s) du site
 ADMINS = (
@@ -78,6 +78,8 @@ INTERVALLE = 30
 # =============================================================================
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
+
+FILE_UPLOAD_MAX_MEMORY_SIZE = 6000000
 
 CHEMINVERSECOLLE = path.dirname(path.dirname(__file__))
 

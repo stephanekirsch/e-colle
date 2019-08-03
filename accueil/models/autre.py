@@ -8,6 +8,7 @@ from ecolle.settings import MEDIA_ROOT, IMAGEMAGICK, BDD, \
 from PIL import Image
 from django.db.models import Sum, F
 from random import choice
+from .contenttype import ContentTypeRestrictedFileField
 
 from .eleve import Eleve
 
@@ -76,7 +77,8 @@ class Programme(models.Model):
     matiere = models.ForeignKey("Matiere",related_name="matiereprogramme",on_delete=models.PROTECT)
     titre = models.CharField(max_length = 50)
     detail = models.TextField(verbose_name="Détails",null=True,blank=True)
-    fichier = models.FileField(verbose_name="Fichier(pdf)",upload_to=update_name,null=True,blank=True)
+    fichier = ContentTypeRestrictedFileField(verbose_name="Fichier(pdf)",upload_to=update_name,null=True,blank=True,
+        content_types=["application/pdf"], max_upload_size=5000000)
 
     def __str__(self):
         return self.titre.title()
