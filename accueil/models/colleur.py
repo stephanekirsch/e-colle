@@ -2,9 +2,29 @@ from django.db import models
 from django.db import transaction,connection
 from django.db.models import Q
 
-from .autre import group_concat,dictfetchall
 from .config import Config
 
+
+def dictfetchall(cursor):
+    """Renvoie les lignes du curseur sous forme de dictionnaire"""
+    desc = cursor.description
+    return [
+        dict(zip([col[0] for col in desc], row))
+        for row in cursor.fetchall()
+    ]
+
+def group_concat(arg):
+    """Renvoie une chaîne de caractères correspondant à la syntaxe SQL 
+    qui permet d'utiliser une fonction d'agrégation qui concatène des chaînes"""
+    if BDD == 'postgresql' or BDD == 'postgresql_psycopg2':
+        return "STRING_AGG(DISTINCT {0:}, ',' ORDER BY {0:})".format(arg)
+    elif BDD == 'mysql':
+        return "GROUP_CONCAT(DISTINCT {0:} ORDER BY {0:})".format(arg)
+    elif BDD == 'sqlite3':
+        return "GROUP_CONCAT(DISTINCT {})".format(arg)
+    else:
+        return "" # à compléter par ce qu'il faut dans le cas ou vous utilisez 
+                  # un SGBD qui n'est ni mysql, ni postgresql, ni sqlite
 
 
 class ColleurManager(models.Manager):
