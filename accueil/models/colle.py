@@ -3,7 +3,7 @@ from .semaine import Semaine
 from .autre import Creneau, date_plus_jour, dictfetchall
 from .groupe import Groupe
 from django.db.models import Count
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, time, timezone
 
 class ColleManager(models.Manager):
 
@@ -71,7 +71,7 @@ class ColleManager(models.Manager):
                    LEFT OUTER JOIN accueil_programme_semaine ps\
                    ON ps.semaine_id = s.id\
                    LEFT OUTER JOIN accueil_programme p\
-                   ON (ps.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = cl.id)\
+                   ON (ps.programme_id = p.id AND p.matiere_id = m.id AND p.classe_id = cl.id)\
                    LEFT OUTER JOIN accueil_note n\
                    ON n.matiere_id = m.id AND n.colleur_id = c.id AND n.semaine_id=s.id AND (n.eleve_id = e.id OR n.eleve_id = e2.id)\
                    WHERE c.id=%s AND s.lundi >= %s\
@@ -108,7 +108,7 @@ class ColleManager(models.Manager):
                    LEFT OUTER JOIN accueil_programme_semaine ps\
                    ON ps.semaine_id = s.id\
                    LEFT OUTER JOIN accueil_programme p\
-                   ON (ps.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = %s)\
+                   ON (ps.programme_id = p.id AND p.matiere_id = m.id AND p.classe_id = %s)\
                    WHERE e.id=%s AND s.lundi >= %s\
                    ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'))
         with connection.cursor() as cursor:
@@ -136,7 +136,7 @@ class ColleManager(models.Manager):
                    LEFT OUTER JOIN accueil_programme_semaine ps\
                    ON ps.semaine_id = s.id\
                    LEFT OUTER JOIN accueil_programme p\
-                   ON (ps.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = %s)\
+                   ON (ps.programme_id = p.id AND p.matiere_id = m.id AND p.classe_id = %s)\
                    WHERE e.id=%s AND s.lundi >= %s\
                    ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'))
         with connection.cursor() as cursor:
