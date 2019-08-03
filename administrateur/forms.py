@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Classe, Matiere, Etablissement, Semaine, Colleur, Eleve, JourFerie, User, Prof, Config
+from accueil.models import Classe, Matiere, Etablissement, Semaine, Colleur, Eleve, JourFerie, User, Prof, Config,  Note,  Colle
 from django.forms.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password

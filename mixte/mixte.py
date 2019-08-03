@@ -1,5 +1,5 @@
 #-*- coding: utf-8 -*-
-from accueil.models import Groupe, JourFerie, Colle, Semaine, Eleve, Colleur, Creneau, Classe
+from accueil.models import Groupe, JourFerie, Colle, Semaine, Eleve, Colleur, Creneau
 from datetime import timedelta
 from django.db.models import Count, F
 from django.http import Http404, HttpResponse

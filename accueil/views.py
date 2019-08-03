@@ -3,7 +3,7 @@ from django.http import HttpResponseForbidden, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from accueil.models import Classe, Matiere, Colleur, Prof, Message, Destinataire, Eleve
+from accueil.models import Classe, Matiere, Colleur, Message, Destinataire, Eleve
 from accueil.forms import UserForm, UserProfprincipalForm, SelectMessageForm, EcrireForm, ReponseForm
 from django.contrib import messages as messagees
 from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES

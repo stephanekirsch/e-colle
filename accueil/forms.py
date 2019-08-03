@@ -17,7 +17,6 @@ class ColleurForm(forms.Form):
 	def __init__(self,*args,**kwargs):
 		self.pk = kwargs.pop('pk')
 		super().__init__(*args,**kwargs)
-		LISTE_GRADE=((0,"autre"),(1,"certifié"),(2,"bi-admissible"),(3,"agrégé"),(4,"chaire supérieure"))
 		self.fields['last_name'] = forms.CharField(label="Nom",max_length=30)
 		self.fields['first_name'] = forms.CharField(label="Prénom",max_length=30)
 		self.fields['password'] = forms.CharField(label="Mot de passe",max_length=30,required=False)

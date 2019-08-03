@@ -6,8 +6,8 @@ from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, 
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
-from django.db.models import Count, Avg, Min, Max, StdDev, Sum
-from datetime import date, timedelta
+from django.db.models import Avg, Min, Max, StdDev, Sum
+from datetime import date
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.forms.formsets import formset_factory
 from pdf.pdf import Pdf, creditsects, attestationects
@@ -419,9 +419,9 @@ def colleNote(request,id_colle):
 	request.session['matiere']=colle.matiere.pk # on met à jour la matière courante
 	eleves = Eleve.objects.filter(groupe = colle.groupe)
 	if colle.matiere.lv == 1:
-		eleves = eleves.filter(lv1 == matiere)
+		eleves = eleves.filter(lv1 = colle.matiere)
 	elif colle.matiere.lv == 2:
-		eleves = eleves.filter(lv2 == matiere)
+		eleves = eleves.filter(lv2 = colle.matiere)
 	eleves_str = "-".join([str(x.pk) for x in eleves] + ["0"]*(3-eleves.count()))
 	note = Note(semaine = colle.semaine, jour = colle.creneau.jour, heure = colle.creneau.heure)
 	return noteEleves(request,colle.creneau.classe.pk,eleves_str,note)

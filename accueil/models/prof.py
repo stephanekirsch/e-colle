@@ -1,6 +1,6 @@
 from django.db import models,connection
 from .classe import Classe
-from .autre import group_concat,dictfetchall
+from .autre import dictfetchall
 
 
 class ProfManager(models.Manager):

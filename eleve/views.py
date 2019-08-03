@@ -3,10 +3,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from eleve.forms import EleveConnexionForm, MatiereForm
 from colleur.forms import SemaineForm
-from accueil.models import Classe, Note, Programme, Colle, Semaine, Groupe
+from accueil.models import Note, Programme, Colle, Semaine, Groupe
 from django.contrib.auth.decorators import user_passes_test
-from django.db.models import Min, Max, Avg, StdDev, Count
-from datetime import date, timedelta
+from django.db.models import Max
+from datetime import date
 from pdf.pdf import Pdf
 from ecolle.settings import MEDIA_URL, IMAGEMAGICK
 from django.http import Http404
@@ -65,7 +65,7 @@ def note(request):
 def programme(request):
 	"""Renvoie la vue de la page de consultation des programmes"""
 	form=MatiereForm(request.user.eleve.classe,request.POST or None)
-	matiere=planning=None
+	matiere=None
 	if form.is_valid():
 		matiere=form.cleaned_data['matiere']
 	eleve = request.user.eleve

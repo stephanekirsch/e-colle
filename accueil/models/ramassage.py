@@ -1,15 +1,12 @@
 from django.db import models, transaction, connection
-from django.shortcuts import get_object_or_404
 from django.http import Http404
 from datetime import date, timedelta
 from django.db.models.functions import Lower
-from django.db.models import Count, Sum, Q, Min, Max
+from django.db.models import Count, Sum, Min, Max
 from .note import Note
 from .autre import dictfetchall
 from .classe import Classe
 from .semaine import Semaine
-from .colleur import Colleur
-from .matiere import Matiere
 from ecolle.settings import BDD
 
 def totalMois(arg):

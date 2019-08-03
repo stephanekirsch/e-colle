@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import template
-from datetime import date, timedelta
+from datetime import timedelta
 from accueil.models import Classe, Config
 
 register = template.Library()

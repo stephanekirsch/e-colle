@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Colleur, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS, User
+from accueil.models import Colleur, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS
 from django.db.models import Q, Count
 from datetime import date, timedelta
 from django.forms.widgets import SelectDateWidget

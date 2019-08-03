@@ -1,4 +1,5 @@
 from django.db import models
+from .eleve import Eleve
 
 class Groupe(models.Model):
     nom = models.PositiveSmallIntegerField(

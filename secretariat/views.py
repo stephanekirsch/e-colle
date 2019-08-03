@@ -292,9 +292,9 @@ def ramassageCSV(request,id_ramassage,parMois = 0):
             for grade, listeColleurs, nbColleurs in listeGrades:
                 if parMois:
                     for colleur_nom, colleur_prenom, listeMois, nbMois in listeColleurs:
-                        for mois, decomptes in listeMois:
+                        for moi, decomptes in listeMois:
                             writer.writerow([matiere.title(), etablissement.title(),
-                                grade, "{} {}".format(colleur_nom, colleur_prenom), LISTE_MOIS[mois%12+1]] + ["{:.02f}".format(decomptes[i]/60).replace('.',',') for i in range(len(effectifs))])
+                                grade, "{} {}".format(colleur_nom, colleur_prenom), LISTE_MOIS[moi%12+1]] + ["{:.02f}".format(decomptes[i]/60).replace('.',',') for i in range(len(effectifs))])
                 else:               
                     for colleur_nom, colleur_prenom, decomptes in listeColleurs:
                         writer.writerow([matiere.title(), etablissement.title(),
@@ -355,10 +355,10 @@ def ramassagePdf(request, id_ramassage, parMois = 0):
                         if nbMois>1:
                             LIST_STYLE.add('SPAN',(3,ligneColleur),(3,min(ligneColleur+nbMois-1,23)))
                         ligneColleur+=nbMois
-                        for mois, decomptes in listeMois:
-                            if mois < moisdebut:
+                        for moi, decomptes in listeMois:
+                            if moi < moisdebut:
                                 LIST_STYLE.add('TEXTCOLOR',(4,ligneMois),(4+len(effectifs),ligneMois),(1,0,0))
-                            data[ligneMois][4]=LISTE_MOIS_COURT[mois%12]
+                            data[ligneMois][4]=LISTE_MOIS_COURT[moi%12]
                             for i in range(len(effectifs)):
                                 data[ligneMois][i+5]="{:.02f}h".format(decomptes[i]/60).replace('.',',')
                             ligneMois+=1
@@ -563,11 +563,11 @@ def ramassagePdfParClasse(request,id_ramassage,totalParmois):
                             if nbMois>1:
                                 LIST_STYLE.add('SPAN',(3,ligneColleur),(3,min(ligneColleur+nbMois-1,22)))
                             ligneColleur+=nbMois
-                            for mois, heures in listeMois:
+                            for moi,  heures in listeMois:
                                 totalmatiere += heures
-                                if mois<moisdebut:
+                                if moi<moisdebut:
                                     LIST_STYLE.add('TEXTCOLOR',(4,ligneMois),(5,ligneMois),(1,0,0))
-                                data[ligneMois][4]=LISTE_MOIS[mois%12+1]
+                                data[ligneMois][4]=LISTE_MOIS[moi%12+1]
                                 data[ligneMois][5]="{:.02f}h".format(heures/60).replace('.',',')
                                 ligneMois+=1
                                 if ligneMois==23 and nbKolleurs>22: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau

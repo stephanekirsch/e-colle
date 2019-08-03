@@ -1,6 +1,6 @@
 from django.db import models
 import locale
-from datetime import date, timedelta, time
+from datetime import date, timedelta
 
 class Semaine(models.Model):
     locale.setlocale(locale.LC_ALL,'')

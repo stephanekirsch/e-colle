@@ -466,7 +466,7 @@ def adddraftgrades(request):
                 if draft_id != 0:
                     try:
                         note = Note.objects.get(pk=draft_id)
-                    except DoesNotExist:
+                    except Exception:
                         note = Note()
                 else:
                     note = Note()
@@ -522,8 +522,6 @@ def addmessage(request):
         return HttpResponseForbidden("not authenticated")
     if request.method != 'POST' or 'title' not in request.POST or 'body' not in request.POST or 'recipients' not in request.POST:
         raise Http404
-    title = request.POST['title']
-    body = request.POST['body']
     destinataires = set()
     try:
         destinataireList = [[int(x) for x in y.split("-")] for y in request.POST['recipients'].split("_")]
@@ -533,7 +531,7 @@ def addmessage(request):
         if genre == 1: # élève
             try:
                 destinataires.add(User.objects.get(eleve__pk = pk))
-            except Exception as e:
+            except Exception:
                 pass
         elif genre == 2: # colleur
             try:

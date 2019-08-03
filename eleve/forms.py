@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Eleve, Matiere, User
+from accueil.models import Matiere
 
 class EleveConnexionForm(forms.Form):
 	username = forms.CharField(label="Identifiant")

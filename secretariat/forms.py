@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django import forms
 from django.db.models import Max
-from accueil.models import Matiere, Classe, Semaine, Ramassage, Note
+from accueil.models import Matiere, Classe, Semaine, Ramassage
 from datetime import date, timedelta
 from django.core.exceptions import ValidationError
 

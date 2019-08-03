@@ -15,7 +15,6 @@ from reportlab.platypus import Table, TableStyle, Image, SimpleDocTemplate, Page
 from reportlab.lib.styles import ParagraphStyle, TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import A4
 import csv
-from pdf.pdf import easyPdf
 from os.path import join
 from _io import TextIOWrapper
 from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES, MEDIA_ROOT
@@ -536,7 +535,7 @@ def rgpd_eleve_pdf(request, eleve_id):
     nomfichier="RGPD_eleve-{}.pdf".format(eleve.pk)
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
-    marge_x,  marge_y = 30, 40
+    marge_y = 40
     pdfformat = A4
     titre = "Données personnelles de l'étudiant {}".format(eleve)
 
@@ -680,7 +679,7 @@ def rgpd_colleur_pdf(request, colleur_id):
     nomfichier="RGPD_colleur-{}.pdf".format(colleur.pk)
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
-    marge_x,  marge_y = 30, 40
+    marge_y = 40
     pdfformat = A4
     titre = "Données personnelles du colleur {}".format(colleur)
 

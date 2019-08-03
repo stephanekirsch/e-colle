@@ -1,7 +1,6 @@
 from django.db import models, connection
 from .semaine import Semaine
 from .autre import Creneau, date_plus_jour, dictfetchall
-from .groupe import Groupe
 from django.db.models import Count
 from datetime import date, timedelta, datetime, time, timezone
 
