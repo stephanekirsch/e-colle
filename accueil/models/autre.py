@@ -158,40 +158,28 @@ def programme_post_save_function(sender, instance, **kwargs):
                 os.system("convert -resize 50% "+os.path.join(MEDIA_ROOT,nomimage)+" "+os.path.join(MEDIA_ROOT,nomimage))
     except Exception: # Dans le cas ou plus aucun fichier n'est lié au programme, exception silencieuse
         pass
-    
-def update_photo(eleve):
-    try:
-        nomphoto = 'photos/photo_{}.{}'.format(eleve.pk,eleve.photo.name.split(".")[-1].lower())
-        os.rename(os.path.join(MEDIA_ROOT,eleve.photo.name),os.path.join(MEDIA_ROOT,nomphoto))
-        if nomphoto != eleve.photo.name:
-            eleve.photo.name=nomphoto
-            eleve.save()
-    except Exception:
-        eleve.photo=None
-        eleve.save()
 
 @receiver(post_save, sender=Eleve)
 def eleve_post_save_function(sender, instance, **kwargs):
-    if instance.photo:
-        update_photo(instance)
-    if instance.photo: # si l'exécution de update_photo a effacé la photo
+    if instance.photo: # si il y a une photo
         image=Image.open(os.path.join(MEDIA_ROOT,instance.photo.name))
         taille=image.size
-        try:
-            ratio=taille[0]/taille[1]
-        except Exception:
-            ratio=.75
-        if ratio>.75:
-            image=image.resize((int(ratio*400),400))
-            abscisse=(image.size[0]-300)//2
-            image=image.crop((abscisse,0,abscisse+300,400))
-        elif ratio<.75:
-            image=image.resize((300,int(400/ratio)))
-            ordonnee=(image.size[1]-400)//2
-            image=image.crop((0,ordonnee,300,ordonnee+400))
-        else:
-            image=image.resize((300,400))
-        image.save(os.path.join(MEDIA_ROOT,instance.photo.name))
+        if taille != (300,400):# si la taille n'est pas déjà la bonne:
+            try:
+                ratio=taille[0]/taille[1]
+            except Exception:
+                ratio=.75
+            if ratio>.75:
+                image=image.resize((int(ratio*400),400))
+                abscisse=(image.size[0]-300)//2
+                image=image.crop((abscisse,0,abscisse+300,400))
+            elif ratio<.75:
+                image=image.resize((300,int(400/ratio)))
+                ordonnee=(image.size[1]-400)//2
+                image=image.crop((0,ordonnee,300,ordonnee+400))
+            else:
+                image=image.resize((300,400))
+            image.save(os.path.join(MEDIA_ROOT,instance.photo.name))
 
 @receiver(post_delete, sender=Eleve)
 def eleve_post_delete_function(sender, instance, **kwargs):

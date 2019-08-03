@@ -1,9 +1,13 @@
 from django.db import models
+from random import choice
+
+def texte_aleatoire(taille):
+    return "".join(choice("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789") for i in range(taille))
 
 class Eleve(models.Model):
     def update_photo(instance, filename):
         """Renvoie l'url vers le fichier photo"""
-        return "photos/photo.{}".format(filename.split('.')[-1])
+        return "photos/photo{}.{}".format(texte_aleatoire(20),filename.split('.')[-1])
     classe = models.ForeignKey("Classe",related_name="classeeleve",on_delete=models.PROTECT)
     groupe = models.ForeignKey("Groupe", null=True,related_name="groupeeleve", on_delete=models.SET_NULL)
     photo = models.ImageField(verbose_name="photo(jpg/png, 300x400)",upload_to=update_photo,null=True,blank=True)
