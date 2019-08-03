@@ -120,7 +120,7 @@ def programme_post_delete_function(sender, instance, **kwargs):
         if os.path.isfile(fichier):
             os.remove(fichier)
         if IMAGEMAGICK:
-            image=fichier.replace('programme','image').replace('pdf','jpg')
+            image = os.path.join(MEDIA_ROOT,"image"+instance.fichier.name[9:-3]+"jpg")
             if os.path.isfile(image):
                 os.remove(image)
 
@@ -129,11 +129,11 @@ def programme_post_save_function(sender, instance, **kwargs):
     try:
         nomfichier=instance.fichier.name # on récupère le nom du fichier joint
         if IMAGEMAGICK and nomfichier: # si le fichier existe et qu'on fait des mini images
-            nomimage=nomfichier.replace('programme','image').replace('pdf','jpg') # on récupère le nom de l'éventuelle image correspondante, lève une exception s'il n'y a pas de pdf car replace n'est pas une méthode de NoneType
-            if not os.path.isfile(os.path.join(MEDIA_ROOT,nomimage)): # si l'image n'existe pas
+            nomimage=os.path.join(MEDIA_ROOT,"image"+instance.fichier.name[9:-3]+"jpg") # on récupère le nom de l'éventuelle image correspondante, lève une exception s'il n'y a pas de pdf car replace n'est pas une méthode de NoneType
+            if not os.path.isfile(nomimage): # si l'image n'existe pas
                 # on convertit la première page du pdf en jpg (échoue avec une exception s'il n'y pas pas de pdf ou si imagemagick n'est pas installé)
-                os.system("convert -density 200 "+os.path.join(MEDIA_ROOT,nomfichier)+"[0] "+os.path.join(MEDIA_ROOT,nomimage))  
-                os.system("convert -resize 50% "+os.path.join(MEDIA_ROOT,nomimage)+" "+os.path.join(MEDIA_ROOT,nomimage))
+                os.system("convert -density 200 "+os.path.join(MEDIA_ROOT,nomfichier)+"[0] "+nomimage)  
+                os.system("convert -resize 50% "+nomimage+" "+nomimage)
     except Exception: # Dans le cas ou plus aucun fichier n'est lié au programme, exception silencieuse
         pass
 

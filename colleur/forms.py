@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from django.forms.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from xml.etree import ElementTree as etree
-from ecolle.settings import RESOURCES_ROOT, MEDIA_ROOT
+from ecolle.settings import RESOURCES_ROOT, MEDIA_ROOT, IMAGEMAGICK
 from os.path import isfile,join
 from os import remove
 from copy import copy
@@ -42,6 +42,11 @@ class ProgrammeForm(forms.ModelForm):
             fichier=join(MEDIA_ROOT,self.instance.fichier.name)
             if isfile(fichier):
                 remove(fichier)
+            if IMAGEMAGICK:
+                image = join(MEDIA_ROOT,"image"+self.instance.fichier.name[9:-3]+"jpg")
+                if isfile(image):
+                    remove(image)
+
 
 class MatiereChoiceField(forms.ModelChoiceField):
     def label_from_instance(self,matiere):
