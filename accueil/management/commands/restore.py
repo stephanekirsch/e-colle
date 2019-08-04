@@ -1,12 +1,11 @@
 from django.core.management.commands.loaddata import Command as Loaddata
 from django.core.management.commands.flush import Command as Flush
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.db import DEFAULT_DB_ALIAS
 from ecolle.settings import BACKUP_ROOT, MEDIA_ROOT
 import os
 import bz2
 import tarfile
-import datetime
 
 class Command(BaseCommand):
 
@@ -54,7 +53,7 @@ a. abandonner\n""")
 							try:
 								archive_zip = tarfile.open(os.path.join(BACKUP_ROOT,fichier_media),"r:xz")
 								archive_zip.extractall(MEDIA_ROOT)
-							except Exception as e:
+							except Exception:
 								self.stdout.write("Erreur lors de la restauration des fichiers media")
 							else:
 								self.stdout.write("Restauration des fichiers media terminée")
