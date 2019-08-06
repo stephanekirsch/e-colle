@@ -63,6 +63,11 @@ class Command(BaseCommand):
             Attention, si le mot de passe est déjà défini il est fortement conseillé\n\
             de le conserver. Tapez 'a' pour générer un mot de passe aléatoire ({}): ".format(DB_PASSWORD))
         self.stdout.write("-"*20)
+        db_host = input("adresse locale de la base de données ({}): ".format(DB_HOST))
+        self.stdout.write("-"*20)
+        db_port = input("port de la base de données, vide par défaut\n\
+        peut être laissé vide en validant un espace ({}): ".format(DB_PORT))
+        self.stdout.write("-"*20)
         loop = True
         while loop:
             imagemagick = input("Utiliser ImageMagick pour convertir les pdf des programmes en images? O/N ({}): ".format("O" if IMAGEMAGICK else "N"))
@@ -86,7 +91,7 @@ class Command(BaseCommand):
         self.stdout.write("-"*20)
         loop = True
         while loop:
-            secret_key = input("Générer une nouvelle clé secrète? O/N (O): ")
+            secret_key = input("Générer une nouvelle clé secrète? O/N (N): ")
             if secret_key in "oOnN":
                 loop = False
             else:
@@ -154,6 +159,10 @@ class Command(BaseCommand):
                     .format(DB_NAME if db_name == "" else sgbd_dict[db_name]))
                 fichier.write("DB_PASSWORD = '{}' # mot de passe pour se connecter à la base de données\n"\
                     .format(DB_PASSWORD if db_password == "" else ( texte_aleatoire(30) if db_password.strip().lower() =="a" else db_password.strip())))
+                fichier.write("DB_HOST = '{}' # adresse locale de la base de données\n"\
+                    .format(DB_HOST if db_host == "" else ("" if db_host == " " else db_host)))
+                fichier.write("DB_PORT = '{}' # port de la BDD, vide par défaut. À renseigner si la BDD se trouve sur un port particulier\n"\
+                    .format(DB_PORT if db_port == "" else ("" if db_port == " " else db_port)))
                 fichier.write("IMAGEMAGICK = {} # utilisation de ImageMagick pour faire des miniatures de la première page des pdf programmes de colle\n"\
                     .format(IMAGEMAGICK if imagemagick == "" else imagemagick.lower() == "o"))
                 fichier.write("ALLOWED_HOSTS = {} # liste des noms de domaine autorisés pour accéder à e-colle\n"\
@@ -161,7 +170,7 @@ class Command(BaseCommand):
                 fichier.write("INTERNAL_IPS = {} # liste des IP autorisées pour accéder en interne à e-colle quand debug est True\n"\
                     .format(INTERNAL_IPS if internal_ips == [""] else ("[]" if internal_ips == [" "] else list(internal_ips))))
                 fichier.write("SECRET_KEY = '{}' # clé secrète aléatoire de 50 caractères\n"\
-                    .format(texte_aleatoire(50) if secret_key in "oO" else SECRET_KEY))
+                    .format(SECRET_KEY if secret_key in "nN" else texte_aleatoire(50)))
                 fichier.write("TIME_ZONE = '{}' # fuseau horaire\n"\
                     .format(TIME_ZONE if time_zone == "" else timezonedict[time_zone]))
                 fichier.write("HEURE_DEBUT = {} # heure de début des colles (en minutes depuis minuit)\n"\
@@ -170,7 +179,8 @@ class Command(BaseCommand):
                     .format(HEURE_FIN if heure_fin == "" else heure_fin))
                 fichier.write("INTERVALLE = {} # intervalle entre 2 créneaux (en minutes)"\
                     .format(INTERVALLE if intervalle == "" else intervalle))
-        except Exception:
+        except Exception as e:
+            print(e)
             self.stdout.write("erreur lors de la modification du fichier config.py\n\
                 Vous devrez le remplir à la main")
         else:

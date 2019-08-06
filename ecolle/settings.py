@@ -35,8 +35,8 @@ DATABASES = {
         'USER': 'e-colle',  # le nom de l'utilisateur ayant droits
         # sur la base de données.
         'PASSWORD': DB_PASSWORD,  # le mot de passe de l'utilisateur
-        'HOST': 'localhost',  # l'adresse IP de la base de données.
-        'PORT': '',  # vide par défaut. À renseigner si la BDD se trouve
+        'HOST': DB_HOST,  # l'adresse IP de la base de données.
+        'PORT': DB_PORT,  # vide par défaut. À renseigner si la BDD se trouve
         # sur un port particulier.
     }
 }
