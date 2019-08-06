@@ -280,7 +280,7 @@ def ramassageCSV(request,id_ramassage,parMois = 0):
     if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists(): #s'il existe un ramassage antérieur
         debut = Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).aggregate(Max('moisFin'))['moisFin__max']
     else:
-        debut = ramassage.moisFin
+        debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
     fin = ramassage.moisFin
     listeDecompte, effectifs = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = False, parMois =parMois)
     nomfichier="ramassage{}_{}-{}_{}.csv".format(debut.month,debut.year,fin.month,fin.year)
@@ -312,10 +312,7 @@ def ramassagePdf(request, id_ramassage, parMois = 0):
     if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists(): #s'il existe un ramassage antérieur
         debut = Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).aggregate(Max('moisFin'))['moisFin__max']+timedelta(days=1)
     else:
-        if Note.objects.exists():
-            debut = Note.objects.aggregate(Min('date_colle'))['date_colle__min'].replace(day=1)
-        else:
-            debut = date.today().replace(day=1)
+        debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
     fin = ramassage.moisFin
     moisdebut = 12*debut.year+debut.month-1
     listeDecompte, effectifs = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = False, parMois=parMois)
@@ -457,7 +454,7 @@ def ramassageCSVParClasse(request, id_ramassage, totalParmois):
     if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists():# s'il existe un ramassage antérieur
         moisDebut = Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).aggregate(Max('moisFin'))['moisFin__max'] + timedelta(days=1)
     else:
-        moisDebut = ramassage.moisFin
+        moisDebut = debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
     LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
     response = HttpResponse(content_type='text/csv')
     decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = True, parClasse = True, parMois = bool(parmois))
@@ -517,7 +514,7 @@ def ramassagePdfParClasse(request,id_ramassage,totalParmois):
     if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists():# s'il existe un ramassage antérieur
         debut = Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).aggregate(Max('moisFin'))['moisFin__max'] + timedelta(days=1)
     else:
-        debut = ramassage.moisFin
+        debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
     fin = ramassage.moisFin
     moisdebut = 12*debut.year+debut.month-1
     decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = True, parMois=bool(parmois))

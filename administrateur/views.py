@@ -219,7 +219,8 @@ def semaine(request):
     if lundimax['lundi__max'] is not None and numeromax['numero__max'] is not None:
         semaine.lundi=lundimax['lundi__max']+timedelta(days=7)
         semaine.numero=numeromax['numero__max']+1
-    form = SemaineForm(request.POST or None,instance=semaine)
+    print(semaine)
+    form = SemaineForm(request.POST or None, initial={'lundi':semaine.lundi,'numero':semaine.numero})
     if form.is_valid():
         form.save()
         return redirect('gestion_semaine')
@@ -230,7 +231,7 @@ def semaine(request):
 def semainemodif(request, id_semaine):
     """Renvoie la vue de la page de modification de la semaine dont l'id est id_semaine"""
     semaine = get_object_or_404(Semaine,pk=id_semaine)
-    form=SemaineForm(request.POST or None, instance=semaine)
+    form=SemaineForm(request.POST or None, instance=semaine, initial = {"numero":semaine.numero,"lundi":semaine.lundi})
     if form.is_valid():
         form.save()
         return redirect('gestion_semaine')

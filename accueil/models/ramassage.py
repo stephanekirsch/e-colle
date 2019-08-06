@@ -19,12 +19,12 @@ def totalMois(arg):
                   # un SGBD qui n'est ni mysql, ni postgresql, ni sqlite ni oracle
 
 def mois():
-    """Renvoie les mois min et max des semaines de colle. Renvoie le mois courant en double si aucune semaine n'est définie"""
+    """Renvoie les mois min et max (+1 mois) des semaines de colle. Renvoie le mois courant en double si aucune semaine n'est définie"""
     try:
         moisMin=Semaine.objects.aggregate(Min('lundi'))
         moisMax=Semaine.objects.aggregate(Max('lundi'))
         moisMin=date(moisMin['lundi__min'].year+moisMin['lundi__min'].month//12,moisMin['lundi__min'].month%12+1,1)-timedelta(days=1) # dernier jour du mois
-        moisMax=moisMax['lundi__max']+timedelta(days=5)
+        moisMax=moisMax['lundi__max']+timedelta(days=35)
         moisMax=date(moisMax.year+moisMax.month//12,moisMax.month%12+1,1)-timedelta(days=1) # dernier jour du mois
     except Exception:
         hui=date.today()
@@ -357,19 +357,7 @@ class RamassageManager(models.Manager):
         return listeDecompte,effectifs
 
 class Ramassage(models.Model):
-    def incremente_mois(moment):
-        """ajoute un mois à moment"""
-        moment += timedelta(days=1)
-        return date(moment.year+moment.month//12,moment.month%12+1,1) - timedelta(days=1)
-    moisMin,moisMax=mois()
-    moiscourant=moisMin
-    LISTE_MOIS =[moiscourant]
-    moiscourant=incremente_mois(moiscourant)
-    while moiscourant<=moisMax:
-        LISTE_MOIS.append(moiscourant)
-        moiscourant=incremente_mois(moiscourant)
-    LISTE_MOIS=[(x,x.strftime('%B %Y')) for x in LISTE_MOIS]
-    moisFin = models.DateField(verbose_name="Jusqu'à (inclus)",choices=LISTE_MOIS, unique = True, blank = False)
+    moisFin = models.DateField(verbose_name="Jusqu'à (inclus)", unique = True, blank = False)
     date = models.DateTimeField(auto_now = True)
     objects = RamassageManager()
 
