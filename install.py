@@ -6,7 +6,6 @@ import subprocess
 from time import sleep
 from getpass import getpass
 from random import choice
-from ecolle.config import DB_PASSWORD, DB_NAME, IMAGEMAGICK
 
 
 liste_echecs = []
@@ -22,6 +21,9 @@ def pipinstall(package):
 
 def configpostgresl():
     from pexpect import spawn, TIMEOUT
+    from ecolle.config import DB_PASSWORD
+    if DB_PASSWORD =="":
+        return
     print("-"*20)
     print("configuration de la base de données")
     p=spawn("sudo -i -u postgres", encoding="utf8")
@@ -54,10 +56,13 @@ def configpostgresl():
             p.sendline("createdb -O e-colle -E UTF8 e-colle")
             print("base de données recréée")
     p.sendline("exit")
-    p.close()
+    p.close
 
 def configmysql():
     from pexpect import spawn, TIMEOUT
+    from ecolle.config import DB_PASSWORD
+    if DB_PASSWORD =="":
+        return
     print("-"*20)
     print("configuration de la base de données")
     p=spawn("sudo mysql", encoding="utf8")
@@ -138,6 +143,7 @@ def main():
     if sys.version[:3] < '3.5':
         print("Il vous faut une version de de Python >= 3.5")
         return
+
     print("installation des logiciels / biliothèques python nécessaires")
     print("-"*20)
     print("installation de python3-pip")
@@ -154,14 +160,31 @@ def main():
                 print("échec de l'installation de " + bibli)
                 liste_echecs.append(bibli)
     print("-"*20)
-    print("installation de ImageMagick")
-    completedProcess = aptinstall("imagemagick")
-    if completedProcess.returncode:
-        print("échec de l'installation d'imagemagick")
-        liste_echecs.append("imagemagick")
-    else: # configuration (on autorise la conversion des pdfs)
-        print("modification de la configuration pour autoriser les conversion des pdfs")
-        subprocess.run(["sudo","python3","imagemagick.py"])
+    init = input("Avez-vous initialisé les données du fichier de configuration\n\
+        à l'aide de la commande 'python3 manage.py initdata' ?\n\
+        Si ce n'est pas le cas, voulez-vous le faire maintenant?\n\
+        (très fortement conseillé) o/n: ")
+    while init == "" or init not in "oOnN":
+        init = input("réponse incorrecte, voulez-vous exécuter l'initialisation\n\
+            du fichier de configuration? o/n: ")
+    if init in "oO":
+        print("initialisation du fichier de configuration")
+        completedProcess = subprocess.run(["python3","manage.py","initdata"])
+        if completedProcess.returncode:
+            print("l'initialisation des données de donfiguration a échoué, il faudra le faire à la main")
+        else:
+            print("l'initialisation des données de configuration a été effectuée avec succès")
+    from ecolle.config import DB_NAME, IMAGEMAGICK, DB_PASSWORD
+    if IMAGEMAGICK:
+        print("-"*20)
+        print("installation de ImageMagick")
+        completedProcess = aptinstall("imagemagick")
+        if completedProcess.returncode:
+            print("échec de l'installation d'imagemagick")
+            liste_echecs.append("imagemagick")
+        else: # configuration (on autorise la conversion des pdfs)
+            print("modification de la configuration pour autoriser les conversion des pdfs")
+            subprocess.run(["sudo","python3","imagemagick.py"])
     print("-"*20)
     if DB_NAME == "postgresql":
         print("installation de postgresql")
@@ -201,9 +224,13 @@ def main():
         else:
             print("-"*20)
             configsqlite()
-    print("début initialisation de la base de données")
-    subprocess.run(["python3","manage.py","migrate"])
-    print("fin initialisation de la base de données") 
+    if DB_NAME != "sqlite3" and DB_PASSWORD =="":
+        print("il faut définir un mot de passe pour la base de données\n\
+            initialisation de la base de données impossible")
+    else:
+        print("début initialisation de la base de données")
+        subprocess.run(["python3","manage.py","migrate"])
+        print("fin initialisation de la base de données") 
     apache = input("Voulez-vous installer apache comme logiciel pour faire serveur? O/N (N): ")
     if apache != "" and apache in "oO":
         installapache()
