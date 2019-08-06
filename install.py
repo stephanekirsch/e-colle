@@ -11,9 +11,11 @@ from random import choice
 liste_echecs = []
 liste_echecs_config = []
 
+install_command = "apt"
+
 def aptinstall(package):
     return subprocess.run(
-        ["sudo","apt", "install", package])
+        ["sudo",install_command, "install", package])
 
 def pipinstall(package):
     return subprocess.run(
@@ -137,13 +139,25 @@ def droits():
 
 
 def main():
+    global install_command
     if platform.system().lower() != 'linux':
         print("cette commande ne fonctionne que sous linux")
         return
     if sys.version[:3] < '3.5':
         print("Il vous faut une version de de Python >= 3.5")
         return
-
+    p = subprocess.Popen("command -v apt",shell=True,stdout=subprocess.PIPE)
+    result = p.communicate()[0]
+    if result != bytes(0):
+        install_command = "apt"
+    else:
+        p = subprocess.Popen("command -v yum",shell=True,stdout=subprocess.PIPE)
+        result = p.communicate()[0]
+        if result != bytes(0):
+            install_command = "yum"
+        else:
+            print("impossible d'exécuter le script sous ce système d'exploitation")
+            return
     print("installation des logiciels / biliothèques python nécessaires")
     print("-"*20)
     print("installation de python3-pip")
@@ -237,13 +251,19 @@ def main():
 
     ssl = input("Voulez-vous configurer votre site en ssl avec let's encrypt? o/n (N): ")
     if ssl !="" and ssl in "oO":
-        subprocess.run(["sudo","add-apt-repository","ppa:certbot/certbot"]) # ajout du ppa de certbot
-        subprocess.run(["sudo","apt","update"]) # mise à jour des dépôts pour inclure certbot
-        print("installation de certbot")
-        subprocess.run(["sudo","apt","install","certbot","python-certbot-apache"]) #installation de certbot
-        print("lancement de certbot")
-        subprocess.run(["sudo","certbot","--apache"])
-     
+        if install_command == "apt":
+            subprocess.run(["sudo","add-apt-repository","ppa:certbot/certbot"]) # ajout du ppa de certbot
+            subprocess.run(["sudo","apt","update"]) # mise à jour des dépôts pour inclure certbot
+            print("installation de certbot")
+            subprocess.run(["sudo","apt","install","certbot","python-certbot-apache"]) #installation de certbot
+            print("lancement de certbot")
+            subprocess.run(["sudo","certbot","--apache"])
+        elif install_command == "yum":
+            print("installation de certbot")
+            subprocess.run(["sudo","dnf","install","certbot","certbot-apache"]) #installation de certbot
+            print("lancement de certbot")s
+            subprocess.run(["sudo","certbot","--apache"])
+
 if __name__== '__main__':
     main()
         
