@@ -3,79 +3,43 @@
 
 from os import path
 
+from .debug import *
+
 # =============================================================================
 #                            INFORMATIONS À REMPLIR
 # =============================================================================
 
-# le mot de passe à la création de l'admin
-DEFAULT_ADMIN_PASSWD = 'admin'
+from .config import *
 
-# le mot de passe à la création du compte secrétariat
-DEFAULT_SECRETARIAT_PASSWD = 'secret'
-
-# l'email de l'admin. Si vous ne voulez pas en mettre, laissez vide
-EMAIL_ADMIN = ''
-
-# l'email du secrétariat. Si vous ne voulez pas en mettre, laissez vide
-EMAIL_SECRETARIAT = ''
-
-# True si on veut restreindre la partie admin à certaines adresse IP
-# (typiquement des adresse locales), False sinon
-IP_FILTRE_ADMIN = True
-
-# liste des adresses autorisées pour la partie admin si IP_FILTRE_ADMIN == True
-# à renseigner avec des REGEXP.
-IP_FILTRE_ADRESSES = ('^127\.0\.0\.1$')
-
-# True pour faire des jpeg miniatures des pdf de colle. False sinon.
-IMAGEMAGICK = False
+# =============================================================================
+#                        FIN INFORMATIONS À REMPLIR
+# =============================================================================
 
 # les couples nom/email du (des) administrateur(s) du site
 ADMINS = (
     ('admin', 'admin@example.com'),
 )
 
+DEFAULT_CSS = "style.css"
 
-# les nom de domaine autorisés pour accéder à e-colle
-# démarrer par un '.' pour les sous-domaines (par exemple '.e-colle.fr')
-ALLOWED_HOSTS = []
-
-INTERNAL_IPS= ['127.0.0.1']
-
-# une clé secrète de 50 caractères. À modifier à la configuration
-SECRET_KEY = 'cg(ip)m3z77z3v!5wo&cl8^4!rk9t0++5wld+@i(kifb!z-k0p'
-
-# fuseau horaire, à changer le cas échéant
-TIME_ZONE = 'Europe/Paris'
+if DB_NAME == "sqlite3":
+    dataname = "e-colle.db"
+else:
+    dataname = "e-colle"
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',  # le SGBD choisi
-        'NAME': 'e-colle',  # le nom de la base de données
+        'ENGINE': "django.db.backends.{}".format(DB_NAME),  # le SGBD choisi
+        'NAME': dataname,  # le nom de la base de données
         # La suite est à laisser vide si vous utilisez SQlite
         'USER': 'e-colle',  # le nom de l'utilisateur ayant droits
         # sur la base de données.
-        'PASSWORD': '',  # le mot de passe de l'utilisateur
+        'PASSWORD': DB_PASSWORD,  # le mot de passe de l'utilisateur
         'HOST': 'localhost',  # l'adresse IP de la base de données.
         'PORT': '',  # vide par défaut. À renseigner si la BDD se trouve
         # sur un port particulier.
     }
 }
-
-# Style CSS par défaut.
-DEFAULT_CSS = "style.css"
-
-# Horaires des colles
-# On écrit les heures en minutes depuis minuit.
-HEURE_DEBUT = 8*60
-HEURE_FIN = 20*60
-# L'intervalle entre deux créneaux, en minutes.
-INTERVALLE = 30
-
-
-# =============================================================================
-#                        FIN INFORMATIONS À REMPLIR
-# =============================================================================
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
 
@@ -139,8 +103,6 @@ STATICFILES_DIRS = (
 MEDIA_URL = '/media/'
 
 STATIC_URL = '/static/'
-
-DEBUG = False
 
 APPEND_SLASH = False
 

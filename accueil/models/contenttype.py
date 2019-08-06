@@ -20,10 +20,10 @@ class ContentTypeRestrictedFileField(FileField):
     Same as FileField, but you can specify:
         * content_types - list containing allowed content_types. Example: ['application/pdf', 'image/jpeg']
         * max_upload_size - the maximum file size (in bytes) allowed for upload.
-    """
-    def __init__(self, *args, **kwargs):
-        self.content_types = kwargs.pop("content_types")
-        self.max_upload_size = kwargs.pop("max_upload_size")
+  """
+    def __init__(self, content_types = [], max_upload_size = 1000000, *args, **kwargs):
+        self.content_types = content_types
+        self.max_upload_size = max_upload_size
 
         super().__init__(*args, **kwargs)
 

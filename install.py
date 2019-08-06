@@ -1,0 +1,232 @@
+from django.core.management.base import BaseCommand
+import os
+import sys
+import platform
+import subprocess
+from time import sleep
+from getpass import getpass
+from random import choice
+from ecolle.config import DB_PASSWORD, DB_NAME, IMAGEMAGICK
+
+
+liste_echecs = []
+liste_echecs_config = []
+
+def aptinstall(package):
+    return subprocess.run(
+        ["sudo","apt", "install", package])
+
+def pipinstall(package):
+    return subprocess.run(
+        ["pip3", "install", package])
+
+def configpostgresl():
+    from pexpect import spawn, TIMEOUT
+    print("-"*20)
+    print("configuration de la base de données")
+    p=spawn("sudo -i -u postgres", encoding="utf8")
+    passwd = getpass("[sudo] mot de passe: ")
+    p.sendline(passwd)
+    p.sendline("createuser -PE e-colle")
+    p.expect("Enter password for new role: ")
+    p.sendline("{}".format(DB_PASSWORD))
+    p.expect("Enter it again: ")
+    p.sendline("{}".format(DB_PASSWORD))
+    i = p.expect(['createuser: creation of new role failed: ERROR:  role "e-colle" already exists',TIMEOUT],timeout=2)
+    if i==0:
+        print("l'utilisateur e-colle existe déjà")
+        maj = input("Voulez-vous mettre à jour son mot de passe? O/N (N): ")
+        if maj not in "nN":
+            p.sendline("dropuser e-colle")
+            p.sendline("createuser -PE e-colle")
+            p.expect("Enter password for new role: ")
+            p.sendline("{}".format(DB_PASSWORD))
+            p.expect("Enter it again: ")
+            p.sendline("{}".format(DB_PASSWORD))
+            print("mot de passe mis à jour")
+    p.sendline("createdb -O e-colle -E UTF8 e-colle")
+    i = p.expect(['createdb: database creation failed: ERROR:  database "e-colle" already exists',TIMEOUT],timeout=2)
+    if i==0:
+        print("la base de données e-colle existe déjà")
+        maj = input("Voulez-vous l'effacer et la recréer? O/N (N): ")
+        if maj not in "nN":
+            p.sendline("dropdb e-colle")
+            p.sendline("createdb -O e-colle -E UTF8 e-colle")
+            print("base de données recréée")
+    p.sendline("exit")
+    p.close()
+
+def configmysql():
+    from pexpect import spawn, TIMEOUT
+    print("-"*20)
+    print("configuration de la base de données")
+    p=spawn("sudo mysql", encoding="utf8")
+    passwd = getpass("[sudo] mot de passe: ")
+    p.sendline(passwd)
+    p.sendline("CREATE USER 'e-colle' IDENTIFIED BY '{}';".format(DB_PASSWORD))
+    i = p.expect(['ERROR',TIMEOUT],timeout=2)
+    if i==0:
+        print("l'utilisateur e-colle existe déjà")
+        maj = input("Voulez-vous mettre à jour son mot de passe? O/N (N): ")
+        if maj not in "nN":
+            p.sendline("DROP USER `e-colle`;")
+            p.sendline("CREATE USER 'e-colle' IDENTIFIED BY '{}';".format(DB_PASSWORD))
+            print("mot de passe mis à jour")
+    p.sendline("CREATE DATABASE `e-colle` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+    i = p.expect(["ERROR",TIMEOUT],timeout=2)
+    if i==0:
+        print("la base de données e-colle existe déjà")
+        maj = input("Voulez-vous l'effacer et la recréer? O/N (N): ")
+        if maj not in "nN":
+            p.sendline("DROP DATABASE `e-colle`;")
+            p.sendline("CREATE DATABASE `e-colle` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+            print("base de données recréée")
+    p.sendline("GRANT ALL PRIVILEGES ON `e-colle`.* TO `e-colle` WITH GRANT OPTION;")
+    i = p.expect(["ERROR",TIMEOUT],timeout=2)
+    if i==0:
+        print("erreur dans la modification des privilèges")
+    p.sendline("exit")
+    p.close()
+
+def configsqlite():
+    from pexpect import spawn, TIMEOUT
+    print("-"*20)
+    print("configuration de la base de données")
+    p.spawn("sqlite3 e-colle.db",encoding="utf8")
+    print("base de données créée")
+    p.sendline(".quit")
+
+def installapache():
+    print("-"*20)
+    print("installation de apache2")
+    completedProcess = aptinstall("apache2")
+    if completedProcess.returncode:
+        print("échec de l'installation d'apache2")
+        liste_echecs.append("apache2")
+    print("-"*20)
+    print("installation de libapache2-mod-wsgi-py3")
+    completedProcess = aptinstall("libapache2-mod-wsgi-py3")
+    if completedProcess.returncode:
+        print("échec de l'installation de libapache2-mod-wsgi-py3")
+        liste_echecs.append("libapache2-mod-wsgi-py3")
+    if "apache2" not in liste_echecs and "libapache2-mod-wsgi-py3" not in liste_echecs:
+        configapache()
+
+def configapache():
+    code1 = subprocess.run(["sudo","a2enmod","wsgi"]).returncode # activation du mod wsgi
+    # lecture de e-colle.conf
+    subprocess.run(["sudo","python3","apacheconf.py"])
+    code2 = subprocess.run(["sudo","a2ensite","e-colle.conf"]).returncode # activation du site
+    if not(code1 or code2):
+        droits()
+
+def droits():
+    print("gestion des droits d'apache")
+    p = subprocess.Popen("whoami",shell=True,stdout=subprocess.PIPE)
+    user = str(p.communicate()[0], encoding="utf8").strip()
+    subprocess.run(["sudo","groupadd","web"]) # création du group web
+    subprocess.run(["sudo","adduser",user,"web"]) # ajout de l'utilisateur courant au groupe web
+    subprocess.run(["sudo","adduser","www-data","web"]) # ajout de l'utilisateur www-data (apache) au groupe web
+    subprocess.run(["sudo","chown","-R","{}:web".format(user),"../e-colle"]) # tout le répertoire e-colle est associé au group web
+    print("changement des droits effectué")
+
+
+def main():
+    if platform.system().lower() != 'linux':
+        print("cette commande ne fonctionne que sous linux")
+        return
+    if sys.version[:3] < '3.5':
+        print("Il vous faut une version de de Python >= 3.5")
+        return
+    print("installation des logiciels / biliothèques python nécessaires")
+    print("-"*20)
+    print("installation de python3-pip")
+    completedProcess = aptinstall("python3-pip")
+    if completedProcess.returncode:
+        print("échec de l'installation de pip")
+        liste_echecs.append("python3-pip")
+    else:
+        print("installation des bibliothèques python requises")
+        for bibli in ["django","pexpect","reportlab","unidecode","pillow"]:
+            print("-"*20)
+            completedProcess = pipinstall(bibli)
+            if completedProcess.returncode:
+                print("échec de l'installation de " + bibli)
+                liste_echecs.append(bibli)
+    print("-"*20)
+    print("installation de ImageMagick")
+    completedProcess = aptinstall("imagemagick")
+    if completedProcess.returncode:
+        print("échec de l'installation d'imagemagick")
+        liste_echecs.append("imagemagick")
+    else: # configuration (on autorise la conversion des pdfs)
+        print("modification de la configuration pour autoriser les conversion des pdfs")
+        subprocess.run(["sudo","python3","imagemagick.py"])
+    print("-"*20)
+    if DB_NAME == "postgresql":
+        print("installation de postgresql")
+        completedProcess = aptinstall("postgresql")
+        if completedProcess.returncode:
+            print("échec de l'installation de postgresql")
+            liste_echecs.append("postgresql")
+        print("-"*20)
+        print("installation de psycopg2")
+        completedProcess = pipinstall("psycopg2")
+        if completedProcess.returncode:
+            print("échec de l'installation de psycopg2")
+            liste_echecs.append("psycopg2")
+        elif "pexpect" not in liste_echecs:
+            configpostgresl()
+    elif DB_NAME == "mysql":
+        print("installation de mysql")
+        completedProcess = aptinstall("mysql-server")
+        if completedProcess.returncode:
+            print("échec de l'installation de mysql")
+            liste_echecs.append("mysql")
+        print("-"*20)
+        print("installation de mysqlclient")
+        completedProcess = aptinstall("libmysqlclient-dev")
+        completedProcess = pipinstall("mysqlclient")
+        if completedProcess.returncode:
+            print("échec de l'installation de mysqlclient")
+            liste_echecs.append("mysqlclient")
+        elif "pexpect" not in liste_echecs:
+            configmysql()
+    elif DB_NAME == "sqlite3":
+        print("installation de sqlite3")
+        completedProcess = aptinstall("sqlite3")
+        if completedProcess.returncode:
+            print("échec de l'installation de sqlite3")
+            liste_echecs.append("sqlite3")
+        else:
+            print("-"*20)
+            configsqlite()
+    print("début initialisation de la base de données")
+    subprocess.run(["python3","manage.py","migrate"])
+    print("fin initialisation de la base de données") 
+    apache = input("Voulez-vous installer apache comme logiciel pour faire serveur? O/N (N): ")
+    if apache != "" and apache in "oO":
+        installapache()
+
+    ssl = input("Voulez-vous configurer votre site en ssl avec let's encrypt? o/n (N): ")
+    if ssl !="" and ssl in "oO":
+        subprocess.run(["sudo","add-apt-repository","ppa:certbot/certbot"]) # ajout du ppa de certbot
+        subprocess.run(["sudo","apt","update"]) # mise à jour des dépôts pour inclure certbot
+        print("installation de certbot")
+        subprocess.run(["sudo","apt","install","certbot","python-certbot-apache"]) #installation de certbot
+        print("lancement de certbot")
+        subprocess.run(["sudo","certbot","--apache"])
+     
+if __name__== '__main__':
+    main()
+        
+            
+
+
+
+
+
+
+
+
+

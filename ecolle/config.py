@@ -1,0 +1,16 @@
+DEFAULT_ADMIN_PASSWD = 'admin' # mot de passe de l'utilisateur administrateur
+DEFAULT_SECRETARIAT_PASSWD = 'secret' # mot de passe de l'utilisateur secrétariat
+EMAIL_ADMIN = '' # email de l'utilisateur administateur
+EMAIL_SECRETARIAT = '' # email de l'utilisateur secrétariat
+IP_FILTRE_ADMIN = True # filtrage IP pour l'utilisateur administrateur
+IP_FILTRE_ADRESSES = ('^127\.0\.0\.1$',) # si IP_FILTER_ADMIN vaut True, liste des IPS autorisées pour l'utilisateur admin (REGEXP)
+DB_NAME = 'postgresql' # base de données (mysql ou postgresql ou sqlite3)
+DB_PASSWORD = '' # mot de passe pour se connecter à la base de données
+IMAGEMAGICK = False # utilisation de ImageMagick pour faire des miniatures de la première page des pdf programmes de colle
+ALLOWED_HOSTS = [] # liste des noms de domaine autorisés pour accéder à e-colle
+INTERNAL_IPS = ['127.0.0.1'] # liste des IP autorisées pour accéder en interne à e-colle quand debug est True
+SECRET_KEY = 'jN2jgsCV16q15YzmalsrKtO44n-9G)hITpOU@+gjXHuO&qUMAr' # clé secrète aléatoire de 50 caractères
+TIME_ZONE = 'Europe/Paris' # fuseau horaire
+HEURE_DEBUT = 480 # heure de début des colles (en minutes depuis minuit)
+HEURE_FIN = 1200 # heure de fin des colles (en minutes depuis minuit)
+INTERVALLE = 30 # intervalle entre 2 créneaux (en minutes)
