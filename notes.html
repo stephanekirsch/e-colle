@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>E-colle by stephanekirsch</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>E-colle</h1>
+        <h2>Application web de gestion de colles en CPGE basée sur Python3/Django</h2>
+        <a href="https://github.com/stephanekirsch/e-colle" class="button"><small>View project on</small> GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h3>Release notes</h3>
+          <h4>Version 2.1</h4>
+          <ul>
+            <li>La connexion se fait désormais par identifiant/mot de passe, on n'a plus accès à la liste des colleurs/étudiants sur la page de connexion</li>
+            <li>Possibilité d'éditer au format pdf toutes les informations sur un utilisateur étudiant ou colleur (RGPD)</li>
+            <li>Possibilité de forcer l'effacement d'un étudiant ou d'un colleur sans nuire à la cohérence de la base de données (RGPD)</li>
+            <li>Les programmes de colles peuvent désormais s'étaler sur plusieurs semaines de colle</li>
+            <li>Changement dans le ramassage des colles:
+              <ul>
+                <li>lorsqu'on effectue un ramassage, le décompte des heures est figé et dénombre les heures effectuées avant un mois donné, non ramassées au ramassage précédent</li>
+                <li>Possibilité d'éditer au format pdf ou csv par classe ou par année/effectif</li>
+                <li>Possibilité de décompter les heures effectuées pour chaque mois</li>
+              </ul>
+            </li>
+            <li>Découpage du fichier settings.py en 3 fichiers pour des raisons de commodité (config.py + debug.py)</li>
+            <li>Création d'un fichier install.py pour une installation/configuration automatique de e-colle</li>
+            <li>ajout de commandes console:
+              <ul>
+                <li>setdebugtrue/setdebugfalse pour passer la variable debug à True/False</li>
+                <li>backup pour faire des sauvegardes de la base de données/des fichiers media</li>
+                <li>restore pour réinitiliser la base de données à une sauvegarde antérieure effectuée avec backup</li>
+                <li>nouvelle_annee pour nettoyer la base de données entre 2 années scolaires</li>
+                <li>initdata pour initialiser les données du fichier config.py (anciennement la première moitié du fichier settings.py</li>
+              </ul>
+            </li>
+          </ul>
+
+        <aside id="sidebar">
+          <a href="https://github.com/stephanekirsch/e-colle/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/stephanekirsch/e-colle/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+          <a href="index.html" class="button">Accueil</a>
+          <a href="doc.html" class="button">Doc</a>
+          <a href="videos.html" class="button">Vidéos</a>
+          <p class="repo-owner"><a href="https://github.com/stephanekirsch/e-colle"></a> est développé par <a href="https://github.com/stephanekirsch">Stéphane Kirsch</a>.</p>
+        </aside>
+      </div>
+    </div>
+  </body>
+</html>
