@@ -48,7 +48,7 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 6000000
 CHEMINVERSECOLLE = path.dirname(path.dirname(__file__))
 
 # on récupère le nom du SGBD: mysql ou sqlite3 ou postgresql ou oracle.
-BDD = DATABASES['default']['ENGINE'].split(".")[-1]
+BDD = DB_NAME
 
 TEMPLATES = [
     {
