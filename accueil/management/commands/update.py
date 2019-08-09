@@ -134,7 +134,17 @@ class Command(BaseCommand):
             self.stdout.write(str(e))
             self.stdout.write("la mise à jour n'a pas pu aller jusqu'au bout. Si la migration a eu lieu,\n\
                 et que e-colle ne fonctionne plus à cause de la base de données\n\
-                il est recommandé de l'effacer, la recréer et d'utiliser la commande restore.")
+                il est recommandé d'effacer le répertoire 'e-colle',\n\
+                renommer 'e-colle' le répertoire 'e-colle-bak', effacer la base de données,\n\
+                la recréer et d'utiliser les commandes migrate et restore.")
+        else:
+            self.stdout.write("la mise a jour a été effectuée avec succès.\n\
+                l'ancien répertoire e-colle s'appelle désormais e-colle-bak\n\
+                Si jamais ça ne fonctionne pas, vous pouvez revenir à l'état précédent\n\
+                en effaçant le répertoire 'e-colle', renommant 'e-colle' le répertoire 'e-colle-bak'\n\
+                effaçant la base de données, la recréer et utiliser les commandes migrate et restore\n\
+                Pour que les modifications soient prises en compte en production,\n\
+                il faut redémarrer le logiciel serveur.")
         finally:
             self.stdout.write("nettoyage")
             self.clean()
