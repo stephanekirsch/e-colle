@@ -3,7 +3,7 @@ from django.http import Http404
 from datetime import date, timedelta
 from django.db.models.functions import Lower
 from django.db.models import Count, Sum, Min, Max
-from .note import Note
+from .note import Note, array2tree
 from .autre import dictfetchall
 from .classe import Classe
 from .semaine import Semaine
@@ -76,8 +76,8 @@ class RamassageManager(models.Manager):
         else:
             ramassage_precedent_pk = 0
         # pas de FULL OUTER JOIN avec MySQL, donc on bidouille avec jointure externe à gauche / à droite et un UNION ALL
-        requete = "SELECT u.last_name nom, u.first_name prenom, col.id colleur_id, ma.id matiere_id, ma.nom matiere_nom, cl.id classe_id, cl.nom classe_nom, cl.annee,\
-        col.grade, COALESCE(et.nom, 'Inconnu') etab, col.etablissement_id etab_id, dec2.mois mois, dec2.temps - COALESCE(dec1.temps,0) heures\
+        requete = "SELECT cl.id classe_id, cl.nom classe_nom, cl.annee, ma.nom matiere_nom, COALESCE(et.nom, 'Inconnu') etab, col.grade, u.last_name nom, u.first_name prenom, col.id colleur_id,\
+        dec2.mois mois, SUM(dec2.temps) - COALESCE(SUM(dec1.temps),0) heures\
         FROM accueil_decompte dec2\
         LEFT OUTER JOIN accueil_decompte dec1\
         ON dec1.colleur_id = dec2.colleur_id AND dec1.classe_id = dec2.classe_id AND dec1.matiere_id = dec2.matiere_id\
@@ -93,8 +93,9 @@ class RamassageManager(models.Manager):
         LEFT OUTER JOIN accueil_etablissement et\
         ON col.etablissement_id = et.id\
         WHERE dec2.ramassage_id=%s AND dec2.temps - COALESCE(dec1.temps,0) > 0\
-        UNION ALL SELECT u.last_name, u.first_name, col.id colleur_id, ma.id matiere_id, ma.nom matiere_nom, cl.id classe_id, cl.nom, cl.annee,\
-        col.grade, COALESCE(et.nom, 'Inconnu') etab, col.etablissement_id etab_id, dec1.mois mois, - dec1.temps heures\
+        GROUP BY ma.id, u.last_name, u.first_name, col.id, cl.id, et.nom, dec2.mois, dec1.mois\
+        UNION ALL SELECT cl.id classe_id, cl.nom classe_nom, cl.annee, ma.nom matiere_nom, COALESCE(et.nom, 'Inconnu') etab, col.grade, u.last_name nom, u.first_name prenom, col.id colleur_id,\
+        dec1.mois mois, - COALESCE(SUM(dec1.temps),0) heures\
         FROM accueil_decompte dec1\
         LEFT OUTER JOIN accueil_decompte dec2\
         ON dec1.colleur_id = dec2.colleur_id AND dec1.classe_id = dec2.classe_id AND dec1.matiere_id = dec2.matiere_id\
@@ -109,24 +110,21 @@ class RamassageManager(models.Manager):
         ON u.colleur_id = col.id\
         LEFT OUTER JOIN accueil_etablissement et\
         ON col.etablissement_id = et.id\
-        WHERE dec2.id = NULL AND dec1.ramassage_id = %s"
+        WHERE dec2.id = NULL AND dec1.ramassage_id = %s\
+        GROUP BY ma.id, u.last_name, u.first_name, col.id, cl.id, et.nom, dec2.mois, dec1.mois"
         if parMois:
             requete = "SELECT * FROM ({}) as req\
-            ORDER BY req.annee, req.classe_nom, req.matiere_nom, req.etab, req.grade, req.nom, req.prenom, req.mois".format(requete)
+            ORDER BY {} req.matiere_nom, req.etab, req.grade, req.nom, req.prenom, req.mois".format(requete, "req.annee, req.classe_nom, " if parClasse else "")
         else:
-            requete = "SELECT req.nom, req.prenom, req.colleur_id, req.matiere_id, req.matiere_nom, req.classe_id\
-            ,req.classe_nom, req.annee, req.grade, req.etab, req.etab_id, SUM(req.heures) heures FROM ({}) as req\
-            GROUP BY req.nom, req.prenom, req.colleur_id, req.matiere_id, req.matiere_nom, req.classe_id\
-            ,req.classe_nom, req.annee, req.grade, req.etab, req.etab_id\
-            ORDER BY req.annee, req.classe_nom, req.matiere_nom, req.etab, req.grade, req.nom, req.prenom".format(requete)
+            requete = "SELECT  req.classe_id, req.classe_nom, req.annee, req.matiere_nom, req.etab, req.grade, req.nom, req.prenom, req.colleur_id, \
+            SUM(req.heures) heures FROM ({}) as req\
+            GROUP BY req.classe_id, req.classe_nom, req.annee, req.matiere_nom, req.etab, req.grade, req.nom, req.prenom, req.colleur_id\
+            ORDER BY {}req.matiere_nom, req.etab, req.grade, req.nom, req.prenom".format(requete, "req.annee, req.classe_nom, " if parClasse else "")
         with connection.cursor() as cursor:
             cursor.execute(requete,(ramassage_precedent_pk,ramassage.pk,ramassage.pk,ramassage_precedent_pk))
-            decomptes = dictfetchall(cursor)
-        if csv and parClasse: # si on note par classe pour un csv
-            return decomptes
+            decomptes = cursor.fetchall()
         LISTE_GRADES=["inconnu","certifié","bi-admissible","agrégé","chaire sup"]
         if not parClasse: # si on note par annee/effectif pour un csv ou un pdf
-            LISTE_GRADES=["inconnu","certifié","bi-admissible","agrégé","chaire sup"]
             classes = Classe.objects.annotate(eleve_compte=Count('classeeleve'))
             effectif_classe = [False]*6
             for classe in classes:
@@ -138,166 +136,47 @@ class RamassageManager(models.Manager):
                     effectif_classe[i]=j
                     j+=1
             effectifs_classe = {classe.pk:effectif_classe[int(20<=classe.eleve_compte<=35)+2*int(35<classe.eleve_compte)+3*classe.annee-3] for classe in classes}
-            if len(decomptes) > 0:
-                lastMatiere, lastEtab, lastGrade, lastColleur = decomptes[0]['matiere_nom'], decomptes[0]['etab'], decomptes[0]['grade'], (decomptes[0]['nom'], decomptes[0]['prenom'])
+            decomptes2 = []
+            if decomptes:
                 if parMois:
-                    lastMois=decomptes[0]['mois']
-            nbEtabs=nbGrades=nbColleurs=nbMois=1
-            listeDecompte, listeEtablissements, listeGrades, listeColleurs, listeMois, listeTemps = [], [], [], [], [], [0]*nb_decompte
-            for decompte in decomptes:
-                if decompte['matiere_nom']!=lastMatiere: # si on change de matière
-                    if parMois:
-                        listeMois.append((lastMois,listeTemps))
-                        listeColleurs.append((lastColleur[0].upper(),lastColleur[1].title(),listeMois,nbMois))
-                    else:
-                        listeColleurs.append((lastColleur[0].upper(),lastColleur[1].title(),listeTemps))
-                    listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
-                    listeEtablissements.append((lastEtab,listeGrades,nbGrades))
-                    listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
-                    listeTemps,listeMois,listeColleurs,listeGrades,listeEtablissements=[0]*nb_decompte,[],[],[],[]
-                    nbMois=nbColleurs=nbGrades=nbEtabs=1
-                elif decompte['etab']!=lastEtab: # si on change d'établissement mais pas de matière
-                    if parMois:
-                        listeMois.append((lastMois,listeTemps))
-                        listeColleurs.append((lastColleur[0].upper(),lastColleur[1].title(),listeMois,nbMois))
-                    else:
-                        listeColleurs.append((lastColleur[0].upper(),lastColleur[1].title(),listeTemps))
-                    listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
-                    listeEtablissements.append((lastEtab,listeGrades,nbGrades))
-                    listeTemps,listeMois,listeColleurs,listeGrades=[0]*nb_decompte,[],[],[]
-                    nbMois=nbColleurs=nbGrades=1
-                    nbEtabs+=1
-                elif lastGrade!=decompte['grade']: # si on change de grade, mais pas d'établissement ni de matière
-                    if parMois:
-                        listeMois.append((lastMois,listeTemps))
-                        listeColleurs.append((lastColleur[0].upper(),lastColleur[1].title(),listeMois,nbMois))
-                    else:
-                        listeColleurs.append((lastColleur[0].upper(),lastColleur[1].title(),listeTemps))
-                    listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
-                    listeTemps,listeMois,listeColleurs=[0]*nb_decompte,[],[]
-                    nbMois=nbColleurs=1
-                    nbEtabs+=1
-                    nbGrades+=1
-                elif (decompte['nom'],decompte['prenom'])!=lastColleur: # si on change de colleur, mais pas de grade, ni d'établissement, ni de matière
-                    if parMois:
-                        listeMois.append((lastMois,listeTemps))
-                        listeColleurs.append((lastColleur[0].upper(),lastColleur[1].title(),listeMois,nbMois))
-                    else:
-                        listeColleurs.append((lastColleur[0].upper(),lastColleur[1].title(),listeTemps))
-                    listeTemps, listeMois =[0]*nb_decompte, []
-                    nbMois=1
-                    nbColleurs+=1
-                    nbGrades+=1
-                    nbEtabs+=1
-                elif parMois and decompte['mois'] != lastMois: #si on change de mois mais pas de colleur
-                    listeMois.append((lastMois,listeTemps))
-                    listeTemps = [0]*nb_decompte
-                    nbMois+=1
-                    nbColleurs+=1
-                    nbGrades+=1
-                    nbEtabs+=1
-                listeTemps[effectifs_classe[decompte['classe_id']]]+= decompte['heures']
-                lastColleur, lastGrade, lastEtab, lastMatiere = (decompte['nom'], decompte['prenom']), decompte['grade'], decompte['etab'], decompte['matiere_nom']
-                if parMois:
-                    lastMois = decompte['mois']
-            if parMois:
-                listeMois.append((lastMois,listeTemps))
-                listeColleurs.append((lastColleur[0].upper(),lastColleur[1].title(),listeMois,nbMois))
-            else:
-                listeColleurs.append((lastColleur[0].upper(),lastColleur[1].title(),listeTemps))
-            listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
-            listeEtablissements.append((lastEtab,listeGrades,nbGrades))
-            listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
+                    lastMatiere, lastColleur, lastMois = decomptes[0][3], decomptes[0][8], decomptes[0][9] # nom de la matière et id du colleur
+                    decomptes2.append(decomptes[0][3:-1] + ([0]*nb_decompte,))
+                    for ligne in decomptes: # on va sommer les heures par année/effectif
+                        if not(ligne[3] == lastMatiere and ligne[8] == lastColleur and ligne and ligne[9] == lastMois): # si on change pas de colleur, on rajoute une ligne
+                            lastMatiere, lastColleur, lastMois = ligne[3], ligne[8], ligne[9]
+                            decomptes2.append(ligne[3:-1] + ([0]*nb_decompte,))
+                        decomptes2[-1][-1][effectifs_classe[ligne[0]]] += ligne[-1]
+                else:
+                    lastMatiere, lastColleur = decomptes[0][3], decomptes[0][8] # nom de la matière et id du colleur
+                    decomptes2.append(decomptes[0][3:-1] + ([0]*nb_decompte,))
+                    for ligne in decomptes: # on va sommer les heures par année/effectif
+                        if not(ligne[3] == lastMatiere and ligne[8] == lastColleur and ligne): # si on change pas de colleur, on rajoute une ligne
+                            lastMatiere, lastColleur = ligne[3], ligne[8]
+                            decomptes2.append(ligne[3:-1] + ([0]*nb_decompte,))
+                        decomptes2[-1][-1][effectifs_classe[ligne[0]]] += ligne[-1]
             effectifs= list(zip([1]*3+[2]*3,["eff<20","20≤eff≤35","eff>35"]*2))
             effectifs = [x for x,boolean in zip(effectifs,effectif_classe) if boolean is not False]
-            return listeDecompte,effectifs
-        else: # si on note par classe pour un pdf
-            listeMatieres, listeDecompte, listeEtablissements, listeGrades, listeColleurs, listeMois = [], [], [], [], [], []
-            if len(decomptes) > 0:
-                lastClasse, lastMatiere, lastEtab, lastGrade, lastColleur, lastTemps = decomptes[0]['classe_nom'], decomptes[0]['matiere_nom'], decomptes[0]['etab'], decomptes[0]['grade'], (decomptes[0]['nom'], decomptes[0]['prenom']), decomptes[0]['heures']
-                lastMois = decomptes[0]['mois'] if parMois else 0
-                nbMatieres = nbEtabs = nbGrades = nbColleurs = nbMois = 1
-                for decompte in decomptes:
-                    if decompte['classe_nom'] != lastClasse: # si on change de classe
-                        if parMois:
-                            listeColleurs.append((lastColleur,listeMois,nbMois))
-                            listeMois.append((lastMois,lastTemps))
-                        else:
-                            listeColleurs.append((lastColleur,lastTemps))
-                        listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
-                        listeEtablissements.append((lastEtab,listeGrades,nbGrades))
-                        listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
-                        listeMatieres.append((lastClasse,listeDecompte,nbMatieres))
-                        listeDecompte,listeColleurs,listeGrades,listeEtablissements, listeMois = [], [], [], [], []
-                        nbMatieres=nbColleurs=nbGrades=nbEtabs=nbMois=1
-                    elif decompte['matiere_nom']!=lastMatiere: # si on change de matière
-                        if parMois:
-                            listeColleurs.append((lastColleur,listeMois,nbMois))
-                            listeMois.append((lastMois,lastTemps))
-                        else:
-                            listeColleurs.append((lastColleur,lastTemps))
-                        listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
-                        listeEtablissements.append((lastEtab,listeGrades,nbGrades))
-                        listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
-                        listeColleurs,listeGrades,listeEtablissements, listeMois = [], [], [], []
-                        nbMois=nbColleurs=nbGrades=nbEtabs=1
-                        nbMatieres+=1
-                    elif decompte['etab']!=lastEtab: # si on change d'établissement mais pas de matière
-                        if parMois:
-                            listeColleurs.append((lastColleur,listeMois,nbMois))
-                            listeMois.append((lastMois,lastTemps))
-                        else:
-                            listeColleurs.append((lastColleur,lastTemps))
-                        listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
-                        listeEtablissements.append((lastEtab,listeGrades,nbGrades))
-                        listeColleurs,listeGrades, listeMois = [], [], []
-                        nbMois=nbColleurs=nbGrades=1
-                        nbEtabs+=1
-                        nbMatieres+=1
-                    elif lastGrade!=decompte['grade']: # si on change de grade, mais pas d'établissement ni de matière
-                        if parMois:
-                            listeColleurs.append((lastColleur,listeMois,nbMois))
-                            listeMois.append((lastMois,lastTemps))
-                        else:
-                            listeColleurs.append((lastColleur,lastTemps))
-                        listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
-                        listeColleurs, listeMois = [], []
-                        nbMois=nbColleurs=1
-                        nbEtabs+=1
-                        nbGrades+=1
-                        nbMatieres+=1
-                    elif (decompte['nom'],decompte['prenom'])!=lastColleur: # si on change de colleur, mais pas de grade, ni d'établissement, ni de matière
-                        if parMois:
-                            listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),listeMois,nbMois))
-                            listeMois.append((lastMois,lastTemps))
-                        else:
-                            listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),lastTemps))
-                        listeMois = []
-                        nbMois=1
-                        nbColleurs+=1
-                        nbGrades+=1
-                        nbEtabs+=1
-                        nbMatieres+=1
-                    elif parMois and decompte['mois']!=lastMois: # si on change de mois, mais pas de colleur, etc ...
-                        listeMois.append((lastMois,lastTemps))
-                        nbMois+=1
-                        nbColleurs+=1
-                        nbGrades+=1
-                        nbEtabs+=1
-                        nbMatieres+=1
-                    lastColleur, lastGrade, lastEtab, lastMatiere, lastTemps = (decompte['nom'],decompte['prenom']), decompte['grade'], decompte['etab'], decompte['matiere_nom'], decompte['heures']
-                    if parMois:
-                        lastMois = decompte['mois']
-                if parMois:
-                    listeMois.append((lastMois,lastTemps))
-                    listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),listeMois,nbMois))
-                else:
-                    listeColleurs.append(("{} {}".format(lastColleur[1].title(),lastColleur[0].upper()),lastTemps))
-                listeGrades.append((LISTE_GRADES[lastGrade],listeColleurs,nbColleurs))
-                listeEtablissements.append((lastEtab,listeGrades,nbGrades))
-                listeDecompte.append((lastMatiere,listeEtablissements,nbEtabs))
-                listeMatieres.append((lastClasse,listeDecompte,nbMatieres))
-        return listeMatieres
+            if csv:
+                print(decomptes2)
+                return decomptes2, effectifs
+            if parMois:
+                profondeurs = [1,1,1,3,2]
+                funcs = [lambda t:t, lambda t:t,lambda x:(LISTE_GRADES[x[0]],),lambda x:("{} {}".format(x[1].title(),x[0].upper()),),lambda t:t]
+            else:
+                profondeurs = [1,1,1,4]
+                funcs = [lambda t:t, lambda t:t,lambda x:(LISTE_GRADES[x[0]],),lambda x:("{} {}".format(x[1].title(),x[0].upper()),x[3])]
+            return array2tree(decomptes2,profondeurs,funcs), effectifs
+        else: # si on note par classe
+            if csv : # si on note par classe pour un csv
+                return decomptes
+            # si on note par classe pour un pdf
+            if parMois:
+                profondeurs = [3,1,1,1,3,2]
+                funcs = [lambda x:(x[1],), lambda t:t, lambda t:t,lambda x:(LISTE_GRADES[x[0]],),lambda x:("{} {}".format(x[1].title(),x[0].upper()),), lambda t:t]
+            else:
+                profondeurs = [3,1,1,1,4]
+                funcs = [lambda x:(x[1],), lambda t:t, lambda t:t,lambda x:(LISTE_GRADES[x[0]],),lambda x:("{} {}".format(x[1].title(),x[0].upper()),x[3]), lambda t:t[0]]
+            return array2tree(decomptes,profondeurs,funcs)
 
     def decompte(self,moisMin,moisMax):
         """Renvoie la liste des colleurs avec leur nombre d'heures de colle entre les mois moisMin et moisMax, trié par année/effectif de classe"""

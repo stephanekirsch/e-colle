@@ -33,7 +33,7 @@ class Command(BaseCommand):
             try:
                 with urlopen(url) as fichier, open(os.path.join("..","e-colle.tar.gz"),"wb") as fichier_zip:
                     self.stdout.write("téléchargement de la version {} de e-colle".format(version))
-                    self.stdout.write("progression: 0.0%")
+                    self.stdout.write("progression: 0.0%",ending="\r")
                     taille = fichier.getheader('Content-Length')
                     taille = int(taille) if taille is not None else 3000000
                     taille = int(taille)
@@ -47,10 +47,10 @@ class Command(BaseCommand):
                         else:
                             progress += CHUNK
                             progress = min(taille,progress)
-                            pourcent = "{:.2f}%".format(100*progress/taille)
-                            self.stdout.write(pourcent)
+                            pourcent = "progression: {:.2f}%".format(100*progress/taille)
+                            self.stdout.write(pourcent, ending="\r")
                             fichier_zip.write(chunk)
-                    self.stdout.write("téléchargement terminé")
+                    self.stdout.write("\ntéléchargement terminé")
             except HTTPError:
                 raise CommandError("la version précisée: {} n'existe pas".format(version))
             # décompression du fichier zip

@@ -50,16 +50,16 @@
 		<td>Modifier</td>
 		<td>Supprimer</td>
 	</tr>
-	{% for listeDates, semaine, titre, detail, nbDates in notes %}
+	{% for semaine, titre, detail, listeDates, nbDates in notes %}
 	<tr {% cycle '' 'class="plusclair"' as couleur %} >
-		<td rowspan="{{nbDates}}">Semaine n°{{semaine}}</td>
-		<td rowspan="{{nbDates}}">{% if titre %}{{titre}}{% endif %}{% if detail %}<div class="popup">{% if latex %}{{detail}}{% else %}{{detail|linebreaksbr}}{% endif %}</div>{% endif %}</td>
-		{% for listeHeures, dateColle, nbHeures in listeDates %}
+		<td rowspan="{{nbDates}}">{{ semaine }}</td>
+		<td rowspan="{{nbDates}}">{{ titre }}{% if detail %}<div class="popup">{% if latex %}{{item.2}}{% else %}{{item.2|linebreaksbr}}{% endif %}</div>{% endif %}</td>
+		{% for dateColle, listeHeures, nbHeures in listeDates %}
 		{% if not forloop.first %}
 	<tr {{couleur}}>
 		{% endif %}
 		<td rowspan="{{nbHeures}}">{{dateColle|date:"l j F"}}</td>
-			{% for colles, heure, nbColles in listeHeures %}
+			{% for heure, colles, nbColles in listeHeures %}
 			{% if not forloop.first %}
 	<tr {{couleur}}>
 			{% endif %}
@@ -68,7 +68,7 @@
 				{% if not forloop.first %}
 	<tr {{couleur}}>
 				{% endif %}
-		<td>{% if colle.0 %}{{colle.0}}{% else %}Élève fictif{% endif %}</td>
+		<td>{{colle.0}}</td>
 		<td>{% if colle.1 == 22 %}Abs.{% elif colle.1 == 21 %}n.n.{% else %}{{colle.1}}{% endif %}</td>
 		<td>{% if colle.2 %}Lire<div class="popup">{% if latex %}{{colle.2}}{% else %}{{colle.2|linebreaksbr}}{% endif %}</div>{% endif %}</td>
 		<td><a href="{% url 'notemodif_colleur' colle.3 %}">Modifier</a></td>

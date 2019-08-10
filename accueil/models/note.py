@@ -5,8 +5,35 @@ from django.db.models import Avg, Min, Max, StdDev, Count
 from .autre import dictfetchall
 from .semaine import Semaine
 from .eleve import Eleve
-
 from ecolle.settings import HEURE_DEBUT, HEURE_FIN, INTERVALLE
+
+def array2tree(tableau, profondeurs = None, funcs = None, x = 0, y = 0, taille = False):
+    """fonction récursive pour transformer un tableau de tableaux en arbre à poids"""
+    if taille is False:
+        taille = len(tableau)
+    prof = 1 if profondeurs is None else profondeurs[0]
+    func = (lambda t:t) if funcs is None else funcs[0]
+    if taille == 0:
+        return []
+    if y + prof == len(tableau[0]): # si on est au bout
+        return [func(tableau[x+i][y:y+prof]) for i in range(taille)]
+    longueurs = []
+    positions = [x]
+    longueur = 1
+    for i in range(taille-1):
+        if tableau[x+i][y] == tableau[x+i+1][y]:
+            longueur +=1
+        else:
+            longueurs.append(longueur)
+            positions.append(x+i+1)
+            longueur = 1
+    longueurs.append(longueur)
+    new_prof = None if profondeurs is None else profondeurs[1:]
+    new_func = None if funcs is None else funcs[1:]
+    return [(*func(tableau[position][y:y+prof]), array2tree(tableau, new_prof, new_func, position, y+prof, longueur), longueur) for longueur, position in zip(longueurs,positions)]
+
+
+
 
 class NoteManager(models.Manager):
     def listeNotesApp(self,colleur):
@@ -23,7 +50,7 @@ class NoteManager(models.Manager):
                 time(note["heure"] // 60, note["heure"] % 60)).replace(tzinfo=timezone.utc).timestamp(), note["eleve_id"], bool(note["rattrapee"])] for note in notes]
 
     def listeNotes(self,colleur,classe,matiere):
-        requete = "SELECT n.id pk, s.numero semaine, p.titre, p.detail, n.date_colle, n.heure, u.first_name prenom, u.last_name nom, n.note, n.commentaire\
+        requete = "SELECT s.numero semaine, p.titre, p.detail, n.date_colle, n.heure, COALESCE(u.first_name,'Élève Fictif') prenom, COALESCE(u.last_name,'') nom, n.note, n.commentaire, n.id pk\
                    FROM accueil_note n\
                    LEFT OUTER JOIN accueil_eleve e\
                    ON n.eleve_id = e.id\
@@ -36,50 +63,14 @@ class NoteManager(models.Manager):
                    LEFT OUTER JOIN accueil_programme p\
                    ON p.classe_id= %s AND p.matiere_id = %s AND ps.programme_id = p.id\
                    WHERE n.classe_id = %s AND n.colleur_id= %s AND n.matiere_id = %s\
-                   ORDER BY s.numero DESC, n.date_colle DESC, n.heure DESC"
+                   ORDER BY s.numero DESC, n.date_colle DESC, n.heure DESC, u.last_name, u.first_name"
         with connection.cursor() as cursor:
             cursor.execute(requete,(classe.pk,matiere.pk,classe.pk,colleur.pk,matiere.pk))
             notes = dictfetchall(cursor)
-        listeNotes = []
-        listeDates = []
-        listeHeures = []
-        listeEleves = []
-        nbeleves=nbheures=nbdates=0
-        try:
-            heure,date_colle,semaine,titre,detail = notes[0]['heure'],notes[0]['date_colle'], notes[0]['semaine'], notes[0]['titre'], notes[0]['detail']
-        except Exception:
-            pass
-        else:
-            for note in notes:
-                if not (note['heure'] == heure and note['date_colle'] == date_colle):
-                    nbheures += nbeleves
-                    listeHeures.append((listeEleves,heure,nbeleves))
-                    heure = note['heure']
-                    nbeleves=1
-                    listeEleves = [("Élève fictif" if not note['prenom'] else "{} {}".format(note['prenom'].title(),note['nom'].upper()),note['note'],note['commentaire'],note['pk'])]
-                    if note['date_colle'] != date_colle:
-                        nbdates+=nbheures
-                        listeDates.append((listeHeures,date_colle,nbheures))
-                        date_colle = note['date_colle']
-                        nbheures=0
-                        listeHeures=[]
-                        if note['semaine'] != semaine:
-                            listeNotes.append((listeDates,semaine,titre,detail,nbdates))
-                            semaine,titre,detail = note['semaine'],note['titre'],note['detail']
-                            nbdates=0
-                            listeDates=[]
-                elif note['prenom']:
-                    listeEleves.append(("{} {}".format(note['prenom'].title(),note['nom'].upper()),note['note'],note['commentaire'],note['pk']))
-                    nbeleves+=1
-                else:
-                    listeEleves.append(("Élève fictif",note['note'],note['commentaire'],note['pk']))
-                    nbeleves+=1
-            listeHeures.append((listeEleves,heure,nbeleves))
-            nbheures += nbeleves
-            listeDates.append((listeHeures,date_colle,nbheures))
-            nbdates+=nbheures    
-            listeNotes.append((listeDates,semaine,titre,detail,nbdates))
-        return listeNotes
+        with connection.cursor() as cursor:
+            cursor.execute(requete,(classe.pk,matiere.pk,classe.pk,colleur.pk,matiere.pk))
+            notes2 = cursor.fetchall()
+        return array2tree(notes2,[3,1,1,5],[lambda l:("Semaine n°{}".format(l[0]),l[1] or "",l[2] or ""),lambda t:t, lambda t:t, lambda t:("{} {}".format(t[0].title(),t[1].upper()),t[2],t[3],t[4])])
 
     def classe2resultat(self,matiere,classe,semin,semax):
         semaines = Semaine.objects.filter(semainenote__classe=classe,semainenote__matiere=matiere,lundi__range=(semin.lundi,semax.lundi)).distinct().order_by('lundi')

@@ -282,23 +282,20 @@ def ramassageCSV(request,id_ramassage,parMois = 0):
     else:
         debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
     fin = ramassage.moisFin
-    listeDecompte, effectifs = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = False, parMois =parMois)
+    listeDecompte, effectifs = Ramassage.objects.decompteRamassage(ramassage, csv = True, parClasse = False, parMois =parMois)
     nomfichier="ramassage{}_{}-{}_{}.csv".format(debut.month,debut.year,fin.month,fin.year)
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
     writer = csv.writer(response)
-    writer.writerow(["Matière","Établissement","Grade","Colleur"]+ (["mois"] if parMois else []) +["{}è. ann.  {}".format(annee,effectif) for annee,effectif in effectifs])
-    for matiere, listeEtabs, nbEtabs in listeDecompte:
-        for etablissement, listeGrades, nbGrades in listeEtabs:
-            for grade, listeColleurs, nbColleurs in listeGrades:
-                if parMois:
-                    for colleur_nom, colleur_prenom, listeMois, nbMois in listeColleurs:
-                        for moi, decomptes in listeMois:
-                            writer.writerow([matiere.title(), etablissement.title(),
-                                grade, "{} {}".format(colleur_nom, colleur_prenom), LISTE_MOIS[moi%12+1]] + ["{:.02f}".format(decomptes[i]/60).replace('.',',') for i in range(len(effectifs))])
-                else:               
-                    for colleur_nom, colleur_prenom, decomptes in listeColleurs:
-                        writer.writerow([matiere.title(), etablissement.title(),
-                            grade, "{} {}".format(colleur_nom, colleur_prenom)] + ["{:.02f}".format(decomptes[i]/60).replace('.',',') for i in range(len(effectifs))])
+    writer.writerow(["Matière","Établissement","Grade","Nom","Prénomm"]+ (["mois"] if parMois else []) +["{}è. ann.  {}".format(annee,effectif) for annee,effectif in effectifs])
+    LISTE_GRADES=["inconnu","certifié","bi-admissible","agrégé","chaire sup"]
+    if parMois:
+        for matiere, etablissement, grade, colleur_nom, colleur_prenom, _, moi, heures in listeDecompte:
+            writer.writerow([matiere.title(), etablissement.title(),
+                                LISTE_GRADES[grade], colleur_nom.upper(), colleur_prenom.title(), LISTE_MOIS[moi%12+1]] + ["{:.02f}".format(heures[i]/60).replace('.',',') for i in range(len(effectifs))])
+    else:
+        for matiere, etablissement, grade, colleur_nom, colleur_prenom, _, heures in listeDecompte:
+            writer.writerow([matiere.title(), etablissement.title(),
+                                LISTE_GRADES[grade], colleur_nom.upper(), colleur_prenom.title()] + ["{:.02f}".format(heures[i]/60).replace('.',',') for i in range(len(effectifs))])
     return response
 
 @user_passes_test(is_secret, login_url='login_secret')
@@ -347,8 +344,8 @@ def ramassagePdf(request, id_ramassage, parMois = 0):
                     LIST_STYLE.add('SPAN',(2,ligneGrade),(2,min(ligneGrade+nbColleurs-1,23)))
                 ligneGrade+=nbColleurs
                 if parMois:
-                    for colleur_nom, colleur_prenom, listeMois, nbMois in listeColleurs:
-                        data[ligneColleur][3]="{} {}".format(colleur_nom, colleur_prenom)
+                    for colleur, listeMois, nbMois in listeColleurs:
+                        data[ligneColleur][3]=colleur
                         if nbMois>1:
                             LIST_STYLE.add('SPAN',(3,ligneColleur),(3,min(ligneColleur+nbMois-1,23)))
                         ligneColleur+=nbMois
@@ -397,8 +394,8 @@ def ramassagePdf(request, id_ramassage, parMois = 0):
                                                 if ligneColleur>2:
                                                     LIST_STYLE.add('SPAN',(3,1),(3,min(ligneColleur-1,23)))
                 else:
-                    for colleur_nom, colleur_prenom, decomptes in listeColleurs:
-                        data[ligneColleur][3]="{} {}".format(colleur_nom, colleur_prenom)
+                    for colleur, decomptes in listeColleurs:
+                        data[ligneColleur][3]=colleur
                         for i in range(len(effectifs)):
                             data[ligneColleur][i+4]="{:.02f}h".format(decomptes[i]/60).replace('.',',')
                         ligneColleur+=1
@@ -468,18 +465,18 @@ def ramassageCSVParClasse(request, id_ramassage, totalParmois):
     writer.writerow(entete)
     if not total:
         for decompte in decomptes:
-            heures = int(decompte['heures'])
-            writer.writerow([decompte['classe_nom'], decompte['matiere_nom'], decompte['etab'].title(),
-                            LISTE_GRADES[decompte['grade']], decompte['nom'], decompte['prenom']] + ([LISTE_MOIS[decompte["mois"]%12+1]] if parmois else []) + ["{:.02f}".format(heures/60).replace('.',',')])
+            heures = int(decompte[-1])
+            writer.writerow([decompte[1], decompte[3], decompte[4].title(),
+                            LISTE_GRADES[decompte[5]], decompte[6].upper(), decompte[7].title()] + ([LISTE_MOIS[decompte[9]%12+1]] if parmois else []) + ["{:.02f}".format(heures/60).replace('.',',')])
     elif len(decomptes) > 0:
-        last_classe, last_classe_nom, last_matiere, last_matiere_nom = decomptes[0]['classe_id'], decomptes[0]['classe_nom'], decomptes[0]['matiere_id'], decomptes[0]['matiere_nom']
+        last_classe, last_classe_nom, last_matiere = decomptes[0][0], decomptes[0][1], decomptes[0][3]
         total_classe, total_matiere = 0, 0
         for decompte in decomptes:
-            classe, matiere = decompte['classe_id'], decompte['matiere_id']
-            heures = decompte['heures']
+            classe, matiere = decompte[0], decompte[3]
+            heures = decompte[-1]
             if matiere != last_matiere or classe != last_classe: # si on change de matière ou de classe, on met le total matière
                 writer.writerow([""]*(6+parmois))
-                writer.writerow([last_classe_nom, "total {}".format(last_matiere_nom.title())]+[""]*(4+parmois) +["{:.02f}".format(total_matiere/60).replace('.',',')])
+                writer.writerow([last_classe_nom, "total {}".format(last_matiere.title())]+[""]*(4+parmois) +["{:.02f}".format(total_matiere/60).replace('.',',')])
                 writer.writerow([""]*(6+parmois))
                 total_classe += total_matiere
                 total_matiere = 0
@@ -488,11 +485,11 @@ def ramassageCSVParClasse(request, id_ramassage, totalParmois):
                 writer.writerow([""]*(6+parmois))
                 writer.writerow([""]*(6+parmois))
                 total_classe = 0
-            heures = int(decompte['heures'])
-            writer.writerow([decompte['classe_nom'], decompte['matiere_nom'], decompte['etab'].title(),
-                        LISTE_GRADES[decompte['grade']], decompte['nom'], decompte['prenom']] + ([LISTE_MOIS[decompte["mois"]%12+1]] if parmois else []) + ["{:.02f}".format(heures/60).replace('.',',')])
+            heures = int(decompte[-1])
+            writer.writerow([decompte[1], decompte[3], decompte[4].title(),
+                        LISTE_GRADES[decompte[5]], decompte[6].upper(), decompte[7].title()] + ([LISTE_MOIS[decompte[-2]%12+1]] if parmois else []) + ["{:.02f}".format(heures/60).replace('.',',')])
             total_matiere += heures
-            last_classe, last_classe_nom, last_matiere, last_matiere_nom = decompte['classe_id'], decompte['classe_nom'], decompte['matiere_id'], decompte['matiere_nom']
+            last_classe, last_classe_nom, last_matiere_nom = decompte[0], decompte[1], decompte[3]
         writer.writerow([""]*(6+parmois))
         writer.writerow([last_classe_nom, "total {}".format(last_matiere_nom.title())]+[""]*(4+parmois) +["{:.02f}".format(total_matiere/60).replace('.',',')])
         writer.writerow([""]*(6+parmois))
