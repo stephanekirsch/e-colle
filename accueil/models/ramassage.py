@@ -157,7 +157,6 @@ class RamassageManager(models.Manager):
             effectifs= list(zip([1]*3+[2]*3,["eff<20","20≤eff≤35","eff>35"]*2))
             effectifs = [x for x,boolean in zip(effectifs,effectif_classe) if boolean is not False]
             if csv:
-                print(decomptes2)
                 return decomptes2, effectifs
             if parMois:
                 profondeurs = [1,1,1,3,2]
