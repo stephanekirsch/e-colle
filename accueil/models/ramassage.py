@@ -4,7 +4,6 @@ from datetime import date, timedelta
 from django.db.models.functions import Lower
 from django.db.models import Count, Sum, Min, Max
 from .note import Note, array2tree
-from .autre import dictfetchall
 from .classe import Classe
 from .semaine import Semaine
 from ecolle.settings import BDD

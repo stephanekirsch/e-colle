@@ -1,12 +1,7 @@
-from django.core.management.base import BaseCommand
-import os
 import sys
 import platform
 import subprocess
-from time import sleep
 from getpass import getpass
-from random import choice
-
 
 liste_echecs = []
 liste_echecs_config = []
@@ -96,10 +91,10 @@ def configmysql():
     p.close()
 
 def configsqlite():
-    from pexpect import spawn, TIMEOUT
+    from pexpect import spawn
     print("-"*20)
     print("configuration de la base de données")
-    p.spawn("sqlite3 e-colle.db",encoding="utf8")
+    p=spawn("sqlite3 e-colle.db",encoding="utf8")
     print("base de données créée")
     p.sendline(".quit")
 
@@ -261,7 +256,7 @@ def main():
         elif install_command == "yum":
             print("installation de certbot")
             subprocess.run(["sudo","dnf","install","certbot","certbot-apache"]) #installation de certbot
-            print("lancement de certbot")s
+            print("lancement de certbot")
             subprocess.run(["sudo","certbot","--apache"])
 
 if __name__== '__main__':

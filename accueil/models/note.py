@@ -67,10 +67,7 @@ class NoteManager(models.Manager):
         with connection.cursor() as cursor:
             cursor.execute(requete,(classe.pk,matiere.pk,classe.pk,colleur.pk,matiere.pk))
             notes = dictfetchall(cursor)
-        with connection.cursor() as cursor:
-            cursor.execute(requete,(classe.pk,matiere.pk,classe.pk,colleur.pk,matiere.pk))
-            notes2 = cursor.fetchall()
-        return array2tree(notes2,[3,1,1,5],[lambda l:("Semaine n°{}".format(l[0]),l[1] or "",l[2] or ""),lambda t:t, lambda t:t, lambda t:("{} {}".format(t[0].title(),t[1].upper()),t[2],t[3],t[4])])
+        return array2tree(notes,[3,1,1,5],[lambda l:("Semaine n°{}".format(l[0]),l[1] or "",l[2] or ""),lambda t:t, lambda t:t, lambda t:("{} {}".format(t[0].title(),t[1].upper()),t[2],t[3],t[4])])
 
     def classe2resultat(self,matiere,classe,semin,semax):
         semaines = Semaine.objects.filter(semainenote__classe=classe,semainenote__matiere=matiere,lundi__range=(semin.lundi,semax.lundi)).distinct().order_by('lundi')
