@@ -10,7 +10,7 @@ from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixteco
 from django.http import Http404, HttpResponse,  HttpResponseForbidden
 from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
 from reportlab.platypus import Table, TableStyle
-from datetime import timedelta, date
+from datetime import timedelta
 from django.db.models import Max, Min
 import csv
 
@@ -334,7 +334,7 @@ def ramassagePdf(request, id_ramassage, parMois = 0):
             LIST_STYLE.add('SPAN',(0,ligneMat),(0,min(ligneMat+nbEtabs-1,23)))
         ligneMat+=nbEtabs
         for etablissement, listeGrades, nbGrades in listeEtabs:
-            data[ligneEtab][1]='Inconnu' if not etablissement else etablissement.title()
+            data[ligneEtab][1]=etablissement.title()
             if nbGrades>1:
                 LIST_STYLE.add('SPAN',(1,ligneEtab),(1,min(ligneEtab+nbGrades-1,23)))
             ligneEtab+=nbGrades
@@ -382,7 +382,7 @@ def ramassagePdf(request, id_ramassage, parMois = 0):
                                     if ligneMat>2:
                                         LIST_STYLE.add('SPAN',(0,1),(0,min(ligneMat-1,23)))
                                     if ligneEtab>1:
-                                        data[1][1]='Inconnu' if not etablissement else etablissement.title()
+                                        data[1][1]=etablissement.title()
                                         if ligneEtab>2:
                                             LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab-1,23)))
                                         if ligneGrade>1:
@@ -390,7 +390,7 @@ def ramassagePdf(request, id_ramassage, parMois = 0):
                                             if ligneGrade>2:
                                                 LIST_STYLE.add('SPAN',(2,1),(2,min(ligneGrade-1,23)))
                                             if ligneColleur>1:
-                                                data[1][3]= "{} {}".format(colleur_nom, colleur_prenom)
+                                                data[1][3]= colleur
                                                 if ligneColleur>2:
                                                     LIST_STYLE.add('SPAN',(3,1),(3,min(ligneColleur-1,23)))
                 else:
@@ -424,7 +424,7 @@ def ramassagePdf(request, id_ramassage, parMois = 0):
                                 if ligneMat>2:
                                     LIST_STYLE.add('SPAN',(0,1),(0,min(ligneMat-1,23)))
                                 if ligneEtab>1:
-                                    data[1][1]='Inconnu' if not etablissement else etablissement.title()
+                                    data[1][1]=etablissement.title()
                                     if ligneEtab>2:
                                         LIST_STYLE.add('SPAN',(1,1),(1,min(ligneEtab-1,23)))
                                     if ligneGrade>1:
@@ -451,7 +451,7 @@ def ramassageCSVParClasse(request, id_ramassage, totalParmois):
     if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists():# s'il existe un ramassage antérieur
         moisDebut = Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).aggregate(Max('moisFin'))['moisFin__max'] + timedelta(days=1)
     else:
-        moisDebut = debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
+        moisDebut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
     LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
     response = HttpResponse(content_type='text/csv')
     decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = True, parClasse = True, parMois = bool(parmois))
@@ -537,7 +537,7 @@ def ramassagePdfParClasse(request,id_ramassage,totalParmois):
         ligneMat=ligneEtab=ligneGrade=ligneColleur=ligneMois=1
         for matiere, listeEtabs, nbEtabs in listeClasse:
             totalmatiere = 0
-            data[ligneMat][0]=matiere.title()
+            data[ligneMat][0]=matiere
             if nbEtabs>1:
                 LIST_STYLE.add('SPAN',(0,ligneMat),(0,min(ligneMat+nbEtabs-1,22)))
             ligneMat+=nbEtabs
@@ -571,7 +571,7 @@ def ramassagePdfParClasse(request,id_ramassage,totalParmois):
                                     t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-hauteurcel/2)
                                     pdf.finDePage()
                                     # on redémarre sur une nouvelle page
-                                    pdf.debutDePage(soustitre = classe.nom)
+                                    pdf.debutDePage(soustitre = classe)
                                     LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
                                                     ,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))
                                                     ,('VALIGN',(0,0),(-1,-1),'MIDDLE')
@@ -579,14 +579,14 @@ def ramassagePdfParClasse(request,id_ramassage,totalParmois):
                                                     ,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
                                                     ,('SIZE',(0,0),(-1,-1),8)])
                                     nbKolleurs-=22
-                                    data = [["Matière","Établissement","Grade","Colleur", "heures"]]+[[""]*5 for i in range(min(22,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
+                                    data = [["Matière","Établissement","Grade","Colleur","mois","heures"]]+[[""]*6 for i in range(min(22,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
                                     ligneEtab-=22
                                     ligneGrade-=22
                                     ligneMat-=22
                                     ligneColleur-=22
                                     ligneMois = 1
                                     if ligneMat>1:
-                                        data[1][0]=matiere.title()
+                                        data[1][0]=matiere
                                         if ligneMat>2:
                                             LIST_STYLE.add('SPAN',(0,1),(0,min(ligneMat-1,22)))
                                         if ligneEtab>1:
@@ -650,6 +650,7 @@ def ramassagePdfParClasse(request,id_ramassage,totalParmois):
                 ligneGrade+=1
                 ligneMat+=1
                 ligneColleur+=1
+                ligneMois+=1
                 if ligneColleur==23 and nbKolleurs>22: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau
                     t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel, largeurcel],rowHeights=min((1+nbKolleurs),23)*[hauteurcel])
                     t.setStyle(LIST_STYLE)
@@ -657,7 +658,7 @@ def ramassagePdfParClasse(request,id_ramassage,totalParmois):
                     t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-hauteurcel/2)
                     pdf.finDePage()
                     # on redémarre sur une nouvelle page
-                    pdf.debutDePage(soustitre = classe.nom)
+                    pdf.debutDePage(soustitre = classe)
                     LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
                                     ,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))
                                     ,('VALIGN',(0,0),(-1,-1),'MIDDLE')
@@ -665,11 +666,15 @@ def ramassagePdfParClasse(request,id_ramassage,totalParmois):
                                     ,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
                                     ,('SIZE',(0,0),(-1,-1),8)])
                     nbKolleurs-=22
-                    data = [["Matière","Établissement","Grade","Colleur", "heures"]]+[[""]*5 for i in range(min(22,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
+                    data = [["Matière","Établissement","Grade","Colleur"] + (["mois"] if parmois else []) + ["heures"]]+[[""]*(5+parmois) for i in range(min(22,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
                     ligneEtab-=22
                     ligneGrade-=22
                     ligneMat-=22
-                    ligneColleur=1
+                    if parmois:
+                        ligneColleur-=22
+                        ligneMois=1
+                    else:
+                        ligneColleur=1
         # fin classe
         if total:
             LIST_STYLE.add('SPAN',(0,ligneColleur),(3+parmois,ligneColleur))
