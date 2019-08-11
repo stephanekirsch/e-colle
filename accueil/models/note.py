@@ -66,7 +66,7 @@ class NoteManager(models.Manager):
                    ORDER BY s.numero DESC, n.date_colle DESC, n.heure DESC, u.last_name, u.first_name"
         with connection.cursor() as cursor:
             cursor.execute(requete,(classe.pk,matiere.pk,classe.pk,colleur.pk,matiere.pk))
-            notes = dictfetchall(cursor)
+            notes = cursor.fetchall()
         return array2tree(notes,[3,1,1,5],[lambda l:("Semaine n°{}".format(l[0]),l[1] or "",l[2] or ""),lambda t:t, lambda t:t, lambda t:("{} {}".format(t[0].title(),t[1].upper()),t[2],t[3],t[4])])
 
     def classe2resultat(self,matiere,classe,semin,semax):
