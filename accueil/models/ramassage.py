@@ -92,7 +92,7 @@ class RamassageManager(models.Manager):
         LEFT OUTER JOIN accueil_etablissement et\
         ON col.etablissement_id = et.id\
         WHERE dec2.ramassage_id=%s AND dec2.temps - COALESCE(dec1.temps,0) > 0\
-        GROUP BY ma.id, u.last_name, u.first_name, col.id, cl.id, et.nom, dec2.mois, dec1.mois\
+        GROUP BY ma.nom, u.last_name, u.first_name, col.id, cl.id, et.nom, dec2.mois\
         UNION ALL SELECT cl.id classe_id, cl.nom classe_nom, cl.annee, ma.nom matiere_nom, COALESCE(et.nom, 'Inconnu') etab, col.grade, u.last_name nom, u.first_name prenom, col.id colleur_id,\
         dec1.mois mois, - COALESCE(SUM(dec1.temps),0) heures\
         FROM accueil_decompte dec1\
@@ -110,7 +110,7 @@ class RamassageManager(models.Manager):
         LEFT OUTER JOIN accueil_etablissement et\
         ON col.etablissement_id = et.id\
         WHERE dec2.id = NULL AND dec1.ramassage_id = %s\
-        GROUP BY ma.id, u.last_name, u.first_name, col.id, cl.id, et.nom, dec2.mois, dec1.mois"
+        GROUP BY ma.nom, u.last_name, u.first_name, col.id, cl.id, et.nom, dec1.mois"
         if parMois:
             requete = "SELECT * FROM ({}) as req\
             ORDER BY {} req.matiere_nom, req.etab, req.grade, req.nom, req.prenom, req.mois".format(requete, "req.annee, req.classe_nom, " if parClasse else "")
