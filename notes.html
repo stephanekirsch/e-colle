@@ -30,18 +30,26 @@
         <section id="main-content">
           <h3>Release notes</h3>
           <h4>Version 2.1</h4>
+          <h5>général</h5>
           <ul>
             <li>La connexion se fait désormais par identifiant/mot de passe, on n'a plus accès à la liste des colleurs/étudiants sur la page de connexion</li>
+          </ul>
+          <h5>Colleurs</h5>
+            <ul>
+               <li>Les programmes de colles peuvent désormais s'étaler sur plusieurs semaines de colle</li>
+               <li>Évolution dans la notation des élèves. On peut noter entre 1 et 3 élèves quelconques d'une classe en même temps. On peut en un clic sélectionner les 3 élèves d'un même groupe pour les noter</li>
+            </ul>
+          <h5>Secrétariat</h5>
+          Changement dans le ramassage des colles:
+          <ul>
+            <li>lorsqu'on effectue un ramassage, le décompte des heures est figé et dénombre les heures effectuées avant un mois donné, non ramassées au ramassage précédent</li>
+            <li>Possibilité d'éditer au format pdf ou csv par classe ou par année/effectif</li>
+            <li>Possibilité de décompter les heures effectuées pour chaque mois</li>
+          </ul>
+          <h5>Administrateur</h5>
+          <ul>
             <li>Possibilité d'éditer au format pdf toutes les informations sur un utilisateur étudiant ou colleur (RGPD)</li>
             <li>Possibilité de forcer l'effacement d'un étudiant ou d'un colleur sans nuire à la cohérence de la base de données (RGPD)</li>
-            <li>Les programmes de colles peuvent désormais s'étaler sur plusieurs semaines de colle</li>
-            <li>Changement dans le ramassage des colles:
-              <ul>
-                <li>lorsqu'on effectue un ramassage, le décompte des heures est figé et dénombre les heures effectuées avant un mois donné, non ramassées au ramassage précédent</li>
-                <li>Possibilité d'éditer au format pdf ou csv par classe ou par année/effectif</li>
-                <li>Possibilité de décompter les heures effectuées pour chaque mois</li>
-              </ul>
-            </li>
             <li>Découpage du fichier settings.py en 3 fichiers pour des raisons de commodité (config.py + debug.py)</li>
             <li>Création d'un fichier install.py pour une installation/configuration automatique de e-colle</li>
             <li>ajout de commandes console:
@@ -54,7 +62,7 @@
                 <li>update pour mettre à jour automatiquement vers une version ultérieure de e-colle</li>
               </ul>
             </li>
-          </ul>
+
         </section>
 
         <aside id="sidebar">
