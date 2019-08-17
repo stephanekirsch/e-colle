@@ -23,9 +23,10 @@ def date_serial(obj):
 def check(request):
     """renvoie la version de e-colle 
     pour indiquer à l'app mobile que le serveur fonctionne"""
-    if not Config.objects.get_config().app_mobile:
+    config = Config.objects.get_config()
+    if not config.app_mobile:
         raise Http404
-    return HttpResponse("ok")
+    return HttpResponse("e-colle::{}".format(config.nom_etablissement))
 
 
 def checkeleve(user):
