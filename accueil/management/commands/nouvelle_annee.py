@@ -44,7 +44,7 @@ class Command(BaseCommand):
                             TRUNCATE TABLE accueil_note;\
                             TRUNCATE TABLE accueil_noteects;\
                             TRUNCATE TABLE accueil_programme;\
-                            accueil_programme_semaine,\
+                            TRUNCATE accueil_programme_semaine,\
                             TRUNCATE TABLE accueil_ramassage;\
                             TRUNCATE TABLE accueil_semaine;\
                             TRUNCATE TABLE django_session;\
