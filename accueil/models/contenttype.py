@@ -29,7 +29,6 @@ class ContentTypeRestrictedFileField(FileField):
 
     def clean(self, *args, **kwargs):        
         data = super().clean(*args, **kwargs)
-        
         file = data.file
         try:
             content_type = file.content_type
@@ -39,8 +38,7 @@ class ContentTypeRestrictedFileField(FileField):
             else:
                 raise forms.ValidationError(_("type de fichier non supporté"))
         except AttributeError:
-            pass        
-            
+            pass           
         return data
 
 class RestrictedImageField(ImageField):
@@ -55,10 +53,9 @@ class RestrictedImageField(ImageField):
 
     def clean(self, *args, **kwargs):        
         data = super().clean(*args, **kwargs)
-        
-        file = data.file
-        taille = file.getbuffer().nbytes
-        if taille > self.max_upload_size:
-            raise forms.ValidationError(_("taille maximale d'un téléversement: {}. taille de votre fichier: {}".format(fileformat(self.max_upload_size), fileformat(taille))))
-   
+        if data:
+            file = data.file
+            taille = file.getbuffer().nbytes
+            if taille > self.max_upload_size:
+                raise forms.ValidationError(_("taille maximale d'un téléversement: {}. taille de votre fichier: {}".format(fileformat(self.max_upload_size), fileformat(taille))))
         return data
