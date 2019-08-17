@@ -14,7 +14,7 @@ def aptinstall(package):
 
 def pipinstall(package):
     return subprocess.run(
-        ["pip3", "install", package])
+        ["sudo","-H","pip3", "install", package])
 
 def configpostgresl():
     from pexpect import spawn, TIMEOUT
@@ -121,6 +121,7 @@ def configapache():
     code2 = subprocess.run(["sudo","a2ensite","e-colle.conf"]).returncode # activation du site
     if not(code1 or code2):
         droits()
+    subprocess.run(["sudo","service","apache2","reload"])
 
 def droits():
     print("gestion des droits d'apache")
