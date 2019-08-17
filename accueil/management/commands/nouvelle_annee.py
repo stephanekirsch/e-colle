@@ -27,9 +27,10 @@ class Command(BaseCommand):
                             accueil_note,\
                             accueil_noteects,\
                             accueil_programme,\
+                            accueil_programme_semaine,\
                             accueil_ramassage,\
                             accueil_semaine,\
-                            django_session,\
+                            django_session\
                             RESTART IDENTITY;")
                         cursor.execute("VACUUM;")
                     elif BDD == "mysql":
@@ -43,6 +44,7 @@ class Command(BaseCommand):
                             TRUNCATE TABLE accueil_note;\
                             TRUNCATE TABLE accueil_noteects;\
                             TRUNCATE TABLE accueil_programme;\
+                            accueil_programme_semaine,\
                             TRUNCATE TABLE accueil_ramassage;\
                             TRUNCATE TABLE accueil_semaine;\
                             TRUNCATE TABLE django_session;\
@@ -59,6 +61,7 @@ class Command(BaseCommand):
                             cursor.execute("DELETE FROM accueil_note;")
                             cursor.execute("DELETE FROM accueil_noteects;")
                             cursor.execute("DELETE FROM accueil_programme;")
+                            cursor.execute("DELETE FROM accueil_programme_semaine;")
                             cursor.execute("DELETE FROM accueil_ramassage;")
                             cursor.execute("DELETE FROM accueil_semaine;")
                             cursor.execute("DELETE FROM django_session;")

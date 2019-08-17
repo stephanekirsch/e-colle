@@ -10,5 +10,8 @@ class Semaine(models.Model):
         ordering=['lundi']
 
     def __str__(self):
-        samedi=self.lundi+timedelta(days=5)
-        return "{}:{}/{}-{}/{}".format(self.numero,self.lundi.day,self.lundi.month,samedi.day,samedi.month)
+        try:
+            samedi=self.lundi+timedelta(days=5)
+            return "{}:{}/{}-{}/{}".format(self.numero,self.lundi.day,self.lundi.month,samedi.day,samedi.month)
+        except Exception:
+            return ""
