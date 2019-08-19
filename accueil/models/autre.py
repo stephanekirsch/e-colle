@@ -140,7 +140,7 @@ def programme_post_save_function(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Eleve)
 def eleve_post_save_function(sender, instance, **kwargs):
-    if instance.photo: # si il y a une photo
+    if instance.photo and os.path.isfile(os.path.join(MEDIA_ROOT,instance.photo.name)):  # si il y a une photo
         image=Image.open(os.path.join(MEDIA_ROOT,instance.photo.name))
         taille=image.size
         if taille != (300,400):# si la taille n'est pas déjà la bonne:
