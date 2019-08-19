@@ -371,7 +371,7 @@ def addsinglegrade(request):
         program = Programme.objects.get(classe = note.classe, semaine = note.semaine, matiere = note.matiere).titre
     except Exception:
         program = ""
-    date_colle = int(datetime.combine(note.date_colle, time(note.heure // 4, 15 * (note.heure % 4))).replace(tzinfo=timezone.utc).timestamp())
+    date_colle = int(datetime.combine(note.date_colle, time(note.heure // 60, note.heure % 60)).replace(tzinfo=timezone.utc).timestamp())
     return HttpResponse(json.dumps({'pk': note.pk, 'program': program, 'date': date_colle}, default=date_serial))
 
 @csrf_exempt
@@ -442,7 +442,7 @@ def addgroupgrades(request):
         program = Programme.objects.get(classe = note1.classe, semaine = note1.semaine, matiere = note1.matiere).titre
     except Exception:
         program = ""
-    date_colle = int(datetime.combine(note1.date_colle, time(note1.heure // 4, 15 * (note1.heure % 4))).replace(tzinfo=timezone.utc).timestamp())
+    date_colle = int(datetime.combine(note1.date_colle, time(note1.heure // 60, note1.heure % 60)).replace(tzinfo=timezone.utc).timestamp())
     return HttpResponse(json.dumps({'pk1': note1.pk, 'pk2': note2.pk, 'pk3': note3.pk, 'program': program, 'date': date_colle}, default=date_serial))
 
 @csrf_exempt

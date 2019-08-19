@@ -6,6 +6,7 @@ from ecolle.settings import BACKUP_ROOT, MEDIA_ROOT
 import os
 import bz2
 import tarfile
+import subprocess
 
 class Command(BaseCommand):
 
@@ -53,6 +54,11 @@ a. abandonner\n""")
 							try:
 								archive_zip = tarfile.open(os.path.join(BACKUP_ROOT,fichier_media),"r:xz")
 								archive_zip.extractall(MEDIA_ROOT)
+								# on redonne les droits au groupe web sur les frichiers retaurés
+								try:
+									subprocess.run(["chgrp","-R","web",MEDIA_ROOT])
+								except Exception:
+									self.stdout.write("Problème dans l'attribution des droits des fichiers media")
 							except Exception:
 								self.stdout.write("Erreur lors de la restauration des fichiers media")
 							else:
