@@ -2,7 +2,7 @@ from django.db import models
 from datetime import timedelta
 
 class Semaine(models.Model):
-    LISTE_SEMAINES = [(i,i) for i in range(1,36)] 
+    LISTE_SEMAINES = [(i,i) for i in range(1,37)] 
     numero = models.PositiveSmallIntegerField(unique=True, choices=LISTE_SEMAINES, default=1)
     lundi = models.DateField(unique=True)
 
