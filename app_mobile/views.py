@@ -26,7 +26,6 @@ def check(request):
     config = Config.objects.get_config()
     if not config.app_mobile:
         raise Http404
-    return HttpResponse("ok")
     return HttpResponse("{}::{}".format(config.nom_etablissement,request.build_absolute_uri("/")[:-1]))
 
 
