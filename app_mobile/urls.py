@@ -4,13 +4,13 @@ from django.conf.urls import url
 from . import views
 
 urlpatterns = [
-    url(r'^check$', views.check, name="connect_app_mobile"),
+    url(r'^check$', views.check, name="check_app_mobile"),
     url(r'^connect$', views.connect, name="connect_app_mobile"),
     url(r'^agendaprograms$', views.agendaprograms, name="agenda_app_mobile"),
     url(r'^grades$', views.grades, name="grades_app_mobile"),
     url(r'^results$', views.results, name="results_app_mobile"),
     url(r'^colles$', views.colles, name="colles_app_mobile"),
-    url(r'^messages$', views.messages, name="messages_app_mpbile"),
+    url(r'^messages$', views.messages, name="messages_app_mobile"),
     url(r'^readmessage/(\d+)$', views.readmessage,
         name="read_message_app_mobile"),
     url(r'^deletemessage/(\d+)$', views.deletemessage,
