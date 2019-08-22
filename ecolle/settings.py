@@ -22,17 +22,12 @@ ADMINS = (
 
 DEFAULT_CSS = "style.css"
 
-if DB_NAME == "sqlite3":
-    dataname = "e-colle.db"
-else:
-    dataname = "e-colle"
-
 DATABASES = {
     'default': {
-        'ENGINE': "django.db.backends.{}".format(DB_NAME),  # le SGBD choisi
-        'NAME': dataname,  # le nom de la base de données
+        'ENGINE': "django.db.backends.{}".format(DB_ENGINE),  # le SGBD choisi
+        'NAME': DB_NAME,  # le nom de la base de données
         # La suite est à laisser vide si vous utilisez SQlite
-        'USER': 'e-colle',  # le nom de l'utilisateur ayant droits
+        'USER': DB_USER,  # le nom de l'utilisateur ayant droits
         # sur la base de données.
         'PASSWORD': DB_PASSWORD,  # le mot de passe de l'utilisateur
         'HOST': DB_HOST,  # l'adresse IP de la base de données.
@@ -48,7 +43,7 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 6000000
 CHEMINVERSECOLLE = path.dirname(path.dirname(__file__))
 
 # on récupère le nom du SGBD: mysql ou sqlite3 ou postgresql ou oracle.
-BDD = DB_NAME
+BDD = DB_ENGINE
 
 TEMPLATES = [
     {

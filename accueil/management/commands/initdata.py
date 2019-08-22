@@ -4,6 +4,7 @@ import os
 import re
 from random import choice
 from ecolle.config import *
+from ecolle.settings import DATABASES, BDD
 
 def texte_aleatoire(taille):
     return "".join(choice("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+@()!-&") for i in range(taille))
@@ -12,6 +13,9 @@ class Command(BaseCommand):
     help = """ré-initialise les données du fichier config.py"""
 
     def handle(self, *args, **options):
+        DB_ENGINE = BDD
+        DB_NAME = DATABASES['default']['NAME']
+        DB_USER = DATABASES['default']['USER']
         nomfichier = os.path.join(CHEMINVERSECOLLE,"ecolle","config.py")
         self.stdout.write("Ré-initialisation des données:\n\
             pour chaque donnée, appuyez sur entrée\n\
@@ -53,11 +57,15 @@ class Command(BaseCommand):
         loop = True
         while loop:
             sgbd_dict = {'1':"postgresql",'2':"mysql",'3':"sqlite3"}
-            db_name = input("SGBD à utiliser, " + ",".join(" {}:{}".format(value,key) for key,value in sgbd_dict.items()) + " ({}): ".format(DB_NAME))
-            if db_name in "123":
+            db_engine = input("SGBD à utiliser, " + ",".join(" {}:{}".format(value,key) for key,value in sgbd_dict.items()) + " ({}): ".format(DB_ENGINE))
+            if db_engine in "123":
                 loop = False
             else:
                 self.stdout.write("réponse invalide")
+        self.stdout.write("-"*20)
+        db_user = input("nom de l'utilisateur de la base de données ({}): ".format(DB_USER))
+        self.stdout.write("-"*20)
+        db_name = input("nom de la base de données ({}): ".format(DB_NAME))
         self.stdout.write("-"*20)
         db_password = input("mot de passe pour se connecter à la base de données\n\
             Attention, si le mot de passe est déjà défini il est fortement conseillé\n\
@@ -97,7 +105,7 @@ class Command(BaseCommand):
             else:
                 self.stdout.write("réponse invalide")
         self.stdout.write("-"*20)
-        timezonedict = {'1':'Europe/Paris', '2':'America/Cayenne', '3':'America/Guadeloupe', '4':'America/Martinique', '5':'Pacific/Noumea', '6':'Pacific/Tahiti'}
+        timezonedict = {'1':'Europe/Paris', '2':'America/Cayenne', '3':'America/Guadeloupe', '4':'America/Martinique', '5':'Indian/Reunion','6':'Pacific/Noumea', '7':'Pacific/Tahiti'}
         time_zone = input("fuseau horaire," + ",".join(" {}:{}".format(value,key) for key,value in timezonedict.items()) + " ({}): ".format(TIME_ZONE))
         self.stdout.write("-"*20)
         loop = True
@@ -155,8 +163,12 @@ class Command(BaseCommand):
                 fichier.write("IP_FILTRE_ADRESSES = (")
                 fichier.write(ip_filtre_adresses)
                 fichier.write(") # si IP_FILTER_ADMIN vaut True, liste des IPS autorisées pour l'utilisateur admin (REGEXP)\n")
-                fichier.write("DB_NAME = '{}' # base de données (mysql ou postgresql ou sqlite3)\n"\
-                    .format(DB_NAME if db_name == "" else sgbd_dict[db_name]))
+                fichier.write("DB_ENGINE = '{}' # base de données (mysql ou postgresql ou sqlite3)\n"\
+                    .format(DB_ENGINE if db_engine == "" else sgbd_dict[db_engine]))
+                fichier.write("DB_USER = '{}' # nom de l'utilisateur qui a les droits sur la base de données\n"\
+                    .format(DB_USER if db_user =="" else db_user))
+                fichier.write("DB_NAME = '{}' # nom de la base de données (ou du fichier .db pour SQLite)\n"\
+                    .format(DB_NAME if db_name =="" else db_name))
                 fichier.write("DB_PASSWORD = '{}' # mot de passe pour se connecter à la base de données\n"\
                     .format(DB_PASSWORD if db_password == "" else ( texte_aleatoire(30) if db_password.strip().lower() =="a" else db_password.strip())))
                 fichier.write("DB_HOST = '{}' # adresse locale de la base de données\n"\
