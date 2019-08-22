@@ -232,7 +232,7 @@ def deletemessage(request, message_id):
 @csrf_exempt
 def answer(request, message_id, answerAll):
     """répond au message dont l'identifiant est message_id, avec les champs POST title et body.
-    La réponse est envoyée à tous si la variable booléenne ansewAll vaut True, et uniquement
+    La réponse est envoyée à tous si la variable booléenne answerAll vaut True, et uniquement
     à l'expéditeur du message original sinon"""
     user = request.user
     if not checkeleve(user) and not checkcolleur(user):
@@ -242,7 +242,7 @@ def answer(request, message_id, answerAll):
     message = get_object_or_404(Message, pk=message_id, messagerecu__user=user)
     userdestinataire = get_object_or_404(
         Destinataire, user=user, message=message)
-    if userdestinataire.reponses and user.eleve is not None:
+    if userdestinataire.reponses and user.eleve is not None and not Config.objects.get_config().message_eleves:
         return HttpResponseForbidden("already answered")
     listedestinataires = message.auteur.first_name.title() + " " + \
         message.auteur.last_name.upper()
@@ -518,9 +518,9 @@ def adddraftgrades(request):
 
 @csrf_exempt
 def addmessage(request):
-    """ajoute un message envoyé par l"utilisateur (colleur)"""
+    """ajoute un message envoyé par l"utilisateur"""
     user = request.user
-    if not checkcolleur(user):
+    if not checkcolleur(user) and not (checkeleve(user) and Config.objects.get_config().message_eleves):
         return HttpResponseForbidden("not authenticated")
     if request.method != 'POST' or 'title' not in request.POST or 'body' not in request.POST or 'recipients' not in request.POST:
         raise Http404
