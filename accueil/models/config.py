@@ -12,6 +12,7 @@ class ConfigManager(models.Manager):
                             modif_prof_groupe=True,
                             default_modif_col=False,
                             default_modif_groupe=False,
+                            message_eleves=False,
                             mathjax=True,
                             ects=False,
                             nom_adresse_etablissement="",
@@ -50,6 +51,10 @@ class Config(models.Model):
     )
     default_modif_groupe = models.BooleanField(
             verbose_name="Modification des groupes par défaut pour tous les enseignants",
+            default=False
+    )
+    message_eleves = models.BooleanField(
+            verbose_name="Autoriser les étudiants à écrire aux colleurs (pas seulement répondre)",
             default=False
     )
     mathjax = models.BooleanField(

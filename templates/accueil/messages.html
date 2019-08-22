@@ -4,9 +4,8 @@
 {% block body %}
 <table class="accueil">
 	<tr>
-		<td>Liste des messages reçus</td>
-		<td><a href="{% url 'messagesenvoyes' %}">Messages envoyés</a></td>
-		{% if not user.eleve %}
+		<td>Liste des messages</td>
+		{% if peut_composer %}
 			<td><a href="{% url 'ecrire' %}">Écrire un message</a></td>
 		{% endif %}
 	</tr>
@@ -20,27 +19,31 @@
 		<td>Sélectionner{{form.message.errors}}</td>
 		<td>Lire</td>
 		<td>date</td>
+		<td>reçu</td>
+		<td>envoyé</td>
 		<td>lu</td>
 		<td>auteur</td>
 		<td>Destinataires</td>
 		<td>sujet</td>
 	</tr>
-	{% for mesage,widget in form.fields.message.queryset|tzip:form.message %}
-	{% with mesage.lu as lu %}
-	<tr>
+	{% for message,widget in form.fields.message.queryset|tzip:form.message %}
+	{% with message|getLu:user as lu %}
+	<tr {% if lu.1 %} style="color:#550000;" {% else %} style="color:#005500;" {% endif%}>
 		<td>{{widget}}</td>
-		<td><a href="{% url 'message' mesage.pk %}">Lire</a></td>
-		<td>{% if not lu %}<b>{% endif %}{{mesage.message.date|date:"D d M Y à H:i:s"}}{% if not lu %}</b>{% endif %}</td>
-		<td>{% if lu %} ✓ {% endif %}</td>
-		<td>{% if not lu %}<b>{% endif %} {{mesage.message.auteur}} {% if not lu %}</b>{% endif %}</td>
-		<td>{% if not lu %}<b>{% endif %} {{mesage.message.listedestinataires|truncatechars:200}} {% if not lu %}</b>{% endif %}</td>
-		<td>{% if not lu %}<b>{% endif %} {{mesage.message.titre}} {% if not lu %}</b>{% endif %}</td>
+		<td><a href="{% url 'message' message.pk %}">Lire</a></td>
+		<td>{% if not lu.0 %}<b>{% endif %}{{message.date|date:"D d M Y à H:i:s"}}{% if not lu.0 %}</b>{% endif %}</td>
+		<td>{% if lu.1 %} ✓ {% endif %}</td>
+		<td>{% if not lu.1 %} ✓ {% endif %}</td>
+		<td>{% if lu.0 %} ✓ {% endif %}</td>
+		<td>{% if not lu.0 %}<b>{% endif %} {{message.auteur}} {% if not lu.0 %}</b>{% endif %}</td>
+		<td>{% if not lu.0 %}<b>{% endif %} {{message.listedestinataires|truncatechars:200}} {% if not lu.0 %}</b>{% endif %}</td>
+		<td>{% if not lu.0 %}<b>joufsdhnnnnnhpiùsdgpùsgih{% endif %} {{message.titre}} {% if not lu.0 %}</b>{% endif %}</td>
 	</tr>
 	{% endwith %}
 	{% endfor %}
 	<tr class="plusclair">
 		<td><label for = "check">Tout cocher</label><br/><input type="checkbox" id="check"/></td>
-		<td colspan="6"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
+		<td colspan="8"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
 	</tr>
 {% else %}
 	<div class="error">Aucun message reçu</div>

@@ -78,6 +78,7 @@ def connect(request):
                                                 'classe_year': classe.annee,
                                                 'group': "" if user.eleve.groupe is None else user.eleve.groupe.nom,
                                                 'version': "2.1",
+                                                'compose': Config.objects.get_config().message_eleves,
                                                 'heure_debut': HEURE_DEBUT,
                                                 'heure_fin': HEURE_FIN,
                                                 'intervalle': INTERVALLE}))

@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django import template
 from datetime import timedelta
-from accueil.models import Classe, Config
+from accueil.models import Classe, Config, Destinataire
 
 register = template.Library()
 
@@ -67,3 +67,10 @@ def tnext(iterable):
         return next(iterable)
     except Exception:
         return None
+
+@register.filter
+def getLu(message,user):
+    if message.auteur == user:
+        return True, False
+    else:
+        return Destinataire.objects.filter(message=message,user=user).values_list("lu",flat=True).first(), True

@@ -3,11 +3,12 @@ from django.http import HttpResponseForbidden, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from accueil.models import Classe, Matiere, Colleur, Message, Destinataire, Eleve
+from accueil.models import Classe, Matiere, Colleur, Message, Destinataire, Eleve, Config
 from accueil.forms import UserForm, UserProfprincipalForm, SelectMessageForm, EcrireForm, ReponseForm
 from django.contrib import messages as messagees
 from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES
 import re
+from django.db.models import Q
 
 def home(request):
 	"""Renvoie la vue d'accueil ou, si l'utilisateur est déjà identifié, redirige vers la section adéquate"""
@@ -69,56 +70,46 @@ def profil(request):
 @login_required(login_url='accueil')
 def messages(request):
 	"""Renvoie vers la vue des messages"""
-	form = SelectMessageForm(request.user,True,request.POST or None)
+	form = SelectMessageForm(request.user,request.POST or None)
 	if form.is_valid():
-		for destinataire in form.cleaned_data['message']:
-			if not destinataire.message.hasAuteur and destinataire.message.messagerecu.all().count()<=1:
-				destinataire.message.delete()
-		form.cleaned_data['message'].delete()
+		form.save()
 		return redirect('messages')
-	return render(request,"accueil/messages.html",{'form':form,'nonvide':form.fields['message'].queryset.exists()})
-
-@login_required(login_url='accueil')
-def messagesenvoyes(request):
-	"""Renvoie vers la vue des messages envoyés"""
-	form = SelectMessageForm(request.user,False,request.POST or None)
-	if form.is_valid():
-		form.cleaned_data['message'].update(hasAuteur=False)
-		for message in form.cleaned_data['message']:
-			if not message.messagerecu.all().count():
-				message.delete()
-		return redirect('messagesenvoyes')
-	return render(request,"accueil/messagesenvoyes.html",{'form':form,'nonvide':form.fields['message'].queryset.exists()})
+	peut_composer = True
+	if request.user.eleve:
+		peut_composer = Config.objects.get_config().message_eleves
+	return render(request,"accueil/messages.html",{'form':form,'peut_composer':peut_composer,'nonvide':form.fields['message'].queryset.exists()})
 
 @login_required(login_url='accueil')
 def message(request,id_message):
 	"""Renvoie vers la vue du message dont l'id est id_message"""
-	mesage = Destinataire.objects.filter(user=request.user,pk=id_message).select_related('message','user')
-	if not mesage:
+	message = Message.objects.filter(pk=id_message).filter(Q(auteur = request.user, hasAuteur = True) | Q(messagerecu__user = request.user))
+	if not message.exists():
 		raise Http404("Message non trouvé")
-	if not mesage[0].lu:
-		mesage[0].message.luPar=mesage[0].message.luPar + str(request.user)+"; "
-		mesage[0].message.save()
-		mesage.update(lu=True)
-	repondre = False
-	if mesage[0].message.auteur.username not in ['admin','Secrétariat']:
-		if request.user.colleur or (request.user.eleve and not mesage[0].reponses):
-			repondre = True
-	return render(request,"accueil/message.html",{'mesage':mesage[0],'repondre':repondre})
-
-@login_required(login_url='accueil')
-def messageenvoye(request,id_message):
-	"""Renvoie vers la vue du message envoyé dont l'id est id_message"""
-	mesage = Message.objects.filter(auteur=request.user,pk=id_message)
-	if not mesage:
-		raise Http404
-	return render(request,"accueil/messageenvoye.html",{'mesage':mesage[0]})
+	message = message.first()
+	repondre = True
+	envoye = False
+	if message.auteur == request.user: # si c'est un message envoyé
+		envoye = True
+		if request.user.eleve: # on peut répondre, sauf si on est élève et que les élèves n'ont le droit que de répondre
+			repondre = Config.objects.get_config().message_eleves
+	else: # si c'est un message reçu
+		destinataire = Destinataire.objects.get(message = message,user=request.user)
+		if not destinataire.lu: # on met à jour  le destinataire
+			message.luPar += str(request.user) + "; "
+			message.save()
+			destinataire.lu=True
+			destinataire.save()
+		if request.user.eleve and destinataire.reponses and not Config.objects.get_config().message_eleves:
+			repondre = False
+		if message.auteur.username in ['admin','Secrétariat']:
+			repondre = False
+	return render(request,"accueil/message.html",{'message':message,'repondre':repondre,'envoye':envoye})
 
 @login_required(login_url='accueil')
 def ecrire(request):
 	"""Renvoie vers la vue d'écriture d'un message """
-	if request.user.eleve:
-		return HttpResponseForbidden
+	if request.user.eleve and not Config.objects.get_config().message_eleves:
+		return HttpResponseForbidden("Vous n'avez pas le droit d'écrire une message")
 	form=EcrireForm(request.user,request.POST or None)
 	if form.is_valid():
 		destinataires = set()
@@ -142,24 +133,52 @@ def ecrire(request):
 	return render(request,"accueil/ecrire.html",{'form':form})
 
 @login_required(login_url='accueil')
-def repondre(request,destinataire_id):
-	"""Renvoie vers la vue de réponse au message dont le destinataire est destinataire_id"""
-	destinataire = get_object_or_404(Destinataire,pk=destinataire_id)
-	if destinataire.user  != request.user:
+def repondre(request,message_id):
+	"""Renvoie vers la vue de réponse au message dont l'id est message_id"""
+	message = get_object_or_404(Message, pk=message_id)
+	if message.auteur == request.user: # on ne peut que "répondre à tous" à un message qu'on a envoyé
 		raise Http404
-	repondre = False
-	if destinataire.message.auteur.username not in ['admin','Secrétariat']:
-		if request.user.colleur or (request.user.eleve and not destinataire.reponses):
-			repondre = True
-	if not repondre:
-		return HttpResponseForbidden("Vous n'avez pas le droit de répondre")
-	form = ReponseForm(destinataire,request.POST or None)
+	destinataire = get_object_or_404(Destinataire,message=message,user=request.user)
+	if request.user.eleve and destinataire.reponses and not Config.objects.get_config().message_eleves or message.auteur.username in ['admin','Secrétariat']:
+		return HttpResponseForbidden("Vous n'avez pas le droit de répondre")	
+	form = ReponseForm(message,request.POST or None, initial = {'destinataire':str(message.auteur)})
 	if form.is_valid():
-		message = Message(auteur=request.user,listedestinataires=str(destinataire.message.auteur),titre=form.cleaned_data['titre'],corps=form.cleaned_data['corps'])
-		message.save()
-		Destinataire(user=destinataire.message.auteur,message=message).save()
-		destinataire.reponses+=1
-		destinataire.save()
+		mesage = Message(auteur=request.user,listedestinataires=str(message.auteur),titre=form.cleaned_data['titre'],corps=form.cleaned_data['corps'])
+		mesage.save()
+		destinatair = Destinataire(user=message.auteur,message=message)
+		destinatair.save()
+		destinatair.reponses+=1
+		destinatair.save()
 		messagees.error(request, "Message envoyé")
 		return redirect('messages')
-	return render(request,"accueil/repondre.html",{'form':form,'destinataire':destinataire})
+	return render(request,"accueil/repondre.html",{'form':form,'message':message})
+
+@login_required(login_url='accueil')
+def repondreatous(request,message_id):
+	"""Renvoie vers la vue de réponse au message dont l'id est message_id"""
+	message = Message.objects.filter(pk=message_id).filter(Q(auteur = request.user, hasAuteur = True) | Q(messagerecu__user = request.user))
+	if not message.exists():
+		raise Http404("Message non trouvé")
+	message = message.first()
+	destinataires  = list(message.messagerecu.all())
+	if message.auteur.username in ['admin','Secrétariat']:
+		returHttpResponseForbidden("Vous n'avez pas le droit de répondre")
+	if message.auteur == request.user: # si on répond à un message qu'on a envoyé
+		if request.user.eleve and not Config.objects.get_config().message_eleves:
+			returHttpResponseForbidden("Vous n'avez pas le droit de répondre")
+	else:
+		desti = get_object_or_404(Destinataire,message=message,user=request.user)
+		if request.user.eleve and desti.reponses and not Config.objects.get_config().message_eleves:
+			return HttpResponseForbidden("Vous n'avez pas le droit de répondre")
+		destinataires.append(Destinataire(user=message.auteur,message=None))
+	listedestinataires = "; ".join([str(desti.user) for desti in destinataires])
+	form = ReponseForm(message,request.POST or None, initial = {"destinataire": listedestinataires})
+	if form.is_valid():
+		message = Message(auteur=request.user,listedestinataires=listedestinataires,titre=form.cleaned_data['titre'],corps=form.cleaned_data['corps'])
+		message.save()
+		for destinat in destinataires:
+			if destinat.user != request.user:
+				Destinataire(message = message, user=destinat.user,reponses=1).save()
+		messagees.error(request, "Message envoyé")
+		return redirect('messages')
+	return render(request,"accueil/repondre.html",{'form':form,'message':message})

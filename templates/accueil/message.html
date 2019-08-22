@@ -5,33 +5,34 @@
 <table class="tableausimple">
 	<tr>
 		<th>Message de: </td>
-		<td>{{mesage.message.auteur}}</td>
+		<td>{{message.auteur}}</td>
 	</tr>
 	<tr>
 		<th>Envoyé le: </td>
-		<td>{{mesage.message.date|date:"D d M Y à H:i:s"}}</td>
+		<td>{{message.date|date:"D d M Y à H:i:s"}}</td>
 	</tr>
 	<tr>
 		<th>À destination de: </td>
-		<td><div class="scroll">{{mesage.message.listedestinataires}}</div></td>
+		<td><div class="scroll">{{message.listedestinataires}}</div></td>
 	</tr>
 	<tr>
 		<th>lu par: </td>
-		<td><div class="scroll">{{mesage.message.luPar}}</div></td>
+		<td><div class="scroll">{{message.luPar}}</div></td>
 	</tr>
 	<tr>
 		<th>Sujet: </td>
-		<td>{{mesage.message.titre}}</td>
+		<td>{{message.titre}}</td>
 	</tr>
 	<tr>
 		<th>Corps du message:</td>
 		<td>
-			<div class="bigscroll">{{mesage.message.corps|linebreaksbr}}</div>
+			<div class="bigscroll">{{message.corps|linebreaksbr}}</div>
 		</td>
 	</tr>
 </table>
 {% if repondre %}
-<table class="accueil"><tr><td><a href="{% url 'repondre' mesage.pk %}">Répondre</a></td></tr></table>
+<table class="accueil"><tr>{% if not envoye %}<td><a href="{% url 'repondre' message.pk %}">Répondre</a></td>{% endif %}
+}<td><a href="{% url 'repondreatous' message.pk %}">Répondre à tous</a></td></tr></table>
 {% endif %}
 <table class="accueil"><tr><td><a href="{% url 'messages' %}">Retour</a></td></tr></table>
 {% endblock %}

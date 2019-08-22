@@ -24,7 +24,7 @@
 	</table>
 </form>
 
-<table class="accueil"><tr><td><a href="{% url 'message' destinataire.pk %}">Retour</a></td></tr></table>
+<table class="accueil"><tr><td><a href="{% url 'message' message.pk %}">Retour</a></td></tr></table>
 {% endblock %}
 {% block javascript %}
 <script type="text/javascript" src="{% static 'javascript/ecrire.js' %}"></script>
