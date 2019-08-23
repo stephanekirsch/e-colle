@@ -1,11 +1,11 @@
 from django.core.management.base import BaseCommand, CommandError
-from django.core.management.commands.migrate import Command as Migrate
 from .backup import Command as Backup
 from ecolle.settings import CHEMINVERSECOLLE
 import os
 from urllib.request import urlopen
 from urllib.error import HTTPError
 import tarfile
+import subprocess
 from shutil import rmtree, copy as filecopy
 
 class Command(BaseCommand):
@@ -109,14 +109,8 @@ class Command(BaseCommand):
                 poursuite = True
             if poursuite: # si la sauvegarde de la base de données a réussi ou si on s'en passe, on met à jour la migration
                 self.stdout.write("Mise à jour de la structure de la base de données")
-                migrate = Migrate()
-                options['interactive'] = False
-                options['database'] = 'default'
-                options['run_syncdb'] = False
-                options['app_label'] = False
-                options['migration_name'] = False
-                options['plan'] = False
-                migrate.handle(**options) # on utilise les valeurs par défaut déjà définies pour notre commande update
+                chemin = os.path.join("..","e-colle-new","manage.py")
+                subprocess.run(["python3",chemin,"migrate"])
                 # on copie les fichiers media/backup:
                 self.stdout.write("copie des fichiers media/backup")
                 repertoires = ['programme','image','photos']
