@@ -77,9 +77,9 @@ class Command(BaseCommand):
                         ip_filtre_adresses += ","
                     fichier.write(ip_filtre_adresses)
                     fichier.write(") # si IP_FILTER_ADMIN vaut True, liste des IPS autorisées pour l'utilisateur admin (REGEXP)\n")
-                    fichier.write("DB_ENGINE = '{}' # base de données (mysql ou postgresql ou sqlite3)\n".format(db['ENGINE']))
+                    fichier.write("DB_ENGINE = '{}' # base de données (mysql ou postgresql ou sqlite3)\n".format(BDD))
                     fichier.write("DB_USER = '{}' # nom de l'utilisateur qui a les droits sur la base de données\n".format(db['USER']))
-                    fichier.write("DB_NAME = '{}' # nom de la base de données (ou du fichier .db pour SQLite)".format(db['NAME']))
+                    fichier.write("DB_NAME = '{}' # nom de la base de données (ou du fichier .db pour SQLite)\n".format(db['NAME']))
                     fichier.write("DB_PASSWORD = '{}' # mot de passe pour se connecter à la base de données\n".format(db['PASSWORD']))
                     fichier.write("DB_HOST = '{}' # adresse locale de la base de données\n".format(db['HOST']))
                     fichier.write("DB_PORT = '{}' # port de la BDD, vide par défaut. À renseigner si la BDD se trouve sur un port particulier\n".format(db['PORT']))
