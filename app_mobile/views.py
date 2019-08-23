@@ -250,7 +250,7 @@ def answer(request, message_id, answerAll):
                       'body'], listedestinataires=listedestinataires)
     reponse.save()
     destinataire = Destinataire(
-        message=reponse, user=message.auteur, reponses=0)
+        message=reponse, user=message.auteur)
     destinataire.save()
     userdestinataire.reponses += 1
     userdestinataire.save()
@@ -258,7 +258,7 @@ def answer(request, message_id, answerAll):
         for destinataireUser in message.messagerecu.all():
             if destinataireUser.user != user:
                 destinataire = Destinataire(
-                    message=reponse, user=destinataireUser.user, reponses=1)
+                    message=reponse, user=destinataireUser.user, reponses=0)
                 destinataire.save()
                 listedestinataires += "; " + destinataireUser.user.first_name.title() + " " + \
                     destinataireUser.user.last_name.upper()

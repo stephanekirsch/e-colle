@@ -145,11 +145,10 @@ def repondre(request,message_id):
 	if form.is_valid():
 		mesage = Message(auteur=request.user,listedestinataires=str(message.auteur),titre=form.cleaned_data['titre'],corps=form.cleaned_data['corps'])
 		mesage.save()
-		destinatair = Destinataire(user=message.auteur,message=message)
-		destinatair.save()
-		destinatair.reponses+=1
-		destinatair.save()
+		Destinataire(user=message.auteur,message=message).save()
 		messagees.error(request, "Message envoyé")
+		destinataire.reponses +=1
+		destinataire.save()
 		return redirect('messages')
 	return render(request,"accueil/repondre.html",{'form':form,'message':message})
 
@@ -174,11 +173,14 @@ def repondreatous(request,message_id):
 	listedestinataires = "; ".join([str(desti.user) for desti in destinataires])
 	form = ReponseForm(message,request.POST or None, initial = {"destinataire": listedestinataires})
 	if form.is_valid():
-		message = Message(auteur=request.user,listedestinataires=listedestinataires,titre=form.cleaned_data['titre'],corps=form.cleaned_data['corps'])
-		message.save()
+		mesage = Message(auteur=request.user,listedestinataires=listedestinataires,titre=form.cleaned_data['titre'],corps=form.cleaned_data['corps'])
+		mesage.save()
 		for destinat in destinataires:
 			if destinat.user != request.user:
-				Destinataire(message = message, user=destinat.user,reponses=1).save()
+				Destinataire(message = mesage, user=destinat.user).save()
 		messagees.error(request, "Message envoyé")
+		if message.auteur != request.user:
+			desti.reponses +=1
+			desti.save()
 		return redirect('messages')
 	return render(request,"accueil/repondre.html",{'form':form,'message':message})
