@@ -102,12 +102,26 @@ def noteEleves(request, id_classe, eleves_str, noteColle=None):
 	if total == 1 and noteColle is not None and noteColle.pk: # si on modifie une note
 		NoteElevesformset = formset_factory(NoteElevesTailForm,extra=0,max_num=1,formset=NoteElevesFormset)
 		formset = NoteElevesformset(form, list(eleves) + [None]*nbFictifs, request.POST or None, initial=[{'note':noteColle.note, 'commentaire':noteColle.commentaire}])
+	elif noteColle is None: # si on ne note pas depuis l'agenda
+		initial = dict()
+		if 'semaine' in request.session:
+			initial['semaine'] = request.session['semaine']
+		if 'jour' in request.session:
+			initial['jour'] = request.session['jour']
+		if 'heure' in request.session:
+			initial['heure'] = request.session['heure']
+		form.initial = initial
+		NoteElevesformset = formset_factory(NoteElevesTailForm,extra=total,max_num=3,formset=NoteElevesFormset)
+		formset = NoteElevesformset(form, list(eleves) + [None]*nbFictifs, request.POST or None)
 	else:
 		NoteElevesformset = formset_factory(NoteElevesTailForm,extra=total,max_num=3,formset=NoteElevesFormset)
 		formset = NoteElevesformset(form, list(eleves) + [None]*nbFictifs, request.POST or None)
 	if request.method == 'POST':
 		if formset.is_valid():
 			formset.save()
+			request.session['semaine']=form.cleaned_data['semaine'].pk
+			request.session['jour']=form.cleaned_data['jour']
+			request.session['heure']=form.cleaned_data['heure']
 			return redirect('note_colleur',id_classe)
 	return render(request,"colleur/noteEleves.html", {'form':form, 'formset':formset, 'classe':classe.nom, 'matiere':matiere})
 
