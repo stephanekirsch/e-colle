@@ -279,8 +279,7 @@ def colleurDonnees(request):
     colleurmatieres = Colleur.objects.listeColleurMatiere(user.colleur)
     creneaux = list(Creneau.objects.filter(classe__in=classes).annotate(nb=Count(
         'colle')).filter(nb__gt=0).values_list('pk', 'classe__pk', 'jour', 'heure', 'salle'))
-    semaines = list(Semaine.objects.filter(
-        colle__creneau__classe__in=classes).distinct().values_list('pk', 'numero', 'lundi'))
+    semaines = list(Semaine.objects.values_list('pk', 'numero', 'lundi'))
     colles = Colle.objects.filter(creneau__classe__in=classes).values_list(
         'pk', 'creneau', 'semaine', 'groupe', 'matiere', 'colleur', 'eleve')
     colles = [[pk, creneau, semaine, groupe or 0, matiere, colleur, eleve or 0]
