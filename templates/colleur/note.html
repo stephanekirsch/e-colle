@@ -4,7 +4,7 @@
 {% block body %}
 {% get_mathjax as latex %}
 {% with request.session.matiere|get_matiere as matiere %}
-<table class="accueil"><tr><td>Notes de la classe {{classe}} en {{matiere.nom|title}}</td></tr></table>
+<table class="accueil"><tr><td>Notes de la classe {{classe}} en {{matiere}}</td></tr></table>
 {% endwith %}
 <form method="post">
 	{% csrf_token %}
