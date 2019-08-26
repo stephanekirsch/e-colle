@@ -1,7 +1,8 @@
 #-*- coding: utf-8 -*-
 from django import template
 from datetime import timedelta
-from accueil.models import Classe, Config, Destinataire
+from accueil.models import Classe, Config, Destinataire, Matiere
+from ecolle.settings import DEFAULT_CSS
 
 register = template.Library()
 
@@ -34,6 +35,11 @@ def heure(heure):
 	return "{}h{:02d}".format(heure//60,(heure%60))
 
 @register.filter
+def get_matiere(matiere_id):
+    if Matiere.objects.filter(pk=matiere_id).exists():
+        return Matiere.objects.get(pk=matiere_id)
+
+@register.filter
 def image(fichier):
     return fichier.replace('programme','image').replace('pdf','jpg')
 
@@ -56,6 +62,11 @@ def get_modifgroupe():
 @register.simple_tag
 def get_classes():
     return Classe.objects.all()
+
+@register.simple_tag
+def get_css():
+    print(DEFAULT_CSS)
+    return 'css/' + DEFAULT_CSS
 
 @register.filter
 def titer(obj):
