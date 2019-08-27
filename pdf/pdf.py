@@ -112,16 +112,22 @@ def Pdf(classe,semin,semax):
 			# on remplit les jours.
 			if reste!=0:# S'il reste des créneaux d'un jour de la page précédente
 				data[0][1]=LISTE_JOURS[dernierJour] # on réécrit le nom du jour
-				LIST_STYLE.add('SPAN',(1,0),(reste,0)) # on fusionne les bonnes cases
-				nbjours=reste # on met à jour le nombre de créneaux déjà pris en compte
-				reste=0 # on remet le reste à 0
+				if reste > nbCreneauxLoc: # s'il reste plus de créneaux du jour que de créneaux de la page
+					LIST_STYLE.add('SPAN',(1,0),(nbCreneauxLoc,0)) # on fusionne les bonnes cases
+					nbjours = nbCreneauxLoc
+					reste -= nbCreneauxLoc
+				else:
+					LIST_STYLE.add('SPAN',(1,0),(reste,0)) # on fusionne les bonnes cases
+					nbjours=reste # on met à jour le nombre de créneaux déjà pris en compte
+					reste=0 # on remet le reste à 0
 			while nbjours<nbCreneauxLoc:
 				dernierJour=jours[indjour]['jour']
 				data[0][nbjours+1]=LISTE_JOURS[dernierJour]
 				LIST_STYLE.add('SPAN',(nbjours+1,0),(min(nbjours+jours[indjour]['nb'],nbCreneauxLoc),0))
 				nbjours+=jours[indjour]['nb']
 				indjour+=1
-			reste=nbjours-nbCreneauxLoc
+			if reste == 0:
+				reste=nbjours-nbCreneauxLoc
 			# on remplit les heures, ainsi que les salles
 			data[1][0]="Heure"
 			data[2][0]="Salle"
