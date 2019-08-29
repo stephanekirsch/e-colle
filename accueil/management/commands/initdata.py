@@ -53,6 +53,8 @@ class Command(BaseCommand):
         if ip_filtre_admin == "o" or ip_filtre_admin == "O" or ip_filtre_admin == "" and IP_FILTRE_ADMIN is True:
             ip_filtre_adresses = input("liste des REGEXP des adresses IP de l'utilisateur administrateur,\n\
                 séparer par des virgules, peut être laissé vide en validant un espace (" + ",".join("'" + x + "'" for x in IP_FILTRE_ADRESSES) + "): ").split(",")
+        else:
+            ip_filtre_adresses = ""
         self.stdout.write("-"*20)
         loop = True
         while loop:

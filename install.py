@@ -18,7 +18,7 @@ def pipinstall(package):
 
 def configpostgresl():
     from pexpect import spawn, TIMEOUT
-    from ecolle.config import DB_PASSWORD
+    from ecolle.config import DB_PASSWORD, DB_NAME, DB_USER, DB_PORT, DB_HOST
     if DB_PASSWORD =="":
         return
     print("-"*20)
@@ -26,7 +26,7 @@ def configpostgresl():
     p=spawn("sudo -i -u postgres", encoding="utf8")
     passwd = getpass("[sudo] mot de passe: ")
     p.sendline(passwd)
-    p.sendline("createuser -PE e-colle")
+    p.sendline("createuser -PE {}".format(DB_USER))
     p.expect("Enter password for new role: ")
     p.sendline("{}".format(DB_PASSWORD))
     p.expect("Enter it again: ")
@@ -43,21 +43,21 @@ def configpostgresl():
             p.expect("Enter it again: ")
             p.sendline("{}".format(DB_PASSWORD))
             print("mot de passe mis à jour")
-    p.sendline("createdb -O e-colle -E UTF8 e-colle")
+    p.sendline("createdb -O {} {} -h {} -E UTF8 {}".format(DB_USER, "" if not DB_PORT else ("-p " + DB_PORT), DB_HOST, DB_NAME))
     i = p.expect(['createdb: database creation failed: ERROR:  database "e-colle" already exists',TIMEOUT],timeout=2)
     if i==0:
         print("la base de données e-colle existe déjà")
         maj = input("Voulez-vous l'effacer et la recréer? O/N (N): ")
         if maj not in "nN":
             p.sendline("dropdb e-colle")
-            p.sendline("createdb -O e-colle -E UTF8 e-colle")
+            p.sendline("createdb -O {} {} -h {} -E UTF8 {}".format(DB_USER, "" if not DB_PORT else ("-p " + DB_PORT), DB_HOST, DB_NAME))
             print("base de données recréée")
     p.sendline("exit")
     p.close
 
 def configmysql():
     from pexpect import spawn, TIMEOUT
-    from ecolle.config import DB_PASSWORD
+    from ecolle.config import DB_PASSWORD, DB_NAME, DB_USER, DB_PORT, DB_HOST
     if DB_PASSWORD =="":
         return
     print("-"*20)
@@ -65,25 +65,25 @@ def configmysql():
     p=spawn("sudo mysql", encoding="utf8")
     passwd = getpass("[sudo] mot de passe: ")
     p.sendline(passwd)
-    p.sendline("CREATE USER 'e-colle' IDENTIFIED BY '{}';".format(DB_PASSWORD))
+    p.sendline("CREATE USER '{}' IDENTIFIED BY '{}';".format(DB_USER, DB_PASSWORD))
     i = p.expect(['ERROR',TIMEOUT],timeout=2)
     if i==0:
         print("l'utilisateur e-colle existe déjà")
         maj = input("Voulez-vous mettre à jour son mot de passe? O/N (N): ")
         if maj not in "nN":
-            p.sendline("DROP USER `e-colle`;")
-            p.sendline("CREATE USER 'e-colle' IDENTIFIED BY '{}';".format(DB_PASSWORD))
+            p.sendline("DROP USER `{}`;".format(DB_USER))
+            p.sendline("CREATE USER '{}' IDENTIFIED BY '{}';".format(DB_USER, DB_PASSWORD))
             print("mot de passe mis à jour")
-    p.sendline("CREATE DATABASE `e-colle` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+    p.sendline("CREATE DATABASE `{}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;".format(DB_NAME))
     i = p.expect(["ERROR",TIMEOUT],timeout=2)
     if i==0:
         print("la base de données e-colle existe déjà")
         maj = input("Voulez-vous l'effacer et la recréer? O/N (N): ")
         if maj not in "nN":
-            p.sendline("DROP DATABASE `e-colle`;")
-            p.sendline("CREATE DATABASE `e-colle` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+            p.sendline("DROP DATABASE `{}`;".format(DB_NAME))
+            p.sendline("CREATE DATABASE `{}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;".format(DB_NAME))
             print("base de données recréée")
-    p.sendline("GRANT ALL PRIVILEGES ON `e-colle`.* TO `e-colle` WITH GRANT OPTION;")
+    p.sendline("GRANT ALL PRIVILEGES ON `{}`.* TO `{}` WITH GRANT OPTION;".format(DB_NAME, DB_USER))
     i = p.expect(["ERROR",TIMEOUT],timeout=2)
     if i==0:
         print("erreur dans la modification des privilèges")
@@ -184,7 +184,7 @@ def main():
             print("l'initialisation des données de donfiguration a échoué, il faudra le faire à la main")
         else:
             print("l'initialisation des données de configuration a été effectuée avec succès")
-    from ecolle.config import DB_NAME, IMAGEMAGICK, DB_PASSWORD
+    from ecolle.config import DB_ENGINE, IMAGEMAGICK, DB_PASSWORD
     if IMAGEMAGICK:
         print("-"*20)
         print("installation de ImageMagick")
@@ -196,7 +196,7 @@ def main():
             print("modification de la configuration pour autoriser les conversion des pdfs")
             subprocess.run(["sudo","python3","imagemagick.py"])
     print("-"*20)
-    if DB_NAME == "postgresql":
+    if DB_ENGINE == "postgresql":
         print("installation de postgresql")
         completedProcess = aptinstall("postgresql")
         if completedProcess.returncode:
@@ -210,7 +210,7 @@ def main():
             liste_echecs.append("psycopg2")
         elif "pexpect" not in liste_echecs:
             configpostgresl()
-    elif DB_NAME == "mysql":
+    elif DB_ENGINE == "mysql":
         print("installation de mysql")
         completedProcess = aptinstall("mysql-server")
         if completedProcess.returncode:
@@ -225,7 +225,7 @@ def main():
             liste_echecs.append("mysqlclient")
         elif "pexpect" not in liste_echecs:
             configmysql()
-    elif DB_NAME == "sqlite3":
+    elif DB_ENGINE == "sqlite3":
         print("installation de sqlite3")
         completedProcess = aptinstall("sqlite3")
         if completedProcess.returncode:
@@ -234,7 +234,7 @@ def main():
         else:
             print("-"*20)
             configsqlite()
-    if DB_NAME != "sqlite3" and DB_PASSWORD =="":
+    if DB_ENGINE != "sqlite3" and DB_PASSWORD =="":
         print("il faut définir un mot de passe pour la base de données\n\
             initialisation de la base de données impossible")
     else:
