@@ -29,7 +29,7 @@
 		<td>n°{% for sem in programme.semaine.all %}{{sem.numero}}{% if not forloop.last %}-{% endif %}{% endfor %}</td>
 		<td>{{programme.titre|title}}</td>
 		{% if programme.fichier %}
-		<td style="height:200px;width:150px">{% if jpeg %}<a class="image" href="{{media_url}}{{programme.fichier}}"><img src="{{media_url}}{{programme.fichier|image}}" alt="mini jpeg programme"/></a>{% else %}<a href="{{media_url}}{{programme.fichier}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a>{% endif %}</td>
+		<td style="height:200px;width:150px">{% if jpeg %}<a class="image" href="{{media_url}}{{programme.fichier}}"><img src="{{programme.fichier.url|image}}" alt="mini jpeg programme"/></a>{% else %}<a href="{{programme.fichier.url}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a>{% endif %}</td>
 		{% else %}
 		<td></td>
 		{% endif %}
