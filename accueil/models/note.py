@@ -58,10 +58,10 @@ class NoteManager(models.Manager):
                    ON u.eleve_id = e.id\
                    INNER JOIN accueil_semaine s\
                    ON n.semaine_id=s.id\
-                   LEFT OUTER JOIN accueil_programme_semaine ps\
-                   ON ps.semaine_id = s.id\
-                   LEFT OUTER JOIN accueil_programme p\
-                   ON p.classe_id= %s AND p.matiere_id = %s AND ps.programme_id = p.id\
+                   LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier FROM accueil_programme_semaine ps\
+                   INNER JOIN accueil_programme sub\
+                   ON ps.programme_id = sub.id) p\
+                   ON p.semaine_id = s.id AND p.classe_id = %s AND p.matiere_id = %s\
                    WHERE n.classe_id = %s AND n.colleur_id= %s AND n.matiere_id = %s\
                    ORDER BY s.numero DESC, n.date_colle DESC, n.heure DESC, u.last_name, u.first_name"
         with connection.cursor() as cursor:
@@ -105,10 +105,10 @@ class NoteManager(models.Manager):
                    ON u.colleur_id=c.id\
                    INNER JOIN accueil_semaine s\
                    ON n.semaine_id=s.id\
-                   LEFT OUTER JOIN accueil_programme_semaine ps\
-                   ON ps.semaine_id = s.id\
-                   LEFT OUTER JOIN accueil_programme p\
-                   ON p.classe_id= n.classe_id AND p.matiere_id = m.id AND ps.programme_id = p.id\
+                   LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier FROM accueil_programme_semaine ps\
+                   INNER JOIN accueil_programme sub\
+                   ON ps.programme_id = sub.id) p\
+                   ON p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = n.classe_id\
                    WHERE n.eleve_id = %s "
         if matiere:
             requete+="AND m.id = %s "

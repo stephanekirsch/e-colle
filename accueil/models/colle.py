@@ -67,10 +67,10 @@ class ColleManager(models.Manager):
                    ON u2.eleve_id = e.id\
                    LEFT OUTER JOIN accueil_classe cl\
                    ON (co.classe_id = cl.id OR g.classe_id=cl.id OR e.classe_id=cl.id)\
-                   LEFT OUTER JOIN accueil_programme_semaine ps\
-                   ON ps.semaine_id = s.id\
-                   LEFT OUTER JOIN accueil_programme p\
-                   ON (ps.programme_id = p.id AND p.matiere_id = m.id AND p.classe_id = cl.id)\
+                   LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier FROM accueil_programme_semaine ps\
+                   INNER JOIN accueil_programme sub\
+                   ON ps.programme_id = sub.id) p\
+                   ON p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = cl.id\
                    LEFT OUTER JOIN accueil_note n\
                    ON n.matiere_id = m.id AND n.colleur_id = c.id AND n.semaine_id=s.id AND (n.eleve_id = e.id OR n.eleve_id = e2.id)\
                    WHERE c.id=%s AND s.lundi >= %s\
@@ -104,10 +104,10 @@ class ColleManager(models.Manager):
                    ON co.groupe_id = g.id\
                    INNER JOIN accueil_eleve e\
                    ON e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id) OR e.id=co.eleve_id\
-                   LEFT OUTER JOIN accueil_programme_semaine ps\
-                   ON ps.semaine_id = s.id\
-                   LEFT OUTER JOIN accueil_programme p\
-                   ON (ps.programme_id = p.id AND p.matiere_id = m.id AND p.classe_id = %s)\
+                   LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier FROM accueil_programme_semaine ps\
+                   INNER JOIN accueil_programme sub\
+                   ON ps.programme_id = sub.id) p\
+                   ON p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = %s\
                    WHERE e.id=%s AND s.lundi >= %s\
                    ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'))
         with connection.cursor() as cursor:
@@ -132,10 +132,10 @@ class ColleManager(models.Manager):
                    ON co.groupe_id = g.id\
                    INNER JOIN accueil_eleve e\
                    ON e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id) OR e.id=co.eleve_id\
-                   LEFT OUTER JOIN accueil_programme_semaine ps\
-                   ON ps.semaine_id = s.id\
-                   LEFT OUTER JOIN accueil_programme p\
-                   ON (ps.programme_id = p.id AND p.matiere_id = m.id AND p.classe_id = %s)\
+                   LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier FROM accueil_programme_semaine ps\
+                   INNER JOIN accueil_programme sub\
+                   ON ps.programme_id = sub.id) p\
+                   ON p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = %s\
                    WHERE e.id=%s AND s.lundi >= %s\
                    ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'))
         with connection.cursor() as cursor:
