@@ -24,7 +24,7 @@ class ProgrammeForm(forms.ModelForm):
 
     def clean_semaine(self):# on vérifie que les semaines choisies ne chevauchent pas de semaines d'un programme existant.
         semaines = self.cleaned_data['semaine']
-        query = Programme.objects.filter(semaine__in=semaines)
+        query = Programme.objects.filter(semaine__in=semaines, classe=self.instance.classe,matiere=self.instance.matiere)
         if self.instance.pk: # si c'est une modification:
             query = query.exclude(pk=self.instance.pk)
         if query.exists():
