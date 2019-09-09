@@ -132,7 +132,7 @@ class ColleManager(models.Manager):
                    ON co.groupe_id = g.id\
                    INNER JOIN accueil_eleve e\
                    ON e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id) OR e.id=co.eleve_id\
-                   LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier FROM accueil_programme_semaine ps\
+                   LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier, sub.id FROM accueil_programme_semaine ps\
                    INNER JOIN accueil_programme sub\
                    ON ps.programme_id = sub.id) p\
                    ON p.semaine_id = s.id AND p.matiere_id = m.id AND p.classe_id = %s\
