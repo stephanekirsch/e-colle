@@ -243,18 +243,17 @@ grise.firstElementChild.addEventListener('submit',function(e)
 	lienajax=lienajax.replace('kolleur',document.getElementById('id_colleur').value);
 	var groupe = document.getElementById('id_groupe').value;
 	if (groupe == ""){
-		groupe = "0"
+		groupe = "0";
 	}
 	lienajax=lienajax.replace('groupe', groupe);
 	var eleve = document.getElementById('id_eleve').value;
 	if (eleve == ""){
-		eleve = "0"
+		eleve = "0";
 	}
 	lienajax=lienajax.replace('eleve', eleve);
 	lienajax=lienajax.replace('duree',document.getElementById('id_duree').value);
 	lienajax=lienajax.replace('frequence',document.getElementById('id_frequence').value);
 	lienajax=lienajax.replace('permu',document.getElementById('id_permutation').value);
-	console.log(lienajax);
 	xhr=new XMLHttpRequest;
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == 4) {
