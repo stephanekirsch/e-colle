@@ -1,7 +1,8 @@
 #-*- coding: utf-8 -*-
 from django import forms
 from accueil.models import Colleur, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Value
+from django.db.models.functions import Coalesce
 from datetime import date, timedelta
 from django.forms.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
@@ -225,7 +226,7 @@ class ECTSForm(forms.Form):
 class SelectEleveNoteForm(forms.Form):
     def __init__(self,classe,*args,**kwargs):
         super().__init__(*args,**kwargs)
-        query = iter(Eleve.objects.filter(classe=classe).select_related('user').order_by('groupe__nom','user__last_name','user__first_name'))
+        query = iter(Eleve.objects.filter(classe=classe).annotate(groupe_nom=Coalesce('groupe__nom',Value(100))).select_related('user').order_by('groupe_nom','user__last_name','user__first_name'))
         listeGroupes = Groupe.objects.filter(classe=classe).annotate(nb=Count('groupeeleve')).order_by('nom')
         choices_groupe = [(groupe.pk, "Groupe {}".format(groupe.nom)) for groupe in listeGroupes]
         choices = [(0,"Élève fictif")]
