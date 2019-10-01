@@ -56,7 +56,7 @@ def profil(request):
 		for classe in classes:
 			initial["{}_groupe".format(classe.pk)] = Colleur.objects.filter(colleurprof__classe=classe,colleurprof__modifgroupe=True)
 			initial["{}_colloscope".format(classe.pk)] = Colleur.objects.filter(colleurprof__classe=classe,colleurprof__modifcolloscope=True)
-		form = UserProfprincipalForm(user.colleur,classes,request.POST or None,instance = user)
+		form = UserProfprincipalForm(user.colleur,classes,request.POST or None,instance = user, initial = initial)
 		if form.is_valid():
 			form.save()
 			return redirect('accueil')
