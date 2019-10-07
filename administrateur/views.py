@@ -429,14 +429,14 @@ def elevecsv(request):
                 reader = csv.DictReader(fichiercsv, dialect=dialect)
                 ligne = next(reader)
                 if not(nom in ligne and prenom in ligne):
-                    messages.error("Les intitulés des champs nom et/ou prénom sont inexacts")
+                    messages.error(request,"Les intitulés des champs nom et/ou prénom sont inexacts")
                 else:
                     fichiercsv.seek(0)
                     next(reader)
                     initial = [{'last_name': ligneLoc[nom],'first_name':ligneLoc[prenom],'ddn':None if ddn not in ligneLoc else ligneLoc[ddn],'ldn':None if ldn not in ligneLoc else ligneLoc[ldn],\
                     'ine':'' if ine not in ligneLoc else ligneLoc[ine],'email':'' if email not in ligneLoc else ligneLoc[email],'classe':form.cleaned_data['classe']} for ligneLoc in reader]
                     return eleveajout(request,initial=initial)
-        except Exception:
+        except Exception as e:
                 messages.error(request,"Le fichier doit être un fichier CSV valide, encodé en UTF-8")
                 return redirect('csv_eleve')
     return render(request,'administrateur/elevecsv.html',{'form':form})
@@ -473,7 +473,6 @@ def eleveajout(request,initial=None):
     if request.method=="POST":
         EleveFormset = formset_factory(EleveFormMdp,extra=0,formset=EleveFormSetMdp)
         if "csv" in request.POST:
-            print(initial)
             formset = EleveFormset(initial=initial)
         else:
             formset=EleveFormset(request.POST,request.FILES)
