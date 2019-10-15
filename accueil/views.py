@@ -145,7 +145,7 @@ def repondre(request,message_id):
 	if form.is_valid():
 		mesage = Message(auteur=request.user,listedestinataires=str(message.auteur),titre=form.cleaned_data['titre'],corps=form.cleaned_data['corps'])
 		mesage.save()
-		Destinataire(user=message.auteur,message=message).save()
+		Destinataire(user=message.auteur,message=mesage).save()
 		messagees.error(request, "Message envoyé")
 		destinataire.reponses +=1
 		destinataire.save()
