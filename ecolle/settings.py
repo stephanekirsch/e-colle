@@ -42,6 +42,8 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 6000000
 
 CHEMINVERSECOLLE = path.dirname(path.dirname(__file__))
 
+SESSION_COOKIE_AGE = 31536000 # cookie de session valable un an, pour éviter les deconnexions intempestives de l'app mobile.
+
 # on récupère le nom du SGBD: mysql ou sqlite3 ou postgresql ou oracle.
 BDD = DB_ENGINE
 
