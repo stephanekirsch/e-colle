@@ -58,7 +58,6 @@ class RamassageManager(models.Manager):
         ON no.colleur_id = co.id AND no.matiere_id = ma.id AND no.classe_id = cl.id\
         WHERE u.is_active = {} AND no.date_colle <= %s\
         GROUP BY co.id, ma.id, cl.id, moisTotal".format(totalMois("no.date_colle"),1 if BDD == "sqlite3" else "TRUE")
-        print(requete)
         with connection.cursor() as cursor:
             cursor.execute(requete,(moisFin,))
             with transaction.atomic():
