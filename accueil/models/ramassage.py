@@ -12,7 +12,7 @@ def totalMois(arg):
     if BDD == 'postgresql' or BDD == 'postgresql_psycopg2' or BDD == 'mysql' or BDD == 'oracle':
         return "EXTRACT(YEAR FROM {0})*12 + EXTRACT(MONTH FROM {0}) -1".format(arg)
     elif BDD == 'sqlite3':
-        return "strftime('%Y',{0})*12+strftime('%m',{0})-1".format(arg)
+        return "strftime('%%Y',{0})*12+strftime('%%m',{0})-1".format(arg)
     else:
         return "" # à compléter par ce qu'il faut dans le cas ou vous utilisez 
                   # un SGBD qui n'est ni mysql, ni postgresql, ni sqlite ni oracle
@@ -58,6 +58,7 @@ class RamassageManager(models.Manager):
         ON no.colleur_id = co.id AND no.matiere_id = ma.id AND no.classe_id = cl.id\
         WHERE u.is_active = {} AND no.date_colle <= %s\
         GROUP BY co.id, ma.id, cl.id, moisTotal".format(totalMois("no.date_colle"),1 if BDD == "sqlite3" else "TRUE")
+        print(requete)
         with connection.cursor() as cursor:
             cursor.execute(requete,(moisFin,))
             with transaction.atomic():
