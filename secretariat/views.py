@@ -615,7 +615,7 @@ def ramassagePdfParClasse(request,id_ramassage,totalParmois):
                                 t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-hauteurcel/2)
                                 pdf.finDePage()
                                 # on redémarre sur une nouvelle page
-                                pdf.debutDePage(soustitre = classe.nom)
+                                pdf.debutDePage(soustitre = classe)
                                 LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
                                                 ,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))
                                                 ,('VALIGN',(0,0),(-1,-1),'MIDDLE')
