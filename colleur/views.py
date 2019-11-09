@@ -200,12 +200,12 @@ def resultatcsv(request,id_classe,id_semin,id_semax):
 	response = HttpResponse(content_type='text/csv')
 	response['Content-Disposition'] = 'attachment; filename="resultats_{}_{}_s{}-s{}.csv"'.format(classe.nom,matiere.nom,semin.numero,semax.numero)
 	writer = csv.writer(response)
-	writer.writerow(['Élève','rang','moyenne']+['S{}'.format(semaine.numero) for semaine in semaines])
+	writer.writerow(['Nom','Prénom','rang','moyenne']+['S{}'.format(semaine.numero) for semaine in semaines])
 	notation = {i:str(i) for i in range(21)}
 	notation[21]="n.n."
 	notation[22]="abs"
 	for note in generateur:
-		writer.writerow([note['eleve'],note['rang'],note['moyenne']]+["|".join([notation[note['note']] for note in value]) for value in note['semaine']])
+		writer.writerow([note['eleve'].user.last_name,note['eleve'].user.first_name,note['rang'],note['moyenne']]+["|".join([notation[note['note']] for note in value]) for value in note['semaine']])
 	return response
 
 @user_passes_test(is_colleur, login_url='accueil')
