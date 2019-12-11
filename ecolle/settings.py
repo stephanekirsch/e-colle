@@ -137,7 +137,7 @@ ROOT_URLCONF = 'ecolle.urls'
 
 WSGI_APPLICATION = 'ecolle.wsgi.application'
 
-LANGUAGE_CODE = 'fr-FR'
+LANGUAGE_CODE = 'fr'
 
 USE_I18N = True
 
