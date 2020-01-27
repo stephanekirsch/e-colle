@@ -91,7 +91,7 @@ class RamassageManager(models.Manager):
         ON u.colleur_id = col.id\
         LEFT OUTER JOIN accueil_etablissement et\
         ON col.etablissement_id = et.id\
-        WHERE dec2.ramassage_id=%s AND dec2.temps - COALESCE(dec1.temps,0) > 0\
+        WHERE dec2.ramassage_id=%s AND dec2.temps - COALESCE(dec1.temps,0) != 0\
         GROUP BY ma.nom, u.last_name, u.first_name, col.id, cl.id, et.nom, dec2.mois\
         UNION ALL SELECT cl.id classe_id, cl.nom classe_nom, cl.annee, ma.nom matiere_nom, COALESCE(et.nom, 'Inconnu') etab, col.grade, u.last_name nom, u.first_name prenom, col.id colleur_id,\
         dec1.mois mois, - COALESCE(SUM(dec1.temps),0) heures\
