@@ -23,20 +23,22 @@
 		<td>CSV par classe</td>
 		<td>CSV par classe avec totaux</td>
 		<td>ramassage par mois</td>
+		<td>Tout ramasser depuis le début</td>
 	</tr>
 	{% for ramassage in ramassages %}
 	<tr>
 		<td>{{ramassage.moisFin|date:"E Y"}}</td>
 		<td>{{ramassage.date|date:"d/m/Y à H\hi"}}</td>
 		<td>{% if forloop.last %}<a href="{% url 'ramassagesuppr' ramassage.pk %}">Supprimer</a>{% endif %}</td>
-		<td><a href="{% url 'ramassagepdf' ramassage.pk 0 %}"><img src="{% static 'images/iconePDF.png' %}"/></a></td>
-		<td><a href="{% url 'ramassagepdfparclasse' ramassage.pk 0 %}"><img src="{% static 'images/iconePDF.png' %}"/></a></td>
-		<td><a href="{% url 'ramassagepdfparclasse' ramassage.pk 1 %}"><img src="{% static 'images/iconePDF.png' %}"/></a></td>
-		<td><a href="{% url 'ramassagecsv' ramassage.pk 0 %}"><img src="{% static 'images/csv.png' %}"/></a></td>
-		<td><a href="{% url 'ramassagecsvparclasse' ramassage.pk 0 %}"><img src="{% static 'images/csv.png' %}"/></a></td>
-		<td><a href="{% url 'ramassagecsvparclasse' ramassage.pk 1 %}"><img src="{% static 'images/csv.png' %}"/></a></td>
+		<td><a href="{% url 'ramassagepdf' ramassage.pk 0 0 %}"><img src="{% static 'images/iconePDF.png' %}"/></a></td>
+		<td><a href="{% url 'ramassagepdfparclasse' ramassage.pk 0 0 %}"><img src="{% static 'images/iconePDF.png' %}"/></a></td>
+		<td><a href="{% url 'ramassagepdfparclasse' ramassage.pk 1 0 %}"><img src="{% static 'images/iconePDF.png' %}"/></a></td>
+		<td><a href="{% url 'ramassagecsv' ramassage.pk 0 0 %}"><img src="{% static 'images/csv.png' %}"/></a></td>
+		<td><a href="{% url 'ramassagecsvparclasse' ramassage.pk 0 0 %}"><img src="{% static 'images/csv.png' %}"/></a></td>
+		<td><a href="{% url 'ramassagecsvparclasse' ramassage.pk 1 0 %}"><img src="{% static 'images/csv.png' %}"/></a></td>
 		{% if forloop.first %}
 		<td rowspan="{{hauteur}}"><input type="checkbox" id="checkbox"></td>
+		<td rowspan="{{hauteur}}"><input type="checkbox" id="checkbox2"></td>
 		{% endif %}
 	</tr>
 	{% endfor %}

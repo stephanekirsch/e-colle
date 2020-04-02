@@ -271,13 +271,13 @@ def ramassageSuppr(request,id_ramassage):
     return redirect('ramassage')
 
 @user_passes_test(is_secret, login_url='login_secret')
-def ramassageCSV(request,id_ramassage,parMois = 0):
+def ramassageCSV(request,id_ramassage,parMois = 0, full = 0):
     """Renvoie le fichier CSV du ramassage par année/effectif correspondant au ramassage dont l'id est id_ramassage"""
     parMois = int(parMois)
     ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
     LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
     response = HttpResponse(content_type='text/csv')
-    if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists(): #s'il existe un ramassage antérieur
+    if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists() and not full: #s'il existe un ramassage antérieur
         debut = Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).aggregate(Max('moisFin'))['moisFin__max']
     else:
         debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
@@ -299,14 +299,14 @@ def ramassageCSV(request,id_ramassage,parMois = 0):
     return response
 
 @user_passes_test(is_secret, login_url='login_secret')
-def ramassagePdf(request, id_ramassage, parMois = 0):
+def ramassagePdf(request, id_ramassage, parMois = 0, full = 0):
     """Renvoie le fichier PDF du ramassage par année/effectif correspondant au ramassage dont l'id est id_ramassage"""
     parMois = int(parMois) // 2
     ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
     LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
     LISTE_MOIS_COURT=["jan","fev","mar","avr","mai","juin","juil","aou","sep","oct","nov","dec"]
     response = HttpResponse(content_type='application/pdf')
-    if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists(): #s'il existe un ramassage antérieur
+    if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists() and not full: #s'il existe un ramassage antérieur
         debut = Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).aggregate(Max('moisFin'))['moisFin__max']+timedelta(days=1)
     else:
         debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
@@ -443,12 +443,12 @@ def ramassagePdf(request, id_ramassage, parMois = 0):
     return response
 
 @user_passes_test(is_secret, login_url='login_secret')
-def ramassageCSVParClasse(request, id_ramassage, totalParmois):
+def ramassageCSVParClasse(request, id_ramassage, totalParmois, full = 0):
     """Renvoie le fichier CSV du ramassage par classe correspondant au ramassage dont l'id est id_ramassage
     si total vaut 1, les totaux par classe et matière sont calculés"""
     parmois, total = divmod(int(totalParmois),2)
     ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
-    if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists():# s'il existe un ramassage antérieur
+    if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists() and not full:# s'il existe un ramassage antérieur
         moisDebut = Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).aggregate(Max('moisFin'))['moisFin__max'] + timedelta(days=1)
     else:
         moisDebut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
@@ -501,14 +501,15 @@ def ramassageCSVParClasse(request, id_ramassage, totalParmois):
 
 
 @user_passes_test(is_secret, login_url='login_secret')
-def ramassagePdfParClasse(request,id_ramassage,totalParmois):
+def ramassagePdfParClasse(request,id_ramassage,totalParmois,full=0):
     """Renvoie le fichier PDF du ramassage par classe correspondant au ramassage dont l'id est id_ramassage
     si total vaut 1, les totaux par classe et matière sont calculés"""
+    full = int(full)
     parmois, total = divmod(int(totalParmois),2)
     ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
     LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
     response = HttpResponse(content_type='application/pdf')
-    if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists():# s'il existe un ramassage antérieur
+    if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists() and not full:# s'il existe un ramassage antérieur
         debut = Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).aggregate(Max('moisFin'))['moisFin__max'] + timedelta(days=1)
     else:
         debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']

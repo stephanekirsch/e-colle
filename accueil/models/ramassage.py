@@ -66,9 +66,9 @@ class RamassageManager(models.Manager):
                 for row in cursor.fetchall(): # on -re-crée le décompte
                     Decompte.objects.create(colleur_id=row[0],matiere_id=row[1],classe_id=row[2],ramassage_id=ramassage.pk, mois=row[3] ,temps=row[4])
 
-    def decompteRamassage(self, ramassage, csv = True, parClasse = True, parMois = False):
+    def decompteRamassage(self, ramassage, csv = True, parClasse = True, parMois = False, full = False):
         """Renvoie, pour chaque classe, la liste des colleurs avec leur nombre d'heures de colle entre les mois moisMin et moisMax, s'ils en ont effectué"""
-        if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists(): # s'il existe un ramassage antérieur
+        if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists() and not full: # s'il existe un ramassage antérieur et qu'on ne ramasse pas depuis le début
             mois = Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).aggregate(Max('moisFin'))['moisFin__max']
             ramassage_precedent = Ramassage.objects.get(moisFin = mois) # on récupère le ramassage précédent
             ramassage_precedent_pk = ramassage_precedent.pk
