@@ -274,6 +274,7 @@ def ramassageSuppr(request,id_ramassage):
 def ramassageCSV(request,id_ramassage,parMois = 0, full = 0):
     """Renvoie le fichier CSV du ramassage par année/effectif correspondant au ramassage dont l'id est id_ramassage"""
     parMois = int(parMois)
+    full = int(full)
     ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
     LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
     response = HttpResponse(content_type='text/csv')
@@ -282,7 +283,7 @@ def ramassageCSV(request,id_ramassage,parMois = 0, full = 0):
     else:
         debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
     fin = ramassage.moisFin
-    listeDecompte, effectifs = Ramassage.objects.decompteRamassage(ramassage, csv = True, parClasse = False, parMois =parMois)
+    listeDecompte, effectifs = Ramassage.objects.decompteRamassage(ramassage, csv = True, parClasse = False, parMois =parMois, full = full)
     nomfichier="ramassage{}_{}-{}_{}.csv".format(debut.month,debut.year,fin.month,fin.year)
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
     writer = csv.writer(response)
@@ -302,6 +303,7 @@ def ramassageCSV(request,id_ramassage,parMois = 0, full = 0):
 def ramassagePdf(request, id_ramassage, parMois = 0, full = 0):
     """Renvoie le fichier PDF du ramassage par année/effectif correspondant au ramassage dont l'id est id_ramassage"""
     parMois = int(parMois) // 2
+    full=int(full)
     ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
     LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
     LISTE_MOIS_COURT=["jan","fev","mar","avr","mai","juin","juil","aou","sep","oct","nov","dec"]
@@ -312,7 +314,7 @@ def ramassagePdf(request, id_ramassage, parMois = 0, full = 0):
         debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
     fin = ramassage.moisFin
     moisdebut = 12*debut.year+debut.month-1
-    listeDecompte, effectifs = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = False, parMois=parMois)
+    listeDecompte, effectifs = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = False, parMois=parMois, full = full)
     nomfichier="ramassage{}_{}-{}_{}.pdf".format(debut.month,debut.year,fin.month,fin.year)
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
     pdf = easyPdf(titre="Ramassage des colles de {} {} à {} {}".format(LISTE_MOIS[debut.month],debut.year,LISTE_MOIS[fin.month],fin.year),marge_x=30,marge_y=30)
@@ -447,6 +449,7 @@ def ramassageCSVParClasse(request, id_ramassage, totalParmois, full = 0):
     """Renvoie le fichier CSV du ramassage par classe correspondant au ramassage dont l'id est id_ramassage
     si total vaut 1, les totaux par classe et matière sont calculés"""
     parmois, total = divmod(int(totalParmois),2)
+    full = int(full)
     ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
     if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists() and not full:# s'il existe un ramassage antérieur
         moisDebut = Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).aggregate(Max('moisFin'))['moisFin__max'] + timedelta(days=1)
@@ -454,7 +457,8 @@ def ramassageCSVParClasse(request, id_ramassage, totalParmois, full = 0):
         moisDebut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
     LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
     response = HttpResponse(content_type='text/csv')
-    decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = True, parClasse = True, parMois = bool(parmois))
+    decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = True, parClasse = True, parMois = bool(parmois), full = full)
+    print(decomptes)
     LISTE_GRADES=["inconnu","certifié","bi-admissible","agrégé","chaire sup"]
     nomfichier="ramassageCSVParclasse{}_{}-{}_{}.csv".format(moisDebut.month,moisDebut.year,ramassage.moisFin.month,ramassage.moisFin.year)
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
@@ -489,9 +493,9 @@ def ramassageCSVParClasse(request, id_ramassage, totalParmois, full = 0):
             writer.writerow([decompte[1], decompte[3], decompte[4].title(),
                         LISTE_GRADES[decompte[5]], decompte[6].upper(), decompte[7].title()] + ([LISTE_MOIS[decompte[-2]%12+1]] if parmois else []) + ["{:.02f}".format(heures/60).replace('.',',')])
             total_matiere += heures
-            last_classe, last_classe_nom, last_matiere_nom = decompte[0], decompte[1], decompte[3]
+            last_classe, last_classe_nom, last_matiere = decompte[0], decompte[1], decompte[3]
         writer.writerow([""]*(6+parmois))
-        writer.writerow([last_classe_nom, "total {}".format(last_matiere_nom.title())]+[""]*(4+parmois) +["{:.02f}".format(total_matiere/60).replace('.',',')])
+        writer.writerow([last_classe_nom, "total {}".format(last_matiere.title())]+[""]*(4+parmois) +["{:.02f}".format(total_matiere/60).replace('.',',')])
         writer.writerow([""]*(6+parmois))
         total_classe += total_matiere
         writer.writerow(["total {}".format(last_classe_nom)]+[""]*(5+parmois) +["{:.02f}".format(total_classe/60).replace('.',',')])
@@ -515,7 +519,7 @@ def ramassagePdfParClasse(request,id_ramassage,totalParmois,full=0):
         debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
     fin = ramassage.moisFin
     moisdebut = 12*debut.year+debut.month-1
-    decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = True, parMois=bool(parmois))
+    decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = True, parMois=bool(parmois), full = full)
     nomfichier="ramassagePdfParclasse{}_{}-{}_{}.pdf".format(debut.month,debut.year,fin.month,fin.year)
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
     pdf = easyPdf(titre="Ramassage des colles de {} {} à {} {}".format(LISTE_MOIS[debut.month],debut.year,LISTE_MOIS[fin.month],fin.year),marge_x=30,marge_y=30)
