@@ -307,7 +307,7 @@ class ColleurFormMdp(forms.ModelForm):
     LISTE_GRADE=enumerate(["autre","certifié","bi-admissible","agrégé","chaire supérieure"])
     grade = forms.ChoiceField(choices=LISTE_GRADE)
     etablissement = forms.ModelChoiceField(queryset=Etablissement.objects.order_by('nom'),empty_label="inconnu",required=False)
-    matiere = forms.ModelMultipleChoiceField(label="Matière(s)",queryset=Matiere.objects.order_by('nom'))
+    matiere = forms.ModelMultipleChoiceField(label="Matière(s)",queryset=Matiere.objects.order_by('nom'),required=False)
     classe = forms.ModelMultipleChoiceField(label="Classe(s)",queryset=Classe.objects.order_by('annee','nom'),required=False)
     class Meta:
         model = User

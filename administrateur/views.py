@@ -219,7 +219,6 @@ def semaine(request):
     if lundimax['lundi__max'] is not None and numeromax['numero__max'] is not None:
         semaine.lundi=lundimax['lundi__max']+timedelta(days=7)
         semaine.numero=numeromax['numero__max']+1
-    print(semaine)
     form = SemaineForm(request.POST or None, initial={'lundi':semaine.lundi,'numero':semaine.numero})
     if form.is_valid():
         form.save()
