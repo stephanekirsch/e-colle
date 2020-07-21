@@ -1,5 +1,5 @@
 #-*- coding: utf-8 -*-
-from django.http import HttpResponseForbidden, Http404
+from django.http import HttpResponseForbidden, Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -8,7 +8,9 @@ from accueil.forms import UserForm, UserProfprincipalForm, SelectMessageForm, Ec
 from django.contrib import messages as messagees
 from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES
 import re
+import qrcode as qr
 from django.db.models import Q
+from io import BytesIO
 
 def home(request):
 	"""Renvoie la vue d'accueil ou, si l'utilisateur est déjà identifié, redirige vers la section adéquate"""
@@ -184,3 +186,19 @@ def repondreatous(request,message_id):
 			desti.save()
 		return redirect('messages')
 	return render(request,"accueil/repondre.html",{'form':form,'message':message})
+
+
+@login_required(login_url='accueil')
+def qrcode(request):
+	return render(request,"accueil/qrcode.html")
+
+@login_required(login_url='accueil')
+def qrcodepng(request):
+	url = request.build_absolute_uri('/')
+	img = qr.make(url)
+	buffer = BytesIO()
+	img.save(buffer,format="PNG")
+	response = HttpResponse(content_type='image/png')
+	response.write(buffer.getvalue())
+	buffer.close()
+	return response

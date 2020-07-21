@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import template
-from datetime import timedelta
+from datetime import timedelta, date
 from accueil.models import Classe, Config, Destinataire, Matiere
 from ecolle.settings import DEFAULT_CSS
 
@@ -9,6 +9,10 @@ register = template.Library()
 @register.filter
 def nometab(d):
 	return Config.objects.get_config().nom_etablissement
+
+@register.filter
+def fromiso(d):
+    return date.fromisoformat(d).strftime("%d/%m/%Y")
 
 @register.filter
 def lookup(d,key):
@@ -50,6 +54,10 @@ def tzip(l1, l2):
 @register.simple_tag
 def get_mathjax():
     return Config.objects.get_config().mathjax
+
+@register.simple_tag
+def get_app_mobile():
+    return Config.objects.get_config().app_mobile
 
 @register.simple_tag
 def get_ects():

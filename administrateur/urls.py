@@ -40,4 +40,11 @@ url(r'^action/rgpd/eleve/efface/(\d+)$', views.eleve_force_efface,name="eleve_fo
 url(r'^action/rgpd/colleur/(\d+)$', views.rgpd_colleur,name="rgpd_colleur"),
 url(r'^action/rgpd/colleur/pdf/(\d+)$', views.rgpd_colleur_pdf,name="rgpd_colleur_pdf"),
 url(r'^action/rgpd/colleur/efface/(\d+)$', views.colleur_force_efface,name="colleur_force_efface"),
+url(r'^action/nouvelle_annee$', views.nouvelle_annee, name="gestion_nouvelle_annee"),
+url(r'^action/nouvelle_annee_confirm$', views.nouvelle_annee_confirm, name="gestion_nouvelle_annee_confirm"),
+url(r'^action/sauvebdd$', views.sauvebdd, name="gestion_sauvebdd"),
+url(r'^action/sauvegarde_bdd/([01]{1})$', views.sauvegarde_bdd, name="sauvegarde_bdd"),
+url(r'^action/suppr_sauvegarde/(\d{4}-\d{2}-\d{2})$', views.suppr_sauvegarde, name="suppr_sauvegarde"),
+url(r'^action/restaure_sauvegarde/(\d{4}-\d{2}-\d{2})$', views.restaure_sauvegarde, name="restaure_sauvegarde"),
+url(r'^action/restaure_sauvegarde_confirm/(\d{4}-\d{2}-\d{2})/([123]{1})$', views.restaure_sauvegarde_confirm, name="restaure_sauvegarde_confirm"),
 ]

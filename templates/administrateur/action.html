@@ -11,6 +11,12 @@
 		<li><a href="{% url 'gestion_prof' %}" title="gestion des professeurs des classess">Professeurs</a></li>
 		<li><a href="{% url 'gestion_semaine' %}" title="gestion des semaines">Semaines</a></li>
 		<li><a href="{% url 'gestion_ferie' %}" title="gestion des jours fériés">Jours fériés</a></li>
+		<li><a href="#">Maintenance</a>
+			<ul>
+				<li><a href="{% url 'gestion_sauvebdd' %}" title="faire une souvegarde de la base de données ou restaurer à une sauvegarde antérieure">Sauvegardes</a></li>
+				<li><a href="{% url 'gestion_nouvelle_annee' %}" title="Nettoyer la base de données entre 2 années">nouvelle année</a></li>
+			</ul>
+		</li>
 	</ul>
 </div>
 {% endblock %}

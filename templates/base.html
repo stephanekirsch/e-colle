@@ -68,6 +68,12 @@
 				<li><a href="{% url 'deconnexion' %}">Déconnexion</a></li>
 				<li><a href="{% url 'profil' %}">Modifier profil</a></li>
 				<li><a {% if user.messagesnonlus %} style="{% for i in 'xxxx' %} background: {% cycle '' '-moz-' '-o-' '-webkit-'%}linear-gradient(top, #FF0000,  #0f0f0f) ;{% endfor %}" {% endif %} href="{% url 'messages' %}">Messages({{user.messagesnonlus}}/{{user.totalmessages}})</a></li>
+				{% if user.colleur or user.eleve %}
+				{% get_app_mobile as app_mobile %}
+				{% if app_mobile %}
+				<li><a href="{% url 'qrcode' %}">QR code</a></li>
+				{% endif %}
+				{% endif %}
 				{% endif %}
 			</ul>
 		</div>

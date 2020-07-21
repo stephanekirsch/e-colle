@@ -17,7 +17,9 @@ urlpatterns = [
     url(r'^colleur/', include('colleur.urls')),
     url(r'^secretariat/', include('secretariat.urls')),
     url(r'^logout/$', views.deconnexion, name="deconnexion"),
-    url(r'^profil/$', views.profil, name="profil")
+    url(r'^profil/$', views.profil, name="profil"),
+    url(r'^qrcode/$', views.qrcode, name="qrcode"),
+    url(r'^qrcodepng/$', views.qrcodepng, name="qrcodepng")
 ]
 
 urlpatterns += staticfiles_urlpatterns()

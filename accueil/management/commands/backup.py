@@ -14,11 +14,9 @@ class Command(Backup):
             help="""include media files in the backup,
             which can increase drastically the size disk space required""")
 
-    def handle(self,*app_labels,**options):
-        backup_media = options['backup_media']
+    def json_backup(self):
         output = os.path.join(BACKUP_ROOT,'ecolle.json')
         bz2_output = os.path.join(BACKUP_ROOT,'ecolle_{}.json.bz2'.format(datetime.date.today().isoformat()))
-        media_output = os.path.join(BACKUP_ROOT,'ecolle-media_{}.tar.xz'.format(datetime.date.today().isoformat()))
         self.stdout.write("Début de la sauvegarde de la base de donnée")
         super().handle(exclude=['auth' ,'contenttypes','sessions'], format='json',
             verbosity=1, indent=2, database=DEFAULT_DB_ALIAS, traceback=True,
@@ -31,19 +29,34 @@ class Command(Backup):
             with bz2.open(bz2_output,'wb') as fichier_bz2:
                 fichier_bz2.write(bz2.compress(fichier.read()))
                 os.remove(output)
-        compression = (1-os.path.getsize(bz2_output)/taille_fichier)*100
+        taille_bz2 = os.path.getsize(bz2_output)
+        compression = (1-taille_bz2/taille_fichier)*100
         self.stdout.write("Compression de la sauvegarde terminée (taux de compression: {:.02f}%)\n".format(compression))
-        if backup_media:
-            self.stdout.write("Début de la sauvegarde des fichiers media\n")
-            taille_repertoire = 0
-            with tarfile.open(media_output, 'w:xz') as archive_zip:
-                for folder, subfolders, files in os.walk(MEDIA_ROOT):
-                    for file in files:
-                        if (file != '.gitignore'):
-                            taille_repertoire += os.path.getsize(os.path.join(folder, file))
-                            archive_zip.add(os.path.join(folder, file), os.path.relpath(os.path.join(folder,file), MEDIA_ROOT))
+        return taille_bz2, compression
+
+    def media_backup(self):
+        media_output = os.path.join(BACKUP_ROOT,'ecolle-media_{}.tar.xz'.format(datetime.date.today().isoformat()))
+        self.stdout.write("Début de la sauvegarde des fichiers media\n")
+        taille_repertoire = 0
+        with tarfile.open(media_output, 'w:xz') as archive_zip:
+            for folder, subfolders, files in os.walk(MEDIA_ROOT):
+                for file in files:
+                    if (file != '.gitignore'):
+                        taille_repertoire += os.path.getsize(os.path.join(folder, file))
+                        archive_zip.add(os.path.join(folder, file), os.path.relpath(os.path.join(folder,file), MEDIA_ROOT))
+        if taille_repertoire > 0:
             compression = (1-os.path.getsize(media_output)/taille_repertoire)*100
-            self.stdout.write("Sauvegarde des fichiers media terminée (taux de compression: {:.02f}%)\n".format(compression))
+        else:
+            compression = 0
+        self.stdout.write("Sauvegarde des fichiers media terminée (taux de compression: {:.02f}%)\n".format(compression))
+        return taille_repertoire, compression
+
+    def handle(self,*app_labels,**options):
+        backup_media = options['backup_media']
+        self.json_backup()
+        if backup_media:
+            self.media_backup()
+            
 
 
 

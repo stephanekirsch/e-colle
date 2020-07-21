@@ -16,10 +16,15 @@ from reportlab.lib.styles import ParagraphStyle, TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import A4
 import csv
 from os.path import join
+import os
+import bz2
 from _io import TextIOWrapper
-from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES, MEDIA_ROOT
+from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES, MEDIA_ROOT, BACKUP_ROOT
 import re 
 from io import BytesIO
+from accueil.management.commands.nouvelle_annee import Command as NouvelleAnnee
+from accueil.management.commands.restore import Command as Restore
+from accueil.management.commands.backup import Command as Backup
 
 def random_string():
     """renvoie une chaine de caractères aléatoires contenant des lettres ou des chiffres ou un des symboles _+-.@"""
@@ -769,7 +774,6 @@ def rgpd_colleur_pdf(request, colleur_id):
     response.write(fichier)
     return response
 
-
 @ip_filter
 def colleur_force_efface(request, colleur_id):
     colleur = get_object_or_404(Colleur, pk=colleur_id)
@@ -783,3 +787,79 @@ def colleur_force_efface(request, colleur_id):
         return redirect('gestion_colleur')
     messages.error(request, "Le colleur n'a pas pu être effacé")
     return redirect('gestion_colleur')
+
+@ip_filter
+def nouvelle_annee(request):
+    """Renvoie la vue de la page de reinitialisation de la bdd entre 2 années"""
+    return render(request,"administrateur/nouvelle_annee.html")
+
+@ip_filter
+def nouvelle_annee_confirm(request):
+    """nettoie la base de données pour la nouvelle année scolaire et affiche un message de confirmation"""
+    command = NouvelleAnnee()
+    messages.error(request, "\n".join(command.reinit()))
+    return redirect('action_admin')
+
+@ip_filter
+def sauvebdd(request):
+    """Renvoie la vue de la page de gestion des sauvegardes de la base de donnée et des fichiers média"""
+    fichiers_bz2 = sorted([f.split("_")[1].split(".")[0] for f in os.listdir(BACKUP_ROOT) if f[-4:] == ".bz2"], reverse=True)
+    fichiers_xz = [os.path.isfile(os.path.join(BACKUP_ROOT,"ecolle-media_{}.tar.xz".format(f)))
+    for f in fichiers_bz2] # on regarde s'il y a des fichiers média associés
+    return render(request,"administrateur/sauvegardes.html", {'sauvegardes': zip(fichiers_bz2,fichiers_xz)})
+
+@ip_filter
+def sauvegarde_bdd(request, media):
+    """Effectue une sauvegarde de la base de données et renvoie sur les pages des sauvegardes
+    le paramètre media indique si l'on doit inclure (1) ou pas (0) les fichiers media"""
+    command = Backup()
+    try:
+        taille, comp = command.json_backup()
+        messages.error(request, "sauvegarde de la base de données effectuée avec succès, taille:{} octets, taux de compression: {:.02f}".format(taille, comp))
+    except Exception as e:
+        messages.error(request, str(e))
+    if media == "1":
+        try:
+            taille, comp = command.media_backup()
+            messages.error(request, "sauvegarde des fichiers média effectuée avec succès, taille:{} octets, taux de compression: {}".format(taille, comp))
+        except Exception as e:
+            messages.error(request, str(e))
+    return redirect('gestion_sauvebdd')
+
+@ip_filter
+def suppr_sauvegarde(request, date):
+    """supprime la sauvegarde de date indiquée et renvoie la page sur les différentes sauvegardes"""
+    try:
+        fichier_bz2 = os.path.join(BACKUP_ROOT,"ecolle_{}.json.bz2".format(date))
+        os.remove(fichier_bz2)
+    except Exception as e:
+        messages.error(request, "Erreur dans la suppression de la sauvegarde de la Base de données: {}".format(e))
+    try:
+        fichier_xz = os.path.join(BACKUP_ROOT,"ecolle_{}.json.bz2".format(date))
+        if os.path.isfile(fichier_xz):
+            os.remove(fichier_xz)
+    except Exception as e:
+        messages.error(request, "Erreur dans la suppression de la sauvegarde des fichiers : {}".format(e))
+    return redirect('gestion_sauvebdd')
+
+@ip_filter
+def restaure_sauvegarde(request, date):
+    """renvoie la page de restauration de la sauvegarde de la date indiquée"""
+    return render(request, "administrateur/restaure_sauvegarde.html", {'date': date})
+
+@ip_filter
+def restaure_sauvegarde_confirm(request, date, choix):
+    """restaure le système à la sauvegarde en question, selon le choix fait concernant les fichiers média"""
+    command = Restore()
+    fichier_bz2 = os.path.join(BACKUP_ROOT,"ecolle_{}.json.bz2".format(date))
+    fichier_xz = os.path.join(BACKUP_ROOT,"ecolle_{}.json.bz2".format(date))
+    try:
+        command.gere_media(fichier_xz, choix)
+    except Exception as e:
+        messages.error(request, str(e))
+    try:
+        command.gere_json(fichier_bz2)
+    except Exception as e:
+        messages.error(request, str(e))
+    return redirect("gestion_sauvebdd")
+
