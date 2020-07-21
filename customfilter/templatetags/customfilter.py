@@ -2,7 +2,7 @@
 from django import template
 from datetime import timedelta, date
 from accueil.models import Classe, Config, Destinataire, Matiere
-from ecolle.settings import DEFAULT_CSS
+from ecolle.settings import DEFAULT_CSS, GESTION_ADMIN_BDD
 
 register = template.Library()
 
@@ -50,6 +50,10 @@ def image(fichier):
 @register.filter
 def tzip(l1, l2):
     return zip(l1,l2)
+
+@register.simple_tag
+def get_admin_bdd():
+    return GESTION_ADMIN_BDD
 
 @register.simple_tag
 def get_mathjax():
