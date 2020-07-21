@@ -58,6 +58,14 @@ class Command(BaseCommand):
         self.stdout.write("-"*20)
         loop = True
         while loop:
+            gestion_admin_bdd = input("Autoriser l'admin à effectuer depuis l'inerface web des opération sur la base de données? O/N ({}): ".format("O" if GESTION_ADMIN_BDD else "N"))
+            if gestion_admin_bdd in "oOnN":
+                loop = False
+            else:
+                self.stdout.write("réponse invalide")
+        self.stdout.write("-"*20)
+        loop = True
+        while loop:
             sgbd_dict = {'1':"postgresql",'2':"mysql",'3':"sqlite3"}
             db_engine = input("SGBD à utiliser, " + ",".join(" {}:{}".format(value,key) for key,value in sgbd_dict.items()) + " ({}): ".format(DB_ENGINE))
             if db_engine in "123":
@@ -165,6 +173,8 @@ class Command(BaseCommand):
                 fichier.write("IP_FILTRE_ADRESSES = (")
                 fichier.write(ip_filtre_adresses)
                 fichier.write(") # si IP_FILTER_ADMIN vaut True, liste des IPS autorisées pour l'utilisateur admin (REGEXP)\n")
+                fichier.write("GESTION_ADMIN_BDD = {} # autorise l'admin a effectuer des opérations\
+                 sur la BDD (nettoyage entre 2 années + backup/restore)\n".format(gestion_admin_bdd))
                 fichier.write("DB_ENGINE = '{}' # base de données (mysql ou postgresql ou sqlite3)\n"\
                     .format(DB_ENGINE if db_engine == "" else sgbd_dict[db_engine]))
                 fichier.write("DB_USER = '{}' # nom de l'utilisateur qui a les droits sur la base de données\n"\

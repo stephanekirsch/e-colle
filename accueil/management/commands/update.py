@@ -63,6 +63,10 @@ class Command(BaseCommand):
             self.stdout.write("copie des données de configuration")
             from ecolle.settings import DEFAULT_ADMIN_PASSWD, DEFAULT_SECRETARIAT_PASSWD, EMAIL_ADMIN, EMAIL_SECRETARIAT, IP_FILTRE_ADMIN,\
             IP_FILTRE_ADRESSES, DATABASES, BDD, IMAGEMAGICK, ALLOWED_HOSTS, INTERNAL_IPS, SECRET_KEY, TIME_ZONE, HEURE_DEBUT, HEURE_FIN, INTERVALLE
+            try:
+                from ecolle.settings import GESTION_ADMIN_BDD
+            except exception:
+                GESTION_ADMIN_BDD = False
             db = DATABASES["default"]
             with open(os.path.join("..","e-colle-new","ecolle","config.py"),"wt",encoding="utf8") as fichier:
                     fichier.write("DEFAULT_ADMIN_PASSWD = '{}' # mot de passe de l'utilisateur administrateur\n".format(DEFAULT_ADMIN_PASSWD))
@@ -77,6 +81,7 @@ class Command(BaseCommand):
                         ip_filtre_adresses += ","
                     fichier.write(ip_filtre_adresses)
                     fichier.write(") # si IP_FILTER_ADMIN vaut True, liste des IPS autorisées pour l'utilisateur admin (REGEXP)\n")
+                    fichier.write("GESTION_ADMIN_BDD = {} # autorise l'admin a effectuter des opérations sur la BDD (nettoyage entre 2 années + backup/restore)\n".format(GESTION_ADMIN_BDD))
                     fichier.write("DB_ENGINE = '{}' # base de données (mysql ou postgresql ou sqlite3)\n".format(BDD))
                     fichier.write("DB_USER = '{}' # nom de l'utilisateur qui a les droits sur la base de données\n".format(db['USER']))
                     fichier.write("DB_NAME = '{}' # nom de la base de données (ou du fichier .db pour SQLite)\n".format(db['NAME']))

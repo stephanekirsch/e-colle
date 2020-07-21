@@ -4,6 +4,7 @@ EMAIL_ADMIN = '' # email de l'utilisateur administateur
 EMAIL_SECRETARIAT = '' # email de l'utilisateur secrétariat
 IP_FILTRE_ADMIN = True # filtrage IP pour l'utilisateur administrateur
 IP_FILTRE_ADRESSES = ('^127\.0\.0\.1$',) # si IP_FILTER_ADMIN vaut True, liste des IPS autorisées pour l'utilisateur admin (REGEXP)
+GESTION_ADMIN_BDD = False # autorise l'admin a effectuter des opérations sur la BDD (nettoyage entre 2 années + backup/restore)
 DB_ENGINE = 'postgresql' # SGBD (mysql ou postgresql ou sqlite3)
 DB_USER = 'e-colle' # nom de l'utilisateur qui a les droits sur la base de données
 DB_NAME = 'e-colle' # nom de la base de données (ou du fichier .db pour SQLite)

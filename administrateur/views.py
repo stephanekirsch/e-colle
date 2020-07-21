@@ -19,7 +19,7 @@ from os.path import join
 import os
 import bz2
 from _io import TextIOWrapper
-from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES, MEDIA_ROOT, BACKUP_ROOT
+from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES, MEDIA_ROOT, BACKUP_ROOT, GESTION_ADMIN_BDD
 import re 
 from io import BytesIO
 from accueil.management.commands.nouvelle_annee import Command as NouvelleAnnee
@@ -791,11 +791,15 @@ def colleur_force_efface(request, colleur_id):
 @ip_filter
 def nouvelle_annee(request):
     """Renvoie la vue de la page de reinitialisation de la bdd entre 2 années"""
+    if not GESTION_ADMIN_BDD:
+        return HttpResponseForbidden("Vous n'avez pas les droits suffisants pour accéder à cette page")
     return render(request,"administrateur/nouvelle_annee.html")
 
 @ip_filter
 def nouvelle_annee_confirm(request):
     """nettoie la base de données pour la nouvelle année scolaire et affiche un message de confirmation"""
+    if not GESTION_ADMIN_BDD:
+        return HttpResponseForbidden("Vous n'avez pas les droits suffisants pour accéder à cette page")
     command = NouvelleAnnee()
     messages.error(request, "\n".join(command.reinit()))
     return redirect('action_admin')
@@ -803,6 +807,8 @@ def nouvelle_annee_confirm(request):
 @ip_filter
 def sauvebdd(request):
     """Renvoie la vue de la page de gestion des sauvegardes de la base de donnée et des fichiers média"""
+    if not GESTION_ADMIN_BDD:
+        return HttpResponseForbidden("Vous n'avez pas les droits suffisants pour accéder à cette page")
     fichiers_bz2 = sorted([f.split("_")[1].split(".")[0] for f in os.listdir(BACKUP_ROOT) if f[-4:] == ".bz2"], reverse=True)
     fichiers_xz = [os.path.isfile(os.path.join(BACKUP_ROOT,"ecolle-media_{}.tar.xz".format(f)))
     for f in fichiers_bz2] # on regarde s'il y a des fichiers média associés
@@ -812,6 +818,8 @@ def sauvebdd(request):
 def sauvegarde_bdd(request, media):
     """Effectue une sauvegarde de la base de données et renvoie sur les pages des sauvegardes
     le paramètre media indique si l'on doit inclure (1) ou pas (0) les fichiers media"""
+    if not GESTION_ADMIN_BDD:
+        return HttpResponseForbidden("Vous n'avez pas les droits suffisants pour accéder à cette page")
     command = Backup()
     try:
         taille, comp = command.json_backup()
@@ -829,6 +837,8 @@ def sauvegarde_bdd(request, media):
 @ip_filter
 def suppr_sauvegarde(request, date):
     """supprime la sauvegarde de date indiquée et renvoie la page sur les différentes sauvegardes"""
+    if not GESTION_ADMIN_BDD:
+        return HttpResponseForbidden("Vous n'avez pas les droits suffisants pour accéder à cette page")
     try:
         fichier_bz2 = os.path.join(BACKUP_ROOT,"ecolle_{}.json.bz2".format(date))
         os.remove(fichier_bz2)
@@ -845,11 +855,15 @@ def suppr_sauvegarde(request, date):
 @ip_filter
 def restaure_sauvegarde(request, date):
     """renvoie la page de restauration de la sauvegarde de la date indiquée"""
+    if not GESTION_ADMIN_BDD:
+        return HttpResponseForbidden("Vous n'avez pas les droits suffisants pour accéder à cette page")
     return render(request, "administrateur/restaure_sauvegarde.html", {'date': date})
 
 @ip_filter
 def restaure_sauvegarde_confirm(request, date, choix):
     """restaure le système à la sauvegarde en question, selon le choix fait concernant les fichiers média"""
+    if not GESTION_ADMIN_BDD:
+        return HttpResponseForbidden("Vous n'avez pas les droits suffisants pour accéder à cette page")
     command = Restore()
     fichier_bz2 = os.path.join(BACKUP_ROOT,"ecolle_{}.json.bz2".format(date))
     fichier_xz = os.path.join(BACKUP_ROOT,"ecolle_{}.json.bz2".format(date))
