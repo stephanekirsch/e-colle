@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block body %}
+
+<table class="accueil"><tr><td>QR code à scanner depuis l'application mobile pour se connecter</td></tr></table>
+
+<table class="tableausimple">
+<tr>
+	<td><img style="max-width: 200px; aspect-ratio:1;" src="{% url 'qrcodepng' %}"></td>
+</tr>
+</table>
+<table class="accueil"><tr><td><a href="{% url 'accueil' %}">Retour</a></td></tr></table>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/ecrire.js' %}"></script>
+{% endblock %}

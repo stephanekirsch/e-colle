@@ -1,0 +1,19 @@
+{% extends 'administrateur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil"><tr><td>restauration de la sauvegarde du {{date|fromiso}}</td></tr></table>
+<table class="tableausimple" id="suppr">
+	<tr class="entete">
+		<td colspan="3">restauration des fichiers média</td>
+	</tr>
+	<tr>
+		<td><a href="{% url 'restaure_sauvegarde_confirm' date 1 %}">Ne rien faire</a></td>
+		<td><a href="{% url 'restaure_sauvegarde_confirm' date 2 %}">Effacer ceux actuellements présent pour les remplacer par ceux de la sauvegarde</a></td>
+		<td><a href="{% url 'restaure_sauvegarde_confirm' date 3 %}">Fusionner ceux actuellement présents et ceux de la sauvegarde (en écrasant les doublons)</a></td>
+	</tr>
+	<tr><td colspan="3">La restauration à une sauvegarde antérieure prend du temps, soyez patient une fois que vous avez cliqué <br/>
+	Une fois la restauration terminée, vous serez déconnecté(e)</td></tr>
+</table>
+<table class="accueil"><tr><td><a href="{% url 'gestion_sauvebdd' %}">Annuler</a></td></tr></table>
+{% endblock %}

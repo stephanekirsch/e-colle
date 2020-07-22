@@ -1,6 +1,7 @@
 {% extends 'administrateur/action.html' %}
 {% load static %}
 {% block body %}
+	{% if semaines %}
 	<table class="accueil"><tr><td>Liste des semaines</td></tr></table>
 	<table class="tableausimple" id="suppr">
 		<tr class="entete">
@@ -18,6 +19,9 @@
 		</tr>
 		{% endfor %}
 	</table>
+	{% else %}
+		<table class="accueil"><tr><td><a href="{% url 'genere_semaines' %}">Générer toutes les semaines de colle en une fois</a></td></tr></table>
+	{% endif %}
 	<table class="accueil"><tr><td>Ajouter une semaine</td></tr></table>
 	<form method="post">
 	{% csrf_token %}

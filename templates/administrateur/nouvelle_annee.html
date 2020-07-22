@@ -1,0 +1,11 @@
+{% extends 'administrateur/action.html' %}
+{% load static %}
+{% block body %}
+	<table class="accueil"><tr><td>Nettoyage de la base de données entre 2 années scolaires</td></tr></table>
+	<table class="tableausimple"><tr>t<td>Si vous voulez nettoyer la base de données avant la rentrée scolaire, cliquez sur le lien ci-dessous. Cette opération effacera les données que l'on ne garde pas d'une année sur l'autre (notes, programmes de colle, ramassage, colloscope, créneaux de colle, semaines,  ...) et conserve le reste (colleurs, étudiants, classes, matières, ... ). <br/>
+	Cette opération efface également toutes les sessions utilisateurs, vous allez donc être déconnecté(e) </td></tr></table>
+	<table class="accueil" id="nouvelle_annee"><tr><td><a href="{% url 'gestion_nouvelle_annee_confirm' %}">Réinitialiser</a></td></tr></table>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/nouvelle_annee.js' %}"></script>
+{% endblock %}

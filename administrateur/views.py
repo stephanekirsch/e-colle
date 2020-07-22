@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django.http import HttpResponseForbidden, Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from administrateur.forms import ChercheUserForm, ConfigForm, EleveFormSet, EleveFormSetMdp, ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm
+from administrateur.forms import ChercheUserForm, ConfigForm, EleveFormSet, EleveFormSetMdp, ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm, GenereSemainesForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
@@ -249,6 +249,19 @@ def semainesuppr(request, id_semaine):
     except Exception:
         messages.error(request,"Impossible d'effacer la semaine car elle est présente dans certain(e)s colles/programmes")
     return redirect('gestion_semaine')
+
+@ip_filter
+def genere_semaines(request):
+    """renvoie une vue qui propose en un seul formulaire de générer toutes les semaines de colle de l'année"""
+    if Semaine.objects.exists():
+        messages.error(request, "il existe déjà des semaines de colle")
+        return redirect('gestion_semaine')
+    form = GenereSemainesForm(request.POST or None, initial = {'nb_semaines': 36})
+    if form.is_valid():
+        form.save()
+        return redirect('gestion_semaine')
+    return render(request, 'administrateur/genere_semaine.html', {'form': form})
+
 
 @ip_filter
 def colleur(request):
@@ -876,4 +889,3 @@ def restaure_sauvegarde_confirm(request, date, choix):
     except Exception as e:
         messages.error(request, str(e))
     return redirect("gestion_sauvebdd")
-

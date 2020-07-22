@@ -1,0 +1,27 @@
+{% extends 'administrateur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil"><tr><td>Sauvegardes de la base de données et des fichiers média</td></tr></table>
+<table class="accueil" ><tr><td id="sauve_bdd" ><a href="{% url 'sauvegarde_bdd' 0 %}">Effectuer une nouvelle sauvegarde de la base de données</a></td></tr></table>
+<table class="tableausimple" id="suppr">
+	<tr class="entete">
+		<td>Date de la sauvegarde</td>
+		<td>fichiers médias</td>
+		<td>supprimer</td>
+		<td>restaurer e-colle à cette sauvegarde</td>
+	</tr>
+	{% for date, media in sauvegardes %}
+	<tr>
+		<td>{{date|fromiso}}</td>
+		{% if media %}<td style="color:green;">✓</td>{% else %}<td style="color:red;">❌</td>{% endif %}
+		<td><a class="bouton" href="{% url 'suppr_sauvegarde' date %}">Supprimer</a></td>
+		<td><a class="bouton" href="{% url 'restaure_sauvegarde' date %}">restaurer</a></td>
+	</tr>
+	{% endfor %}
+</table>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/sauve_bdd.js' %}"></script>
+{% endblock %}

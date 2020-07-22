@@ -249,7 +249,6 @@ class EtabForm(forms.ModelForm):
         fields=['nom']
 
 class SemaineForm(forms.ModelForm):
-    LISTE_SEMAINES = [(i,i) for i in range(1,36)] 
     base = date.today()
     base = base-timedelta(days=base.weekday())
     # utilisation d'une fonction lambda car en python 3 les compréhensions on leur propre espace de nom, et les variables d'une classe englobante y sont invisibles
@@ -267,8 +266,39 @@ class SemaineForm(forms.ModelForm):
         self.instance.numero = self.cleaned_data['numero']
         self.instance.save()
         
+class GenereSemainesForm(forms.Form):
+    base = date.today()
+    base = base-timedelta(days=base.weekday())
+    # utilisation d'une fonction lambda car en python 3 les compréhensions on leur propre espace de nom, et les variables d'une classe englobante y sont invisibles
+    liste1 = (lambda y:[y+timedelta(days=7*x) for x in range(-40,60)])(base)
+    liste2 = [d.strftime('%d %B %Y') for d in liste1]
+    LISTE_LUNDIS = list(zip(liste1,liste2))
+    premiere_semaine = forms.ChoiceField(label = "première semaine", choices=LISTE_LUNDIS, required = True)
+    nb_semaines = forms.ChoiceField(label = "nombre de semaines", choices = zip(range(1,41),range(1,41)), required = True)
+    no_semaines = forms.MultipleChoiceField(label = "semaines à retirer (vacances)", help_text="Maintenir CTRL enfoncé pour sélection multiple", choices = LISTE_LUNDIS, required = False, widget=forms.SelectMultiple(attrs={'size':'20'}))
 
-        
+    def save(self):
+        semaines = []
+        nombre_semaines = 0
+        nombre_total = int(self.cleaned_data['nb_semaines'])
+        semaine_courante = self.cleaned_data['premiere_semaine']
+        diff_semaines = self.cleaned_data['no_semaines']
+        while diff_semaines and diff_semaines[0] < semaine_courante:
+            diff_semaines.pop(0)
+        semaine_courante = date.fromisoformat(semaine_courante) # on convertit la date AAAA-MM-JJ en objet date
+        diff_semaine = False
+        if diff_semaines:
+            diff_semaine = date.fromisoformat(diff_semaines.pop(0)) # on convertit la date AAAA-MM-JJ en objet date
+        while nombre_semaines < nombre_total: # so on n'a pas encore toutes nos semaines de colle
+            if diff_semaine and diff_semaine == semaine_courante: # si on tombe sur une semaine à éviter
+                diff_semaine = False if not diff_semaines else date.fromisoformat(diff_semaines.pop(0)) # on passe à la semaine suivante à éviter et on ne garde pas la semaine en question
+            else:
+                semaines.append(Semaine(numero = nombre_semaines+1, lundi = semaine_courante))
+                nombre_semaines += 1
+            semaine_courante = semaine_courante + timedelta(days = 7)
+        Semaine.objects.bulk_create(semaines)
+
+
 class JourFerieForm(forms.ModelForm):
     class Meta:
         model = JourFerie
