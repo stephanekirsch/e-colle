@@ -42,8 +42,11 @@ class Command(Backup):
                         if (file != '.gitignore'):
                             taille_repertoire += os.path.getsize(os.path.join(folder, file))
                             archive_zip.add(os.path.join(folder, file), os.path.relpath(os.path.join(folder,file), MEDIA_ROOT))
-            compression = (1-os.path.getsize(media_output)/taille_repertoire)*100
-            self.stdout.write("Sauvegarde des fichiers media terminée (taux de compression: {:.02f}%)\n".format(compression))
+            if taille_repertoire == 0:
+                self.stdout.write("Sauvegarde des fichiers media terminée (Repertoires media vide)\n")
+            else:
+                compression = (1-os.path.getsize(media_output)/taille_repertoire)*100
+                self.stdout.write("Sauvegarde des fichiers media terminée (taux de compression: {:.02f}%)\n".format(compression))
 
 
 
