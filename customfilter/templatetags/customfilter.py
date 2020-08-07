@@ -2,10 +2,13 @@
 from django import template
 from datetime import timedelta, date
 from accueil.models import Classe, Config, Destinataire, Matiere
-from ecolle.settings import DEFAULT_CSS, GESTION_ADMIN_BDD
+from ecolle.settings import DEFAULT_CSS, GESTION_ADMIN_BDD, MEDIA_URL
 
 register = template.Library()
 
+@register.filter
+def media(url):
+    return MEDIA_URL + url
 @register.filter
 def nometab(d):
 	return Config.objects.get_config().nom_etablissement

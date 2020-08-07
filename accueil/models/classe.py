@@ -101,6 +101,9 @@ class Colleur(models.Model):
     def allprofs(self):
         return self.colleurprof.prefetch_related('classe')
 
+    def allprofsmatieres(self):
+        return [prof.matiere.pk for prof in self.colleurprof.all()]
+
     def classeGroupes(self):
         classes = set()
         for prof in self.colleurprof.prefetch_related('classe').all():

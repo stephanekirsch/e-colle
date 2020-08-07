@@ -1,0 +1,70 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+{% get_mathjax as latex %}
+<table class="accueil"><tr><td>Devoirs de la classe {{classe}}{% if matiere %} en {{matiere}}{% endif %}</td></tr></table>
+<form method="POST">
+	{% csrf_token %}
+	<table class="tableausimple">
+		{{ form.as_table }}
+		<tr><td colspan="2"><input type="submit"/></td></tr>
+	</table>
+</form>
+<table class="tableausimple" id="suppr">
+	<tr class="entete">
+		{% if not matiere %}
+		<td>Matière</td>
+		{% endif %}
+		<td>Numéro</td>
+		<td>affiché le</td>
+		<td>Détails</td>
+		<td>À rendre</td>
+		<td>Énoncé</td>
+		<td>Copie</td>
+		<td>Copie corrigée</td>
+		<td>Corrigé</td>
+	</tr>
+	{% for devoir in devoirs %}
+	<tr>
+		{% if not matiere %}
+		<td style="background-color:{{devoir.couleur}}">{{devoir.nom|title}}</td>
+		{% endif %}
+		<td>{{devoir.numero}}</td>
+		<td>{{devoir.date_affichage|date:"d/m/y à H\hi"}}</td>
+		<td>{{devoir.details|linebreaksbr}}</td>
+		<td>{{devoir.a_rendre_jour|date:"d/m/y"}} à {{devoir.a_rendre_heure|time:"H\hi"}}</td>
+		{% if devoir.enonce %}
+		<td><a href="{{devoir.enonce|media}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a></td>
+		{% else %}
+		<td></td>
+		{% endif %}
+		{% if devoir.copie %}
+		<td><a href="{{devoir.copie|media}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a><br>
+			{% if devoir.a_rendre_jour > hui or devoir.a_rendre_jour == hui and devoir.a_rendre_heure > heure %}
+			<a href="{% url 'depot_copie' devoir.id %}">Modifier votre copie</a></td>
+			{% endif %}
+		{% else %}
+		<td><a href="{% url 'depot_copie' devoir.id %}">Déposer votre copie</a></td>
+		{% endif %}
+		{% if devoir.copie_corrige %}
+		<td><a href="{{devoir.copie_corrige|media}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a></td>
+		{% else %}
+		<td></td>
+		{% endif %}
+		{% if devoir.corrige %}
+		<td><a href="{{devoir.corrige|media}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a></td>
+		{% else %}
+		<td></td>
+		{% endif %}
+	</tr>
+	{% endfor %}
+</table>
+{% endblock %}
+{% block javascript %}
+{% get_mathjax as latex %}
+<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+{% if latex %}
+{% include "mathjax.html" %}
+{% endif %}
+{% endblock %}

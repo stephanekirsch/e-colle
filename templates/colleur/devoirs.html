@@ -1,0 +1,56 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+{% get_mathjax as latex %}
+<table class="accueil"><tr><td>Ajouter un devoir en {{matiere.nom|title}}</td></tr></table>
+<form method="POST" enctype="multipart/form-data">
+{% csrf_token %}
+<table class="tableausimple">
+{{ form.as_table }}
+<tr><td colspan="2"><input type = "submit", name ="devoir" value = "Valider"/></td></tr>
+</table>
+</form>
+<table class="accueil"><tr><td>Devoirs de la classe {{classe}} en {{matiere.nom|title}}</td></tr></table>
+<table class="tableausimple" id="suppr">
+	<tr class="entete">
+		<td>Numéro</td>
+		<td>affiché le</td>
+		<td>Détails</td>
+		<td>Énoncé</td>
+		<td>À rendre</td>
+		<td>Corrigé</td>
+		<td>Copies</td>
+		<td>Modifier</td>
+		<td>Supprimer</td>
+	</tr>
+	{% for devoir in devoirs %}
+	<tr>
+		<td>{{devoir.numero}}</td>
+		<td>{{devoir.date_affichage|date:"d/m/y à H\hi"}}</td>
+		<td>{{devoir.detail|linebreaksbr}}</td>
+		{% if devoir.fichier %}
+		<td><a href="{{devoir.fichier.url}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a></td>
+		{% else %}
+		<td></td>
+		{% endif %}
+		<td>{{devoir.a_rendre_jour|date:"d/m/y"}} à {{devoir.a_rendre_heure|time:"H\hi"}}</td>
+		{% if devoir.corrige %}
+		<td><a href="{{devoir.corrige.url}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a></td>
+		{% else %}
+		<td></td>
+		{% endif %}
+		<td><a href="{% url 'colleur_devoir' devoir.pk %}">Copies</a></td>
+		<td><a href="{% url 'colleur_devoirmodif' devoir.pk %}">Modifier</a></td>
+		<td><a href="{% url 'colleur_devoirsuppr' devoir.pk %}">Supprimer</a></td>
+	</tr>
+	{% endfor %}
+</table>
+{% endblock %}
+{% block javascript %}
+{% get_mathjax as latex %}
+<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+{% if latex %}
+{% include "mathjax.html" %}
+{% endif %}
+{% endblock %}

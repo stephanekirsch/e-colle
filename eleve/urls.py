@@ -11,4 +11,6 @@ url(r'^action/programme$', views.programme,name="programme_eleve"),
 url(r'^action/colloscope$', views.colloscope,name="colloscope_eleve"),
 url(r'^action/colloscope/pdf/(\d+)/(\d+)$', views.colloscopePdf,name="colloscopepdf_eleve"),
 url(r'^action/agenda$', views.agenda,name="agenda_eleve"),
+url(r'^action/devoirs$', views.devoirs ,name="eleve_devoirs"),
+url(r'^action/depotcopie/(\d+)$', views.depotCopie ,name="depot_copie"),
 ]

@@ -1,19 +1,21 @@
 #-*- coding: utf-8 -*-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from colleur.forms import ColleurConnexionForm, ProgrammeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm, SelectEleveNoteForm, NoteElevesHeadForm, NoteElevesTailForm, NoteElevesFormset
-from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, MatiereECTS, NoteECTS
+from colleur.forms import ColleurConnexionForm, ProgrammeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm, SelectEleveNoteForm, NoteElevesHeadForm, NoteElevesTailForm, NoteElevesFormset, DevoirForm, CopieForm, CopiesForm
+from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, MatiereECTS, NoteECTS, Devoir, DevoirCorrige, DevoirRendu
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Avg, Min, Max, StdDev, Sum
 from datetime import date
-from django.http import Http404, HttpResponse, HttpResponseForbidden
+from django.http import Http404, HttpResponse, HttpResponseForbidden, FileResponse
 from django.forms.formsets import formset_factory
 from pdf.pdf import Pdf, creditsects, attestationects
 import os
 import csv
+from zipfile import ZipFile
 from ecolle.settings import MEDIA_ROOT, MEDIA_URL, IMAGEMAGICK
+from io import BytesIO
 
 def is_colleur(user):
 	"""Renvoie True si l'utilisateur est authentifié et est un colleur, False sinon"""
@@ -676,4 +678,113 @@ def attestationectsclassepdf(request,id_classe):
 		else:
 			return ectscredits(request,classe.pk,form)
 	else:
+		raise 
+
+@user_passes_test(is_colleur, login_url='accueil')
+def devoirs(request,id_classe):
+	"""renvoie la page des devoirs de la classe dont l'id est id_classe, dans la matière courante du professeur"""
+	classe=get_object_or_404(Classe,pk=id_classe)
+	colleur=request.user.colleur
+	matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
+	if not is_prof(request.user,matiere,classe):
 		raise Http404
+	devoirs=Devoir.objects.filter(classe=classe,matiere=matiere).order_by('-a_rendre_jour','-a_rendre_heure')
+	devoir = Devoir(classe=classe,matiere=matiere)
+	form = DevoirForm(matiere, classe, request.POST or None,request.FILES or None,instance=devoir)
+	if form.is_valid():
+		form.save()
+		return redirect('colleur_devoirs',classe.pk)
+	return render(request,"colleur/devoirs.html", {'matiere':matiere , 'form':form, 'devoirs':devoirs})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def devoir(request, id_devoir):
+	"""Renvoie la vue de la page du devoir dont l'id est id_devoir, pour consuler/rendre les copies"""
+	devoir=get_object_or_404(Devoir,pk=id_devoir)
+	if not is_prof(request.user,devoir.matiere,devoir.classe):
+		raise Http404
+	copies = Devoir.objects.devoirsrendus(devoir)
+	return render(request, "colleur/devoir.html", {'devoir': devoir ,'copies': copies})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def devoirModif(request,id_devoir):
+	"""Renvoie la vue de la page de modification du devoir dont l'id est id_devoir"""
+	devoir=get_object_or_404(Devoir,pk=id_devoir)
+	if not is_prof(request.user,devoir.matiere,devoir.classe):
+		raise Http404
+	form=DevoirForm(devoir.matiere, devoir.classe, request.POST or None,request.FILES or None, instance=devoir)
+	oldfile=os.path.join(MEDIA_ROOT,devoir.fichier.name) if devoir.fichier else False
+	oldfilecorrige=os.path.join(MEDIA_ROOT,devoir.corrige.name) if devoir.corrige else False
+	if form.is_valid():
+		if (request.FILES and 'fichier' in request.FILES or form.cleaned_data['fichier'] is False) and oldfile:
+			if os.path.isfile(oldfile):
+				os.remove(oldfile)
+		if (request.FILES and 'corrige' in request.FILES or form.cleaned_data['corrige'] is False) and oldfilecorrige:
+			if os.path.isfile(oldfilecorrige):
+				os.remove(oldfilecorrige)
+		form.save()
+		return redirect('colleur_devoirs', devoir.classe.pk)
+	return render(request,"colleur/devoirModif.html",{'devoir':devoir,'form':form})
+
+
+@user_passes_test(is_colleur, login_url='accueil')
+def devoirSuppr(request,id_devoir):
+	"""Essaie de supprimer le devoir dont l'id est id_devoir puis redirige vers la page de gestion des devoirs"""
+	devoir=get_object_or_404(Devoir,pk=id_devoir)
+	if not is_prof(request.user,devoir.matiere,devoir.classe):
+		raise Http404
+	try:
+		devoir.delete()
+	except Exception:
+		messages.error(request, "impossible d'effacer le devoir car certains élèves ont déposé leur copie")
+	return redirect('colleur_devoirs', devoir.classe.pk)
+
+@user_passes_test(is_colleur, login_url='accueil')
+def depotCopie(request, id_devoir, id_eleve):
+	"""envoie vers un formulaire pour deposer la copie corrigée de l'élève dont l'id est id_eleve pour le devoir dont l'id est id_devoir"""
+	devoir = get_object_or_404(Devoir, pk=id_devoir)
+	eleve = get_object_or_404(Eleve, pk=id_eleve)
+	copiecorrige = DevoirCorrige.objects.filter(eleve = eleve, devoir = devoir)
+	oldfile = False
+	if copiecorrige.exists():
+		copie = copiecorrige.first()
+		oldfile=os.path.join(MEDIA_ROOT,copie.fichier.name) 
+	else:
+		copie = DevoirCorrige(eleve = eleve, devoir = devoir)
+	form=CopieForm(request.POST or None,request.FILES or None, instance=copie)
+	if form.is_valid():
+		if (request.FILES or form.cleaned_data['fichier'] is False) and oldfile:
+			if os.path.isfile(oldfile):
+				os.remove(oldfile)
+		form.save()
+		return redirect("colleur_devoir", devoir.pk)
+	return render(request, "colleur/renducopie.html", {'form': form, 'devoir': devoir, 'eleve':eleve})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def depotCopies(request, id_devoir):
+	"""envoie vers un formulaire pour deposer sous forme de zip les copies corrigés de certains élèves (voire tous)"""
+	devoir = get_object_or_404(Devoir, pk=id_devoir)
+	form=CopiesForm(devoir, request.POST or None,request.FILES or None)
+	if form.is_valid():
+		form.save()
+		return redirect("colleur_devoir", devoir.pk)
+	return render(request, "colleur/renducopies.html", {'form': form, 'devoir': devoir})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def ramasseCopies(request, id_devoir):
+	"""renvoie une achive zip de toutes les copies du devoir dont l'id est id_devoir"""
+	devoir = get_object_or_404(Devoir,pk=id_devoir)
+	if all(not is_prof(request.user,devoir.matiere,devoir.classe) for matiere in request.user.colleur.matieres.all()):
+		raise Http404
+	copies = DevoirRendu.objects.filter(devoir=devoir)
+	if copies.exists():
+		temp_file = BytesIO()
+		with ZipFile(temp_file, 'w') as myzip:
+			for copie in copies:
+				if copie.fichier:
+					myzip.write(copie.fichier.url[1:])
+		temp_file.seek(0)
+		return FileResponse(temp_file, content_type='application/zip', filename="copies_devoir_{}_{}_{}.zip".format(devoir.numero,devoir.matiere.nom,devoir.classe.nom))
+	else:
+		raise Http404
+
+

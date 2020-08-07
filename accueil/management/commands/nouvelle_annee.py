@@ -21,6 +21,9 @@ class Command(BaseCommand):
                         accueil_creneau,\
                         accueil_decompte,\
                         accueil_destinataire,\
+                        accueil_devoir,\
+                        accueil_devoircorrige,\
+                        accueil_devoirrendu,\
                         accueil_jourferie,\
                         accueil_message,\
                         accueil_note,\
@@ -38,6 +41,9 @@ class Command(BaseCommand):
                         TRUNCATE TABLE accueil_creneau;\
                         TRUNCATE TABLE accueil_decompte;\
                         TRUNCATE TABLE accueil_destinataire;\
+                        TRUNCATE TABLE accueil_devoir;\
+                        TRUNCATE TABLE accueil_devoircorrige;\
+                        TRUNCATE TABLE accueil_devoirrendu;\
                         TRUNCATE TABLE accueil_jourferie;\
                         TRUNCATE TABLE accueil_message;\
                         TRUNCATE TABLE accueil_note;\
@@ -54,7 +60,9 @@ class Command(BaseCommand):
                         cursor.execute("DELETE FROM accueil_creneau;")
                         cursor.execute("DELETE FROM accueil_decompte;")
                         cursor.execute("DELETE FROM accueil_destinataire;")
-                        cursor.execute("DELETE FROM accueil_jourferie;")
+                        cursor.execute("DELETE FROM accueil_devoir;")
+                        cursor.execute("DELETE FROM accueil_devoircorrige;")
+                        cursor.execute("DELETE FROM accueil_devoirrendu;")
                         cursor.execute("DELETE FROM accueil_jourferie;")
                         cursor.execute("DELETE FROM accueil_message;")
                         cursor.execute("DELETE FROM accueil_note;")
@@ -70,26 +78,17 @@ class Command(BaseCommand):
                 messages.append(texte)
                 self.stdout.write(texte)
             else:
-                repertoire = os.path.join(MEDIA_ROOT,'programme')
-                try:
-                    for fichier in os.listdir(repertoire):
-                        if fichier != ".gitignore":
-                            os.remove(os.path.join(repertoire,fichier))
-                except Exception:
-                    texte = "Les fichiers programmes n'ont pas pu tous être effacés,\
-                        videz le répertoire media/programme à la main."
-                    messages.append(texte)
-                    self.stdout.write(texte)
-                repertoire = os.path.join(MEDIA_ROOT,'image')
-                try:
-                    for fichier in os.listdir(repertoire):
-                        if fichier != ".gitignore":
-                            os.remove(os.path.join(repertoire,fichier))
-                except Exception:
-                    texte = "Les fichiers image n'ont pas pu tous être effacés,\
-                        videz le répertoire media/image à la main."
-                    messages.append(texte)
-                    self.stdout.write(texte)
+                for folder in ('programme', 'image', 'devoir'):
+                    repertoire = os.path.join(MEDIA_ROOT, folder)
+                    try:
+                        for fichier in os.listdir(repertoire):
+                            if fichier != ".gitignore":
+                                os.remove(os.path.join(repertoire,fichier))
+                    except Exception:
+                        texte = "Les fichiers programmes n'ont pas pu tous être effacés,\
+                            videz le répertoire media/{} à la main.".format(folder)
+                        messages.append(texte)
+                        self.stdout.write(texte)
                 texte = "Réinitialisation complète"
                 messages.append(texte)
                 self.stdout.write(texte)

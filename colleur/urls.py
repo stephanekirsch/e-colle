@@ -47,4 +47,12 @@ url(r'^action/ects/credits/(\d+)$', views.ectscredits,name="ects_credits"),
 url(r'^action/ects/fiche/(\d+)$', views.ficheectspdf,name="ects_fiche"),
 url(r'^action/ects/attestation/(\d+)$', views.attestationectspdf,name="ects_attestation"),
 url(r'^action/ects/fiche/classe/(\d+)$', views.ficheectsclassepdf,name="ects_fiche_classe"),
-url(r'^action/ects/attestation/classe/(\d+)$', views.attestationectsclassepdf,name="ects_attestation_classe")]
+url(r'^action/ects/attestation/classe/(\d+)$', views.attestationectsclassepdf,name="ects_attestation_classe"),
+url(r'^action/devoirs/classe/(\d+)$', views.devoirs ,name="colleur_devoirs"),
+url(r'^action/devoir/(\d+)$', views.devoir ,name="colleur_devoir"),
+url(r'^action/devoir/modifier/(\d+)$', views.devoirModif ,name="colleur_devoirmodif"),
+url(r'^action/devoir/supprimer/(\d+)$', views.devoirSuppr ,name="colleur_devoirsuppr"),
+url(r'^action/devoir/depot/(\d+)/(\d+)$', views.depotCopie ,name="colleur_depotcopie"),
+url(r'^action/devoir/depot/(\d+)$', views.depotCopies ,name="depot_copies"),
+url(r'^action/devoir/ramasse/(\d+)$', views.ramasseCopies ,name="ramasse_copies"),
+]

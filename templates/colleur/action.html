@@ -39,6 +39,17 @@
 			</ul>
 		</li>
 		<li><a href="{% url 'agenda_colleur' %}">Agenda</a></li>
+		{% if request.session.matiere in user.colleur.allprofsmatieres %}
+		<li><a href="#">Devoirs</a>
+			<ul>
+				{% for prof in user.colleur.allprofs %}
+				{% if request.session.matiere == prof.matiere.pk %}
+				<li><a href="{% url 'colleur_devoirs' prof.classe.pk %}">{{prof.classe}}</a></li>
+				{% endif %}
+				{% endfor %}
+			</ul>
+		</li>
+		{% endif %}
 		<li><a href="{% url 'decompte_colleur' %}">Décompte</a></li>
 		{% if user.colleur.modifgroupe %}
 		<li><a href="#">Groupes</a>

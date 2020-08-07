@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Colleur, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS
+from accueil.models import Colleur, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS, Devoir, DevoirCorrige, DevoirRendu
 from django.db.models import Q, Count, Value
 from django.db.models.functions import Coalesce
 from datetime import date, timedelta
@@ -11,6 +11,8 @@ from ecolle.settings import RESOURCES_ROOT, MEDIA_ROOT, IMAGEMAGICK
 from os.path import isfile,join
 from os import remove
 from copy import copy
+from zipfile import ZipFile
+from django.core.files.base import ContentFile
 
 class ColleurConnexionForm(forms.Form):
         username = forms.CharField(label="Identifiant")
@@ -340,4 +342,74 @@ class NoteElevesFormset(forms.BaseFormSet):
                 notebis.update()
                 notes.append(notebis)
             Note.objects.bulk_create(notes) # on sauvegarde toutes les notes en une seule requête
+
+class DateInput(forms.DateInput):
+    input_type = 'date'
+
+class DevoirForm(forms.ModelForm):
+    class Meta:
+        model = Devoir
+        fields=['numero','detail','a_rendre_jour','a_rendre_heure','fichier','corrige']
+        widgets = {'a_rendre_jour': DateInput()}
+
+    def __init__(self, matiere, classe, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.matiere = matiere
+        self.classe = classe
+
+    def clean(self):
+        """Vérifie la condition d'unicité de numéro/classe/matière"""
+        query = Devoir.objects.filter(numero = self.cleaned_data['numero'], matiere = self.matiere, classe = self.classe)
+        if self.instance:
+            query = query.exclude(pk = self.instance.pk)
+        if query.exists():
+            raise ValidationError("il existe déjà un devoir n°{} dans la classe {} en {}".format(self.cleaned_data['numero'], self.classe, self.matiere))
+
+class CopieForm(forms.ModelForm):
+    class Meta:
+        model = DevoirCorrige
+        fields = ['fichier', 'commentaire']
+
+    def save(self, *args, **kwargs):
+        if self.cleaned_data['fichier'] in (False, None): # si on efface la copie rendue, ou si on ne soumet aucun fichier
+            if self.instance.id:
+                self.instance.delete()
+        else: # sinon on applique la sauvegarde classique
+            super().save()
+
+class CopiesForm(forms.Form):
+    def __init__(self, devoir, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.devoir = devoir
+        self.fields['fichier'] = forms.FileField(label="fichier zip", help_text="déposer un fichier zip avec les copies corrigées ayant le même nom que les copies ramassées.\
+         Si vous déposez une copie corrigée pour un élève qui en a déjà une, elle écrasera la précédente. Si un nom de fichier ne correspond pas à un nom de copie ramassée, il sera ignoré.")
+
+    def clean_fichier(self):
+        fichier =  self.cleaned_data['fichier']
+        if fichier.content_type != 'application/zip': # on vérifie qu'on a un fichier zip
+            raise ValidationError("le fichier n'est pas un fichier zip valide")
+        with ZipFile(fichier) as myzip:
+            for info in myzip.infolist():
+                if info.filename[-4:] != ".pdf":
+                    raise ValidationError("le fichier n'est pas un fichier pdf")
+                if info.file_size > DevoirCorrige.fichier.field.max_upload_size:
+                    raise ValidationError("le fichier {} est trop volumineux".format(info.filename))
+        return fichier
+
+    def save(self):
+        with ZipFile(self.cleaned_data['fichier']) as myzip:
+            nomfichiers = myzip.namelist() # on récupère les noms des fichiers
+            for nomfichier in nomfichiers: # pour chaque fichier, on cherche une correspondance, et si on trouve, on enregistre en écrasant
+                copie = DevoirRendu.objects.filter(devoir=self.devoir, fichier = join("devoir", nomfichier)).first()
+                if copie: # si le devoir a été rendu
+                    copiecorrigee = DevoirCorrige.objects.filter(devoir = self.devoir, eleve = copie.eleve).first()
+                    if copiecorrigee:
+                        copiecorrigee.delete()
+                    with myzip.open(nomfichier) as myfile:
+                        copiecorrigee = DevoirCorrige(eleve = copie.eleve, devoir = self.devoir, commentaire = "")
+                        copiecorrigee.fichier.save(copiecorrigee.update_name() , ContentFile(myfile.read()), save = False)
+                        copiecorrigee.save()
+
+
+   
         

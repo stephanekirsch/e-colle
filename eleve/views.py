@@ -1,15 +1,16 @@
 #-*- coding: utf-8 -*-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from eleve.forms import EleveConnexionForm, MatiereForm
+from eleve.forms import EleveConnexionForm, MatiereForm, CopieForm
 from colleur.forms import SemaineForm
-from accueil.models import Note, Programme, Colle, Semaine, Groupe
+from accueil.models import Note, Programme, Colle, Semaine, Groupe, Devoir, DevoirRendu
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Max
-from datetime import date
+from datetime import date, datetime
 from pdf.pdf import Pdf
-from ecolle.settings import MEDIA_URL, IMAGEMAGICK
-from django.http import Http404
+from ecolle.settings import MEDIA_URL, IMAGEMAGICK, MEDIA_ROOT
+from django.http import Http404, HttpResponseForbidden
+import os
 
 def is_eleve(user):
 	"""Renvoie True si l'utilisateur est un élève, False sinon"""
@@ -58,7 +59,6 @@ def note(request):
 	else:
 		matiere=None
 	eleve = request.user.eleve
-	print(Note.objects.noteEleve(eleve,matiere))
 	return render(request,'eleve/note.html',{'form':form,'matiere':matiere,'notes':Note.objects.noteEleve(eleve,matiere)})
 
 @user_passes_test(is_eleve, login_url='accueil')
@@ -119,3 +119,44 @@ def colloscopePdf(request,id_semin,id_semax):
 	if not classe:
 		raise Http404
 	return Pdf(classe,semin,semax)
+
+@user_passes_test(is_eleve, login_url='accueil')
+def devoirs(request):
+	"""renvoie la page des devoirs de la classe de l'élève"""
+	classe=request.user.eleve.classe
+	if classe != request.user.eleve.classe :
+		raise Http404
+	form=MatiereForm(classe,request.POST or None)
+	matiere=None
+	if form.is_valid():
+		matiere=form.cleaned_data['matiere']
+	devoirs = Devoir.objects.devoirsEleves(request.user.eleve, matiere)
+	hui = date.today()
+	heure = datetime.time(datetime.today())
+	return render(request,"eleve/devoirs.html", {'form': form, 'classe':classe, 'devoirs':devoirs, 'matiere': matiere, 'hui': hui, "heure": heure})
+
+@user_passes_test(is_eleve, login_url='accueil')
+def depotCopie(request, id_devoir):
+	"""envoie vers un formulaire pour deposer sa copie pour le devoir dont l'id est id_devoir"""
+	devoir = get_object_or_404(Devoir, pk=id_devoir)
+	a_rendre = datetime.combine(devoir.a_rendre_jour, devoir.a_rendre_heure)
+	rendu = DevoirRendu.objects.filter(eleve = request.user.eleve, devoir = devoir)
+	oldfile = False
+	if rendu.exists():
+		# on vérifie que la date pour rendre le devoir n'est pas déjà passée:
+		hui = date.today()
+		heure = datetime.time(datetime.today())
+		if not(devoir.a_rendre_jour > hui or devoir.a_rendre_jour == hui and devoir.a_rendre_heure > heure):
+			return HttpResponseForbidden("Vous avez déjà rendu votre devoir et la date limite est passée")
+		copie = rendu.first()
+		oldfile=os.path.join(MEDIA_ROOT,copie.fichier.name) 
+	else:
+		copie = DevoirRendu(eleve = request.user.eleve, devoir = devoir)
+	form=CopieForm(request.POST or None,request.FILES or None, instance=copie)
+	if form.is_valid():
+		if (request.FILES or form.cleaned_data['fichier'] is False) and oldfile:
+			if os.path.isfile(oldfile):
+				os.remove(oldfile)
+		form.save()
+		return redirect("eleve_devoirs")
+	return render(request, "eleve/renducopie.html", {'form': form, 'devoir': devoir})

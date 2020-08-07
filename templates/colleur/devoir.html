@@ -1,0 +1,45 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil"><tr><td>Copies du {{devoir}}</td></tr></table>
+<table class="accueil">
+	<tr>
+		{% if copies %}
+		<td><a href="{% url 'ramasse_copies' devoir.pk %}">Ramasser toutes les copies</a></td>
+		{% endif %}
+		<td><a href="{% url 'depot_copies' devoir.pk %}">Déposer toutes les copies corrigées</a></td>	
+	</tr>
+</table>
+<table class="tableausimple">
+	<tr class="entete">
+		<td>Élève</td>
+		<td>Copie</td>
+		<td>Rendue le</td>
+		<td>Copie corrigée</td>
+		<td>Commentaire</td>
+	</tr>
+	{% for copie in copies %}
+	<tr>
+		<td>{{copie.first_name|title}} {{copie.last_name|upper}}</td>
+		{% if copie.copie %}
+		<td><a href="{{copie.copie|media}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a></td>
+		<td>{{copie.date_rendu|date:"d/m/y à H\hi"}}</td></td>
+		{% else %}
+		<td>❌</td>
+		<td></td>
+		{% endif %}
+		{% if copie.copiecorrige %}
+		<td><a href="{{copie.copiecorrige|media}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a><br>
+		<a href="{% url 'colleur_depotcopie' devoir.id copie.id %}">changer la copie corrigée</a>
+		</td>
+		<td>{{copie.commentaire}}</td>
+		{% else %}
+		<td><a href="{% url 'colleur_depotcopie' devoir.id copie.id %}">Déposer la copie corrigée</a></td>
+		<td></td>
+		{% endif %}
+	</tr>
+	{% endfor%}
+</table>
+<table class="accueil"><tr><td><a href="{% url 'colleur_devoirs' devoir.classe.pk %}">Retour</a></td></tr></table>
+{% endblock %}

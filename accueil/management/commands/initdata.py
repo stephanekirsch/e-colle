@@ -58,7 +58,7 @@ class Command(BaseCommand):
         self.stdout.write("-"*20)
         loop = True
         while loop:
-            gestion_admin_bdd = input("Autoriser l'admin à effectuer depuis l'inerface web des opération sur la base de données? O/N ({}): ".format("O" if GESTION_ADMIN_BDD else "N"))
+            gestion_admin_bdd = input("Autoriser l'admin à effectuer depuis l'interface web des opération sur la base de données? O/N ({}): ".format("O" if GESTION_ADMIN_BDD else "N"))
             if gestion_admin_bdd in "oOnN":
                 loop = False
             else:
