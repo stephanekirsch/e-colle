@@ -66,8 +66,9 @@ class RamassageManager(models.Manager):
                 for row in cursor.fetchall(): # on -re-crée le décompte
                     Decompte.objects.create(colleur_id=row[0],matiere_id=row[1],classe_id=row[2],ramassage_id=ramassage.pk, mois=row[3] ,temps=row[4])
 
-    def decompteRamassage(self, ramassage, csv = True, parClasse = True, parMois = False, full = False):
-        """Renvoie, pour chaque classe, la liste des colleurs avec leur nombre d'heures de colle entre les mois moisMin et moisMax, s'ils en ont effectué"""
+    def decompteRamassage(self, ramassage, csv = True, parClasse = True, parMois = False, full = False, colleur = False):
+        """Renvoie, pour chaque classe, la liste des colleurs avec leur nombre d'heures de colle ramassées au ramassage 'ramassage', s'ils en ont effectué
+        Si colleur ne vaut pas False, on ne ramasse que les colles du colleur en question"""
         if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists() and not full: # s'il existe un ramassage antérieur et qu'on ne ramasse pas depuis le début
             mois = Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).aggregate(Max('moisFin'))['moisFin__max']
             ramassage_precedent = Ramassage.objects.get(moisFin = mois) # on récupère le ramassage précédent
@@ -91,7 +92,7 @@ class RamassageManager(models.Manager):
         ON u.colleur_id = col.id\
         LEFT OUTER JOIN accueil_etablissement et\
         ON col.etablissement_id = et.id\
-        WHERE dec2.ramassage_id=%s AND dec2.temps - COALESCE(dec1.temps,0) != 0\
+        WHERE dec2.ramassage_id=%s AND dec2.temps - COALESCE(dec1.temps,0) != 0{}\
         GROUP BY ma.nom, u.last_name, u.first_name, col.id, cl.id, et.nom, dec2.mois\
         UNION ALL SELECT cl.id classe_id, cl.nom classe_nom, cl.annee, ma.nom matiere_nom, COALESCE(et.nom, 'Inconnu') etab, col.grade, u.last_name nom, u.first_name prenom, col.id colleur_id,\
         dec1.mois mois, - COALESCE(SUM(dec1.temps),0) heures\
@@ -109,8 +110,8 @@ class RamassageManager(models.Manager):
         ON u.colleur_id = col.id\
         LEFT OUTER JOIN accueil_etablissement et\
         ON col.etablissement_id = et.id\
-        WHERE dec2.id = NULL AND dec1.ramassage_id = %s\
-        GROUP BY ma.nom, u.last_name, u.first_name, col.id, cl.id, et.nom, dec1.mois"
+        WHERE dec2.id = NULL AND dec1.ramassage_id = %s{}\
+        GROUP BY ma.nom, u.last_name, u.first_name, col.id, cl.id, et.nom, dec1.mois".format("" if not colleur else " AND col.id = %s", "" if not colleur else " AND col.id = %s")
         if parMois:
             requete = "SELECT * FROM ({}) as req\
             ORDER BY {} req.matiere_nom, req.etab, req.grade, req.nom, req.prenom, req.mois".format(requete, "req.annee, req.classe_nom, " if parClasse else "")
@@ -120,7 +121,7 @@ class RamassageManager(models.Manager):
             GROUP BY req.classe_id, req.classe_nom, req.annee, req.matiere_nom, req.etab, req.grade, req.nom, req.prenom, req.colleur_id\
             ORDER BY {}req.matiere_nom, req.etab, req.grade, req.nom, req.prenom".format(requete, "req.annee, req.classe_nom, " if parClasse else "")
         with connection.cursor() as cursor:
-            cursor.execute(requete,(ramassage_precedent_pk,ramassage.pk,ramassage.pk,ramassage_precedent_pk))
+            cursor.execute(requete,(ramassage_precedent_pk,ramassage.pk,ramassage.pk,ramassage_precedent_pk) if not colleur else  (ramassage_precedent_pk,ramassage.pk,colleur.pk,ramassage.pk,ramassage_precedent_pk,colleur.pk))
             decomptes = cursor.fetchall()
         LISTE_GRADES=["inconnu","certifié","bi-admissible","agrégé","chaire sup"]
         if not parClasse: # si on note par annee/effectif pour un csv ou un pdf

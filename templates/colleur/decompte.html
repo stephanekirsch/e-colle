@@ -4,7 +4,7 @@
 {% block body %}
 <table class="accueil"><tr><td>Décompte</td></tr></table>
 {% for matiere,listeclasses,listemois in listematieres %}
-<table class="accueil"><tr><td>{{matiere|title}}</td></tr></table>
+<table class="accueil"><tr><td>{{matiere|title}} (heures effectuées/heures ramassées)</td></tr></table>
 <table class="tableausimple">
 	<tr class="entete">
 		<td>Classe</td>
@@ -13,16 +13,26 @@
 	{% endfor %}
 		<td>Total</td>
 	</tr>
-	{% for classe,nbcolles,total in listeclasses %}
+	{% for classe,nbcolles,total,totalramassage in listeclasses %}
 	<tr {% cycle '' 'class="plusclair"'%}>
 		<td>{{classe}}</td>
 		{% for nb in nbcolles %}
-		<td>{{nb.temps|heurecolle}}</td>
+		<td>{{nb.0|heurecolle}} / {{nb.1|heurecolle}}</td>
 		{% endfor %}
-		<td>{{total.temps|heurecolle}}</td>
+		<td>{{total.temps|heurecolle}} / {{totalramassage.temps|heurecolle}}</td>
 	</tr>
 	{% endfor %}
 </table>
-
 {% endfor %}
+{% if ramassages %}
+<table class="accueil"><tr><td>Ramassages</td></tr></table>
+<table class="tableausimple">
+	<tr class="entete">
+{% for ramassage in ramassages %}
+<td>{{ramassage.moisFin|date:"E Y"}}</br>
+<a href="{% url 'ramassage_colleur' ramassage.pk %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
+{% endfor %}
+	</tr>
+</table>
+{% endif %}
 {% endblock %}
