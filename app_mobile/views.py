@@ -6,7 +6,7 @@ from accueil.models import Config, Note, Programme, Colle, Message, Destinataire
 from django.utils import timezone
 import json
 from datetime import date, datetime, time, timedelta
-from django.db.models import Count
+from django.db.models import Count, Q
 from ecolle.settings import HEURE_DEBUT, HEURE_FIN, INTERVALLE
 
 
@@ -16,7 +16,6 @@ def date_serial(obj):
         return int(obj.timestamp())
     if isinstance(obj, date):
         return int(datetime.combine(obj,time(0,0)).replace(tzinfo=timezone.utc).timestamp())
-    
     raise TypeError("Type not serializable")
 
 
@@ -165,7 +164,7 @@ def colles(request):
 # ------------------------- PARTIE MESSAGES ----------------------------
 
 def messages(request):
-    """renvoie les messages reçus par l'utilisateur connecté au format json"""
+    """renvoie les messages envoyés/reçus par l'utilisateur ainsi que les données pour écrire des messages connecté au format json"""
     user = request.user
     if not checkeleve(user) and not checkcolleur(user):
         return HttpResponseForbidden("not authenticated")
@@ -190,7 +189,31 @@ def messages(request):
             'recipients':x['listedestinataires'],
             'title':x['titre'],
             'body':x['corps']} for x in messagesenvoyesQuery]
-    return HttpResponse(json.dumps({'messagesrecus':messagesrecus, 'messagesenvoyes': messagesenvoyes}, default=date_serial))
+    if checkcolleur(user) or not Config.objects.get_config().message_eleves:
+        return HttpResponse(json.dumps({'messagesrecus':messagesrecus, 'messagesenvoyes': messagesenvoyes}, default=date_serial))
+    else:
+        groupes = list(Groupe.objects.filter(classe=classe).values_list('pk', 'nom'))
+        matieres = list(Matiere.objects.filter(matieresclasse=classe).values_list('pk', 'nom', 'couleur', 'lv'))
+        eleves = [[eleve.pk, eleve.user.first_name.title() + " " + eleve.user.last_name.upper(), login, 0 if not eleve.groupe else eleve.groupe.pk,
+                   0 if not eleve.lv1 else eleve.lv1.pk, 0 if not eleve.lv2 else eleve.lv2.pk] for eleve, login in classe.loginsEleves()]
+        colleurs = [[colleur.pk, colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), login]
+                    for colleur, login in classe.loginsColleurs()]
+        profs = list(Prof.objects.filter(classe = eleve.classe).values('colleur__pk','matiere__pk'))
+        return HttpResponse(json.dumps({'messagesrecus':messagesrecus, 'messagesenvoyes': messagesenvoyes, 'groupes': groupes,\
+            'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'profs': profs}, default=date_serial))
+
+def newmessage(request, timestamp):
+    """renvoie les intitulés des messages dont la date est > que la date de timestamp timestamp"""
+    user = request.user
+    debut = datetime.fromtimestamp(timestamp)
+    if not checkeleve(user) and not checkcolleur(user):
+        return HttpResponseForbidden("not authenticated")
+    messagesrecusQuery = Destinataire.objects.filter(user=user, date__gt=debut).values('message__date',
+                                                                  'message__auteur__first_name', 'message__auteur__last_name', 'message__titre').order_by('-message__date')
+    messagesrecus = [{'date':x['message__date'],
+            'author':x['message__auteur__first_name'].title()+" "+x['message__auteur__last_name'].upper(),
+            'title':x['message__titre']} for x in messagesrecusQuery]
+    return HttpResponse(json.dumps(messagesrecus, default=date_serial))
 
 def readmessage(request, message_id):
     """marque comme lu le message d'ont l'identifiant est message_id"""
