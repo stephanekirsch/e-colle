@@ -568,6 +568,14 @@ class CsvForm(forms.Form):
     fichier = forms.FileField(label="Fichier csv",required=True)
     classe=forms.ModelChoiceField(label="Classe",queryset=Classe.objects.order_by('nom'), empty_label="Non définie",required=False) 
 
+class CsvColleurForm(forms.Form):
+    nom = forms.CharField(label="intitulé du champ nom",required=True,max_length=30)
+    prenom = forms.CharField(label="intitulé du champ prénom",required=True,max_length=30)
+    email = forms.CharField(label="intitulé du champ email(facultatif)",required=False,max_length=30)
+    matiere=forms.ModelChoiceField(label="Matière",queryset=Matiere.objects.order_by('nom'), empty_label="Non définie",required=False)
+    classe=forms.ModelChoiceField(label="Classe",queryset=Classe.objects.order_by('nom'), empty_label="Non définie",required=False)
+    fichier = forms.FileField(label="Fichier csv",required=True)
+
 
 
 

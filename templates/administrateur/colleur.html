@@ -19,10 +19,12 @@
 	</table>
 	</form>
 	<table class="accueil">
-	<tr>
-		<td>Liste des colleurs</td>
+	<tr><td><a href="{% url 'csv_colleur' %}">Importer des colleurs depuis un fichier CSV</a></td>
 		<td><a href="{% url 'ajout_colleur' %}">Ajouter des colleurs</a></td>
 	</tr>
+	</table>
+	<table class="accueil">
+	<tr><td>Liste des colleurs</td></tr>
 	</table>
 	<form method="post">
 	{% csrf_token %}

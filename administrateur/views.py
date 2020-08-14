@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django.http import HttpResponseForbidden, Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from administrateur.forms import ChercheUserForm, ConfigForm, EleveFormSet, EleveFormSetMdp, ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm, GenereSemainesForm
+from administrateur.forms import ChercheUserForm, ConfigForm, EleveFormSet, EleveFormSetMdp, ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm, CsvColleurForm, GenereSemainesForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
@@ -330,14 +330,24 @@ def colleurmodif(request, chaine_colleurs):
         formset = Colleurformset(listeColleurs,initial=[{'last_name':colleur.user.last_name,'first_name':colleur.user.first_name,'username':colleur.user.username,'email':colleur.user.email,'is_active':colleur.user.is_active,'grade':colleur.grade,'etablissement':colleur.etablissement,'matiere':colleur.matieres.all(),'classe':colleur.classes.all()} for colleur in listeColleurs]) 
     return render(request,'administrateur/colleurmodif.html',{'formset':formset})
 
-@ip_filter
-def colleurajout(request):
+def colleurajout(request, initial = None):
     """Renvoie la vue de la page d'ajout de colleurs"""
-    Colleurformset = formset_factory(ColleurFormMdp,formset=ColleurFormSetMdp)
-    formset = Colleurformset(request.POST or None)
-    if formset.is_valid():
-        formset.save()
-        return redirect('gestion_colleur')
+    if request.method=="POST":
+        Colleurformset = formset_factory(ColleurFormMdp,extra = 0,formset=ColleurFormSetMdp)
+        if "csv" in request.POST:
+            formset = Colleurformset(initial=initial)
+        else:
+            formset=Colleurformset(request.POST)
+            if formset.is_valid():
+                formset.save()
+                return redirect('gestion_colleur')
+    else:
+        try:
+            matiere = Matiere.objects.get(pk=request.session['matiere'])
+        except Exception:
+            matiere = None
+        Colleurformset = formset_factory(ColleurFormMdp,extra=0)
+        formset=Colleurformset( initial = [{ 'matiere' : matiere}])
     return render(request,'administrateur/colleurajout.html',{'formset':formset})
 
 @ip_filter
@@ -457,6 +467,30 @@ def elevecsv(request):
                 messages.error(request,"Le fichier doit être un fichier CSV valide, encodé en UTF-8")
                 return redirect('csv_eleve')
     return render(request,'administrateur/elevecsv.html',{'form':form})
+
+@ip_filter
+def colleurcsv(request):
+    """Renvoie la vue de la page d'ajout de colleurs via un fichier CSV"""
+    form = CsvColleurForm(request.POST or None, request.FILES or None,initial = {'nom':'Nom','prenom':'Prénom','email':'Adresse mail', 'matiere': 'Matière'})
+    if form.is_valid():
+        try:
+            with TextIOWrapper(form.cleaned_data['fichier'].file,encoding = 'utf8') as fichiercsv:
+                dialect = csv.Sniffer().sniff(fichiercsv.read(4096))
+                nom,prenom,email=form.cleaned_data['nom'],form.cleaned_data['prenom'],form.cleaned_data['email']
+                fichiercsv.seek(0)
+                reader = csv.DictReader(fichiercsv, dialect=dialect)
+                ligne = next(reader)
+                if not(nom in ligne and prenom in ligne):
+                    messages.error(request,"Les intitulés des champs nom et/ou prénom sont inexacts")
+                else:
+                    fichiercsv.seek(0)
+                    next(reader)
+                    initial = [{'last_name': ligneLoc[nom],'first_name':ligneLoc[prenom],'email':'' if email not in ligneLoc else ligneLoc[email],'matiere': form.cleaned_data['matiere'], 'classe': form.cleaned_data['classe']} for ligneLoc in reader]
+                    return colleurajout(request,initial=initial)
+        except Exception as e:
+            messages.error(request,"Le fichier doit être un fichier CSV valide, encodé en UTF-8: {}".format(e))
+            return redirect('csv_colleur')
+    return render(request,'administrateur/colleurcsv.html',{'form':form})
 
 @ip_filter
 def elevemodif(request, chaine_eleves):
