@@ -7,6 +7,7 @@ from django.db import connection
 from django.dispatch import receiver
 import os
 from ecolle.settings import MEDIA_ROOT
+from unidecode import unidecode
 
 def dictfetchall(cursor):
     """Renvoie les lignes du curseur sous forme de dictionnaire"""
@@ -92,7 +93,7 @@ class Devoir(models.Model):
 
 class DevoirRendu(models.Model):
     def update_name(instance, filename):
-        return os.path.join("devoir", "rendu_{}_{}_{}.pdf".format(instance.eleve.user.last_name, instance.eleve.user.first_name, texte_aleatoire(20)))
+        return os.path.join("devoir", "rendu_{}_{}_{}.pdf".format(unidecode(instance.eleve.user.last_name), unidecode(instance.eleve.user.first_name), texte_aleatoire(20)))
     eleve = models.ForeignKey("Eleve", related_name = "devoireleve", on_delete = models.PROTECT)
     devoir = models.ForeignKey("Devoir", related_name = "rendus", on_delete = models.PROTECT)
     date_rendu = models.DateTimeField(auto_now = True)
@@ -107,7 +108,7 @@ class DevoirRendu(models.Model):
 
 class DevoirCorrige(models.Model):
     def update_name(instance, filename = ""):
-        return os.path.join("devoir", "copiecorrige_{}_{}_{}.pdf".format(instance.eleve.user.last_name, instance.eleve.user.first_name, texte_aleatoire(20)))
+        return os.path.join("devoir", "copiecorrige_{}_{}_{}.pdf".format(unidecode(instance.eleve.user.last_name), unidecode(instance.eleve.user.first_name), texte_aleatoire(20)))
     eleve = models.ForeignKey("Eleve", related_name = "devoircorrigeeleve", on_delete = models.PROTECT)
     devoir = models.ForeignKey("Devoir", related_name = "corrigés", on_delete = models.PROTECT)
     commentaire = models.TextField(verbose_name="Commentaire",null=True,blank=True)
