@@ -9,6 +9,10 @@
 	<table class="tableausimple">
 		<tr >
 			<th rowspan="{{form.rowspan}}">Destinataires</th>
+			{% if form.adminsecret == 1 %}
+			<td colspan="{{form.colspan}}">{{form.touscolleurs}} {{form.touscolleurs.label_tag}} &nbsp; {{form.tousprofs}} {{form.tousprofs.label_tag}} &nbsp; {{form.touseleves}}{{form.touseleves.label_tag}} </td>
+		</tr>
+			{% endif %}
 			{% for classe, prof, profs, colleur, colleurs, groupe, groupes, eleve, eleves in form.champs %}
 			<td {% if forloop.last and form.reste %} colspan="2" {% endif %}>
 			<b>Classe de {{classe.nom}}</b><br/><br/>

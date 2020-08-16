@@ -115,13 +115,24 @@ def ecrire(request):
 	form=EcrireForm(request.user,request.POST or None)
 	if form.is_valid():
 		destinataires = set()
+		touscolleurs = tousprofs = touseleves = False
 		for key,value in form.cleaned_data.items():
+			if request.user.username=="Secrétariat" or request.user.username=="admin":
+				if key == "touscolleurs" and value is True:
+					touscolleurs = True
+					destinataires |= {colleur.user for colleur in Colleur.objects.filter(user__is_active=True)}
+				if key == "tousprofs" and value is True and not touscolleurs:
+					tousprofs = True
+					destinataires |= {prof.colleur.user for prof in Prof.objects.filter(colleur__user__is_active=True)}
+				if key == "touseleves" and value is True:
+					touseleves = True
+					destinataires |= {eleve.user for eleve in Eleve.objects.all()}
 			cle = key.split('_')[0]
-			if cle == 'classematiere' or cle == 'classeprof':
+			if cle == 'classematiere' or cle == 'classeprof' and not touscolleurs:
 				destinataires |= {colleur.user for colleur in value}
-			elif cle == 'classegroupe':
+			elif cle == 'classegroupe' and not touseleves:
 				destinataires |= {eleve.user for eleve in Eleve.objects.filter(groupe__in=value)}
-			elif cle == 'classeeleve':
+			elif cle == 'classeeleve' and not touseleves:
 				destinataires |= {eleve.user for eleve in value}
 		if not destinataires:
 			messagees.error(request, "Il faut au moins un destinataire")

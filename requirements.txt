@@ -1,0 +1,7 @@
+mysqlclient
+Pillow
+psycopg2
+qrcode
+reportlab
+Unidecode
+uWSGI

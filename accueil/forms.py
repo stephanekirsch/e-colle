@@ -132,6 +132,7 @@ class EcrireForm(forms.Form):
     def __init__(self,user,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self.champs = []
+        self.adminsecret = 0
         if user.colleur and user.is_active:
             classes = user.colleur.classes.all()
             classesprof = user.colleur.colleurprof.all()
@@ -196,6 +197,10 @@ class EcrireForm(forms.Form):
             colleurs = zip(listecolleurs,listematieres) if listecolleurs else False
             self.champs.append((classe,prof,listeprofs,colleur,colleurs,self['matieregroupe_{}'.format(classe.pk)],self['classegroupe_{}'.format(classe.pk)],self['matiereeleve_{}'.format(classe.pk)],self['classeeleve_{}'.format(classe.pk)]))
         elif user.username=="Secrétariat" or user.username=="admin":
+            self.adminsecret = 1
+            self.fields['touscolleurs'] = forms.BooleanField(label="Tous les colleurs",required=False)
+            self.fields['tousprofs'] = forms.BooleanField(label="Tous les professeurs",required=False)
+            self.fields['touseleves'] = forms.BooleanField(label="Tous les étudiants",required=False)
             classes = Classe.objects.all()
             for classe in classes:
                 listematieres=[]
@@ -229,7 +234,7 @@ class EcrireForm(forms.Form):
             nb = 1
         else:
             nb = classes.count()
-        self.rowspan,self.reste = (nb+1)>>1 ,nb&1
+        self.rowspan, self.reste = self.adminsecret + (nb+1)//2, nb&1
         self.fields['titre'] = forms.CharField(label="titre",max_length=100,required=True)
         self.fields['titre'].widget.attrs={'size':50}
         self.fields['corps'] = forms.CharField(label="corps du message",widget=forms.Textarea,required=True,max_length=2000)
