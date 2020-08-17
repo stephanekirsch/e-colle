@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load customfilter %}
 {% block body %}
 
@@ -29,6 +30,14 @@
 			<div class="bigscroll">{{message.corps|linebreaksbr}}</div>
 		</td>
 	</tr>
+	{% if message.pj %}
+	<tr>
+		<th>Pièce jointe</td>
+		<td>
+			<a href="{{message.pj.url}}"><img src="{% static 'images/trombone.png' %}"></a>
+		</td>
+	</tr>
+	{% endif %}
 </table>
 {% if repondre %}
 <table class="accueil"><tr>{% if not envoye %}<td><a href="{% url 'repondre' message.pk %}">Répondre</a></td>{% endif %}

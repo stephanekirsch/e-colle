@@ -3,6 +3,7 @@ from django import forms
 from accueil.models import Colleur, Groupe, Matiere, Destinataire, Message, Classe, Eleve, User, Prof
 from administrateur.forms import CustomMultipleChoiceField
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 
 class ConnexionForm(forms.Form):
@@ -114,25 +115,44 @@ class SelectMessageForm(forms.Form):
                 if not Destinataire.objects.filter(message = message).exists and not message.hasAuteur: # s"il n'y a plus ni auteur ni destinataire, on efface
                     message.delete()
 
-class ReponseForm(forms.Form):
+class ReponseForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields = ['titre', 'corps', 'pj']
+
     def format_reponse(self,message):
         return (">"+message.strip().replace("\n","\n>")+"\n")
 
-    def __init__(self,message,*args, **kwargs):
+    def __init__(self,message,atous,user,*args, **kwargs):
         super().__init__(*args,**kwargs)
-        self.fields['destinataire'] = forms.CharField(label="Destinataire",required=False)
+        self.message = message
+        self.atous = atous
+        self.user = user
+        self.fields['destinataire'] = forms.CharField(label="Destinataires",required=False)
         self.fields['destinataire'].widget.attrs={'disabled':True}
-        self.fields['titre'] = forms.CharField(label="titre",max_length=100,required=True,initial="Re: "+message.titre)
+        self.fields['titre'].initial="Re: "+message.titre
         self.fields['titre'].widget.attrs={'size':50}
-        self.fields['corps'] = forms.CharField(label="corps du message",widget=forms.Textarea,required=True,max_length=2000,
-            initial = self.format_reponse(message.corps))
+        self.fields['corps'].initial = self.format_reponse(message.corps)
         self.fields['corps'].widget.attrs={'cols':60,'rows':15}
 
-class EcrireForm(forms.Form):
+    def save(self):
+        super().save()
+        if not self.atous:
+            Destinataire(user=self.message.auteur, message=self.instance).save()
+        else:
+            Destinataire.objects.bulk_create([Destinataire(message = self.instance, user=destinataire.user) for destinataire in self.atous if destinataire.user != self.user])
+
+
+class EcrireForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields=['titre', 'corps', 'pj']
+
     def __init__(self,user,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self.champs = []
         self.adminsecret = 0
+        self.user = user
         if user.colleur and user.is_active:
             classes = user.colleur.classes.all()
             classesprof = user.colleur.colleurprof.all()
@@ -235,7 +255,37 @@ class EcrireForm(forms.Form):
         else:
             nb = classes.count()
         self.rowspan, self.reste = self.adminsecret + (nb+1)//2, nb&1
-        self.fields['titre'] = forms.CharField(label="titre",max_length=100,required=True)
         self.fields['titre'].widget.attrs={'size':50}
-        self.fields['corps'] = forms.CharField(label="corps du message",widget=forms.Textarea,required=True,max_length=2000)
+        self.fields['titre'].required = True
         self.fields['corps'].widget.attrs={'cols':60,'rows':15}
+
+    def clean(self):
+        super().clean()
+        self.destinataires = set()
+        touscolleurs = tousprofs = touseleves = False
+        for key,value in self.cleaned_data.items():
+            if self.user.username=="Secrétariat" or self.user.username=="admin":
+                if key == "touscolleurs" and value is True:
+                    touscolleurs = True
+                    self.destinataires |= {colleur.user for colleur in Colleur.objects.filter(user__is_active=True)}
+                if key == "tousprofs" and value is True and not touscolleurs:
+                    tousprofs = True
+                    self.destinataires |= {prof.colleur.user for prof in Prof.objects.filter(colleur__user__is_active=True)}
+                if key == "touseleves" and value is True:
+                    touseleves = True
+                    self.destinataires |= {eleve.user for eleve in Eleve.objects.all()}
+            cle = key.split('_')[0]
+            if cle == 'classematiere' or cle == 'classeprof' and not touscolleurs:
+                self.destinataires |= {colleur.user for colleur in value}
+            elif cle == 'classegroupe' and not touseleves:
+                self.destinataires |= {eleve.user for eleve in Eleve.objects.filter(groupe__in=value)}
+            elif cle == 'classeeleve' and not touseleves:
+                self.destinataires |= {eleve.user for eleve in value}
+        if not self.destinataires:
+            raise ValidationError("Il faut au moins un destinataire")
+
+    def save(self):
+        self.instance.listedestinataires = "; ".join(str(personne) for personne in self.destinataires)
+        super().save()
+        Destinataire.objects.bulk_create([Destinataire(user=personne, message=self.instance) for personne in self.destinataires])
+

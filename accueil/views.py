@@ -3,7 +3,7 @@ from django.http import HttpResponseForbidden, Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from accueil.models import Classe, Matiere, Colleur, Message, Destinataire, Eleve, Config
+from accueil.models import Classe, Matiere, Colleur, Message, Destinataire, Eleve, Config, Prof
 from accueil.forms import UserForm, UserProfprincipalForm, SelectMessageForm, EcrireForm, ReponseForm
 from django.contrib import messages as messagees
 from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES
@@ -112,37 +112,12 @@ def ecrire(request):
 	"""Renvoie vers la vue d'écriture d'un message """
 	if request.user.eleve and not Config.objects.get_config().message_eleves:
 		return HttpResponseForbidden("Vous n'avez pas le droit d'écrire une message")
-	form=EcrireForm(request.user,request.POST or None)
+	message = Message(auteur=request.user)
+	form=EcrireForm(request.user,request.POST or None,request.FILES or None, instance = message)
 	if form.is_valid():
-		destinataires = set()
-		touscolleurs = tousprofs = touseleves = False
-		for key,value in form.cleaned_data.items():
-			if request.user.username=="Secrétariat" or request.user.username=="admin":
-				if key == "touscolleurs" and value is True:
-					touscolleurs = True
-					destinataires |= {colleur.user for colleur in Colleur.objects.filter(user__is_active=True)}
-				if key == "tousprofs" and value is True and not touscolleurs:
-					tousprofs = True
-					destinataires |= {prof.colleur.user for prof in Prof.objects.filter(colleur__user__is_active=True)}
-				if key == "touseleves" and value is True:
-					touseleves = True
-					destinataires |= {eleve.user for eleve in Eleve.objects.all()}
-			cle = key.split('_')[0]
-			if cle == 'classematiere' or cle == 'classeprof' and not touscolleurs:
-				destinataires |= {colleur.user for colleur in value}
-			elif cle == 'classegroupe' and not touseleves:
-				destinataires |= {eleve.user for eleve in Eleve.objects.filter(groupe__in=value)}
-			elif cle == 'classeeleve' and not touseleves:
-				destinataires |= {eleve.user for eleve in value}
-		if not destinataires:
-			messagees.error(request, "Il faut au moins un destinataire")
-		else:
-			message = Message(auteur=request.user,listedestinataires="; ".join(["{} {}".format(destinataire.first_name.title(),destinataire.last_name.upper()) for destinataire in destinataires]),titre=form.cleaned_data['titre'],corps=form.cleaned_data['corps'])
-			message.save()
-			for personne in destinataires:
-				Destinataire(user=personne,message=message).save()
-			messagees.error(request, "Message envoyé")
-			return redirect('messages')
+		form.save()
+		messagees.error(request, "Message envoyé")
+		return redirect('messages')
 	return render(request,"accueil/ecrire.html",{'form':form})
 
 @login_required(login_url='accueil')
@@ -153,12 +128,11 @@ def repondre(request,message_id):
 		raise Http404
 	destinataire = get_object_or_404(Destinataire,message=message,user=request.user)
 	if request.user.eleve and destinataire.reponses and not Config.objects.get_config().message_eleves or message.auteur.username in ['admin','Secrétariat']:
-		return HttpResponseForbidden("Vous n'avez pas le droit de répondre")	
-	form = ReponseForm(message,request.POST or None, initial = {'destinataire':str(message.auteur)})
+		return HttpResponseForbidden("Vous n'avez pas le droit de répondre")
+	reponse = Message(auteur=request.user, listedestinataires=str(message.auteur), titre = "Re: "+ message.titre, corps = (">"+message.corps.strip().replace("\n","\n>")+"\n"))
+	form = ReponseForm(message, False, request.user, request.POST or None, request.FILES or None, initial = {'destinataire': reponse.listedestinataires }, instance = reponse)
 	if form.is_valid():
-		mesage = Message(auteur=request.user,listedestinataires=str(message.auteur),titre=form.cleaned_data['titre'],corps=form.cleaned_data['corps'])
-		mesage.save()
-		Destinataire(user=message.auteur,message=mesage).save()
+		form.save()
 		messagees.error(request, "Message envoyé")
 		destinataire.reponses +=1
 		destinataire.save()
@@ -173,24 +147,19 @@ def repondreatous(request,message_id):
 		raise Http404("Message non trouvé")
 	message = message.first()
 	destinataires  = list(message.messagerecu.all())
-	if message.auteur.username in ['admin','Secrétariat']:
-		returHttpResponseForbidden("Vous n'avez pas le droit de répondre")
 	if message.auteur == request.user: # si on répond à un message qu'on a envoyé
 		if request.user.eleve and not Config.objects.get_config().message_eleves:
-			returHttpResponseForbidden("Vous n'avez pas le droit de répondre")
+			return HttpResponseForbidden("Vous n'avez pas le droit de répondre")
 	else:
 		desti = get_object_or_404(Destinataire,message=message,user=request.user)
 		if request.user.eleve and desti.reponses and not Config.objects.get_config().message_eleves:
 			return HttpResponseForbidden("Vous n'avez pas le droit de répondre")
 		destinataires.append(Destinataire(user=message.auteur,message=None))
 	listedestinataires = "; ".join([str(desti.user) for desti in destinataires])
-	form = ReponseForm(message,request.POST or None, initial = {"destinataire": listedestinataires})
+	reponse = Message(auteur=request.user , listedestinataires=listedestinataires, titre = "Re: "+ message.titre, corps = (">"+message.corps.strip().replace("\n","\n>")+"\n"))
+	form = ReponseForm(message, destinataires, request.user, request.POST or None, request.FILES or None, initial = {"destinataire": listedestinataires}, instance = reponse)
 	if form.is_valid():
-		mesage = Message(auteur=request.user,listedestinataires=listedestinataires,titre=form.cleaned_data['titre'],corps=form.cleaned_data['corps'])
-		mesage.save()
-		for destinat in destinataires:
-			if destinat.user != request.user:
-				Destinataire(message = mesage, user=destinat.user).save()
+		form.save()
 		messagees.error(request, "Message envoyé")
 		if message.auteur != request.user:
 			desti.reponses +=1

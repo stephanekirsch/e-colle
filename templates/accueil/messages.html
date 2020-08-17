@@ -25,6 +25,7 @@
 		<td>auteur</td>
 		<td>Destinataires</td>
 		<td>sujet</td>
+		<td>Pièce jointe</td>
 	</tr>
 	{% for message,widget in form.fields.message.queryset|tzip:form.message %}
 	{% with message|getLu:user as lu %}
@@ -37,13 +38,14 @@
 		<td>{% if lu.0 %} ✓ {% endif %}</td>
 		<td>{% if not lu.0 %}<b>{% endif %} {{message.auteur}} {% if not lu.0 %}</b>{% endif %}</td>
 		<td>{% if not lu.0 %}<b>{% endif %} {{message.listedestinataires|truncatechars:200}} {% if not lu.0 %}</b>{% endif %}</td>
-		<td>{% if not lu.0 %}<b>joufsdhnnnnnhpiùsdgpùsgih{% endif %} {{message.titre}} {% if not lu.0 %}</b>{% endif %}</td>
+		<td>{% if not lu.0 %}<b>{% endif %} {{message.titre}} {% if not lu.0 %}</b>{% endif %}</td>
+		<td>{% if message.pj %}<img src="{% static 'images/trombone.png' %}">{% endif %}</td>
 	</tr>
 	{% endwith %}
 	{% endfor %}
 	<tr class="plusclair">
 		<td><label for = "check">Tout cocher</label><br/><input type="checkbox" id="check"/></td>
-		<td colspan="8"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
+		<td colspan="9"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
 	</tr>
 {% else %}
 	<div class="error">Aucun message reçu</div>

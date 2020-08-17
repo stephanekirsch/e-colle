@@ -100,13 +100,20 @@ class JourFerie(models.Model):
     objects = FerieManager()
 
 class Message(models.Model):
+    def update_name(instance, filename):
+        return "pj/pj{}.{}".format(texte_aleatoire(20), filename.split(".")[-1])
     date = models.DateTimeField(auto_now_add=True)
     auteur = models.ForeignKey("User", null=True, on_delete=models.CASCADE, related_name="messagesenvoyes")
     hasAuteur = models.BooleanField(default=True)
     luPar = models.TextField(verbose_name="lu par: ")
     listedestinataires = models.TextField(verbose_name="Liste des destinataires")
     titre = models.CharField(max_length=100)
-    corps = models.TextField(max_length=2000)
+    corps = models.TextField(max_length=2000, blank = True)
+    pj = ContentTypeRestrictedFileField(verbose_name="Pièce jointe",upload_to=update_name,null=True,blank=True,content_types=["text/plain", "text/csv", "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpeg", "image/png", "application/vnd.oasis.opendocument.presentation",
+        "application/vnd.oasis.opendocument.spreadsheet", "application/vnd.oasis.opendocument.text", "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation" , "application/x-rar-compressed", "application/rtf",
+        "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/pdf", "application/zip", "application/x-7z-compressed"], max_upload_size=5000000)
 
 class Destinataire(models.Model):
     message = models.ForeignKey(Message,related_name="messagerecu",on_delete=models.CASCADE)
@@ -164,6 +171,13 @@ def eleve_post_save_function(sender, instance, **kwargs):
 def eleve_post_delete_function(sender, instance, **kwargs):
     if instance.photo and instance.photo.name is not None:
         fichier=os.path.join(MEDIA_ROOT,instance.photo.name)
+        if os.path.isfile(fichier):
+            os.remove(fichier)
+
+@receiver(post_delete, sender=Message)
+def eleve_post_delete_function(sender, instance, **kwargs):
+    if instance.pj and instance.pj.name is not None:
+        fichier=os.path.join(MEDIA_ROOT,instance.pj.name)
         if os.path.isfile(fichier):
             os.remove(fichier)
 

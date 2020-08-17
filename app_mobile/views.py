@@ -170,7 +170,7 @@ def messages(request):
         return HttpResponseForbidden("not authenticated")
     messagesrecusQuery = Destinataire.objects.filter(user=user).values('lu', 'reponses', 'message__pk', 'message__date',
                                                                   'message__auteur__first_name', 'message__auteur__last_name', 'message__luPar',
-                                                                  'message__listedestinataires', 'message__titre', 'message__corps').order_by('-message__date')
+                                                                  'message__listedestinataires', 'message__titre', 'message__corps', 'message__pj').order_by('-message__date')
     messagesrecus = [{'read':x['lu'],
             'answers':x['reponses'],
             'pk':x['message__pk'],
@@ -179,16 +179,18 @@ def messages(request):
             'readBy':x['message__luPar'],
             'recipients':x['message__listedestinataires'],
             'title':x['message__titre'],
-            'body':x['message__corps']} for x in messagesrecusQuery]
+            'body':x['message__corps'],
+            'attachment':x['message__pj']} for x in messagesrecusQuery]
     messagesenvoyesQuery = Message.objects.filter(auteur=user, hasAuteur=True).distinct().values(
-        'date', 'auteur__first_name', 'auteur__last_name', 'luPar', 'listedestinataires', 'titre', 'corps', 'pk').order_by('-date')
+        'date', 'auteur__first_name', 'auteur__last_name', 'luPar', 'listedestinataires', 'titre', 'corps', 'pj', 'pk').order_by('-date')
     messagesenvoyes = [{'pk':x['pk'],
             'date':x['date'],
             'author':x['auteur__first_name'].title()+" "+x['auteur__last_name'].upper(),
             'readBy':x['luPar'],
             'recipients':x['listedestinataires'],
             'title':x['titre'],
-            'body':x['corps']} for x in messagesenvoyesQuery]
+            'body':x['corps'],
+            'attachment':x['pj']} for x in messagesenvoyesQuery]
     if checkcolleur(user) or not Config.objects.get_config().message_eleves:
         return HttpResponse(json.dumps({'messagesrecus':messagesrecus, 'messagesenvoyes': messagesenvoyes}, default=date_serial))
     else:
@@ -278,17 +280,17 @@ def answer(request, message_id, answerAll):
     userdestinataire.reponses += 1
     userdestinataire.save()
     if answerAll == '1':
+        destinataires = []
         for destinataireUser in message.messagerecu.all():
             if destinataireUser.user != user:
-                destinataire = Destinataire(
-                    message=reponse, user=destinataireUser.user, reponses=0)
-                destinataire.save()
-                listedestinataires += "; " + destinataireUser.user.first_name.title() + " " + \
-                    destinataireUser.user.last_name.upper()
+                destinataires.append(Destinataire(
+                    message=reponse, user=destinataireUser.user, reponses=0))
+                listedestinataires += "; " + str(destinataireUser.user)
+        Destinataire.objects.bulk_create(destinataires)
         reponse.listedestinataires = listedestinataires
         reponse.save()
     return HttpResponse(json.dumps({'pk': reponse.pk, 'date': int(reponse.date.strftime(
-        '%s')), 'listedestinataires': reponse.listedestinataires, 'titre': reponse.titre, 'corps': reponse.corps}))
+        '%s')), 'listedestinataires': reponse.listedestinataires, 'titre': reponse.titre, 'corps': reponse.corps, 'pj': reponse.pj}))
 
 # ------------------------- PARTIE COLLEURS ----------------------------
 
