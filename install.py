@@ -163,12 +163,26 @@ def main():
         liste_echecs.append("python3-pip")
     else:
         print("installation des bibliothèques python requises")
-        for bibli in ["django","pexpect","reportlab","unidecode","pillow"]:
+        for bibli in ["django","pexpect","reportlab","unidecode","pillow","qrcode"]:
             print("-"*20)
             completedProcess = pipinstall(bibli)
             if completedProcess.returncode:
                 print("échec de l'installation de " + bibli)
                 liste_echecs.append(bibli)
+    print("-"*20)
+    print("installation de mysqlclient")
+    completedProcess = aptinstall("libmysqlclient-dev")
+    completedProcess = pipinstall("mysqlclient")
+    if completedProcess.returncode:
+        print("échec de l'installation de mysqlclient")
+        liste_echecs.append("mysqlclient")
+    print("-"*20)
+    print("installation de psycopg2")
+    completedProcess = aptinstall("llibpq-dev")
+    completedProcess = pipinstall("psycopg2")
+    if completedProcess.returncode:
+        print("échec de l'installation de psycipg2")
+        liste_echecs.append("psycopg2")
     print("-"*20)
     init = input("Avez-vous initialisé les données du fichier de configuration\n\
         à l'aide de la commande 'python3 manage.py initdata' ?\n\
@@ -193,7 +207,7 @@ def main():
             print("échec de l'installation d'imagemagick")
             liste_echecs.append("imagemagick")
         else: # configuration (on autorise la conversion des pdfs)
-            print("modification de la configuration pour autoriser les conversion des pdfs")
+            print("modification de la configuration pour autoriser la conversion des pdfs")
             subprocess.run(["sudo","python3","imagemagick.py"])
     print("-"*20)
     if DB_ENGINE == "postgresql":
@@ -216,13 +230,6 @@ def main():
         if completedProcess.returncode:
             print("échec de l'installation de mysql")
             liste_echecs.append("mysql")
-        print("-"*20)
-        print("installation de mysqlclient")
-        completedProcess = aptinstall("libmysqlclient-dev")
-        completedProcess = pipinstall("mysqlclient")
-        if completedProcess.returncode:
-            print("échec de l'installation de mysqlclient")
-            liste_echecs.append("mysqlclient")
         elif "pexpect" not in liste_echecs:
             configmysql()
     elif DB_ENGINE == "sqlite3":
