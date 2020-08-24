@@ -174,7 +174,7 @@ class Command(BaseCommand):
                 fichier.write(ip_filtre_adresses)
                 fichier.write(") # si IP_FILTER_ADMIN vaut True, liste des IPS autorisées pour l'utilisateur admin (REGEXP)\n")
                 fichier.write("GESTION_ADMIN_BDD = {} # autorise l'admin a effectuer des opérations\
-                 sur la BDD (nettoyage entre 2 années + backup/restore)\n".format(gestion_admin_bdd))
+                 sur la BDD (nettoyage entre 2 années + backup/restore)\n".format(GESTION_ADMIN_BDD if gestion_admin_bdd == "" else gestion_admin_bdd.lower() == "o"))
                 fichier.write("DB_ENGINE = '{}' # base de données (mysql ou postgresql ou sqlite3)\n"\
                     .format(DB_ENGINE if db_engine == "" else sgbd_dict[db_engine]))
                 fichier.write("DB_USER = '{}' # nom de l'utilisateur qui a les droits sur la base de données\n"\
