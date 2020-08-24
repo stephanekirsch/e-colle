@@ -23,15 +23,20 @@ def configpostgresl():
         return
     print("-"*20)
     print("configuration de la base de données")
-    p=spawn("sudo -i -u postgres", encoding="utf8")
     passwd = getpass("[sudo] mot de passe: ")
+    p=spawn("sudo -u postgres psql template1", encoding="utf8")
+    p.sendline(passwd)
+    postgrespasswd = getpass("choisissez un mot de passe postgres (indépendant de sudo ou de celui de la base de données): ")
+    p.sendline("ALTER USER postgres PASSWORD '{}';".format(postgrespasswd))
+    p.sendline("exit;")
+    p=spawn("sudo -i -u postgres", encoding="utf8")
     p.sendline(passwd)
     p.sendline("createuser -PE {}".format(DB_USER))
     p.expect("Enter password for new role: ")
     p.sendline("{}".format(DB_PASSWORD))
     p.expect("Enter it again: ")
     p.sendline("{}".format(DB_PASSWORD))
-    i = p.expect(['createuser: creation of new role failed: ERROR:  role "e-colle" already exists',TIMEOUT],timeout=2)
+    i = p.expect(['createuser: error: creation of new role failed: ERROR:  role "{}" already exists'.format(DB_USER),TIMEOUT],timeout=2)
     if i==0:
         print("l'utilisateur e-colle existe déjà")
         maj = input("Voulez-vous mettre à jour son mot de passe? O/N (N): ")
@@ -44,13 +49,23 @@ def configpostgresl():
             p.sendline("{}".format(DB_PASSWORD))
             print("mot de passe mis à jour")
     p.sendline("createdb -O {} {} -h {} -E UTF8 {}".format(DB_USER, "" if not DB_PORT else ("-p " + DB_PORT), DB_HOST, DB_NAME))
-    i = p.expect(['createdb: database creation failed: ERROR:  database "e-colle" already exists',TIMEOUT],timeout=2)
+    i=p.expect(["Password: ", TIMEOUT],timeout=2)
+    if i==0:
+        p.sendline(postgrespasswd)
+        p.expect(["Password: ", TIMEOUT],timeout=2)
+        p.sendline(postgrespasswd)
+    i = p.expect(['createdb: error: database creation failed: ERROR:  database "{}" already exists'.format(DB_NAME),TIMEOUT],timeout=2)
     if i==0:
         print("la base de données e-colle existe déjà")
         maj = input("Voulez-vous l'effacer et la recréer? O/N (N): ")
         if maj not in "nN":
             p.sendline("dropdb e-colle")
             p.sendline("createdb -O {} {} -h {} -E UTF8 {}".format(DB_USER, "" if not DB_PORT else ("-p " + DB_PORT), DB_HOST, DB_NAME))
+            j=p.expect(["Password: ", TIMEOUT],timeout=2)
+            if j==0:
+                p.sendline(postgrespasswd)
+                p.expect(["Password: ", TIMEOUT],timeout=2)
+                p.sendline(postgrespasswd)
             print("base de données recréée")
     p.sendline("exit")
     p.close
@@ -263,14 +278,3 @@ def main():
 
 if __name__== '__main__':
     main()
-        
-            
-
-
-
-
-
-
-
-
-
