@@ -216,12 +216,6 @@ def main():
         if completedProcess.returncode:
             print("échec de l'installation de postgresql")
             liste_echecs.append("postgresql")
-        print("-"*20)
-        print("installation de psycopg2")
-        completedProcess = pipinstall("psycopg2")
-        if completedProcess.returncode:
-            print("échec de l'installation de psycopg2")
-            liste_echecs.append("psycopg2")
         elif "pexpect" not in liste_echecs:
             configpostgresl()
     elif DB_ENGINE == "mysql":
