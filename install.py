@@ -178,7 +178,7 @@ def main():
         liste_echecs.append("mysqlclient")
     print("-"*20)
     print("installation de psycopg2")
-    completedProcess = aptinstall("llibpq-dev")
+    completedProcess = aptinstall("libpq-dev")
     completedProcess = pipinstall("psycopg2")
     if completedProcess.returncode:
         print("échec de l'installation de psycipg2")
