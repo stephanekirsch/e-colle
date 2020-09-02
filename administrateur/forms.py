@@ -433,7 +433,6 @@ class EleveFormMdp(forms.ModelForm):
     def clean_lv1(self):
         data = self.cleaned_data['lv1']
         if data is not None:
-            print(self.cleaned_data)
             if data not in self.cleaned_data['classe'].matieres.all():
                 raise ValidationError("Cette langue ne fait pas partie des matières de cette classe")
         return data
@@ -476,24 +475,24 @@ class ProfForm(forms.Form):
         self.classe=classe
         for matiere in classe.matieres.all():
             query=Colleur.objects.filter(matieres=matiere,classes=classe,user__is_active=True).order_by('user__last_name','user__last_name')
-            self.fields[str(matiere.pk)] = forms.ModelChoiceField(label=matiere,queryset=query,required=False)
+            self.fields[str(matiere.pk)] = forms.ModelMultipleChoiceField(label=matiere,queryset=query,required=False)
         query2 = Colleur.objects.filter(classes=classe,user__is_active=True)
         self.fields['profprincipal'] = forms.ModelChoiceField(label="prof principal",queryset=query2,required=False)
 
     def clean(self):
         """Vérifie que le prof principal est bien choisi parmi les profs de la classe"""
-        if self.cleaned_data['profprincipal'] not in [self.cleaned_data[str(matiere.pk)] for matiere in self.classe.matieres.all()]:
+        profprinc = self.cleaned_data['profprincipal']
+        if profprinc is not None and profprinc not in [colleur for matiere in self.classe.matieres.all() for colleur in self.cleaned_data[str(matiere.pk)]]:
             raise ValidationError("le professeur principal doit faire partie des professeurs de la classe")
 
     def save(self):
         """Sauvegarde en base de données les données du formulaire"""
-        matieres_avec_prof=[matiere for matiere in self.classe.matieres.all() if self.cleaned_data[str(matiere.pk)]] # liste des matieres
-        colleurs_avec_prof=[self.cleaned_data[str(matiere.pk)] for matiere in self.classe.matieres.all() if self.cleaned_data[str(matiere.pk)]] # liste des colleurs
+        matieres_avec_prof=[(matiere,colleur) for matiere in self.classe.matieres.all() for colleur in self.cleaned_data[str(matiere.pk)]] # liste des matieres/colleur
         # on efface les profs correspondants à la classe courante
         Prof.objects.filter(classe=self.classe).delete()
         # on crée les nouvelles entités profs
         config=Config.objects.get_config()
-        Prof.objects.bulk_create([Prof(classe=self.classe,matiere=matiere,modifgroupe=config.default_modif_groupe,modifcolloscope=config.default_modif_col,colleur=colleur) for matiere,colleur in zip(matieres_avec_prof,colleurs_avec_prof)])
+        Prof.objects.bulk_create([Prof(classe=self.classe,matiere=matiere,modifgroupe=config.default_modif_groupe,modifcolloscope=config.default_modif_col,colleur=colleur) for matiere,colleur in matieres_avec_prof])
         # mise à jour du prof principal
         if self.cleaned_data['profprincipal']:
             self.classe.profprincipal=self.cleaned_data['profprincipal']

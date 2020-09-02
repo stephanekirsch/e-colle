@@ -16,12 +16,19 @@ function majProfprincipal()
 	colleurvalues = new Array();
 	for (var i = 0; i < selectliste.length-1 ; i++)
 	{
-		var option = selectliste[i][selectliste[i].selectedIndex].cloneNode(true);
-		if (option.value != "" && colleurvalues.indexOf(option.value) == -1) // si le professeur n'apparait pas encore dans le select des professeurs principaux, on l'ajoute
-		{
-			selectliste[nbprofs-1].appendChild(option);
-			colleurvalues.push(option.value);
-		}	
+		var options = selectliste[i].selectedOptions;
+		console.log(options);
+		if (options.length > 0){
+			for (var j = options.length - 1; j >= 0; j--) {
+				var option = options[j].cloneNode(true);
+				if (option.value != "" && colleurvalues.indexOf(option.value) == -1) // si le professeur n'apparait pas encore dans le select des professeurs principaux, on l'ajoute
+				{
+					selectliste[nbprofs-1].appendChild(option);
+					colleurvalues.push(option.value);
+				}
+			}
+		}
+			
 	}
 	indexselectionne = colleurvalues.indexOf(selected);
 	if (indexselectionne == -1)

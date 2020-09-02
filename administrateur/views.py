@@ -554,7 +554,7 @@ def profmodif(request, id_classe):
     for matiere in matieres:
         colleur=Prof.objects.filter(matiere=matiere,classe=classe)
         if colleur.exists():
-            initial[str(matiere.pk)]=list(colleur)[0].colleur
+            initial[str(matiere.pk)]=[prof.colleur for prof in colleur]
     form=ProfForm(classe,request.POST or None,initial=initial)
     if form.is_valid():
         form.save()
