@@ -3,7 +3,10 @@
 
 from os import path
 
-from .debug import *
+try:
+    from .debug import DEBUG
+except ImportError:
+    DEBUG = False
 
 # =============================================================================
 #                            INFORMATIONS À REMPLIR
