@@ -9,7 +9,11 @@ from .debug import *
 #                            INFORMATIONS À REMPLIR
 # =============================================================================
 
-from .config import *
+from .config_default import *
+try:
+    from .config import *
+except ImportError:
+    pass
 
 # =============================================================================
 #                        FIN INFORMATIONS À REMPLIR
