@@ -347,7 +347,8 @@ def colleurajout(request, initial = None):
         except Exception:
             matiere = None
         Colleurformset = formset_factory(ColleurFormMdp,extra=0)
-        formset=Colleurformset( initial = [{ 'matiere' : matiere}])
+        initial = request.session.pop('ajout_colleur', None) or [{'matiere': matiere}]
+        formset=Colleurformset(initial = initial)
     return render(request,'administrateur/colleurajout.html',{'formset':formset})
 
 @ip_filter
@@ -485,8 +486,18 @@ def colleurcsv(request):
                 else:
                     fichiercsv.seek(0)
                     next(reader)
-                    initial = [{'last_name': ligneLoc[nom],'first_name':ligneLoc[prenom],'email':'' if email not in ligneLoc else ligneLoc[email],'matiere': form.cleaned_data['matiere'], 'classe': form.cleaned_data['classe']} for ligneLoc in reader]
-                    return colleurajout(request,initial=initial)
+                    initial = [
+                        {
+                            'last_name': ligneLoc[nom],
+                            'first_name': ligneLoc[prenom],
+                            'email': '' if email not in ligneLoc else ligneLoc[email],
+                            'matiere': form.cleaned_data['matiere'] and form.cleaned_data['matiere'].id,
+                            'classe': form.cleaned_data['classe'] and form.cleaned_data['classe'].id
+                        }
+                        for ligneLoc in reader
+                    ]
+                    request.session['ajout_colleur'] = initial
+                    return redirect('ajout_colleur')
         except Exception as e:
             messages.error(request,"Le fichier doit être un fichier CSV valide, encodé en UTF-8: {}".format(e))
             return redirect('csv_colleur')
