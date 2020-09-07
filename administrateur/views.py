@@ -334,13 +334,10 @@ def colleurajout(request, initial = None):
     """Renvoie la vue de la page d'ajout de colleurs"""
     if request.method=="POST":
         Colleurformset = formset_factory(ColleurFormMdp,extra = 0,formset=ColleurFormSetMdp)
-        if "csv" in request.POST:
-            formset = Colleurformset(initial=initial)
-        else:
-            formset=Colleurformset(request.POST)
-            if formset.is_valid():
-                formset.save()
-                return redirect('gestion_colleur')
+        formset=Colleurformset(request.POST)
+        if formset.is_valid():
+            formset.save()
+            return redirect('gestion_colleur')
     else:
         try:
             matiere = Matiere.objects.get(pk=request.session['matiere'])
