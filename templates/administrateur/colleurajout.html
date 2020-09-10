@@ -2,7 +2,7 @@
 {% load static %}
 {% block body %}
 <table class="accueil"><tr><td id="titre">Ajout de colleurs</td></tr></table>
-	<form method="post" id="formajout" action="{% url 'ajout_colleur' %}>
+	<form method="post" id="formajout" action="{% url 'ajout_colleur' %}">
 	{% csrf_token %}
 	{{ formset.management_form }}
 	<table class="tableausimple" id="ajouttab">
