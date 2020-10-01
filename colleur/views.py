@@ -480,7 +480,7 @@ def decompte(request):
 @user_passes_test(is_colleur, login_url='accueil')
 def ramassage(request,id_ramassage):
     ramassage = get_object_or_404(Ramassage, pk=id_ramassage)
-    return mixteRamassagePdfParClasse(ramassage, False, True, False, colleur = request.user.colleur.pk)
+    return mixteRamassagePdfParClasse(ramassage, False, True, False, colleur = request.user.colleur)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def colloscopePdf(request,id_classe,id_semin,id_semax):
