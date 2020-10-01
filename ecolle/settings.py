@@ -17,7 +17,7 @@ from .config import *
 
 # les couples nom/email du (des) administrateur(s) du site
 ADMINS = (
-    ('admin', 'admin@example.com'),
+    ('admin', EMAIL_ADMIN),
 )
 
 DEFAULT_CSS = "style.css"
