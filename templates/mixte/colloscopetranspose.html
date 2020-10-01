@@ -1,0 +1,63 @@
+{% extends user.colleur|yesno:'colleur/action.html,secretariat/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil">
+	<tr>
+		<td>Colloscope de la classe de {{classe}}</td>
+		{% if isprof %}
+		<td><a href="{% url user.colleur|yesno:'colloscopemodif_colleur,colloscopemodif_secret' classe.pk semin.pk semax.pk %}">Modifier le colloscope</a></td>
+		{% endif %}
+	</tr>
+</table>
+<form method="POST">
+{% csrf_token %}
+<table class="tableausimple">
+<tr>
+	<td>Semaine</td>
+	<td>{{form.semin.errors}}{{form.semin}}</td>
+	<td>à</td>
+	<td>{{form.semax.errors}}{{form.semax}}</td>
+	<td><input type="submit"/></td>
+	<td><a href="{% url user.colleur|yesno:'colloscopecsv_colleur,colloscopecsv_secret' classe.pk semin.pk semax.pk %}"><img src="{% static 'images/csv.png' %}" alt="icone csv"/></a></td>
+</tr>
+</table>
+</form>
+
+<table class="accueil">
+	<tr>
+		<td><a href="{% url user.colleur|yesno:'colloscope2_colleur,colloscope2_secret' 0 classe.pk semin.pk semax.pk %}">transposer le colloscope</a></td>
+	</tr>
+</table>
+
+<table class="tableausimple">
+	<tr class="entete">
+		<td colspan="4">semaines</td>
+		{% for semaine in semaines %}
+		<td colspan>S{{semaine.numero}} <br>{{semaine.lundi|date:'d/m'}}<br>{{semaine.lundi|addtime:5|date:'d/m'}}</td>
+		{% endfor %}
+	</tr>
+	{% for creneau, groupes in creneauxgroupe %}
+	<tr>
+		<td style="background-color:{{creneau.couleur}}">{{creneau.matiere_nom|title}}</td>
+		<td>{{creneau.nom|upper}} {{creneau.prenom|title}}</td>
+		<td>{{listejours|lookup:creneau.jds}} {{creneau.heure|heure}}</td>
+		<td>{{creneau.salle}}</td>
+		{% for groupe in groupes %}
+			{% if groupe.id_colle %}
+			<td class="colloscope">{% if groupe.temps == 20 %}{% if groupe.groupe != None %}{{groupe.groupe}}{% endif %}{% elif groupe.temps == 30 %}{% with groupe.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}<div class="colle"><p>
+		{% if groupe.temps == 20 %}
+		Groupe {{groupe.groupe}}: {{dictgroupes|lookup:groupe.id_matiere|lookup:groupe.groupe|lookup:1}}<br/>
+		{% elif groupe.temps == 30 %}
+		Élève: {{groupe.prenom|title}} {{groupe.nom|upper}}<br/>
+		{% endif %}
+		</p></div>
+		</td>
+			{% else %}
+			<td></td>
+			{% endif %}
+		{% endfor %}
+	</tr>
+	{% endfor %}
+</table>
+{% endblock %}

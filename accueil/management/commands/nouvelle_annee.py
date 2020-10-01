@@ -15,7 +15,7 @@ class Command(BaseCommand):
         messages = []
         with connection.cursor() as cursor:
             try:
-                if BDD in ("postgresql","postgresql_pyscopg2"):
+                if BDD in ("postgresql","postgresql_psycopg2"):
                     # on vide les tables en question et on redémarre les ids à 1. 
                     cursor.execute("TRUNCATE accueil_colle,\
                         accueil_creneau,\

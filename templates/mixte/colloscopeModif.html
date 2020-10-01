@@ -5,7 +5,7 @@
 <table class="accueil">
 	<tr>
 		<td>Colloscope de la classe de {{classe}}</td>
-		<td><a href="{% url user.colleur|yesno:'colloscope_colleur,colloscope_secret' classe.pk %}">Arrêter les modifications</a></td>
+		<td><a href="{% url user.colleur|yesno:'colloscope_colleur,colloscope_secret' 0 classe.pk %}">Arrêter les modifications</a></td>
 	</tr>
 </table>
 <form method="POST">

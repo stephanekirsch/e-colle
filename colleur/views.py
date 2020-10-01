@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from colleur.forms import ColleurConnexionForm, ProgrammeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm, SelectEleveNoteForm, NoteElevesHeadForm, NoteElevesTailForm, NoteElevesFormset, DevoirForm, CopieForm, CopiesForm
 from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, MatiereECTS, NoteECTS, Devoir, DevoirCorrige, DevoirRendu, Ramassage, Decompte
-from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse
+from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Avg, Min, Max, StdDev, Sum
@@ -286,17 +286,18 @@ def groupeModif(request,id_groupe):
     return mixtegroupemodif(request,groupe)
     
 @user_passes_test(is_colleur, login_url='accueil')
-def colloscope(request,id_classe):
+def colloscope(request,transpose,id_classe):
     """Renvoie la vue de la page de gestion du colloscope de la classe dont l'id est id_classe"""
     semaines=list(Semaine.objects.all())
     try:
         semin,semax=semaines[0],semaines[-1]
     except Exception:
         raise Http404
-    return colloscope2(request,id_classe,semin.pk,semax.pk)
+    return colloscope2(request,transpose,id_classe,semin.pk,semax.pk)
+
 
 @user_passes_test(is_colleur, login_url='accueil')
-def colloscope2(request,id_classe,id_semin,id_semax):
+def colloscope2(request,transpose,id_classe,id_semin,id_semax):
     """Renvoie la vue de la page de gestion du colloscope de la classe dont l'id est id_classe,
     dont les semaines sont entre la semaine d'id id_semin et celle d'id id_semax"""
     classe=get_object_or_404(Classe,pk=id_classe)
@@ -305,7 +306,7 @@ def colloscope2(request,id_classe,id_semin,id_semax):
     isprof = modifcolloscope(request.user.colleur,classe)
     if classe not in request.user.colleur.classes.all():
         raise Http404
-    return mixtecolloscope(request,classe,semin,semax,isprof)
+    return mixtecolloscope(request,classe,semin,semax,isprof,int(transpose))
 
 @user_passes_test(is_colleur, login_url='accueil')
 def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):
@@ -491,6 +492,16 @@ def colloscopePdf(request,id_classe,id_semin,id_semax):
     if classe not in request.user.colleur.classes.all():
         raise Http404
     return Pdf(classe,semin,semax)
+
+@user_passes_test(is_colleur, login_url='accueil')
+def colloscopeCsv(request,id_classe,id_semin,id_semax):
+    """Renvoie le fichier CSV du colloscope de la classe dont l'id est id_classe, entre les semaines d'id id_semin et id_semax"""
+    classe=get_object_or_404(Classe,pk=id_classe)
+    semin=get_object_or_404(Semaine,pk=id_semin)
+    semax=get_object_or_404(Semaine,pk=id_semax)
+    if classe not in request.user.colleur.classes.all():
+        raise Http404
+    return mixteCSV(request,classe,semin,semax)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def eleves(request,id_classe):

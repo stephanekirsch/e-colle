@@ -6,45 +6,98 @@ from datetime import date, timedelta, datetime, time, timezone
 
 class ColleManager(models.Manager):
 
-    def classe2colloscope(self,classe,semin,semax,modif=False):
+    def classe2colloscope(self,classe,semin,semax,modif=False,transpose=False):
         semaines=Semaine.objects.filter(lundi__range=(semin.lundi,semax.lundi))
-        jours = Creneau.objects.filter(classe=classe)
-        creneaux = Creneau.objects.filter(classe=classe)
-        if not modif:
-            jours = jours.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi))
-            creneaux = creneaux.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi)).annotate(nb=Count('colle')).filter(nb__gt=0)
-        creneaux = creneaux.order_by('jour','heure','salle','pk')
-        jours = jours.values('jour').annotate(nb=Count('id',distinct=True)).order_by('jour')            
-        requete="SELECT {} cr.id id_cr, c2.id id_col, c2.colleur_id id_colleur, jf.nom ferie, m.id id_matiere, m.nom nom_matiere, m.couleur couleur, m.temps temps, g.nom nomgroupe, cr.jour jour, cr.heure heure, cr.salle salle, cr.id, s.lundi lundi, e.id id_eleve, u2.first_name prenom_eleve,u2.last_name nom_eleve {} \
-                        FROM accueil_creneau cr \
-                        CROSS JOIN accueil_semaine s\
-                        {}\
-                        LEFT OUTER JOIN accueil_colle c2 \
-                        ON (c2.creneau_id=cr.id AND c2.semaine_id=s.id) \
-                        LEFT OUTER JOIN accueil_user u \
-                        ON u.colleur_id=c2.colleur_id \
-                        LEFT OUTER JOIN accueil_matiere m \
-                        ON c2.matiere_id=m.id \
-                        LEFT OUTER JOIN accueil_groupe g \
-                        ON g.id=c2.groupe_id \
-                        LEFT OUTER JOIN accueil_eleve e\
-                        ON e.id=c2.eleve_id\
-                        LEFT OUTER JOIN accueil_user u2\
-                        ON u2.eleve_id = e.id\
-                        LEFT OUTER JOIN accueil_jourferie jf \
-                        ON jf.date = {}\
-                        WHERE cr.classe_id=%s AND s.lundi BETWEEN %s AND %s \
-                        ORDER BY s.lundi, cr.jour, cr.heure, cr.salle, cr.id".format("" if modif else "DISTINCT","" if modif else ", g.id groupe, u.last_name nom, u.first_name prenom, {} jourbis".format(date_plus_jour('s.lundi','cr.jour')),"" if modif else "INNER JOIN accueil_colle c \
-                        ON c.creneau_id=cr.id INNER JOIN accueil_semaine s2    ON (c.semaine_id=s2.id AND s2.lundi BETWEEN %s AND %s)",date_plus_jour('s.lundi','cr.jour'))
-        with connection.cursor() as cursor:
-            cursor.execute(requete, ([] if modif else [semin.lundi,semax.lundi])+[classe.pk,semin.lundi,semax.lundi])
-            precolles = dictfetchall(cursor)
-        colles = []
-        longueur = creneaux.count()
-        for i in range(semaines.count()):
-            colles.append(precolles[:longueur])
-            del precolles[:longueur]
-        return jours,creneaux,colles,semaines
+        if transpose:
+            # selection des couples créneau/colleur
+            requete1 = "SELECT DISTINCT m.nom matiere_nom, m.couleur, u.first_name prenom, u.last_name nom, cr.jour jds, cr.heure, cr.salle, cr.id\
+            FROM accueil_creneau cr \
+            INNER JOIN accueil_colle col\
+            ON col.creneau_id = cr.id\
+            INNER JOIN accueil_colleur co\
+            ON col.colleur_id = co.id\
+            INNER JOIN accueil_user u\
+            ON u.colleur_id = co.id\
+            INNER JOIN accueil_semaine s\
+            ON col.semaine_id = s.id\
+            INNER JOIN accueil_matiere m\
+            ON col.matiere_id = m.id\
+            WHERE cr.classe_id = %s AND s.lundi BETWEEN %s AND %s\
+            ORDER BY cr.jour, cr.heure, cr.salle, cr.id, m.nom"
+            with connection.cursor() as cursor:
+                cursor.execute(requete1, ([classe.pk,semin.lundi,semax.lundi]))
+                creneaux = dictfetchall(cursor)
+            #selection des groupes de colle
+            requete2 = "SELECT DISTINCT col.id id_colle, colcr.jour, colcr.heure, colcr.salle, colcr.id_creneau, colcr.nom nom_matiere, colcr.id_matiere, s.numero, g.nom groupe, u.last_name nom, u.first_name prenom, e.id id_eleve, colcr.temps\
+            FROM accueil_semaine s\
+            CROSS JOIN \
+            (SELECT co.id id_colleur, cr.id id_creneau, cr.jour jour, cr.heure heure, cr.salle salle, m.nom, m.temps, m.id id_matiere FROM accueil_creneau cr \
+            INNER JOIN accueil_colle col\
+            ON col.creneau_id = cr.id\
+            INNER JOIN accueil_matiere m\
+            ON col.matiere_id = m.id\
+            INNER JOIN accueil_colleur co\
+            ON col.colleur_id = co.id\
+            INNER JOIN accueil_semaine s\
+            ON col.semaine_id = s.id\
+            WHERE cr.classe_id = %s AND s.lundi BETWEEN %s AND %s) colcr\
+            LEFT OUTER JOIN accueil_colle col\
+            ON col.creneau_id = colcr.id_creneau AND col.semaine_id = s.id AND col.colleur_id = colcr.id_colleur\
+            LEFT OUTER JOIN accueil_groupe g\
+            ON col.groupe_id = g.id\
+            LEFT OUTER JOIN accueil_eleve e\
+            ON e.id=col.eleve_id\
+            LEFT OUTER JOIN accueil_user u\
+            ON u.eleve_id = e.id\
+            WHERE s.lundi BETWEEN %s AND %s\
+            ORDER BY colcr.jour, colcr.heure, colcr.salle, colcr.id_creneau, colcr.nom, s.numero"
+            with connection.cursor() as cursor:
+                cursor.execute(requete2, ([classe.pk,semin.lundi,semax.lundi,semin.lundi,semax.lundi]))
+                groupes = dictfetchall(cursor)
+            groupescolles = []
+            longueur = semaines.count()
+            for i in range(len(creneaux)):
+                groupescolles.append(groupes[:longueur])
+                del groupes[:longueur]
+            return creneaux, groupescolles, semaines
+        else:
+            jours = Creneau.objects.filter(classe=classe)
+            creneaux = Creneau.objects.filter(classe=classe)
+            if not modif:
+                jours = jours.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi))
+                creneaux = creneaux.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi)).annotate(nb=Count('colle')).filter(nb__gt=0)
+            creneaux = creneaux.order_by('jour','heure','salle','pk')
+            jours = jours.values('jour').annotate(nb=Count('id',distinct=True)).order_by('jour')            
+            requete="SELECT {} cr.id id_cr, c2.id id_col, c2.colleur_id id_colleur, jf.nom ferie, m.id id_matiere, m.nom nom_matiere, m.couleur couleur, m.temps temps, g.nom nomgroupe, cr.jour jour, cr.heure heure, cr.salle salle, cr.id, s.lundi lundi, e.id id_eleve, u2.first_name prenom_eleve,u2.last_name nom_eleve {} \
+                            FROM accueil_creneau cr \
+                            CROSS JOIN accueil_semaine s\
+                            {}\
+                            LEFT OUTER JOIN accueil_colle c2 \
+                            ON (c2.creneau_id=cr.id AND c2.semaine_id=s.id) \
+                            LEFT OUTER JOIN accueil_user u \
+                            ON u.colleur_id=c2.colleur_id \
+                            LEFT OUTER JOIN accueil_matiere m \
+                            ON c2.matiere_id=m.id \
+                            LEFT OUTER JOIN accueil_groupe g \
+                            ON g.id=c2.groupe_id \
+                            LEFT OUTER JOIN accueil_eleve e\
+                            ON e.id=c2.eleve_id\
+                            LEFT OUTER JOIN accueil_user u2\
+                            ON u2.eleve_id = e.id\
+                            LEFT OUTER JOIN accueil_jourferie jf \
+                            ON jf.date = {}\
+                            WHERE cr.classe_id=%s AND s.lundi BETWEEN %s AND %s \
+                            ORDER BY s.lundi, cr.jour, cr.heure, cr.salle, cr.id".format("" if modif else "DISTINCT","" if modif else ", g.id groupe, u.last_name nom, u.first_name prenom, {} jourbis".format(date_plus_jour('s.lundi','cr.jour')),"" if modif else "INNER JOIN accueil_colle c \
+                            ON c.creneau_id=cr.id INNER JOIN accueil_semaine s2    ON (c.semaine_id=s2.id AND s2.lundi BETWEEN %s AND %s)",date_plus_jour('s.lundi','cr.jour'))
+            with connection.cursor() as cursor:
+                cursor.execute(requete, ([] if modif else [semin.lundi,semax.lundi])+[classe.pk,semin.lundi,semax.lundi])
+                precolles = dictfetchall(cursor)
+            colles = []
+            longueur = creneaux.count()
+            for i in range(semaines.count()):
+                colles.append(precolles[:longueur])
+                del precolles[:longueur]
+            return jours,creneaux,colles,semaines
 
     def agenda(self,colleur):
         semainemin = date.today()+timedelta(days=-28)

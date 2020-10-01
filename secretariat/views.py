@@ -6,7 +6,7 @@ from administrateur.forms import AdminConnexionForm
 from colleur.forms import ECTSForm
 from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm
 from accueil.models import Config, Note, Semaine, Matiere, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, mois, NoteECTS
-from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse
+from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV
 from django.http import Http404, HttpResponse,  HttpResponseForbidden
 from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
 from reportlab.platypus import Table, TableStyle
@@ -97,23 +97,23 @@ def resultatcsv(request,id_classe,id_matiere,id_semin,id_semax):
     return response
 
 @user_passes_test(is_secret, login_url='login_secret')
-def colloscope(request,id_classe):
+def colloscope(request,transpose,id_classe):
     """Renvoie la vue de la page du colloscope de la classe dont l'id est id_classe"""
     semaines=list(Semaine.objects.all())
     try:
         semin,semax=semaines[0],semaines[-1]
     except Exception:
         raise Http404
-    return colloscope2(request,id_classe,semin.pk,semax.pk)
+    return colloscope2(request,transpose,id_classe,semin.pk,semax.pk)
 
 @user_passes_test(is_secret, login_url='login_secret')
-def colloscope2(request,id_classe,id_semin,id_semax):
+def colloscope2(request,transpose,id_classe,id_semin,id_semax):
     """Renvoie la vue de la page du colloscope de la classe dont l'id est id_classe entre les semaines dont l'id est id_semin et id_semax"""
     classe=get_object_or_404(Classe,pk=id_classe)
     semin=get_object_or_404(Semaine,pk=id_semin)
     semax=get_object_or_404(Semaine,pk=id_semax)
     isprof = Config.objects.get_config().modif_secret_col
-    return mixtecolloscope(request,classe,semin,semax,isprof)
+    return mixtecolloscope(request,classe,semin,semax,isprof,int(tranpose))
 
 @user_passes_test(is_secret, login_url='login_secret')
 def colloscopePdf(request,id_classe,id_semin,id_semax):
@@ -122,6 +122,14 @@ def colloscopePdf(request,id_classe,id_semin,id_semax):
     semin=get_object_or_404(Semaine,pk=id_semin)
     semax=get_object_or_404(Semaine,pk=id_semax)
     return Pdf(classe,semin,semax)
+
+@user_passes_test(is_secret, login_url='login_secret')
+def colloscopeCsv(request,id_classe,id_semin,id_semax):
+    """Renvoie le fichier PDF du colloscope de la classe dont l'id est id_classe, entre les semaines d'id id_semin et id_semax"""
+    classe=get_object_or_404(Classe,pk=id_classe)
+    semin=get_object_or_404(Semaine,pk=id_semin)
+    semax=get_object_or_404(Semaine,pk=id_semax)
+    return mixteCSV(request,classe,semin,semax)
 
 @user_passes_test(is_secret, login_url='accueil')
 def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):

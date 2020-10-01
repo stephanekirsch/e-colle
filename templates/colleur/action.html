@@ -34,7 +34,7 @@
 		<li><a href="#">Colloscope</a>
 			<ul>
 		{% for classe in user.colleur.classes.all %}
-				<li><a href="{% url 'colloscope_colleur' classe.pk %}">{{classe.nom}}</a></li>
+				<li><a href="{% url 'colloscope_colleur' 0 classe.pk %}">{{classe.nom}}</a></li>
 		{% endfor %}
 			</ul>
 		</li>

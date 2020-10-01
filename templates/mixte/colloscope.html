@@ -23,6 +23,12 @@
 </tr>
 </table>
 </form>
+<table class="accueil">
+	<tr>
+		<td><a href="{% url user.colleur|yesno:'colloscope2_colleur,colloscope2_secret' 1 classe.pk semin.pk semax.pk %}">transposer le colloscope</a></td>
+	</tr>
+</table>
+
 <table class="tableausimple">
 	<tr class="entete">
 		<td>Jour</td>
