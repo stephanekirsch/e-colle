@@ -193,14 +193,15 @@ def messages(request):
             'attachment':x['pj']} for x in messagesenvoyesQuery]
     if checkcolleur(user) or not Config.objects.get_config().message_eleves:
         return HttpResponse(json.dumps({'messagesrecus':messagesrecus, 'messagesenvoyes': messagesenvoyes}, default=date_serial))
-    else:
+    elif checkeleve(user):
+        classe = user.eleve.classe
         groupes = list(Groupe.objects.filter(classe=classe).values_list('pk', 'nom'))
         matieres = list(Matiere.objects.filter(matieresclasse=classe).values_list('pk', 'nom', 'couleur', 'lv'))
         eleves = [[eleve.pk, eleve.user.first_name.title() + " " + eleve.user.last_name.upper(), login, 0 if not eleve.groupe else eleve.groupe.pk,
                    0 if not eleve.lv1 else eleve.lv1.pk, 0 if not eleve.lv2 else eleve.lv2.pk] for eleve, login in classe.loginsEleves()]
         colleurs = [[colleur.pk, colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), login]
                     for colleur, login in classe.loginsColleurs()]
-        profs = list(Prof.objects.filter(classe = eleve.classe).values('colleur__pk','matiere__pk'))
+        profs = list(Prof.objects.filter(classe = classe).values('colleur__pk','matiere__pk'))
         return HttpResponse(json.dumps({'messagesrecus':messagesrecus, 'messagesenvoyes': messagesenvoyes, 'groupes': groupes,\
             'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'profs': profs}, default=date_serial))
 
