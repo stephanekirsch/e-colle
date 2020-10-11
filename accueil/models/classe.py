@@ -46,10 +46,10 @@ class ColleurManager(models.Manager):
         # pour éviter de multiples accès à la BDD (même avec optimisation avec prefetch_related)
         # on fait la requête à la main avec fonction d'aggrégation pour concaténer les classes/matières
         where = []
-        if classe is not None:
-            where.append("cl.id = %s")
         if matiere is not None:
             where.append("m.id = %s")
+        if classe is not None:
+            where.append("cl.id = %s")
         if pattern:
             where.append("LOWER(u.first_name) LIKE %s OR LOWER(u.last_name) LIKE %s")
         if where:
@@ -97,7 +97,10 @@ class Colleur(models.Model):
     grade = models.PositiveSmallIntegerField(choices=LISTE_GRADES, default=3)
     etablissement = models.ForeignKey("Etablissement", verbose_name="Établissement", null=True,blank=True, on_delete=models.PROTECT)
     objects = ColleurManager()
-    
+
+    class Meta:
+        ordering = ['user__last_name', 'user__first_name']
+
     def allprofs(self):
         return self.colleurprof.prefetch_related('classe')
 
