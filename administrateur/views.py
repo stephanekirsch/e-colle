@@ -427,14 +427,14 @@ def eleve(request):
             except Exception:
                 pass
             return redirect('gestion_eleve')
-        elif "lv1" in request.POST:
+        elif "change_lv1" in request.POST:
             # on commence par enlever les élèves dont la classe ne possède pas la langue en question, puis on met à jour la lv1
             if form2.cleaned_data['lv1'] is not None:
                 form2.cleaned_data['eleve'].filter(classe__matieres=form2.cleaned_data['lv1']).update(lv1=form2.cleaned_data['lv1'])
             else: # dans le cas contraire c'est qu'on remet à zéro la lv1
                 form2.cleaned_data['eleve'].update(lv1=None)
             return redirect('gestion_eleve')
-        elif "lv2" in request.POST:
+        elif "change_lv2" in request.POST:
             # on commence par enlever les élèves dont la classe ne possède pas la langue en question, puis on met à jour la lv1
             if form2.cleaned_data['lv2'] is not None:
                 form2.cleaned_data['eleve'].filter(classe__matieres=form2.cleaned_data['lv2']).update(lv2=form2.cleaned_data['lv2'])
