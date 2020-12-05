@@ -48,14 +48,10 @@ class RamassageManager(models.Manager):
         ON co.id = cocl.colleur_id\
         INNER JOIN accueil_classe cl\
         ON cocl.classe_id = cl.id\
-        INNER JOIN accueil_colleur_matieres coma\
-        ON coma.colleur_id = co.id\
-        INNER JOIN accueil_matiere ma\
-        ON coma.matiere_id = ma.id\
-        INNER JOIN accueil_classe_matieres clma\
-        ON clma.classe_id = cl.id AND clma.matiere_id = ma.id\
         LEFT OUTER JOIN accueil_note no\
-        ON no.colleur_id = co.id AND no.matiere_id = ma.id AND no.classe_id = cl.id\
+        ON no.colleur_id = co.id AND no.classe_id = cl.id\
+        INNER JOIN accueil_matiere ma\
+        ON no.matiere_id = ma.id\
         WHERE u.is_active = {} AND no.date_colle <= %s\
         GROUP BY co.id, ma.id, cl.id, moisTotal".format(totalMois("no.date_colle"),1 if BDD == "sqlite3" else "TRUE")
         with connection.cursor() as cursor:
@@ -95,7 +91,7 @@ class RamassageManager(models.Manager):
         WHERE dec2.ramassage_id=%s AND dec2.temps - COALESCE(dec1.temps,0) != 0{}\
         GROUP BY ma.nom, u.last_name, u.first_name, col.id, cl.id, et.nom, dec2.mois\
         UNION ALL SELECT cl.id classe_id, cl.nom classe_nom, cl.annee, ma.nom matiere_nom, COALESCE(et.nom, 'Inconnu') etab, col.grade, u.last_name nom, u.first_name prenom, col.id colleur_id,\
-        dec1.mois mois, - COALESCE(SUM(dec1.temps),0) heures\
+        dec1.mois mois, - SUM(dec1.temps) heures\
         FROM accueil_decompte dec1\
         LEFT OUTER JOIN accueil_decompte dec2\
         ON dec1.colleur_id = dec2.colleur_id AND dec1.classe_id = dec2.classe_id AND dec1.matiere_id = dec2.matiere_id\
