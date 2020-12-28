@@ -312,3 +312,14 @@ class Classe(models.Model):
             elif matiere.lv == 2:
                 dictEleves[matiere.pk] = [eleve.lv2 == matiere for eleve in Eleve.objects.filter(classe=self)]
         return dictEleves
+
+    def listeColleurMatiere(self):
+        requete = """SELECT DISTINCT colmat.id, colmat.colleur_id, colmat.matiere_id FROM accueil_colleur_matieres colmat
+                    INNER JOIN accueil_classe_matieres clmat
+                    ON colmat.matiere_id = clmat.matiere_id
+                    INNER JOIN accueil_colleur_classes colcla
+                    ON colcla.colleur_id = colmat.colleur_id AND colcla.classe_id = clmat.classe_id
+                    WHERE colcla.classe_id = %s"""
+        with connection.cursor() as cursor:
+            cursor.execute(requete, [self.id])
+            return dictfetchall(cursor)

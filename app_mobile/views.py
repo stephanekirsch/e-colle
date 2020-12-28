@@ -202,8 +202,9 @@ def messages(request):
         colleurs = [{"id": colleur.pk, "nom": colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), "login": login}
                     for colleur, login in classe.loginsColleurs()]
         profs = list(Prof.objects.filter(classe = classe).values('colleur__pk','matiere__pk'))
+        colleurmatieres = classe.listeColleurMatiere()
         return HttpResponse(json.dumps({'messagesrecus':messagesrecus, 'messagesenvoyes': messagesenvoyes, 'groupes': groupes,\
-            'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'profs': profs}, default=date_serial))
+            'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'profs': profs, 'colleurmatieres': colleurmatieres}, default=date_serial))
 
 def newmessage(request, timestamp):
     """renvoie les intitulés des messages dont la date est > que la date de timestamp timestamp"""
