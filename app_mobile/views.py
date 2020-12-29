@@ -592,7 +592,6 @@ def addmessage(request):
         destinataires.discard(user)
         message = Message(auteur=user,listedestinataires="; ".join(["{} {}".format(destinataire.first_name.title(),destinataire.last_name.upper()) for destinataire in destinataires]),titre=request.POST['title'],corps=request.POST['body'])
         message.save()
-        for personne in destinataires:
-            Destinataire(user=personne,message=message).save()
+        Destinataire.objects.bulk_create([Destinataire(user=personne,message=message) for personne in destinataires])
     return HttpResponse(json.dumps({'pk': message.pk, 'date': int(message.date.strftime(
         '%s')), 'listedestinataires': message.listedestinataires, 'titre': message.titre, 'corps': message.corps}))
