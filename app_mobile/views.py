@@ -276,8 +276,7 @@ def answer(request, message_id, answerAll):
     reponse = Message(auteur=user, titre=request.POST['title'], corps=request.POST[
                       'body'], listedestinataires=listedestinataires)
     reponse.save()
-    destinataire = Destinataire(
-        message=reponse, user=message.auteur)
+    destinataire = Destinataire(message=reponse, user=message.auteur)
     destinataire.save()
     userdestinataire.reponses += 1
     userdestinataire.save()
@@ -292,7 +291,7 @@ def answer(request, message_id, answerAll):
         reponse.listedestinataires = listedestinataires
         reponse.save()
     return HttpResponse(json.dumps({'pk': reponse.pk, 'date': int(reponse.date.strftime(
-        '%s')), 'listedestinataires': reponse.listedestinataires, 'titre': reponse.titre, 'corps': reponse.corps, 'pj': reponse.pj}))
+        '%s')), 'listedestinataires': reponse.listedestinataires, 'titre': reponse.titre, 'corps': reponse.corps, 'pj': reponse.pj if reponse.pj else ""}))
 
 # ------------------------- PARTIE COLLEURS ----------------------------
 
