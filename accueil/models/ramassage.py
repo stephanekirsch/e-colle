@@ -106,7 +106,7 @@ class RamassageManager(models.Manager):
         ON u.colleur_id = col.id\
         LEFT OUTER JOIN accueil_etablissement et\
         ON col.etablissement_id = et.id\
-        WHERE dec2.id = NULL AND dec1.ramassage_id = %s{}\
+        WHERE dec2.id IS NULL AND dec1.ramassage_id = %s{}\
         GROUP BY ma.nom, u.last_name, u.first_name, col.id, cl.id, et.nom, dec1.mois".format("" if not colleur else " AND col.id = %s", "" if not colleur else " AND col.id = %s")
         if parMois:
             requete = "SELECT * FROM ({}) as req\
