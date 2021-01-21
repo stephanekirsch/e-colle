@@ -217,7 +217,7 @@ class Decompte(models.Model):
     matiere = models.ForeignKey("Matiere", on_delete = models.PROTECT, null = False)
     classe = models.ForeignKey("Classe", on_delete = models.PROTECT, null = False)
     ramassage = models.ForeignKey(Ramassage, on_delete = models.CASCADE, null = False)
-    temps = models.PositiveSmallIntegerField(default = 0)
+    temps = models.IntegerField(default = 0)
     mois = models.PositiveSmallIntegerField(default = 0)
 
     class Meta:
