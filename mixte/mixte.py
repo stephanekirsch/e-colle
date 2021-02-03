@@ -139,76 +139,89 @@ def mixteajaxmajcolleur(matiere,classe):
 	return HttpResponse(json.dumps([matiere.temps]+colleurs))
 
 def mixteajaxcolloscopemulti(matiere,colleur,id_groupe,id_eleve,semaine,creneau,duree, frequence, permutation):
-	frequence = int(frequence)
-	modulo = int(semaine.numero)%frequence
-	ecrase = Colle.objects.filter(creneau = creneau,semaine__numero__range=(semaine.numero,semaine.numero+int(duree)-1)).annotate(semaine_mod = F('semaine__numero') % frequence).filter(semaine_mod=modulo).count()
-	nbferies = JourFerie.objects.recupFerie(creneau.jour,semaine,duree,frequence,modulo)
-	if not(ecrase and nbferies[0]):
-		return HttpResponse("{}_{}".format(ecrase,nbferies[0]))
-	else:
-		return mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,creneau,duree, frequence, permutation)
+    frequence = int(frequence)
+    modulo = int(semaine.numero)%frequence
+    ecrase = Colle.objects.filter(creneau = creneau,semaine__numero__range=(semaine.numero,semaine.numero+int(duree)-1)).annotate(semaine_mod = F('semaine__numero') % frequence).filter(semaine_mod=modulo).count()
+    nbferies = JourFerie.objects.recupFerie(creneau.jour,semaine,duree,frequence,modulo)
+    if not(ecrase and nbferies[0]):
+        return HttpResponse("{}_{}".format(ecrase,nbferies[0]))
+    else:
+        return mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,creneau,duree, frequence, permutation)
 
 def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,creneau,duree, frequence, permutation):
-	groupe=None if matiere.temps!=20 else get_object_or_404(Groupe,pk=id_groupe)
-	eleve=None if matiere.temps!=30 else get_object_or_404(Eleve,pk=id_eleve)
-	numsemaine=semaine.numero
-	if matiere.temps == 20:
-		if matiere.lv == 0:
-			groupeseleves=list(Groupe.objects.filter(classe=creneau.classe).order_by('nom'))
-		elif matiere.lv == 1:
-			groupeseleves=list(Groupe.objects.filter(classe=creneau.classe,groupeeleve__lv1=matiere).distinct().order_by('nom'))
-		elif matiere.lv == 2:
-			groupeseleves=list(Groupe.objects.filter(classe=creneau.classe,groupeeleve__lv2=matiere).distinct().order_by('nom'))
-		groupeseleves.sort(key = lambda x:int(x.nom))
-		rang=groupeseleves.index(groupe)
-	elif matiere.temps == 30:
-		if matiere.lv == 0:
-			groupeseleves=list(Eleve.objects.filter(classe=creneau.classe))
-		elif matiere.lv == 1:
-			groupeseleves=list(Eleve.objects.filter(classe=creneau.classe,lv1=matiere))
-		elif matiere.lv == 2:
-			groupeseleves=list(Eleve.objects.filter(classe=creneau.classe,lv2=matiere))
-		rang=groupeseleves.index(eleve)
-	i=0
-	creneaux={'creneau':creneau.pk,'couleur':matiere.couleur,'colleur':creneau.classe.dictColleurs()[colleur.pk]}
-	creneaux['semgroupe']=[]
-	feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
-	if matiere.temps == 20:
-		for numero in range(numsemaine,numsemaine+int(duree),int(frequence)):
-			try:
-				semainecolle=Semaine.objects.get(numero=numero)
-				if semainecolle.lundi + timedelta(days = creneau.jour) not in feries:
-					Colle.objects.filter(creneau=creneau,semaine=semainecolle).delete()
-					groupe=groupeseleves[(rang+i*int(permutation))%len(groupeseleves)]
-					Colle(creneau=creneau,colleur=colleur,matiere=matiere,groupe=groupe,semaine=semainecolle).save()
-					creneaux['semgroupe'].append({'semaine':semainecolle.pk,'groupe':groupe.nom})
-			except Exception:
-				pass
-			i+=1
-	elif matiere.temps == 30:
-		for numero in range(numsemaine,numsemaine+int(duree),int(frequence)):
-			try:
-				semainecolle=Semaine.objects.get(numero=numero)
-				if semainecolle.lundi + timedelta(days = creneau.jour) not in feries:
-					Colle.objects.filter(creneau=creneau,semaine=semainecolle).delete()
-					eleve=groupeseleves[(rang+i*int(permutation))%len(groupeseleves)]
-					Colle(creneau=creneau,colleur=colleur,matiere=matiere,eleve=eleve,semaine=semainecolle).save()
-					creneaux['semgroupe'].append({'semaine':semainecolle.pk,'groupe':creneau.classe.dictEleves()[eleve.pk]})
-			except Exception:
-				pass
-			i+=1
-	elif matiere.temps == 60:
-		for numero in range(numsemaine,numsemaine+int(duree),int(frequence)):
-			try:
-				semainecolle=Semaine.objects.get(numero=numero)
-				if semainecolle.lundi + timedelta(days = creneau.jour) not in feries:
-					Colle.objects.filter(creneau=creneau,semaine=semainecolle).delete()
-					Colle(creneau=creneau,colleur=colleur,matiere=matiere,eleve=None,semaine=semainecolle,classe = creneau.classe).save()
-					creneaux['semgroupe'].append({'semaine':semainecolle.pk,'groupe':""})
-			except Exception:
-				pass
-	return HttpResponse(json.dumps(creneaux))
-
+    creneaux={'creneau':creneau.pk}
+    creneaux['semgroupe']=[]
+    numsemaine=semaine.numero
+    if matiere == -1: # si on ne fait qu'effacer
+        i = 0
+        for numero in range(numsemaine,numsemaine+int(duree),int(frequence)):
+            try:
+                semainecolle=Semaine.objects.get(numero=numero)
+                Colle.objects.filter(creneau=creneau,semaine=semainecolle).delete()
+                creneaux['semgroupe'].append({'semaine':semainecolle.pk})
+            except Exception:
+                pass
+            i+=1
+        return HttpResponse(json.dumps(creneaux))
+    groupe=None if matiere.temps!=20 else get_object_or_404(Groupe,pk=id_groupe)
+    eleve=None if matiere.temps!=30 else get_object_or_404(Eleve,pk=id_eleve)
+    if matiere.temps == 20:
+        if matiere.lv == 0:
+            groupeseleves=list(Groupe.objects.filter(classe=creneau.classe).order_by('nom'))
+        elif matiere.lv == 1:
+            groupeseleves=list(Groupe.objects.filter(classe=creneau.classe,groupeeleve__lv1=matiere).distinct().order_by('nom'))
+        elif matiere.lv == 2:
+            groupeseleves=list(Groupe.objects.filter(classe=creneau.classe,groupeeleve__lv2=matiere).distinct().order_by('nom'))
+        groupeseleves.sort(key = lambda x:int(x.nom))
+        rang=groupeseleves.index(groupe)
+    elif matiere.temps == 30:
+        if matiere.lv == 0:
+            groupeseleves=list(Eleve.objects.filter(classe=creneau.classe))
+        elif matiere.lv == 1:
+            groupeseleves=list(Eleve.objects.filter(classe=creneau.classe,lv1=matiere))
+        elif matiere.lv == 2:
+            groupeseleves=list(Eleve.objects.filter(classe=creneau.classe,lv2=matiere))
+        rang=groupeseleves.index(eleve)
+    i=0
+    creneaux={'creneau':creneau.pk,'couleur':matiere.couleur,'colleur':creneau.classe.dictColleurs()[colleur.pk]}
+    creneaux['semgroupe']=[]
+    feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
+    if matiere.temps == 20:
+        for numero in range(numsemaine,numsemaine+int(duree),int(frequence)):
+            try:
+                semainecolle=Semaine.objects.get(numero=numero)
+                if semainecolle.lundi + timedelta(days = creneau.jour) not in feries:
+                    Colle.objects.filter(creneau=creneau,semaine=semainecolle).delete()
+                    groupe=groupeseleves[(rang+i*int(permutation))%len(groupeseleves)]
+                    Colle(creneau=creneau,colleur=colleur,matiere=matiere,groupe=groupe,semaine=semainecolle).save()
+                    creneaux['semgroupe'].append({'semaine':semainecolle.pk,'groupe':groupe.nom})
+            except Exception:
+                pass
+            i+=1
+    elif matiere.temps == 30:
+        for numero in range(numsemaine,numsemaine+int(duree),int(frequence)):
+            try:
+                semainecolle=Semaine.objects.get(numero=numero)
+                if semainecolle.lundi + timedelta(days = creneau.jour) not in feries:
+                    Colle.objects.filter(creneau=creneau,semaine=semainecolle).delete()
+                    eleve=groupeseleves[(rang+i*int(permutation))%len(groupeseleves)]
+                    Colle(creneau=creneau,colleur=colleur,matiere=matiere,eleve=eleve,semaine=semainecolle).save()
+                    creneaux['semgroupe'].append({'semaine':semainecolle.pk,'groupe':creneau.classe.dictEleves()[eleve.pk]})
+            except Exception:
+                pass
+            i+=1
+    elif matiere.temps == 60:
+        for numero in range(numsemaine,numsemaine+int(duree),int(frequence)):
+            try:
+                semainecolle=Semaine.objects.get(numero=numero)
+                if semainecolle.lundi + timedelta(days = creneau.jour) not in feries:
+                    Colle.objects.filter(creneau=creneau,semaine=semainecolle).delete()
+                    Colle(creneau=creneau,colleur=colleur,matiere=matiere,eleve=None,semaine=semainecolle,classe = creneau.classe).save()
+                    creneaux['semgroupe'].append({'semaine':semainecolle.pk,'groupe':""})
+            except Exception:
+                pass
+    return HttpResponse(json.dumps(creneaux))
+    
 def mixteRamassagePdfParClasse(ramassage,total,parmois,full,colleur=False):
 	"""Renvoie le fichier PDF du ramassage par classe correspondant au ramassage dont l'id est id_ramassage
 	si total vaut 1, les totaux par classe et matière sont calculés"""

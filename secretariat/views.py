@@ -222,8 +222,12 @@ def ajaxcolloscopemulti(request, id_matiere, id_colleur, id_groupe, id_eleve, id
     le groupe démarre au groupe dont l'id est id_groupe puis va de permutation en permutation, et la matière dont l'id est id_matière"""
     if not Config.objects.get_config().modif_secret_col:
         return HttpResponseForbidden("Accès non autorisé")
-    matiere=get_object_or_404(Matiere,pk=id_matiere)
-    colleur=get_object_or_404(Colleur,pk=id_colleur)
+    if matiere != "-1": # si on n'efface pas des colles
+        matiere=get_object_or_404(Matiere,pk=id_matiere)
+        colleur=get_object_or_404(Colleur,pk=id_colleur)
+    else:
+        matiere = -1
+        colleur = 0
     semaine=get_object_or_404(Semaine,pk=id_semaine)
     creneau=get_object_or_404(Creneau,pk=id_creneau)
     return mixteajaxcolloscopemulti(matiere,colleur,id_groupe,id_eleve,semaine,creneau,duree, frequence, permutation)
