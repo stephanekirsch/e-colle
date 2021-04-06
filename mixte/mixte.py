@@ -55,8 +55,7 @@ def mixteCSV(request,classe,semin,semax):
     writer = csv.writer(response)
     writer.writerow(['Matière','Colleur','Créneau','Salle']+['S{}'.format(semaine.numero) for semaine in semaines])
     for creneau, groupes in zip(creneaux, groupescolle):
-        print(groupes)
-        cases = [(groupe['groupe'] if groupe['groupe'] else "") if groupe['temps'] == 20 else classe.dictEleves()[groupe['id_eleve']] for groupe in groupes]
+        cases = [(groupe['groupe'] if groupe['groupe'] is not None else "") if groupe['temps'] == 20  else (classe.dictEleves()[groupe['id_eleve']] if groupe['id_eleve'] is not None else "")  for groupe in groupes]
         writer.writerow([creneau['matiere_nom'], "{} {}".format(creneau['nom'].upper(), creneau['prenom'].title()) ,
             "{} {}h{:02d}".format(jours[creneau['jds']], creneau['heure']//60,(creneau['heure']%60)), creneau['salle']] + cases)
     return response

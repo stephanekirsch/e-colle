@@ -32,7 +32,7 @@
 		{% endif %}
 		<td>{{devoir.numero}}</td>
 		<td>{{devoir.date_affichage|date:"d/m/y à H\hi"}}</td>
-		<td>{{devoir.details|linebreaksbr}}</td>
+		<td>{{devoir.detail|linebreaksbr}}</td>
 		<td>{{devoir.a_rendre_jour|date:"d/m/y"}} à {{devoir.a_rendre_heure|time:"H\hi"}}</td>
 		{% if devoir.enonce %}
 		<td><a href="{{devoir.enonce|media}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a></td>
