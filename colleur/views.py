@@ -804,7 +804,9 @@ def ramasseCopies(request, id_devoir):
         with ZipFile(temp_file, 'w') as myzip:
             for copie in copies:
                 if copie.fichier:
-                    myzip.write(copie.fichier.url[1:])
+                    nomfichier = copie.fichier.url[1:].split("/")
+                    nomfichier = os.path.join(MEDIA_ROOT,*nomfichier[1:])
+                    myzip.write(nomfichier,os.path.basename(nomfichier))
         temp_file.seek(0)
         return FileResponse(temp_file, content_type='application/zip', filename="copies_devoir_{}_{}_{}.zip".format(devoir.numero,devoir.matiere.nom,devoir.classe.nom))
     else:
