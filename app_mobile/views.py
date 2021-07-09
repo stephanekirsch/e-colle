@@ -193,16 +193,18 @@ def messages(request):
             'attachment':x['pj']} for x in messagesenvoyesQuery]
     if checkcolleur(user) or not Config.objects.get_config().message_eleves:
         return HttpResponse(json.dumps({'messagesrecus':messagesrecus, 'messagesenvoyes': messagesenvoyes}, default=date_serial))
-    else:
-        groupes = list(Groupe.objects.filter(classe=classe).values_list('pk', 'nom'))
-        matieres = list(Matiere.objects.filter(matieresclasse=classe).values_list('pk', 'nom', 'couleur', 'lv'))
-        eleves = [[eleve.pk, eleve.user.first_name.title() + " " + eleve.user.last_name.upper(), login, 0 if not eleve.groupe else eleve.groupe.pk,
-                   0 if not eleve.lv1 else eleve.lv1.pk, 0 if not eleve.lv2 else eleve.lv2.pk] for eleve, login in classe.loginsEleves()]
-        colleurs = [[colleur.pk, colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), login]
+    elif checkeleve(user):
+        classe = user.eleve.classe
+        groupes = list(Groupe.objects.filter(classe=classe).values('pk', 'nom'))
+        matieres = list(Matiere.objects.filter(matieresclasse=classe).values('pk', 'nom', 'couleur', 'lv'))
+        eleves = [{"id": eleve.pk, "nom": eleve.user.first_name.title() + " " + eleve.user.last_name.upper(), "login": login, "groupe": 0 if not eleve.groupe else eleve.groupe.pk,
+                   "lv1": 0 if not eleve.lv1 else eleve.lv1.pk, "lv2": 0 if not eleve.lv2 else eleve.lv2.pk} for eleve, login in classe.loginsEleves()]
+        colleurs = [{"id": colleur.pk, "nom": colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), "login": login}
                     for colleur, login in classe.loginsColleurs()]
-        profs = list(Prof.objects.filter(classe = eleve.classe).values('colleur__pk','matiere__pk'))
+        profs = list(Prof.objects.filter(classe = classe).values('colleur__pk','matiere__pk'))
+        colleurmatieres = classe.listeColleurMatiere()
         return HttpResponse(json.dumps({'messagesrecus':messagesrecus, 'messagesenvoyes': messagesenvoyes, 'groupes': groupes,\
-            'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'profs': profs}, default=date_serial))
+            'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'profs': profs, 'colleurmatieres': colleurmatieres}, default=date_serial))
 
 def newmessage(request, timestamp):
     """renvoie les intitulés des messages dont la date est > que la date de timestamp timestamp"""
@@ -274,8 +276,7 @@ def answer(request, message_id, answerAll):
     reponse = Message(auteur=user, titre=request.POST['title'], corps=request.POST[
                       'body'], listedestinataires=listedestinataires)
     reponse.save()
-    destinataire = Destinataire(
-        message=reponse, user=message.auteur)
+    destinataire = Destinataire(message=reponse, user=message.auteur)
     destinataire.save()
     userdestinataire.reponses += 1
     userdestinataire.save()
@@ -290,7 +291,7 @@ def answer(request, message_id, answerAll):
         reponse.listedestinataires = listedestinataires
         reponse.save()
     return HttpResponse(json.dumps({'pk': reponse.pk, 'date': int(reponse.date.strftime(
-        '%s')), 'listedestinataires': reponse.listedestinataires, 'titre': reponse.titre, 'corps': reponse.corps, 'pj': reponse.pj}))
+        '%s')), 'listedestinataires': reponse.listedestinataires, 'titre': reponse.titre, 'corps': reponse.corps, 'pj': reponse.pj if reponse.pj else ""}))
 
 # ------------------------- PARTIE COLLEURS ----------------------------
 
@@ -590,7 +591,6 @@ def addmessage(request):
         destinataires.discard(user)
         message = Message(auteur=user,listedestinataires="; ".join(["{} {}".format(destinataire.first_name.title(),destinataire.last_name.upper()) for destinataire in destinataires]),titre=request.POST['title'],corps=request.POST['body'])
         message.save()
-        for personne in destinataires:
-            Destinataire(user=personne,message=message).save()
+        Destinataire.objects.bulk_create([Destinataire(user=personne,message=message) for personne in destinataires])
     return HttpResponse(json.dumps({'pk': message.pk, 'date': int(message.date.strftime(
         '%s')), 'listedestinataires': message.listedestinataires, 'titre': message.titre, 'corps': message.corps}))

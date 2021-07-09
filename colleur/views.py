@@ -401,11 +401,15 @@ def ajaxcolloscopemulti(request, id_matiere, id_colleur, id_groupe, id_eleve, id
     et dont le numéro est congru à celui de la semaine d'id id_semaine modulo frequence
     S'il n'y en a aucune, ajoute les colles sur les couples créneau/semaine précédents, avec le colleur dont l'id est id_colleur
     le groupe démarre au groupe dont l'id est id_groupe puis va de permutation en permutation, et la matière dont l'id est id_matière"""
-    matiere=get_object_or_404(Matiere,pk=id_matiere)
-    colleur=get_object_or_404(Colleur,pk=id_colleur)
+    if id_matiere != "-1": # si on n'efface pas des colles
+        matiere=get_object_or_404(Matiere,pk=id_matiere)
+        colleur=get_object_or_404(Colleur,pk=id_colleur)
+    else:
+        matiere = -1
+        colleur = 0
     semaine=get_object_or_404(Semaine,pk=id_semaine)
     creneau=get_object_or_404(Creneau,pk=id_creneau)
-    if not modifcolloscope(request.user.colleur,creneau.classe) or matiere not in colleur.matieres.all() or matiere not in creneau.classe.matieres.all():
+    if not modifcolloscope(request.user.colleur,creneau.classe) or matiere !=-1 and (matiere not in colleur.matieres.all() or matiere not in creneau.classe.matieres.all()):
         return HttpResponseForbidden("Accès non autorisé")
     return mixteajaxcolloscopemulti(matiere,colleur,id_groupe,id_eleve,semaine,creneau,duree, frequence, permutation)
     
@@ -415,11 +419,15 @@ def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_el
     et les semaines dont le numéro est compris entre celui de la semaine d'id id_semaine et ce dernier + duree
     et dont le numéro est congru à celui de la semaine d'id id_semaine modulo frequence, avec le colleur dont l'id est id_colleur
     le groupe démarre au groupe dont l'id est id_groupe puis va de permutation en permutation, et la matière dont l'id est id_matière"""
-    matiere=get_object_or_404(Matiere,pk=id_matiere)
-    colleur=get_object_or_404(Colleur,pk=id_colleur)
+    if id_matiere != "-1": # si on n'efface pas des colles
+        matiere=get_object_or_404(Matiere,pk=id_matiere)
+        colleur=get_object_or_404(Colleur,pk=id_colleur)
+    else:
+        matiere = -1
+        colleur = 0
     semaine=get_object_or_404(Semaine,pk=id_semaine)
     creneau=get_object_or_404(Creneau,pk=id_creneau)
-    if not modifcolloscope(request.user.colleur,creneau.classe) or matiere not in colleur.matieres.all() or matiere not in creneau.classe.matieres.all():
+    if not modifcolloscope(request.user.colleur,creneau.classe) or matiere != -1 and (matiere not in colleur.matieres.all() or matiere not in creneau.classe.matieres.all()):
         return HttpResponseForbidden("Accès non autorisé")
     return mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,creneau,duree, frequence, permutation)
 
@@ -481,7 +489,7 @@ def decompte(request):
 @user_passes_test(is_colleur, login_url='accueil')
 def ramassage(request,id_ramassage):
     ramassage = get_object_or_404(Ramassage, pk=id_ramassage)
-    return mixteRamassagePdfParClasse(ramassage, False, True, False, colleur = request.user.colleur.pk)
+    return mixteRamassagePdfParClasse(ramassage, False, True, False, colleur = request.user.colleur)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def colloscopePdf(request,id_classe,id_semin,id_semax):

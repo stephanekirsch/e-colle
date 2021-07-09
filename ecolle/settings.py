@@ -1,15 +1,22 @@
-# -*- coding:utf8 -*-
+# -*- coding: utf-8 -*-
 # Django settings for e-colle project.
 
 from os import path
 
-from .debug import *
+try:
+    from .debug import DEBUG
+except ImportError:
+    DEBUG = False
 
 # =============================================================================
 #                            INFORMATIONS À REMPLIR
 # =============================================================================
 
-from .config import *
+from .config_default import *
+try:
+    from .config import *
+except ImportError:
+    pass
 
 # =============================================================================
 #                        FIN INFORMATIONS À REMPLIR
@@ -17,7 +24,7 @@ from .config import *
 
 # les couples nom/email du (des) administrateur(s) du site
 ADMINS = (
-    ('admin', 'admin@example.com'),
+    ('admin', EMAIL_ADMIN),
 )
 
 DEFAULT_CSS = "style.css"

@@ -99,7 +99,7 @@
 	<li><a id="creneaux" href="false" style="background-color:#888888">creneaux multiples</a></li>
 	<li><a href="{% url user.colleur|yesno:'ajaxeffacer_colleur,ajaxeffacer_secret' 'semaine' 'creneau' %}">Effacer</a></li>
 {% for matiere,colleurs,groupes in matieres %}
-	<li style="background-color:{{matiere.2}}">{{matiere.1|title}}
+	<li style="background-color:{{matiere.2}}">{{matiere.1|title}} {% if matiere.4 != 0 %}(LV{{matiere.4}}) {% endif %}
 		<ul class="niveau3">
 		{% for colleur in colleurs %}
 			<li style="background-color:{{matiere.2}}">{{colleur.1|title}} {{colleur.2|upper}} ({{classe.dictColleurs|lookup:colleur.0}})
