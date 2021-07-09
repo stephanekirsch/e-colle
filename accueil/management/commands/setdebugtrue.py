@@ -9,7 +9,7 @@ class Command(BaseCommand):
         nomfichier = os.path.join(CHEMINVERSECOLLE,"ecolle","debug.py")
         try:
             with open(nomfichier,"wt",encoding="utf8") as fichier:
-                fichier.write("DEBUG = True")
+                fichier.write("DEBUG = True\n")
                 self.stdout.write("variable DEBUG passée à True")
         except Exception:
             self.stdout.write("Les droits sont insuffisants pour modifier le fichier")
