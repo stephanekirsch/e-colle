@@ -18,6 +18,7 @@ class ConfigManager(models.Manager):
                             nom_adresse_etablissement="",
                             academie="",
                             ville="",
+                            semestre2=0,
                             app_mobile=False
                            )
         return config
@@ -80,7 +81,11 @@ class Config(models.Model):
             blank=True
     )
     app_mobile = models.BooleanField(
-            verbose_name="Application mobile",
+            verbose_name = "Application mobile",
             default=False
+    )
+    semestre2 = models.SmallIntegerField(
+            verbose_name = "début du second semestre", 
+            default=0
     )
     objects = ConfigManager()

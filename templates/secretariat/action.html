@@ -12,7 +12,7 @@
 		<li><a href="#" title="Colloscope des élève par classe">Colloscopes</a>
 			<ul>
 		{% for classe in classes %}
-				<li><a href="{% url 'colloscope_secret' classe.pk %}">{{classe.nom}}</a></li>
+				<li><a href="{% url 'colloscope_secret' 0 classe.pk %}">{{classe.nom}}</a></li>
 		{% endfor %}
 			</ul>
 		</li>

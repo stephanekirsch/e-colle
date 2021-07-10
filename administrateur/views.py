@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django.http import HttpResponseForbidden, Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from administrateur.forms import ChercheUserForm, ConfigForm, EleveFormSet, EleveFormSetMdp, ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm, CsvColleurForm, GenereSemainesForm
+from administrateur.forms import ChercheUserForm, ConfigForm, EleveFormSet, EleveFormSetMdp, ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, SemestreForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm, CsvColleurForm, GenereSemainesForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
@@ -228,8 +228,13 @@ def semaine(request):
     if form.is_valid():
         form.save()
         return redirect('gestion_semaine')
-    semaines = Semaine.objects.order_by('lundi')
-    return render(request,'administrateur/semaine.html',{'semaines':semaines,'form':form })
+    if Semaine.objects.exists():
+        semaines = Semaine.objects.order_by('lundi')
+        form2 = SemestreForm(request.POST or None, initial = {'semestre': Config.objects.get_config().semestre2})
+        if form2.is_valid():
+            form2.save()
+            return redirect('gestion_semaine')
+    return render(request,'administrateur/semaine.html',{'semaines':semaines,'form':form, 'form2': form2 })
 
 @ip_filter
 def semainemodif(request, id_semaine):

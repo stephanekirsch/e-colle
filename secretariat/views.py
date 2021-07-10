@@ -113,7 +113,7 @@ def colloscope2(request,transpose,id_classe,id_semin,id_semax):
     semin=get_object_or_404(Semaine,pk=id_semin)
     semax=get_object_or_404(Semaine,pk=id_semax)
     isprof = Config.objects.get_config().modif_secret_col
-    return mixtecolloscope(request,classe,semin,semax,isprof,int(tranpose))
+    return mixtecolloscope(request,classe,semin,semax,isprof,int(transpose))
 
 @user_passes_test(is_secret, login_url='login_secret')
 def colloscopePdf(request,id_classe,id_semin,id_semax):

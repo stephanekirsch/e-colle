@@ -265,6 +265,13 @@ class SemaineForm(forms.ModelForm):
         self.instance.lundi = self.cleaned_data['lundi']
         self.instance.numero = self.cleaned_data['numero']
         self.instance.save()
+
+class SemestreForm(forms.Form):
+    LISTE_SEMAINES = [ (semaine.numero, "S{}".format(semaine.numero))  for semaine in Semaine.objects.order_by("numero")]
+    semestre = forms.ChoiceField(label="début du second semestre", choices = LISTE_SEMAINES, required = False)
+
+    def save(self):
+        Config.objects.all().update(semestre2 = self.cleaned_data['semestre'])
         
 class GenereSemainesForm(forms.Form):
     base = date.today()

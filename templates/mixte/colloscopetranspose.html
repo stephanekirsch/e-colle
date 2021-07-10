@@ -42,8 +42,8 @@
 	</tr>
 	
 	{% for creneau, groupes in creneauxgroupe %}
-	<tr>
-		<td style="background-color:{{creneau.couleur}}">{{creneau.matiere_nom|title}}</td>
+	<tr style="background-color:{{creneau.couleur}}">
+		<td>{{creneau.matiere_nom|title}}</td>
 		<td>{{creneau.nom|upper}} {{creneau.prenom|title}}</td>
 		<td>{{listejours|lookup:creneau.jds}} {{creneau.heure|heure}}</td>
 		<td>{{creneau.salle}}</td>
