@@ -32,11 +32,15 @@
 
 <table class="tableausimple">
 	<tr class="entete">
-		<td colspan="4">semaines</td>
+		<td>Matière</td>
+		<td>Colleur</td>
+		<td>Créneau</td>
+		<td>Salle</td>
 		{% for semaine in semaines %}
-		<td colspan>S{{semaine.numero}} <br>{{semaine.lundi|date:'d/m'}}<br>{{semaine.lundi|addtime:5|date:'d/m'}}</td>
+		<td>S{{semaine.numero}} <br>{{semaine.lundi|date:'d/m'}}<br>{{semaine.lundi|addtime:5|date:'d/m'}}</td>
 		{% endfor %}
 	</tr>
+	
 	{% for creneau, groupes in creneauxgroupe %}
 	<tr>
 		<td style="background-color:{{creneau.couleur}}">{{creneau.matiere_nom|title}}</td>
@@ -47,7 +51,7 @@
 			{% if groupe.id_colle %}
 			<td class="colloscope">{% if groupe.temps == 20 %}{% if groupe.groupe != None %}{{groupe.groupe}}{% endif %}{% elif groupe.temps == 30 %}{% with groupe.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}<div class="colle"><p>
 		{% if groupe.temps == 20 %}
-		Groupe {{groupe.groupe}}: {{dictgroupes|lookup:groupe.id_matiere|lookup:groupe.groupe|lookup:1}}<br/>
+		S {{ groupe.numero }} / Groupe {{groupe.groupe}}: {{dictgroupes|lookup:groupe.id_matiere|lookup:groupe.groupe|lookup:1}}<br/>
 		{% elif groupe.temps == 30 %}
 		Élève: {{groupe.prenom|title}} {{groupe.nom|upper}}<br/>
 		{% endif %}
