@@ -80,16 +80,28 @@ def action(request):
 
 @user_passes_test(is_colleur, login_url='accueil')
 def note(request,id_classe):
-    """Renvoie la vue de la page de gestion des notes"""
+    """Renvoie la vue de la page avec le récapitulaitf des notes données + des liens pour noter"""
     classe=get_object_or_404(Classe,pk=id_classe)
-    form = SelectEleveNoteForm(classe, request.POST or None)
-    if form.is_valid():
-        return redirect('noteeleves_colleur', id_classe, "-".join([str(max(int(eleve),0)) for eleve in form.cleaned_data['eleve']]))
     colleur=request.user.colleur
-    matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=request.user.colleur)
+    matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
     if classe not in colleur.classes.all() or matiere.pk not in classe.matierespk():
         raise Http404
-    return render(request,"colleur/note.html",{'form':form,'classe':classe, 'notes':Note.objects.listeNotes(colleur,classe,matiere)})
+    return render(request,"colleur/note.html",{'classe':classe, 'notes':Note.objects.listeNotes(colleur,classe,matiere)})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def notation(request,id_classe,groupeeleve):
+    """Renvoie la vue de sélection du ou des élèves à coller en fonction de groupe / élève et de l'éventuel semestre"""
+    classe=get_object_or_404(Classe,pk=id_classe)
+    groupeeleve = int(groupeeleve)
+    colleur=request.user.colleur
+    matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
+    if classe not in colleur.classes.all() or matiere.pk not in classe.matierespk():
+        raise Http404
+    form = SelectEleveNoteForm(classe, groupeeleve, request.POST or None)
+    if form.is_valid():
+        return redirect('noteeleves_colleur', id_classe, "-".join([str(max(int(eleve),0)) for eleve in form.cleaned_data['eleve']]))
+    return render(request,"colleur/notation.html",{'form':form,'classe':classe,'groupeeleve':groupeeleve})
+
 
 @user_passes_test(is_colleur, login_url='accueil')
 def noteEleves(request, id_classe, eleves_str, noteColle=None):

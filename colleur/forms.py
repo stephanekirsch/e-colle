@@ -304,10 +304,17 @@ class ECTSForm(forms.Form):
             self.fields['tampon'] = forms.BooleanField(label='incruster le tampon/la signature',required=False)
 
 class SelectEleveNoteForm(forms.Form):
-    def __init__(self,classe,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-        query = iter(Eleve.objects.filter(classe=classe).annotate(groupe_nom=Coalesce('groupe__nom',Value(100))).select_related('user').order_by('groupe_nom','user__last_name','user__first_name'))
-        listeGroupes = Groupe.objects.filter(classe=classe).annotate(nb=Count('groupeeleve')).order_by('nom')
+    def __init__(self,classe,groupeeleve,*args,**kwargs):
+        super().__init__(*args,**kwargs)     
+        if groupeeleve == 1:
+            query = iter(Eleve.objects.filter(classe=classe).annotate(groupe_nom=Coalesce('groupe__nom',Value(100))).select_related('user').order_by('groupe_nom','user__last_name','user__first_name'))
+            listeGroupes = Groupe.objects.filter(classe=classe).annotate(nb=Count('groupeeleve')).order_by('nom')
+        elif groupeeleve == 2:
+            query = iter(Eleve.objects.filter(classe=classe).annotate(groupe_nom=Coalesce('groupe2__nom',Value(100))).select_related('user').order_by('groupe_nom','user__last_name','user__first_name'))
+            listeGroupes = Groupe.objects.filter(classe=classe).annotate(nb=Count('groupe2eleve')).order_by('nom')
+        else:
+            query = iter(Eleve.objects.filter(classe=classe).select_related('user').order_by('user__last_name','user__first_name'))
+            listeGroupes = []
         choices_groupe = [(groupe.pk, "Groupe {}".format(groupe.nom)) for groupe in listeGroupes]
         choices = [(0,"Élève fictif")]
         indexFictif = -1

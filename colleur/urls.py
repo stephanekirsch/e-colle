@@ -6,6 +6,7 @@ urlpatterns = [
 url(r'^$', views.connec,name="login_colleur"),
 url(r'^action$', views.action,name="action_colleur"),
 url(r'^action/note/(\d+)$', views.note,name="note_colleur"),
+url(r'^action/notation/(\d+)/([0-2]{1})$', views.notation,name="notation_colleur"),
 url(r'^action/note/eleves/(\d+)/(\d+(?:-\d+)*)$', views.noteEleves, name="noteeleves_colleur"),
 url(r'^action/note/modifier/(\d+)$', views.noteModif,name="notemodif_colleur"),
 url(r'^action/note/supprimer/(\d+)$', views.noteSuppr,name="notesuppr_colleur"),

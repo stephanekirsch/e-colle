@@ -6,39 +6,17 @@
 {% with request.session.matiere|get_matiere as matiere %}
 <table class="accueil"><tr><td>Notes de la classe {{classe}} en {{matiere}}</td></tr></table>
 {% endwith %}
-<form method="post">
-	{% csrf_token %}
-<table class="tableausimple">
-	<tr class="entete"><td colspan="4">Élèves de {{classe.nom}}</td></tr>
-	{% with form.groupe|titer as groupe_iter %}
-	{% for widget in form.eleve %}
-	{% if forloop.first %}
-		<tr><td colspan="4">{{widget}}</td></tr>
-	{% else %}
-	{% cycle '0' '1' '2' '3' '4' '5' as rank silent %}
-		{% if rank  == '0' or rank == '3' %}
-			<tr {% if rank == '0' %}class="plusclair"{% endif%}>
-				<td>{% with groupe_iter|tnext as groupe %}
-						{% if groupe != None %}
-							{{groupe}}
-						{% endif %}
-					{% endwith %}
-				</td>
-				<td>{{widget}}</td>
-		{% elif rank == '1' or rank == '4' %}
-			<td>{{widget}}</td>
+
+<table class="accueil">
+	<tr>{% if classe.semestres %}
+		<td><a href="{% url 'notation_colleur' classe.pk 1 %}">Notation Groupe Semestre 1</a></td>
+		<td><a href="{% url 'notation_colleur' classe.pk 2 %}">Notation Groupe Semestre 2</a></td>
 		{% else %}
-			<td>{{widget}}</td></tr>
+		<td><a href="{% url 'notation_colleur' classe.pk 1 %}">Notation Groupe</a></td>
 		{% endif %}
-	{% endif%}
-	{% endfor %}
-	{% endwith %}
-	{% if form.errors %}
-	<tr><td colspan="4">{{ form.errors.eleve }}</td></tr>
-	{% endif %}
-	<tr><td colspan="4"><input type="submit" value="Noter"/></td></tr>
+		<td><a href="{% url 'notation_colleur' classe.pk 0 %}">Notation Élève</a></td>
+	</tr>
 </table>
-</form>
 
 <table class="tableausimple" id="suppr">
 	<tr class="entete">
@@ -85,7 +63,6 @@
 {% block javascript %}
 {% get_mathjax as latex %}
 <script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
-<script type="text/javascript" src="{% static 'javascript/groupeeleves.js' %}"></script>
 {% if latex %}
 {% include "mathjax.html" %}
 {% endif %}
