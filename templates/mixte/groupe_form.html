@@ -1,0 +1,42 @@
+<tr>
+	<th> {{ form.nom.label_tag }} </th>
+	<td> {{ form.nom.errors }} {{form.nom}}</td>
+	<th> Recopier sur le second semestre </th>
+	<td> {{ form.idem.errors }} {{form.idem}}</td>
+</tr>
+<tr>
+	<th rowspan="3">Semestre 1</th>
+	<td> {{ form.eleve0.errors }} {{form.eleve0}}</td>
+	<th rowspan="3">Semestre 2</th>
+	<td> {{ form.eleve20.errors }} {{form.eleve20}}</td>
+</tr>
+<tr>
+	<td> {{ form.eleve1.errors }} {{form.eleve1}}</td>
+	<td> {{ form.eleve21.errors }} {{form.eleve21}}</td>
+</tr>
+<tr>
+	<td> {{ form.eleve2.errors }} {{form.eleve2}}</td>
+	<td> {{ form.eleve22.errors }} {{form.eleve22}}</td>
+</tr>
+{% if form.lv11 %}
+<tr>
+	<th> {{ form.lv11.label_tag }} </th>
+	<td> {{ form.lv11.errors }} {{form.lv11}}</td>
+	<th> {{ form.lv12.label_tag }} </th>
+	<td> {{ form.lv12.errors }} {{form.lv12}}</td>
+</tr>
+{% endif %}
+{% if form.lv21 %}
+<tr>
+	<th> {{ form.lv21.label_tag }} </th>
+	<td> {{ form.lv21.errors }} {{form.lv21}}</td>
+	<th> {{ form.lv22.label_tag }} </th>
+	<td> {{ form.lv22.errors }} {{form.lv22}}</td>
+</tr>
+{% endif %}
+{% if form.option %}
+<tr>
+	<th> {{ form.option.label_tag }} </th>
+	<td colspan="3"> {{ form.option.errors }} {{form.option}}</td>
+</tr>
+{% endif %}

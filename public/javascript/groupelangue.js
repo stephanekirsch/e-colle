@@ -1,7 +1,4 @@
 var selectTableau = document.getElementById("id_eleve0").parentNode;
-// selectTableau[0] = document.getElementById("id_eleve0");
-// selectTableau[1] = document.getElementById("id_eleve1");
-// selectTableau[2] = document.getElementById("id_eleve2");
 var lv1select = document.getElementById("id_lv1");
 var lv2select = document.getElementById("id_lv2");
 

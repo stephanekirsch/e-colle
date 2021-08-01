@@ -42,6 +42,7 @@
 			<td>{% if tri == False %}<a href = "{% url 'gestion_eleve_tri' 1 %}" title="Trier les élèves par classe puis par nom" >Classe</a>{% else %}Classe{% endif %}</td>
 			<td>LV1</td>
 			<td>LV2</td>
+			<td>Option</td>
 			<td>Photo</td>
 			<td>Modifier</td>
 			<td>Supprimer</td>
@@ -60,6 +61,7 @@
 			<td>{{eleve.classe.nom}}</td>
 			<td>{% if eleve.lv1 %}{{eleve.lv1.nom|title}}{% endif %}</td>
 			<td>{% if eleve.lv2 %}{{eleve.lv2.nom|title}}{% endif %}</td>
+			<td>{% if eleve.option %}{{eleve.option.nom|title}}{% endif %}</td>
 			<td>{% with eleve.photo as photo %}{% if photo %} <img alt="photo élève" class="photo" src="{{ photo.url }}"/>{% endif %} {% endwith %}</td>
 			<td><a class="bouton" href="{% url 'modif_eleve' eleve.pk %}">Modifier</a></td>
 			<td><a class="bouton" href="{% url 'suppr_eleve' eleve.pk %}">Supprimer</a></td>
@@ -69,8 +71,9 @@
 		<tr class="plusclair">
 			<td><label for = "check">Tout cocher</label><br/><input type="checkbox" id="check"/></td>
 			<td colspan="3"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
-			<td colspan="3"><input type="submit" value="Modifier la sélection" name="modifier"/></td>
+			<td colspan="2"><input type="submit" value="Modifier la sélection" name="modifier"/></td>
 			<td colspan="2"><input type="submit" value="Transférer la sélection en" name="transferer"/> {{ form2.klasse }}</td>
+			<td colspan="2"><input type="submit" value="passer la sélection en option" name="change_option"/>{{form2.option}}</td>
 			<td colspan="3"><input type="submit" value="passer la sélection en lv1" name="change_lv1"/>{{form2.lv1}}</td>
 			<td colspan="3"><input type="submit" value="passer la sélection en lv2" name="change_lv2"/>{{form2.lv2}}</td>
 		</tr>

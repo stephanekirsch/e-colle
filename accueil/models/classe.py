@@ -147,6 +147,18 @@ class Classe(models.Model):
         null=True,
         related_name="classeprofprincipal",
         on_delete=models.SET_NULL)
+    semestres = models.BooleanField(verbose_name="Groupes différents les 2 semestres", default = False)
+    option1 = models.ForeignKey(
+        'Matiere',
+        null=True,
+        related_name='classeoption1',
+        on_delete=models.SET_NULL)
+    option2 = models.ForeignKey(
+        'Matiere',
+        null=True,
+        related_name='classeoption2',
+        on_delete=models.SET_NULL)
+
     class Meta:
         ordering=['annee', 'nom']
 
@@ -276,29 +288,36 @@ class Classe(models.Model):
             dictColleurs[colleur.pk] = login
         return dictColleurs
 
-    def dictGroupes(self, noms=True):
+    def dictGroupes(self, noms=True, semestre=1):
         dictgroupes = dict()
+        attribut = "groupeeleve" if semestre == 1 else "groupe2eleve"
         if noms is True:
             groupes = Groupe.objects.filter(classe=self)\
                       .prefetch_related('groupeeleve','groupeeleve__user')
-            listegroupes = {groupe.pk: (groupe.nom,"; ".join(["{} {}".format(eleve.user.first_name.title(), eleve.user.last_name.upper()) for eleve in groupe.groupeeleve.all()])) for groupe in groupes}
+            if semestre == 2:
+                groupes = groupes.prefetch_related('groupe2eleve','groupe2eleve__user')
+            listegroupes = {groupe.pk: (groupe.nom,"; ".join(["{} {}".format(eleve.user.first_name.title(), eleve.user.last_name.upper()) for eleve in getattr(groupe, attribut).all()])) for groupe in groupes}
             for matiere in self.matieres.filter(temps=20):
-                if matiere.lv == 0:
+                if (self.option1 == matiere or self.option2 == matiere) and semestre == 2:
+                    dictgroupes[matiere.pk] = {groupe.pk: (groupe.nom,"; ".join(["{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper()) for eleve in groupe.groupe2eleve.all() if eleve.option==matiere])) for groupe in groupes}
+                elif matiere.lv == 0:
                     dictgroupes[matiere.pk] = listegroupes
                 elif matiere.lv == 1:
-                    dictgroupes[matiere.pk] = {groupe.pk: (groupe.nom,"; ".join(["{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper()) for eleve in groupe.groupeeleve.all() if eleve.lv1==matiere])) for groupe in groupes}
+                    dictgroupes[matiere.pk] = {groupe.pk: (groupe.nom,"; ".join(["{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper()) for eleve in getattr(groupe, attribut).all() if eleve.lv1==matiere])) for groupe in groupes}
                 elif matiere.lv == 2:
-                    dictgroupes[matiere.pk] = {groupe.pk: (groupe.nom,"; ".join(["{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper()) for eleve in groupe.groupeeleve.all() if eleve.lv2==matiere])) for groupe in groupes}
+                    dictgroupes[matiere.pk] = {groupe.pk: (groupe.nom,"; ".join(["{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper()) for eleve in getattr(groupe, attribut).all() if eleve.lv2==matiere])) for groupe in groupes}
         else:
             groupes = Groupe.objects.filter(classe=self)
             listegroupes = [True]*groupes.count()
             for matiere in self.matieres.filter(temps=20):
-                if matiere.lv == 0:
+                if (self.option1 == matiere or self.option2 == matiere) and semestre == 2:
+                    dictgroupes[matiere.pk] = [any(eleve.option==matiere for eleve in groupe.groupe2eleve.all()) for groupe in groupes]
+                elif matiere.lv == 0:
                     dictgroupes[matiere.pk] = listegroupes
                 elif matiere.lv == 1:
-                    dictgroupes[matiere.pk] = [any(eleve.lv1==matiere for eleve in groupe.groupeeleve.all()) for groupe in groupes]
+                    dictgroupes[matiere.pk] = [any(eleve.lv1==matiere for eleve in getattr(groupe, attribut).all()) for groupe in groupes]
                 elif matiere.lv == 2:
-                    dictgroupes[matiere.pk] = [any(eleve.lv2==matiere for eleve in groupe.groupeeleve.all()) for groupe in groupes]
+                    dictgroupes[matiere.pk] = [any(eleve.lv2==matiere for eleve in getattr(groupe, attribut).all()) for groupe in groupes]
         return dictgroupes
 
     def dictElevespk(self):

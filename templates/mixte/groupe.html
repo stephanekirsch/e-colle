@@ -1,43 +1,55 @@
 {% extends user.colleur|yesno:'colleur/action.html,secretariat/action.html' %}
 {% load static %}
+{% load customfilter %}
 {% block body %}
+<table class="accueil"><tr><td>
+	{% if classe.semestres %}
+		Les groupes des deux semestres sont différents
+	{% else %}
+		Les groupes sont les mêmes chaque semestre
+	{% endif %}
+</td><td><a href="{% url user.colleur|yesno:'groupeSwap_colleur,groupeSwap_secret' classe.pk %}">Changer</a></td></tr>
+<table class="accueil"><tr><td><a href="{% url user.colleur|yesno:'groupecreer_colleur,groupecreer_secret' classe.pk %}">Nouveau groupe</a></td></tr></table>
 <table class="accueil"><tr><td>Groupes de {{classe}}</td></tr></table>
 <table class="tableausimple" id="suppr">
 	<tr class="entete">
 		<td>Groupe</td>
-		<td>Élève n°1</td>
-		<td>Élève n°2</td>
-		<td>Élève n°3</td>
+		{% if classe.semestres %}
+		<td colspan="2">Semestre 1</td>
+		<td colspan="2">Semestre 2</td>
+		{% else %}
+		<td colspan="2">Élèves</td>
+		{% endif %}
 		<td>Modifier</td>
 		<td>Supprimer</td>
 	</tr>
 	{% for groupe in groupes %}
 	<tr {% cycle '' "class=plusclair" %}>
 		<td>{{groupe.nom}}</td>
+		<td>{{groupe.statut|linebreaksbr}}</td>
+		<td>
 		{% for eleve in groupe.groupeeleve.all %}
-		<td>{{eleve}}</td>
+		{{eleve}} {% with eleve.lv1.pk as elv1 %} {% if elv1 %} (LV1: {{lv1|lookup:elv1}}) {% endif %} {% endwith %}
+		{% with eleve.lv2.pk as elv2 %} {% if elv2 %}<br/>(LV2: {{lv1|lookup:elv2}}) {% endif %} {% endwith %}
+		<br/>
 		{% endfor %}
-		{% with groupe.groupeeleve.count as nb %}
-		{% if nb < 3 %}<td></td>
-		{% if nb < 2 %}<td></td>
-		{% if nb < 1 %}<td></td>
+		</td>
+		{% if classe.semestres %}
+		<td>{{groupe.statut2|linebreaksbr}}</td>
+		<td>
+		{% for eleve in groupe.groupe2eleve.all %}
+		{{eleve}} {% with eleve.lv1.pk as elv1 %} {% if elv1 != 0  %} (LV1: {{lv1|lookup:elv1}}) {% endif %} {% endwith %}
+		{% with eleve.lv2.pk as elv2 %} {% if elv2 %} <br/>(LV2: {{lv1|lookup:elv2}}) {% endif %} {% endwith %}
+		{% with eleve.option as opt %} {% if opt %} <br/>(Option: {{opt.nom|title}}) {% endif %} {% endwith %}
+		<br/>
+		{% endfor %}
+		</td>
 		{% endif %}
-		{% endif %}
-		{% endif %}
-		{% endwith %}
 		<td><a href="{% url user.colleur|yesno:'groupemodif_colleur,groupemodif_secret' groupe.pk %}">Modifier</a></td>
 		<td><a href="{% url user.colleur|yesno:'groupesuppr_colleur,groupesuppr_secret' groupe.pk %}">Supprimer</a></td>
+	</tr>
 	{% endfor %}
 </table>
-<table class="accueil"><tr><td>Nouveau groupe</td></tr></table>
-<form method="POST">
-{% csrf_token %}
-<table class="tableausimple">
-	<input type="hidden" id="hide" value="{{hide}}"></input>
-	{{ form.as_table }}
-	<tr><td colspan="2"><input type="submit"/></td></tr>
-</table>
-</form>
 {% endblock %}
 {% block javascript %}
 <script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>

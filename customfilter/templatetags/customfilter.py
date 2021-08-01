@@ -100,3 +100,10 @@ def getLu(message,user):
         return True, False
     else:
         return Destinataire.objects.filter(message=message,user=user).values_list("lu",flat=True).first(), True
+
+@register.filter
+def option(matiere,classe):
+    if matiere.lv == 0 and (classe.option1 == matiere or classe.option2 == matiere):
+        temps = {20:"Gr", 30: "So", 60: "Cl"}
+        return "{} ({}/{}))".format(matiere.nom.title(), temps[matiere.temps],"opt")
+    return str(matiere)

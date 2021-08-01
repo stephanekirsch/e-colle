@@ -57,7 +57,7 @@
 		Colleur: {{colle.prenom|title}} {{colle.nom|upper}}<br/>
 		Matière: {{colle.nom_matiere}}<br/>
 		{% if colle.temps == 20 %}
-		Groupe {{colle.nomgroupe}}: {{dictgroupes|lookup:colle.id_matiere|lookup:colle.groupe|lookup:1}}<br/>
+		Groupe {{colle.nomgroupe}}: {% if semestre2 <= semaine.numero %}{{dictgroupes2|lookup:colle.id_matiere|lookup:colle.groupe|lookup:1}} {% else %} {{dictgroupes|lookup:colle.id_matiere|lookup:colle.groupe|lookup:1}} {% endif %}<br/>
 		{% elif colle.temps == 30 %}
 		Élève: {{colle.prenom_eleve|title}} {{colle.nom_eleve|upper}}<br/>
 		{% endif %}

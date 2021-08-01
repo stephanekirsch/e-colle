@@ -84,7 +84,7 @@ class Config(models.Model):
             verbose_name = "Application mobile",
             default=False
     )
-    semestre2 = models.SmallIntegerField(
+    semestre2 = models.PositiveSmallIntegerField(
             verbose_name = "début du second semestre", 
             default=0
     )

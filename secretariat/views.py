@@ -6,7 +6,7 @@ from administrateur.forms import AdminConnexionForm
 from colleur.forms import ECTSForm
 from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm
 from accueil.models import Config, Note, Semaine, Matiere, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, mois, NoteECTS
-from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV
+from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV, mixtegroupeCreer
 from django.http import Http404, HttpResponse,  HttpResponseForbidden
 from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
 from reportlab.platypus import Table, TableStyle
@@ -104,6 +104,8 @@ def colloscope(request,transpose,id_classe):
         semin,semax=semaines[0],semaines[-1]
     except Exception:
         raise Http404
+    if transpose == "0" and "transpose" in request.session and request.session["transpose"] is True:
+        transpose = "1" 
     return colloscope2(request,transpose,id_classe,semin.pk,semax.pk)
 
 @user_passes_test(is_secret, login_url='login_secret')
@@ -186,7 +188,7 @@ def ajaxmajcolleur(request, id_matiere, id_classe):
     
 
 @user_passes_test(is_secret, login_url='accueil')
-def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, id_semaine, id_creneau):
+def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, numero_semaine, id_creneau):
     """Ajoute la colle propre au quintuplet (matière,colleur,groupe,semaine,créneau) et renvoie le username du colleur
     en effaçant au préalable toute colle déjà existante sur ce couple créneau/semaine"""
     if not Config.objects.get_config().modif_secret_col:
@@ -194,7 +196,7 @@ def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, id_semaine, id_cr
     matiere=get_object_or_404(Matiere,pk=id_matiere)
     colleur=get_object_or_404(Colleur,pk=id_colleur)
     groupe=get_object_or_404(Groupe,pk=id_groupe)
-    semaine=get_object_or_404(Semaine,pk=id_semaine)
+    semaine=get_object_or_404(Semaine,numero=numero_semaine)
     creneau=get_object_or_404(Creneau,pk=id_creneau)
     return mixteajaxcolloscope(matiere,colleur,groupe,semaine,creneau)
     
@@ -212,12 +214,12 @@ def ajaxcolloscopeeleve(request, id_matiere, id_colleur, id_eleve, id_semaine, i
     return mixteajaxcolloscopeeleve(matiere,colleur, id_eleve,semaine,creneau,login)
 
 @user_passes_test(is_secret, login_url='accueil')
-def ajaxcolloscopeeffacer(request,id_semaine, id_creneau):
-    """Efface la colle sur le créneau dont l'id est id_creneau et la semaine sont l'id est id_semaine
+def ajaxcolloscopeeffacer(request, numero_semaine, id_creneau):
+    """Efface la colle sur le créneau dont l'id est id_creneau et la semaine dont le numéro est numero_semaine
     puis renvoie la chaine de caractères "efface" """
     if not Config.objects.get_config().modif_secret_col:
         return HttpResponseForbidden("Accès non autorisé")
-    semaine=get_object_or_404(Semaine,pk=id_semaine)
+    semaine=get_object_or_404(Semaine,numero=numero_semaine)
     creneau=get_object_or_404(Creneau,pk=id_creneau)
     return mixteajaxcolloscopeeffacer(semaine,creneau)
 
@@ -535,6 +537,15 @@ def groupe(request,id_classe):
     return mixtegroupe(request,classe,groupes)
 
 @user_passes_test(is_secret, login_url='accueil')
+def groupeCreer(request,id_classe):
+    """Renvoie la vue de la page de création d'un groupe de la classe dont l'id est id_classe"""
+    if not Config.objects.get_config().modif_secret_groupe:
+        return HttpResponseForbidden("Accès non autorisé")
+    classe=get_object_or_404(Classe,pk=id_classe)
+    return mixtegroupeCreer(request,classe)
+
+
+@user_passes_test(is_secret, login_url='accueil')
 def groupeSuppr(request,id_groupe):
     """Essaie de supprimer la groupe dont l'id est id_groupe, puis redirige vers la page de gestion des groupes"""
     if not Config.objects.get_config().modif_secret_groupe:
@@ -549,6 +560,14 @@ def groupeModif(request,id_groupe):
         return HttpResponseForbidden("Accès non autorisé")
     groupe=get_object_or_404(Groupe,pk=id_groupe)
     return mixtegroupemodif(request,groupe)
+
+@user_passes_test(is_secret, login_url='accueil')
+def groupeSwap(request, id_classe):
+    """change pour la classe dont l'id est id_classe la propriété de groupes différents ou égaux chaque semestres et renvoie la page des groupes"""
+    if not Config.objects.get_config().modif_secret_groupe:
+        return HttpResponseForbidden("Accès non autorisé")
+    classe = get_object_or_404(Classe, pk=id_classe)
+    return mixtegroupeSwap(request,classe)
 
 @user_passes_test(is_secret_ects, login_url='login_secret')
 def ectscredits(request,id_classe,form=None):

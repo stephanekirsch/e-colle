@@ -1,5 +1,6 @@
 {% extends 'administrateur/action.html' %}{% load static %}
 {% load static %}
+{% load customfilter %}
 {% block body %}
 	<table class="accueil"><tr><td>Liste des classes</td></tr></table>
 	<table class="tableausimple" id="suppr">
@@ -14,7 +15,7 @@
 		<tr>
 			<td>{{ classe}}</td>
 			<td>{{ classe.annee }}<sup>&egrave;{{classe.annee|pluralize:"r,m"}}e</sup></td>
-			<td>{% for matiere in classe.matieres.all %}{{ matiere }}<br />{% endfor %}</td>
+			<td>{% for matiere in classe.matieres.all %}{{ matiere|option:classe }}<br />{% endfor %}</td>
 			<td><a class="bouton" href="{% url 'modif_classe' classe.pk %}">Modifier</a></td>
 			<td><a class="bouton" href="{% url 'suppr_classe' classe.pk %}">Supprimer</a></td>
 		</tr>
@@ -23,29 +24,7 @@
 	<table class="accueil"><tr><td>Ajouter une classe</td></tr></table>
 	<form method="post">
 	{% csrf_token %}
-	<table class="tableausimple">
-		<tr>
-			<th> {{ form.nom.label_tag }} </th>
-			<td> {{ form.nom.errors }} {{form.nom}}</td>
-		</tr>
-		<tr >
-			<th> {{ form.gabarit.label_tag }} </th>
-			<td id="gabarit"> {{ form.gabarit.errors }} {{form.gabarit}}</td>
-		</tr>
-		<tr class="to_hide1">
-			<th> {{ form.classe.label_tag }} </th>
-			<td> {{ form.classe.errors }} {{form.classe}}</td>
-		</tr>
-		<tr class="to_hide2">
-			<th> {{ form.annee.label_tag }} </th>
-			<td> {{ form.annee.errors }} {{form.annee}}</td>
-		</tr>
-		<tr class="to_hide2">
-			<th> {{ form.matieres.label_tag }} </th>
-			<td colspan="4"> {{ form.matieres.errors }} {% for widget in form.matieres %} {{widget}}{% cycle '' '' '<br />'%}{% endfor %}</td>
-		</tr>
-		<tr><td colspan="4"><input type="submit"/></td></tr>
-	</table>
+	{% include 'administrateur/classe_form_gabarit.html' %}
 	</form>
 {% endblock %}
 {% block javascript %}

@@ -19,9 +19,6 @@ class ConfigForm(forms.ModelForm):
         fields=['nom_etablissement','app_mobile','modif_secret_col','modif_secret_groupe','modif_prof_col','default_modif_col',\
         'modif_prof_groupe','default_modif_groupe','message_eleves','mathjax','ects','nom_adresse_etablissement','ville','academie']
 
-    def save(self):
-        Config.objects.all().delete()
-        super().save()
 
 class ColleurFormSetMdp(forms.BaseFormSet):
     def clean(self):
@@ -147,6 +144,7 @@ class EleveFormSet(forms.BaseFormSet):
                 eleve.ine=form.cleaned_data['ine']
                 eleve.lv1=form.cleaned_data['lv1']
                 eleve.lv2=form.cleaned_data['lv2']
+                eleve.option=form.cleaned_data['option']
                 user.save()
                 eleve.save()
 
@@ -164,7 +162,7 @@ class EleveFormSetMdp(forms.BaseFormSet):
             for form in self.forms:
                 user = User(first_name=form.cleaned_data['first_name'].lower(),last_name=form.cleaned_data['last_name'].lower(),email=form.cleaned_data['email'], username = form.cleaned_data['username'])
                 user.set_password(form.cleaned_data['password'])
-                eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'],ddn=form.cleaned_data['ddn'],ldn=form.cleaned_data['ldn'],ine=form.cleaned_data['ine'],lv1=form.cleaned_data['lv1'],lv2=form.cleaned_data['lv2'])
+                eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'],ddn=form.cleaned_data['ddn'],ldn=form.cleaned_data['ldn'],ine=form.cleaned_data['ine'],lv1=form.cleaned_data['lv1'],lv2=form.cleaned_data['lv2'], option = form.cleaned_data['option'])
                 eleve.save()
                 user.eleve=eleve
                 user.save()
@@ -175,9 +173,14 @@ class AdminConnexionForm(forms.Form):
 
 
 class ClasseForm(forms.ModelForm):
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['option1'].queryset = Matiere.objects.filter(lv=0)
+        self.fields['option2'].queryset = Matiere.objects.filter(lv=0)
+    
     class Meta:
         model = Classe
-        fields=['nom','annee','matieres']
+        fields=['nom','annee','matieres','option1','option2']
         widgets = {'matieres':forms.CheckboxSelectMultiple}
 
     def clean_matieres(self):
@@ -197,7 +200,19 @@ class ClasseForm(forms.ModelForm):
             raise ValidationError("Vous ne pouvez pas retirer la/les matière(s): {} elles contiennent des colles dans cette classe".format(", ".join(matieresCollesDict[x] for x in diff)))
         return self.cleaned_data['matieres']
 
+    def clean(self):
+        # on vérifie que les options sont bien des matières présentes dans la classe
+        if self.cleaned_data['option1'] and self.cleaned_data['option1'] not in self.cleaned_data['matieres']:
+            raise ValidationError("L'option 1 doit être une matière de la classe")
+        if self.cleaned_data['option2'] and self.cleaned_data['option2'] not in self.cleaned_data['matieres']:
+            raise ValidationError("L'option 2 doit être une matière de la classe")
+        super().clean()
+
 class ClasseGabaritForm(forms.ModelForm):
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['option1'].queryset = Matiere.objects.filter(lv=0)
+        self.fields['option2'].queryset = Matiere.objects.filter(lv=0)
     gabarit=forms.BooleanField(label="gabarit",required=False)
     tree=etree.parse(path.join(RESOURCES_ROOT,'classes.xml')).getroot()
     types=sorted({x.get("type")+'_'+x.get("annee") for x in tree.findall("classe")})
@@ -208,8 +223,16 @@ class ClasseGabaritForm(forms.ModelForm):
     classe = forms.ChoiceField(label="classe",choices=LISTE_CLASSES)
     class Meta:
         model = Classe
-        fields=['nom','annee','matieres']
+        fields=['nom','annee','matieres','option1','option2']
         widgets = {'matieres':forms.CheckboxSelectMultiple}
+
+    def clean(self):
+        # on vérifie que les options sont bien des matières présentes dans la classe
+        if self.cleaned_data['option1'] and self.cleaned_data['option1'] not in self.cleaned_data['matieres']:
+            raise ValidationError("L'option 1 doit être une matière de la classe")
+        if self.cleaned_data['option2'] and self.cleaned_data['option2'] not in self.cleaned_data['matieres']:
+            raise ValidationError("L'option 2 doit être une matière de la classe")
+        super().clean()
 
     def save(self):
         if self.cleaned_data['gabarit']: # si on crée une classe via gabarit
@@ -377,6 +400,7 @@ class EleveForm(forms.Form):
         self.fields['classe'] = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
         self.fields['lv1'] = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=1).order_by('nom'),empty_label='----',required=False)
         self.fields['lv2'] = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=2).order_by('nom'),empty_label='----',required=False)
+        self.fields['option'] = forms.ModelChoiceField(queryset=Matiere.objects.order_by('nom'),empty_label='----',required=False)
 
     def clean_username(self):
         data = self.cleaned_data['username']
@@ -409,6 +433,13 @@ class EleveForm(forms.Form):
                 raise ValidationError("Cette langue ne fait pas partie des matières de cette classe")
         return data
 
+    def clean_option(self):
+        data = self.cleaned_data['option']
+        if data is not None:
+            if data not in (self.cleaned_data['classe'].option1, self.cleaned_data['classe'].option2):
+                raise ValidationError("Cette matière ne fait pas partie des options de cette classe")
+        return data
+
     def clean_ine(self): # validation du numéro étudiant
         data = self.cleaned_data['ine']
         if data:
@@ -433,6 +464,7 @@ class EleveFormMdp(forms.ModelForm):
     classe = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),empty_label=None)
     lv1 = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=1).order_by('nom'),empty_label='----',required=False)
     lv2 = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=2).order_by('nom'),empty_label='----',required=False)
+    option = forms.ModelChoiceField(queryset=Matiere.objects.order_by('nom'),empty_label='----',required=False)
     class Meta:
         model = User
         fields=['first_name','last_name','username','password','email']
@@ -449,6 +481,13 @@ class EleveFormMdp(forms.ModelForm):
         if data is not None:
             if data not in self.cleaned_data['classe'].matieres.all():
                 raise ValidationError("Cette langue ne fait pas partie des matières de cette classe")
+        return data
+
+    def clean_option(self):
+        data = self.cleaned_data['option']
+        if data is not None:
+            if data not in (self.cleaned_data['classe'].option1, self.cleaned_data['classe'].option2):
+                raise ValidationError("Cette matière ne fait pas partie des options de cette classe")
         return data
 
     def clean_motdepasse(self):
@@ -537,8 +576,15 @@ class SelectEleveForm(forms.Form):
         super().__init__(*args, **kwargs)
         if klasse:
             query = Eleve.objects.filter(classe=klasse).select_related('user','classe','lv1','lv2')
+            query2 = Matiere.objects.filter(matieresclasse=klasse)
+            options_pk = set((klasse.option1.pk, klasse.option2.pk)) - {None}
+            if options_pk:
+                query2 = query2.filter(pk__in=options_pk)
         else:
             query = Eleve.objects.select_related('user','classe','lv1','lv2')
+            options_pk = (set([classe.option1 for classe in Classe.objects.all()]) | set([classe.option2 for classe in Classe.objects.all()])) - {None}
+            options_pk = {x.pk for x in options_pk}
+            query2 = Matiere.objects.filter(pk__in = options_pk)
         if pattern:
             query = query.filter(Q(user__first_name__icontains=pattern) | Q(user__last_name__icontains=pattern))
         if tri:
@@ -551,6 +597,7 @@ class SelectEleveForm(forms.Form):
         self.fields['klasse'].empty_label=None
         self.fields['lv1'] = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=1).order_by('nom'),required=False)
         self.fields['lv2'] = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=2).order_by('nom'),required=False)
+        self.fields['option'] = forms.ModelChoiceField(queryset=query2.order_by('nom'),required=False)
 
 class ClasseSelectForm(forms.Form):
     query=Classe.objects.order_by('nom')

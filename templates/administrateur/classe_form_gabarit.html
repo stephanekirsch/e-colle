@@ -1,0 +1,31 @@
+<table class="tableausimple">
+	<tr>
+		<th> {{ form.nom.label_tag }} </th>
+		<td> {{form.non_field_errors}} {{ form.nom.errors }} {{form.nom}}</td>
+	</tr>
+	<tr >
+		<th> {{ form.gabarit.label_tag }} </th>
+		<td id="gabarit"> {{ form.gabarit.errors }} {{form.gabarit}}</td>
+	</tr>
+	<tr class="to_hide1">
+		<th> {{ form.classe.label_tag }} </th>
+		<td> {{ form.classe.errors }} {{form.classe}}</td>
+	</tr>
+	<tr class="to_hide2">
+		<th> {{ form.annee.label_tag }} </th>
+		<td> {{ form.annee.errors }} {{form.annee}}</td>
+	</tr>
+	<tr class="to_hide2">
+		<th> {{ form.matieres.label_tag }} </th>
+		<td > {{ form.matieres.errors }} {% for widget in form.matieres %} {{widget}}{% cycle '' '' '<br />'%}{% endfor %}</td>
+	</tr>
+	<tr class="to_hide2">
+		<th> {{ form.option1.label_tag }} </th>
+		<td> (doit faire partie des matières de la classe)<br>  {{ form.option1.errors }} {{form.option1}} </td>
+	</tr>
+	<tr class="to_hide2">
+		<th> {{ form.option2.label_tag }} </th>
+		<td>  (doit faire partie des matières de la classe)<br> {{ form.option2.errors }} {{form.option2}} </td>
+	</tr>
+	<tr><td colspan="2"><input type="submit"/></td></tr>
+</table>

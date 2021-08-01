@@ -1,12 +1,25 @@
 // on dégomme toutes les listes déroulantes
 var deroul=document.getElementById('niveau2');
+var deroul2;
 var creneaux=document.getElementById('creneaux')
 creneaux.onclick=function(){return false};
 deroul.parentNode.removeChild(deroul);
 var grise=document.getElementById('grise');
 var colleurs=document.getElementById('id_colleur');
 var matcolleur=document.getElementById('id_matiere');
+console.log(matcolleur);
 var opt=document.createElement('option');
+var semestre2=parseInt(document.getElementById('semestre2').value);
+var semestres;
+var semaine = -1;
+if (semestre2 == -1) 
+{
+	semestres = false;
+} else {
+	semestres = true;
+	deroul2 = document.getElementById('niveau2bis');
+	deroul2.parentNode.removeChild(deroul2);
+}
 opt.innerHTML="Effacer";
 opt.value="-1"
 matcolleur.appendChild(opt); 
@@ -19,6 +32,10 @@ var treleve = document.getElementById('id_eleve').parentNode.parentNode;
 var trgroupe = document.getElementById('id_groupe').parentNode.parentNode;
 var trpermu = document.getElementById('id_permutation').parentNode.parentNode;
 var dictgroupes = eval('('+document.getElementById('dictgroupes').value+')');
+var dictgroupes2;
+if (semestres) {
+	dictgroupes2 = eval('('+document.getElementById('dictgroupes2').value+')');
+}
 var selectgroupe = trgroupe.firstElementChild.nextElementSibling.firstElementChild.cloneNode(true);
 var dictselectgroupe = new Object();
 for (var i in dictgroupes) {
@@ -27,6 +44,18 @@ for (var i in dictgroupes) {
 		if (!dictgroupes[i][j])
 		{
 			dictselectgroupe[i].removeChild(dictselectgroupe[i][j]);
+		}
+	}
+}
+if (semestres) {
+	var dictselectgroupe2 = new Object();
+	for (var i in dictgroupes2) {
+		dictselectgroupe2[i] = selectgroupe.cloneNode(true);
+		for (var j = dictgroupes2[i].length - 1; j >= 0; j--) {
+			if (!dictgroupes2[i][j])
+			{
+				dictselectgroupe2[i].removeChild(dictselectgroupe2[i][j]);
+			}
 		}
 	}
 }
@@ -74,29 +103,7 @@ function majColleur()
 						opt.value=reponsejson[i]['id'];
 						colleurs.appendChild(opt);
 					}
-					if (temps[matiere] == '20')
-					{
-						trcolleur.style.display="table-row";
-						treleve.style.display="none";
-						trgroupe.style.display="table-row";
-						trpermu.style.display="table-row";
-						trgroupe.firstElementChild.nextElementSibling.replaceChild(dictselectgroupe[matiere],trgroupe.firstElementChild.nextElementSibling.firstElementChild);
-					}
-					else if (temps[matiere] == '30')
-					{
-						trcolleur.style.display="table-row";
-						trgroupe.style.display="none";
-						treleve.style.display="table-row";
-						trpermu.style.display="table-row";
-						treleve.firstElementChild.nextElementSibling.replaceChild(dictselecteleve[matiere],treleve.firstElementChild.nextElementSibling.firstElementChild);
-					}
-					else if (temps[matiere] == '60')
-					{
-						trcolleur.style.display="table-row";
-						trgroupe.style.display="none";
-						treleve.style.display="none";
-						trpermu.style.display="none";
-					}
+					majGroupes();
 				}
 				else
 				{
@@ -118,35 +125,43 @@ function majColleur()
 				colleurs.appendChild(opt);
 			}
 		}
-		if (matiere == "-1"){
-			trcolleur.style.display="none";
-			treleve.style.display="none";
-			trgroupe.style.display="none";
-			trpermu.style.display="none";
-		}
-		else if (temps[matiere] == '20')
-		{
-			trcolleur.style.display="table-row";
-			treleve.style.display="none";
-			trgroupe.style.display="table-row";
-			trpermu.style.display="table-row";
+		majGroupes();
+	}
+}
+function majGroupes()
+{
+	if (matiere == "-1"){
+		trcolleur.style.display="none";
+		treleve.style.display="none";
+		trgroupe.style.display="none";
+		trpermu.style.display="none";
+	}
+	else if (temps[matiere] == '20')
+	{
+		trcolleur.style.display="table-row";
+		treleve.style.display="none";
+		trgroupe.style.display="table-row";
+		trpermu.style.display="table-row";
+		if (semestres && semestre2 <= semaine) {
+			trgroupe.firstElementChild.nextElementSibling.replaceChild(dictselectgroupe2[matiere],trgroupe.firstElementChild.nextElementSibling.firstElementChild);
+		} else {
 			trgroupe.firstElementChild.nextElementSibling.replaceChild(dictselectgroupe[matiere],trgroupe.firstElementChild.nextElementSibling.firstElementChild);
 		}
-		else if (temps[matiere] == '30')
-		{
-			trcolleur.style.display="table-row";
-			trgroupe.style.display="none";
-			treleve.style.display="table-row";
-			trpermu.style.display="table-row";
-			treleve.firstElementChild.nextElementSibling.replaceChild(dictselecteleve[matiere],treleve.firstElementChild.nextElementSibling.firstElementChild);
-		}
-		else if (temps[matiere] == '60')
-		{
-			trcolleur.style.display="table-row";
-			trgroupe.style.display="none";
-			treleve.style.display="none";
-			trpermu.style.display="none";
-		}
+	}
+	else if (temps[matiere] == '30')
+	{
+		trcolleur.style.display="table-row";
+		trgroupe.style.display="none";
+		treleve.style.display="table-row";
+		trpermu.style.display="table-row";
+		treleve.firstElementChild.nextElementSibling.replaceChild(dictselecteleve[matiere],treleve.firstElementChild.nextElementSibling.firstElementChild);
+	}
+	else if (temps[matiere] == '60')
+	{
+		trcolleur.style.display="table-row";
+		trgroupe.style.display="none";
+		treleve.style.display="none";
+		trpermu.style.display="none";
 	}
 }
 majColleur();
@@ -190,12 +205,24 @@ if (cible.id=='creneaux')
 	cible.onclick=function(){ return false };
 	corps.insertBefore(grise,corps.firstElementChild);
 	semcren=cible.parentNode.parentNode.parentNode.id.split('_');
+	semaine = parseInt(semcren[0]);
+	majGroupes();
 }
 
 if (cible.parentNode.parentNode.nodeName.toLowerCase()=='td')
 {
 // on met les bons liens à la liste déroulante
 semcren=cible.parentNode.lastElementChild.id.split("_");
+semaine = parseInt(semcren[0]);
+if (semestres && semestre2 <= semaine) {
+	cible.parentNode.lastElementChild.appendChild(deroul2);
+	deroul2.onmouseout=function(event){
+	if (event.relatedTarget.parentNode.id!='niveau2bis'&& event.relatedTarget.parentNode.parentNode.id!='niveau2bis'    && event.relatedTarget.parentNode.className!='niveau3' && event.relatedTarget.parentNode.parentNode.className!='niveau4'  && event.relatedTarget.parentNode.className!='niveau4' ) 
+	{
+		deroul2.parentNode.removeChild(deroul2); deroul2.onmouseout=null;
+	}
+};
+} else {
 cible.parentNode.lastElementChild.appendChild(deroul);
 deroul.onmouseout=function(event){
 	if (event.relatedTarget.parentNode.id!='niveau2'&& event.relatedTarget.parentNode.parentNode.id!='niveau2'    && event.relatedTarget.parentNode.className!='niveau3' && event.relatedTarget.parentNode.parentNode.className!='niveau4'  && event.relatedTarget.parentNode.className!='niveau4' ) 
@@ -203,6 +230,7 @@ deroul.onmouseout=function(event){
 		deroul.parentNode.removeChild(deroul); deroul.onmouseout=null;
 	}
 };
+}
 }
 // si on a cliqué sur un lien d'une liste déroulante on désactive le lien et on traite la requête en AJAX pour ne pas avoir à recharger la page.
 if (cible.nodeName.toLowerCase()=='a' && cible.parentNode.nodeName.toLowerCase()!='td' && cible.id!='creneaux') 
@@ -311,8 +339,12 @@ grise.firstElementChild.addEventListener('submit',function(e)
 					{
 						alerte+="\n"+nombres[1]+" créneau(x) tombe(nt) sur un jour férié\n";
 					}
-					alerte+="Voulez-vous poursuivre?";
-					if (reponse == "0_0" || confirm(alerte))
+					if (nombres[2]!="")
+					{
+						alerte+=nombres[2];
+					}
+					alerte+="\nVoulez-vous poursuivre?";
+					if (reponse == "0_0_" || confirm(alerte))
 					{
 						lienajax2=lienajax.replace('multi','multi/confirm');
 						xhr2=new XMLHttpRequest;

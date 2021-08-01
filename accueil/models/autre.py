@@ -90,7 +90,7 @@ class FerieManager(models.Manager):
             ON {} = %s \
             WHERE s.numero >= %s AND s.numero < %s AND s.numero %% %s = %s".format(date_moins_date('jf.date','s.lundi'))
         with connection.cursor() as cursor:
-            cursor.execute(requete,(jour,semaine.numero,semaine.numero+int(duree),frequence,modulo))
+            cursor.execute(requete,(jour,semaine.numero,semaine.numero+duree,frequence,modulo))
             nbferies=cursor.fetchone()
         return nbferies
 

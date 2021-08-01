@@ -28,10 +28,10 @@ class ColleManager(models.Manager):
                 cursor.execute(requete1, ([classe.pk,semin.lundi,semax.lundi]))
                 creneaux = dictfetchall(cursor)
             #selection des groupes de colle
-            requete2 = "SELECT DISTINCT col.id id_colle, colcr.jour, colcr.heure, colcr.salle, colcr.id_creneau, colcr.nom nom_matiere, colcr.id_matiere, s.numero, g.nom groupe, u.last_name nom, u.first_name prenom, e.id id_eleve, colcr.temps\
+            requete2 = "SELECT DISTINCT col.id id_colle, colcr.id_colleur, colcr.jour, colcr.heure, colcr.salle, colcr.id_creneau, colcr.nom nom_matiere, colcr.id_matiere, s.numero, g.nom groupe, g.id id_groupe, u.last_name nom, u.first_name prenom, e.id id_eleve, colcr.temps\
             FROM accueil_semaine s\
             CROSS JOIN \
-            (SELECT co.id id_colleur, cr.id id_creneau, cr.jour jour, cr.heure heure, cr.salle salle, m.nom, m.temps, m.id id_matiere FROM accueil_creneau cr \
+            (SELECT DISTINCT co.id id_colleur, cr.id id_creneau, cr.jour jour, cr.heure heure, cr.salle salle, m.nom, m.temps, m.id id_matiere FROM accueil_creneau cr \
             INNER JOIN accueil_colle col\
             ON col.creneau_id = cr.id\
             INNER JOIN accueil_matiere m\
@@ -40,7 +40,8 @@ class ColleManager(models.Manager):
             ON col.colleur_id = co.id\
             INNER JOIN accueil_semaine s\
             ON col.semaine_id = s.id\
-            WHERE cr.classe_id = %s AND s.lundi BETWEEN %s AND %s) colcr\
+            WHERE cr.classe_id = %s AND s.lundi BETWEEN %s AND %s\
+            ORDER BY jour, heure, salle, id_creneau) colcr\
             LEFT OUTER JOIN accueil_colle col\
             ON col.creneau_id = colcr.id_creneau AND col.semaine_id = s.id AND col.colleur_id = colcr.id_colleur\
             LEFT OUTER JOIN accueil_groupe g\
@@ -50,7 +51,7 @@ class ColleManager(models.Manager):
             LEFT OUTER JOIN accueil_user u\
             ON u.eleve_id = e.id\
             WHERE s.lundi BETWEEN %s AND %s\
-            ORDER BY colcr.jour, colcr.heure, colcr.salle, colcr.id_creneau, colcr.nom, s.numero"
+            ORDER BY colcr.jour, colcr.heure, colcr.salle, colcr.id_creneau, colcr.nom, colcr.id_colleur, s.numero"
             with connection.cursor() as cursor:
                 cursor.execute(requete2, ([classe.pk,semin.lundi,semax.lundi,semin.lundi,semax.lundi]))
                 groupes = dictfetchall(cursor)

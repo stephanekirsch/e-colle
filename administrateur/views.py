@@ -8,7 +8,7 @@ from django.contrib import messages
 from accueil.models import *
 from django.forms.formsets import formset_factory
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Q
 from datetime import timedelta
 from random import choice
 from reportlab.platypus import Table, TableStyle, Image, SimpleDocTemplate, PageBreak, Paragraph
@@ -405,7 +405,7 @@ def eleve(request):
     # si une classeest sélectionnée, par besoin de tri
     if classe is not None:
         tri = None
-    form2 = SelectEleveForm(classe, tri, terme_recherche, request.POST if ("supprimer" in request.POST or "modifier" in request.POST or "transferer" in request.POST or "lv1" in request.POST or "lv2" in request.POST) else None)
+    form2 = SelectEleveForm(classe, tri, terme_recherche, request.POST if ("supprimer" in request.POST or "modifier" in request.POST or "transferer" in request.POST or "lv1" in request.POST or "lv2" in request.POST or "option") else None)
     if form2.is_valid():
         if "supprimer" in request.POST:
             elevesPasSuppr = []
@@ -431,6 +431,13 @@ def eleve(request):
                 Groupe.objects.filter(pk__in=groupes).annotate(nb=Count('groupeeleve')).filter(nb=0).delete()
             except Exception:
                 pass
+            return redirect('gestion_eleve')
+        elif "change_option" in request.POST:
+            # on commence par enlever les élèves dont la classe ne possède pas l'option en question, puis on met à jour la lv1
+            if form2.cleaned_data['option'] is not None:
+                form2.cleaned_data['eleve'].filter(Q(classe__option1=form2.cleaned_data['option']) | Q(classe__option2=form2.cleaned_data['option'])).update(option=form2.cleaned_data['option'])
+            else: # dans le cas contraire c'est qu'on remet à zéro l'option'
+                form2.cleaned_data['eleve'].update(option=None)
             return redirect('gestion_eleve')
         elif "change_lv1" in request.POST:
             # on commence par enlever les élèves dont la classe ne possède pas la langue en question, puis on met à jour la lv1
@@ -510,7 +517,7 @@ def elevemodif(request, chaine_eleves):
     else:
         formset = EleveFormset(chaine_eleves=listeEleves,initial=[{'last_name':eleve.user.last_name,'first_name':eleve.user.first_name,'ine':eleve.ine,\
             'ldn': eleve.ldn,'ddn': None if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),'username':eleve.user.username,'email':eleve.user.email,\
-            'classe':eleve.classe,'photo':eleve.photo,'lv1':eleve.lv1,'lv2':eleve.lv2} for eleve in listeEleves])
+            'classe':eleve.classe,'photo':eleve.photo,'lv1':eleve.lv1,'lv2':eleve.lv2, 'option': eleve.option} for eleve in listeEleves])
     return render(request,'administrateur/elevemodif.html',{'formset':formset})
 
 @ip_filter

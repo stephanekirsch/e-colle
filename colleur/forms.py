@@ -55,6 +55,78 @@ class MatiereChoiceField(forms.ModelChoiceField):
     def label_from_instance(self,matiere):
         return matiere.nom.title()
 
+class Groupe2Form(forms.Form):
+    def __init__(self,classe,groupe, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.groupe=groupe
+        self.classe=classe
+        if not groupe:
+            query=Eleve.objects.filter(groupe__isnull=True,classe=classe).select_related('user')
+            query2=Eleve.objects.filter(groupe2__isnull=True,classe=classe).select_related('user')
+        else:
+            query=Eleve.objects.filter(classe=classe).filter(Q(groupe__isnull=True)|Q(groupe=groupe)).select_related('user')
+            query2=Eleve.objects.filter(classe=classe).filter(Q(groupe2__isnull=True)|Q(groupe2=groupe)).select_related('user')
+        groupes_pris = set(Groupe.objects.filter(classe=classe).values_list('nom',flat = True))
+        groupes = set(range(1,31)) - groupes_pris
+        if groupe: # si c'est une modification
+            groupes |= {groupe.nom}
+        groupes = sorted(groupes)
+        groupes = zip(groupes,groupes)
+        self.fields['nom'] = forms.ChoiceField(label="nom",choices=groupes)
+        self.fields['idem'] = forms.BooleanField(label="recopier les élèves au second semestre",required = False)
+        self.fields['eleve0'] = forms.ModelChoiceField(label="Premier élève",queryset=query,empty_label="Élève fictif",required=False)
+        self.fields['eleve1'] = forms.ModelChoiceField(label="Deuxième élève",queryset=query,empty_label="Élève fictif",required=False)
+        self.fields['eleve2'] = forms.ModelChoiceField(label="Troisième élève",queryset=query,empty_label="Élève fictif",required=False)
+        self.fields['eleve20'] = forms.ModelChoiceField(label="Premier élève",queryset=query2,empty_label="Élève fictif",required=False)
+        self.fields['eleve21'] = forms.ModelChoiceField(label="Deuxième élève",queryset=query2,empty_label="Élève fictif",required=False)
+        self.fields['eleve22'] = forms.ModelChoiceField(label="Troisième élève",queryset=query2,empty_label="Élève fictif",required=False)
+        query = Matiere.objects.filter(matieresclasse=classe,lv=1).distinct()
+        if query.exists():
+            self.fields['lv11'] = MatiereChoiceField(label="LV1",queryset=query,empty_label="Tout",required=False)
+            self.fields['lv12'] = MatiereChoiceField(label="LV1",queryset=query,empty_label="Tout",required=False)
+        query = Matiere.objects.filter(matieresclasse=classe,lv=2).distinct()
+        if query.exists():
+            self.fields['lv21'] = MatiereChoiceField(label="LV2",queryset=query,empty_label="Tout",required=False)
+            self.fields['lv22'] = MatiereChoiceField(label="LV2",queryset=query,empty_label="Tout",required=False)
+        query = Matiere.objects.filter(pk__in=(classe.option1.pk,classe.option2.pk)).distinct()
+        if query.exists():
+            self.fields['option'] = MatiereChoiceField(label="Option",queryset=query,empty_label="Tout",required=False)
+
+    def clean_nom(self):
+        """Validation du champ nom (unicité pour une classe donnée)"""
+        data = self.cleaned_data['nom']
+        query = Groupe.objects.filter(nom=data,classe=self.classe)
+        if self.groupe: # si c'est une modification, on exclut de la requête le groupe en question
+            query=query.exclude(pk=self.groupe.pk)
+        if query.exists():
+            raise ValidationError(
+            "le nom %(value)s est déjà pris",
+            code='uniqueness violation',
+            params={'value': data},
+            )
+        return data
+
+    def clean(self):
+        """validation du formulaire. S'il y a deux fois le même élève (non fictif) on lève une ValidationError"""
+        eleves = [self.cleaned_data['eleve{}'.format(i)] for i in range(3) if 'eleve{}'.format(i) in self.cleaned_data and self.cleaned_data['eleve{}'.format(i)]]
+        eleves2 = [self.cleaned_data['eleve2{}'.format(i)] for i in range(3) if 'eleve2{}'.format(i) in self.cleaned_data and self.cleaned_data['eleve2{}'.format(i)]]
+        if len(eleves) > len(set(eleves)) or len(eleves2) > len(set(eleves2)): # s'il y a doublon
+            raise ValidationError("Un élève ne peut apparaître qu'une fois dans un groupe",code="uniqueness violation")
+
+    def save(self):
+        """sauvegarde en base de données les données du formulaire"""
+        if self.groupe: # dans le cas d'une modification
+            groupe=self.groupe
+            Eleve.objects.filter(groupe=groupe).update(groupe=None) # on efface les groupes des -anciens- élèves du groupe
+            Eleve.objects.filter(groupe2=groupe).update(groupe2=None)
+            Groupe.objects.filter(pk=groupe.pk).update(nom=self.cleaned_data['nom']) # on met à jour le nom du groupe
+        else: # sinon on crée un nouveau groupe
+            groupe=Groupe(nom=self.cleaned_data['nom'],classe=self.classe)
+            groupe.save()
+        Eleve.objects.filter(pk__in=[self.cleaned_data['eleve{}'.format(i)].pk for i in range(3) if self.cleaned_data['eleve{}'.format(i)] is not None]).update(groupe=groupe) # maj des groupes
+        Eleve.objects.filter(pk__in=[self.cleaned_data['eleve2{}'.format(i)].pk for i in range(3) if self.cleaned_data['eleve2{}'.format(i)] is not None]).update(groupe2=groupe) 
+
+
 class GroupeForm(forms.Form):
     def __init__(self,classe,groupe, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -64,7 +136,13 @@ class GroupeForm(forms.Form):
             query=Eleve.objects.filter(groupe__isnull=True,classe=classe).select_related('user')
         else:
             query=Eleve.objects.filter(classe=classe).filter(Q(groupe__isnull=True)|Q(groupe=groupe)).select_related('user')
-        self.fields['nom'] = forms.ChoiceField(label="nom",choices=zip(range(1,21),range(1,21)))
+        groupes_pris = set(Groupe.objects.filter(classe=classe).values_list('nom',flat = True))
+        groupes = set(range(1,31)) - groupes_pris
+        if groupe: # si c'est une modification
+            groupes |= {groupe.nom}
+        groupes = sorted(groupes)
+        groupes = zip(groupes,groupes)
+        self.fields['nom'] = forms.ChoiceField(label="nom",choices=groupes)
         self.fields['eleve0'] = forms.ModelChoiceField(label="Premier élève",queryset=query,empty_label="Élève fictif",required=False)
         self.fields['eleve1'] = forms.ModelChoiceField(label="Deuxième élève",queryset=query,empty_label="Élève fictif",required=False)
         self.fields['eleve2'] = forms.ModelChoiceField(label="Troisième élève",queryset=query,empty_label="Élève fictif",required=False)

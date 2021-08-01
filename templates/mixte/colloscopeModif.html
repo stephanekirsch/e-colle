@@ -87,7 +87,7 @@
 		<td class="matiere">
 			<ul>
 				<li class="niveau1" {% if colle.id_col %}style="background-color:{{colle.couleur}}">{{dictColleurs|lookup:colle.id_colleur}}:{% if colle.temps == 20%}{{colle.nomgroupe}}{% elif colle.temps == 30%}{% with colle.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}{% else %}>:{% endif %}</li>
-		 		<li class="niveau1bis" id="{{semaine.pk}}_{{colle.id_cr}}"></li>
+		 		<li class="niveau1bis" id="{{semaine.numero}}_{{colle.id_cr}}"></li>
 		 	</ul>
 		</td>
 		{% endif %}
@@ -124,10 +124,43 @@
 	</li>
 {% endfor %}
 </ul>
+{% if semestre2 != -1 %}
+<ul id="niveau2bis">
+	<li><a id="creneaux" href="false" style="background-color:#888888">creneaux multiples</a></li>
+	<li><a href="{% url user.colleur|yesno:'ajaxeffacer_colleur,ajaxeffacer_secret' 'semaine' 'creneau' %}">Effacer</a></li>
+{% for matiere,colleurs,groupes in matieres2 %}
+	<li style="background-color:{{matiere.2}}">{{matiere.1|title}} {% if matiere.4 != 0 %}(LV{{matiere.4}}) {% endif %}
+		{% if classe.option1.pk == matiere.0 or classe.option2.pk == matiere.0 %}(Option){% endif %}
+		<ul class="niveau3">
+		{% for colleur in colleurs %}
+			<li style="background-color:{{matiere.2}}">{{colleur.1|title}} {{colleur.2|upper}} ({{classe.dictColleurs|lookup:colleur.0}})
+				{% if matiere.3 == 20 %}
+				<ul class="niveau4">
+				{% for groupe in groupes %}
+					<li><a href="{% url user.colleur|yesno:'ajax_colleur,ajax_secret' matiere.0 colleur.0 groupe.pk 'semaine' 'creneau' %}">G{{groupe}}</a></li>
+				{% endfor %}
+				{% elif matiere.3 == 30 %}
+				<ul class="niveau4">
+				{% for eleve,login in classe.loginsEleves %}
+					<li><a href="{% url user.colleur|yesno:'ajax_colleur_eleve,ajax_secret_eleve' matiere.0 colleur.0 eleve.pk 'semaine' 'creneau' login %}">{{eleve}} ({{login}})</a></li>
+				{% endfor %}
+				{% elif matiere.3 == 60 %}
+				<ul class="niveau4">
+				<li><a href="{% url user.colleur|yesno:'ajax_colleur_eleve,ajax_secret_eleve' matiere.0 colleur.0 0 'semaine' 'creneau' 'no' %}">{{classe}}</a></li>
+				{% endif %}
+				</ul>
+			</li>
+		{% endfor %}
+		</ul>
+	</li>
+{% endfor %}
+</ul>
+{% endif %}
 <div style="width:{{largeur}};height:{{hauteur}}"></div>
 <div id="grise">
 	<form method="POST" action="{% url user.colleur|yesno:'ajaxmulti_colleur,ajaxmulti_secret' 'matiere' 'kolleur' 'groupe' 'eleve' 'semaine' 'creneau' 'duree' 'frequence' 'permu' %}">
 	<input type="hidden" id="dictgroupes" value="{{dictGroupes}}"></input>
+	<input type="hidden" id="dictgroupes2" value="{{dictGroupes2}}"></input>
 	<input type="hidden" id="dicteleves" value="{{dictEleves}}"></input>
 	<table class="reservation">
 		{{form2.as_table}}
@@ -135,6 +168,7 @@
 		<tr><td colspan="2"><a href="" id="annul">Annuler</a></td></tr>
 	</table>
 	<input id="ajaxcolleur" type="hidden" value="{% url user.colleur|yesno:'ajaxmaj_colleur,ajaxmaj_secret' 'matiere' classe.pk %}"/>
+	<input id="semestre2" type="hidden" value="{{semestre2}}"/>
 </form>
 </div>
 {% endblock %}

@@ -380,7 +380,7 @@ td.matiere ul ul
 	z-index:2;
 }
 
-td.matiere:hover ul ul#niveau2
+td.matiere:hover ul ul#niveau2, td.matiere:hover ul ul#niveau2bis
 {
 	display:block;
 	width:100px;
