@@ -75,8 +75,11 @@ def connect(request):
                                                 'classe_id': classe.pk,
                                                 'classe_name': classe.nom,
                                                 'classe_year': classe.annee,
+                                                'classe_option1': 0 if not classe.option1 else classe.option1.pk,
+                                                'classe_option2': 0 if not classe.option2 else classe.option2.pk,
+                                                'semestre2': -1 if not classe.semestres else Config.objects.get_config().semestre2, 
                                                 'group': "" if user.eleve.groupe is None else user.eleve.groupe.nom,
-                                                'version': "2.1",
+                                                'version': "2.3",
                                                 'compose': Config.objects.get_config().message_eleves,
                                                 'heure_debut': HEURE_DEBUT,
                                                 'heure_fin': HEURE_FIN,
@@ -89,10 +92,13 @@ def connect(request):
                                                 'colleur_id': user.colleur.pk,
                                                 'classes_id': "__".join([str(classe.pk) for classe in classes]),
                                                 'classes_name': "__".join([classe.nom for classe in classes]),
+                                                'classes_semestres': "__".join([int(classe.semestres) for classe in classes]),
+                                                'classes_options': "__".join(["{}-{}".format(0 if not classe.option1 else classe.option1.pk, 0 if not classe.option2 else classe.option2.pk) for classe in classe]),
                                                 'subjects_id': "__".join([str(matiere.pk) for matiere in matieres]),
                                                 'subjects_name': "__".join([str(matiere) for matiere in matieres]),
                                                 'subjects_color': "__".join([matiere.couleur for matiere in matieres]),
-                                                'version': "2.1",
+                                                'semestre2': Config.objects.get_config().semestre2,
+                                                'version': "2.3",
                                                 'heure_debut': HEURE_DEBUT,
                                                 'heure_fin': HEURE_FIN,
                                                 'intervalle': INTERVALLE}))
@@ -110,7 +116,6 @@ def agendaprograms(request):
     agendas = Colle.objects.agendaEleveApp(user.eleve)
     programmes = Programme.objects.filter(classe=user.eleve.classe).values('pk',
         'matiere__couleur', 'matiere__nom', 'semaine__numero', 'semaine__lundi', 'titre', 'fichier', 'detail').order_by('-semaine__lundi', 'matiere__nom')
-
     return HttpResponse(json.dumps({'agendas': agendas, 'programs': list(programmes)}, default=date_serial))
 
 def grades(request):
@@ -155,7 +160,7 @@ def colles(request):
     matieres = list(Matiere.objects.filter(
         matieresclasse=classe).values_list('pk', 'nom', 'couleur', 'lv'))
     eleves = [[eleve.pk, eleve.user.first_name.title() + " " + eleve.user.last_name.upper(), login, 0 if not eleve.groupe else eleve.groupe.pk,
-               0 if not eleve.lv1 else eleve.lv1.pk, 0 if not eleve.lv2 else eleve.lv2.pk] for eleve, login in classe.loginsEleves()]
+               0 if not eleve.lv1 else eleve.lv1.pk, 0 if not eleve.lv2 else eleve.lv2.pk, 0 if not eleve.groupe2 else eleve.groupe2.pk] for eleve, login in classe.loginsEleves()]
     colleurs = [[colleur.pk, colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), login]
                 for colleur, login in classe.loginsColleurs()]
     return HttpResponse(json.dumps({'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
@@ -205,19 +210,6 @@ def messages(request):
         colleurmatieres = classe.listeColleurMatiere()
         return HttpResponse(json.dumps({'messagesrecus':messagesrecus, 'messagesenvoyes': messagesenvoyes, 'groupes': groupes,\
             'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'profs': profs, 'colleurmatieres': colleurmatieres}, default=date_serial))
-
-def newmessage(request, timestamp):
-    """renvoie les intitulés des messages dont la date est > que la date de timestamp timestamp"""
-    user = request.user
-    debut = datetime.fromtimestamp(timestamp)
-    if not checkeleve(user) and not checkcolleur(user):
-        return HttpResponseForbidden("not authenticated")
-    messagesrecusQuery = Destinataire.objects.filter(user=user, date__gt=debut).values('message__date',
-                                                                  'message__auteur__first_name', 'message__auteur__last_name', 'message__titre').order_by('-message__date')
-    messagesrecus = [{'date':x['message__date'],
-            'author':x['message__auteur__first_name'].title()+" "+x['message__auteur__last_name'].upper(),
-            'title':x['message__titre']} for x in messagesrecusQuery]
-    return HttpResponse(json.dumps(messagesrecus, default=date_serial))
 
 def readmessage(request, message_id):
     """marque comme lu le message d'ont l'identifiant est message_id"""
@@ -317,7 +309,7 @@ def colleurDonnees(request):
     eleves = []
     for classe in classes:
         eleves_classe = [[eleve[0].pk, eleve[0].user.first_name.title() + " " + eleve[0].user.last_name.upper(), eleve[1], 0 if not eleve[0].groupe else eleve[0].groupe.pk,
-               0 if not eleve[0].lv1 else eleve[0].lv1.pk, 0 if not eleve[0].lv2 else eleve[0].lv2.pk, classe.pk, order] for order, eleve in enumerate(classe.loginsEleves())]
+               0 if not eleve[0].lv1 else eleve[0].lv1.pk, 0 if not eleve[0].lv2 else eleve[0].lv2.pk, classe.pk, order,0 if not eleve[0].groupe2 else eleve[0].groupe2.pk,] for order, eleve in enumerate(classe.loginsEleves())]
         eleves.extend(eleves_classe)
     colleurs = [[colleur[0].pk, colleur[0].user.first_name.title() + " " + colleur[0].user.last_name.upper(), colleur[1], order]
                 for order, colleur in enumerate(classe.loginsColleurs(colleur = user.colleur))]
