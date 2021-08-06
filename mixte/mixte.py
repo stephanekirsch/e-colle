@@ -87,7 +87,7 @@ def mixteCSV(request,classe,semin,semax):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="colloscope_{}_S{}-S{}.csv"'.format(classe.nom, semin.numero, semax.numero)
     jours=['lu', 'ma', 'me', 'je', 've', 'sa']
-    writer = csv.writer(response)
+    writer = csv.writer(response,delimiter=";")
     writer.writerow(['Matière','Colleur','Créneau','Salle']+['S{}'.format(semaine.numero) for semaine in semaines])
     for creneau, groupes in zip(creneaux, groupescolle):
         cases = [(groupe['groupe'] if groupe['groupe'] is not None else "") if groupe['temps'] == 20  else (classe.dictEleves()[groupe['id_eleve']] if groupe['id_eleve'] is not None else "")  for groupe in groupes]
@@ -161,12 +161,36 @@ def mixteajaxcompat(classe):
     return HttpResponse(reponse)
 
 def mixteajaxcolloscope(matiere,colleur,groupe,semaine,creneau):
-    Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
-    # feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
-    # if semaine.lundi+timedelta(days=creneau.jour) in feries:
-    #     return HttpResponse("jour férié")
+    if Colle.objects.filter(semaine=semaine, creneau=creneau).exclude(colleur=colleur).exists() or Colle.objects.filter(semaine=semaine, creneau=creneau).exclude(matiere=matiere).exists():
+        Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
+        noms = str(groupe.nom)
+    else:
+        # si le groupe a déjà une colle sur le couple semaine/créneau
+        groupes = Colle.objects.filter(semaine=semaine,creneau=creneau).order_by('groupe__nom').values_list('groupe__nom',flat=True)
+        if groupe.nom in Colle.objects.filter(semaine=semaine,creneau=creneau).values_list('groupe__nom',flat=True):
+            return HttpResponse("{}:{}".format(creneau.classe.dictColleurs()[colleur.pk],",".join([str(x) for x in groupes])))
+        # on vérifie si on peut cumuler les groupes ou s'il faut effacer
+        semestre2 = Config.objects.get_config().semestre2
+        classe = creneau.classe
+        if classe.semestres and semaine.numero >= semestre2:
+            options = {classe.option1, classe.option2} - {None}
+            options = [x.pk for x in options]
+            eleves = Colle.objects.filter(semaine=semaine,creneau=creneau).values_list('groupe__groupe2eleve','groupe__groupe2eleve__option','groupe__groupe2eleve__lv1','groupe__groupe2eleve__lv2','matiere__pk','matiere__lv').distinct()
+            nbeleves = len([x for x in eleves if x[4] in options and x[1] == x[4] or x[4] not in options and x[5] == 0 or x[5] == 1 and x[2] == x[4] or x[5] == 2 and x[3] == x[4]])
+            eleves2 = Eleve.objects.filter(groupe2=groupe)
+            nbeleves2 = len([x for x in eleves2 if matiere.pk in options and x.option == matiere or matiere.pk not in options and matiere.lv == 0 or matiere.lv == 1 and x.lv1 == matiere or matiere.lv == 2 and x.lv2 == matiere])
+        else:
+            eleves = Colle.objects.filter(semaine=semaine,creneau=creneau).values_list('groupe__groupeeleve','groupe__groupeeleve__lv1','groupe__groupeeleve__lv2','matiere__pk','matiere__lv').distinct()
+            nbeleves = len([x for x in eleves if x[4] == 0 or x[4] == 1 and x[1] == x[3] or x[4] == 2 and x[2] == x[3]])
+            eleves2 = Eleve.objects.filter(groupe=groupe)
+            nbeleves2 = len([x for x in eleves2 if matiere.lv == 0 or matiere.lv == 1 and x.lv1 == matiere or matiere.lv == 2 and x.lv2 == matiere])
+        if nbeleves + nbeleves2 > 3:
+            Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
+            Colle(semaine=semaine,creneau=creneau,groupe=groupe,colleur=colleur,matiere=matiere).save()
+            return HttpResponse("{}:{}".format(creneau.classe.dictColleurs()[colleur.pk],groupe.nom))
+        noms = ",".join([str(x) for x in Colle.objects.filter(semaine=semaine,creneau=creneau).values_list('groupe__nom',flat=True)]+[str(groupe.nom)])
     Colle(semaine=semaine,creneau=creneau,groupe=groupe,colleur=colleur,matiere=matiere).save()
-    return HttpResponse("{}:{}".format(creneau.classe.dictColleurs()[colleur.pk],groupe.nom))
+    return HttpResponse("{}:{}".format(creneau.classe.dictColleurs()[colleur.pk],noms))
 
 def mixteajaxcolloscopeeleve(matiere,colleur, id_eleve,semaine,creneau,login):
     try:
@@ -178,8 +202,6 @@ def mixteajaxcolloscopeeleve(matiere,colleur, id_eleve,semaine,creneau,login):
             raise Http404
     Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
     feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
-    if semaine.lundi+timedelta(days=creneau.jour) in feries:
-        return HttpResponse("jour férié")
     colle=Colle(semaine=semaine,creneau=creneau,colleur=colleur,eleve=eleve,matiere=matiere)
     if eleve is None:
         colle.classe=creneau.classe
@@ -231,6 +253,40 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
                 pass
             i+=1
         return HttpResponse(json.dumps(creneaux))
+    if duree == 1 and int(id_groupe):
+        groupe = get_object_or_404(Groupe,pk=id_groupe)
+        if Colle.objects.filter(semaine=semaine, creneau=creneau).exclude(colleur=colleur).exists() or Colle.objects.filter(semaine=semaine, creneau=creneau).exclude(matiere=matiere).exists():
+            Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
+            noms = str(groupe.nom)
+        else:
+            # si le groupe a déjà une colle sur le couple semaine/créneau
+            groupes = Colle.objects.filter(semaine=semaine,creneau=creneau).order_by('groupe__nom').values_list('groupe__nom',flat=True)
+            if groupe.nom in Colle.objects.filter(semaine=semaine,creneau=creneau).values_list('groupe__nom',flat=True):
+                return HttpResponse("{}:{}".format(creneau.classe.dictColleurs()[colleur.pk],",".join([str(x) for x in groupes])))
+            # on vérifie si on peut cumuler les groupes ou s'il faut effacer
+            semestre2 = Config.objects.get_config().semestre2
+            classe = creneau.classe
+            if classe.semestres and semaine.numero >= semestre2:
+                options = {classe.option1, classe.option2} - {None}
+                options = [x.pk for x in options]
+                eleves = Colle.objects.filter(semaine=semaine,creneau=creneau).values_list('groupe__groupe2eleve','groupe__groupe2eleve__option','groupe__groupe2eleve__lv1','groupe__groupe2eleve__lv2','matiere__pk','matiere__lv').distinct()
+                nbeleves = len([x for x in eleves if x[4] in options and x[1] == x[4] or x[4] not in options and x[5] == 0 or x[5] == 1 and x[2] == x[4] or x[5] == 2 and x[3] == x[4]])
+                eleves2 = Eleve.objects.filter(groupe2=groupe)
+                nbeleves2 = len([x for x in eleves2 if matiere.pk in options and x.option == matiere or matiere.pk not in options and matiere.lv == 0 or matiere.lv == 1 and x.lv1 == matiere or matiere.lv == 2 and x.lv2 == matiere])
+            else:
+                eleves = Colle.objects.filter(semaine=semaine,creneau=creneau).values_list('groupe__groupeeleve','groupe__groupeeleve__lv1','groupe__groupeeleve__lv2','matiere__pk','matiere__lv').distinct()
+                nbeleves = len([x for x in eleves if x[4] == 0 or x[4] == 1 and x[1] == x[3] or x[4] == 2 and x[2] == x[3]])
+                eleves2 = Eleve.objects.filter(groupe=groupe)
+                nbeleves2 = len([x for x in eleves2 if matiere.lv == 0 or matiere.lv == 1 and x.lv1 == matiere or matiere.lv == 2 and x.lv2 == matiere])
+            if nbeleves + nbeleves2 > 3:
+                Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
+                Colle(semaine=semaine,creneau=creneau,groupe=groupe,colleur=colleur,matiere=matiere).save()
+                return HttpResponse("{}:{}".format(creneau.classe.dictColleurs()[colleur.pk],groupe.nom))
+            noms = ",".join([str(x) for x in Colle.objects.filter(semaine=semaine,creneau=creneau).values_list('groupe__nom',flat=True)]+[str(groupe.nom)])
+        Colle(semaine=semaine,creneau=creneau,groupe=groupe,colleur=colleur,matiere=matiere).save()
+        creneaux={'creneau':creneau.pk,'couleur':matiere.couleur,'colleur':creneau.classe.dictColleurs()[colleur.pk]}
+        creneaux['semgroupe'] = [{'semaine':semaine.pk,'groupe':noms}]
+        return HttpResponse(json.dumps(creneaux))
     permutation = int(permutation)
     groupe=None if matiere.temps!=20 else get_object_or_404(Groupe,pk=id_groupe)
     eleve=None if matiere.temps!=30 else get_object_or_404(Eleve,pk=id_eleve)
@@ -272,12 +328,11 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
         for numero in range(numsemaine,numsemaine+duree,frequence):
             try:
                 semainecolle=Semaine.objects.get(numero=numero)
-                if semainecolle.lundi + timedelta(days = creneau.jour) not in feries:
-                    Colle.objects.filter(creneau=creneau,semaine=semainecolle).delete()
-                    groupe=groupeseleves[(rang+i*permutation)%len(groupeseleves)]
-                    Colle(creneau=creneau,colleur=colleur,matiere=matiere,groupe=groupe,semaine=semainecolle).save()
-                    creneaux['semgroupe'].append({'semaine':semainecolle.pk,'groupe':groupe.nom})
-            except Exception:
+                Colle.objects.filter(creneau=creneau,semaine=semainecolle).delete()
+                groupe=groupeseleves[(rang+i*permutation)%len(groupeseleves)]
+                Colle(creneau=creneau,colleur=colleur,matiere=matiere,groupe=groupe,semaine=semainecolle).save()
+                creneaux['semgroupe'].append({'semaine':semainecolle.pk,'groupe':groupe.nom})
+            except:
                 pass
             i+=1
     elif matiere.temps == 30:

@@ -48,10 +48,20 @@
 		<td>{{listejours|lookup:creneau.jds}} {{creneau.heure|heure}}</td>
 		<td>{{creneau.salle}}</td>
 		{% for groupe in groupes %}
-			{% if groupe.id_colle %}
-			<td class="colloscope">{% if groupe.temps == 20 %}{% if groupe.groupe != None %}{{groupe.groupe}}{% endif %}{% elif groupe.temps == 30 %}{% with groupe.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}<div class="colle"><p>
+			{% if groupe.nbcolles %}
+			<td class="colloscope">{% if groupe.temps == 20 %}{{groupe.groupe}}{% elif groupe.temps == 30 %}{% with groupe.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}<div class="colle"><p>
 		{% if groupe.temps == 20 %}
-		S {{ groupe.numero }} / Groupe {{groupe.groupe}}: {% if semestre2 <= groupe.numero %} {{dictgroupes2|lookup:groupe.id_matiere|lookup:groupe.id_groupe|lookup:1}} {% else %} {{dictgroupes|lookup:groupe.id_matiere|lookup:groupe.id_groupe|lookup:1}} {% endif %}<br/>
+		S {{ groupe.numero }} / Groupe {{groupe.groupe}}: {% if semestre2 <= groupe.numero %}
+		{% for id in groupe.id_groupe %}
+		{% if not forloop.first %}; {% endif %}
+		{{dictgroupes2|lookup:groupe.id_matiere|lookup:id|lookup:1}}
+		{% endfor %}
+		{% else %}
+		{% for id in groupe.id_groupe %}
+		{% if not forloop.first %}, {% endif %}
+		{{dictgroupes|lookup:groupe.id_matiere|lookup:id|lookup:1}}
+		{% endfor %}
+		{% endif %}<br/>
 		{% elif groupe.temps == 30 %}
 		Élève: {{groupe.prenom|title}} {{groupe.nom|upper}}<br/>
 		{% endif %}

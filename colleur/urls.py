@@ -38,7 +38,7 @@ url(r'^action/colloscope/ajax/effacer/(\d+|semaine)/(\d+|creneau)$', views.ajaxc
 url(r'^action/colloscope/ajax/multi/(-?\d+|matiere)/(\d+|kolleur)/(\d*|groupe)/(\d*|eleve)/(\d+|semaine)/(\d+|creneau)/([1-9]{1}|[1-2]{1}[0-9]{1}|30|duree)/(1|2|3|4|8|frequence)/([1-9]{1}|1[0-9]{1}|20|permu)$', views.ajaxcolloscopemulti,name="ajaxmulti_colleur"),
 url(r'^action/colloscope/ajax/multi/confirm/(-?\d+|matiere)/(\d+|kolleur)/(\d*|groupe)/(\d*|eleve)/(\d+|semaine)/(\d+|creneau)/([1-9]{1}|[1-2]{1}[0-9]{1}|30|duree)/(1|2|3|4|8|frequence)/([1-9]{1}|1[0-9]{1}|20|permu)$', views.ajaxcolloscopemulticonfirm,name="ajaxmulticonfirm_colleur"),
 url(r'^action/agenda$', views.agenda,name="agenda_colleur"),
-url(r'^action/note/colle/(\d+)$', views.colleNote,name="collenote_colleur"),
+url(r'^action/note/colle/(\d+(?:,\d+)*)$', views.colleNote,name="collenote_colleur"),
 url(r'^action/note/colleeleve/(\d+)$', views.colleNoteEleve,name="collenoteeleve_colleur"),
 url(r'^action/decompte$', views.decompte,name="decompte_colleur"),
 url(r'^action/ramassage/(\d+)$', views.ramassage,name="ramassage_colleur"),

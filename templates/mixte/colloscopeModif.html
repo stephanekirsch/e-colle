@@ -86,7 +86,7 @@
 		{% else %}
 		<td class="matiere">
 			<ul>
-				<li class="niveau1" {% if colle.id_col %}style="background-color:{{colle.couleur}}">{{dictColleurs|lookup:colle.id_colleur}}:{% if colle.temps == 20%}{{colle.nomgroupe}}{% elif colle.temps == 30%}{% with colle.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}{% else %}>:{% endif %}</li>
+				<li class="niveau1" {% if colle.nbcolles %}style="background-color:{{colle.couleur}}">{{dictColleurs|lookup:colle.id_colleur}}:{% if colle.temps == 20%}{{colle.groupe}}{% elif colle.temps == 30%}{% with colle.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}{% else %}>:{% endif %}</li>
 		 		<li class="niveau1bis" id="{{semaine.numero}}_{{colle.id_cr}}"></li>
 		 	</ul>
 		</td>

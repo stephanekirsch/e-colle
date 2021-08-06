@@ -1,11 +1,27 @@
 from django.db import models, connection
 from django.shortcuts import get_object_or_404
 from .classe import Classe
+from .groupe import Groupe
 from .semaine import Semaine
 from .autre import Creneau, date_plus_jour, dictfetchall
 from .config import Config
 from django.db.models import Count
 from datetime import date, timedelta, datetime, time, timezone
+from ecolle.settings import BDD
+
+
+def group_concat(arg):
+    """Renvoie une chaîne de caractères correspondant à la syntaxe SQL 
+    qui permet d'utiliser une fonction d'agrégation qui concatène des chaînes"""
+    if BDD == 'postgresql' or BDD == 'postgresql_psycopg2':
+        return "STRING_AGG(DISTINCT CAST(COALESCE({0:},0) AS TEXT), ',' ORDER BY CAST(COALESCE({0:},0) AS TEXT))".format(arg)
+    elif BDD == 'mysql':
+        return "GROUP_CONCAT(DISTINCT CAST(COALESCE({0:},0) AS TEXT) ORDER BY CAST(COALESCE({0:},0) AS TEXT))".format(arg)
+    elif BDD == 'sqlite3':
+        return "GROUP_CONCAT(DISTINCT CAST (COALESCE({},0) AS TEXT))".format(arg)
+    else:
+        return "" # à compléter par ce qu'il faut dans le cas ou vous utilisez 
+                  # un SGBD qui n'est ni mysql, ni postgresql, ni sqlite
 
 class ColleManager(models.Manager):
 
@@ -31,7 +47,7 @@ class ColleManager(models.Manager):
                 cursor.execute(requete1, ([classe.pk,semin.lundi,semax.lundi]))
                 creneaux = dictfetchall(cursor)
             #selection des groupes de colle
-            requete2 = "SELECT DISTINCT col.id id_colle, colcr.id_colleur, colcr.jour, colcr.heure, colcr.salle, colcr.id_creneau, colcr.nom nom_matiere, colcr.id_matiere, s.numero, g.nom groupe, g.id id_groupe, u.last_name nom, u.first_name prenom, e.id id_eleve, colcr.temps\
+            requete2 = "SELECT DISTINCT {} groupe, {} id_groupe, COUNT(col.id) nbcolles, colcr.id_colleur, colcr.jour, colcr.heure, colcr.salle, colcr.id_creneau, colcr.nom nom_matiere, colcr.id_matiere, s.numero, u.last_name nom, u.first_name prenom, e.id id_eleve, colcr.temps\
             FROM accueil_semaine s\
             CROSS JOIN \
             (SELECT DISTINCT co.id id_colleur, cr.id id_creneau, cr.jour jour, cr.heure heure, cr.salle salle, m.nom, m.temps, m.id id_matiere FROM accueil_creneau cr \
@@ -54,10 +70,13 @@ class ColleManager(models.Manager):
             LEFT OUTER JOIN accueil_user u\
             ON u.eleve_id = e.id\
             WHERE s.lundi BETWEEN %s AND %s\
-            ORDER BY colcr.jour, colcr.heure, colcr.salle, colcr.id_creneau, colcr.nom, colcr.id_colleur, s.numero"
+            GROUP BY colcr.id_colleur, colcr.jour, colcr.heure, colcr.salle, colcr.id_creneau, nom_matiere, colcr.id_matiere, s.numero, u.last_name,  u.first_name, id_eleve, colcr.temps\
+            ORDER BY colcr.jour, colcr.heure, colcr.salle, colcr.id_creneau, colcr.nom, colcr.id_colleur, s.numero".format(group_concat('g.nom'), group_concat('g.id'))
             with connection.cursor() as cursor:
                 cursor.execute(requete2, ([classe.pk,semin.lundi,semax.lundi,semin.lundi,semax.lundi]))
                 groupes = dictfetchall(cursor)
+            for i in range(len(groupes)):
+                groupes[i]["id_groupe"] = eval("(" + groupes[i]["id_groupe"] + ",)")
             groupescolles = []
             longueur = semaines.count()
             for i in range(len(creneaux)):
@@ -72,7 +91,7 @@ class ColleManager(models.Manager):
                 creneaux = creneaux.filter(colle__semaine__lundi__range=(semin.lundi,semax.lundi)).annotate(nb=Count('colle')).filter(nb__gt=0)
             creneaux = creneaux.order_by('jour','heure','salle','pk')
             jours = jours.values('jour').annotate(nb=Count('id',distinct=True)).order_by('jour')            
-            requete="SELECT {} cr.id id_cr, c2.id id_col, c2.colleur_id id_colleur, jf.nom ferie, m.id id_matiere, m.nom nom_matiere, m.couleur couleur, m.temps temps, g.nom nomgroupe, cr.jour jour, cr.heure heure, cr.salle salle, s.lundi lundi, e.id id_eleve, u2.first_name prenom_eleve,u2.last_name nom_eleve {} \
+            requete="SELECT {} groupe, {} id_groupe, cr.id id_cr, COUNT(c2.id) nbcolles, c2.colleur_id id_colleur, jf.nom ferie, m.id id_matiere, m.nom nom_matiere, m.couleur couleur, m.temps temps, cr.jour jour, cr.heure heure, cr.salle salle, s.lundi lundi, e.id id_eleve, u2.first_name prenom_eleve,u2.last_name nom_eleve {} \
                             FROM accueil_creneau cr \
                             CROSS JOIN accueil_semaine s\
                             {}\
@@ -91,11 +110,14 @@ class ColleManager(models.Manager):
                             LEFT OUTER JOIN accueil_jourferie jf \
                             ON jf.date = {}\
                             WHERE cr.classe_id=%s AND s.lundi BETWEEN %s AND %s \
-                            ORDER BY s.lundi, cr.jour, cr.heure, cr.salle, cr.id".format("" if modif else "DISTINCT","" if modif else ", g.id groupe, u.last_name nom, u.first_name prenom, {} jourbis".format(date_plus_jour('s.lundi','cr.jour')),"" if modif else "INNER JOIN accueil_colle c \
-                            ON c.creneau_id=cr.id INNER JOIN accueil_semaine s2    ON (c.semaine_id=s2.id AND s2.lundi BETWEEN %s AND %s)",date_plus_jour('s.lundi','cr.jour'))
+                            GROUP BY cr.id, c2.colleur_id, jf.nom, m.id, m.nom, m.couleur, m.temps, cr.jour, cr.heure, cr.salle, s.lundi, e.id, u2.first_name,u2.last_name {} \
+                            ORDER BY s.lundi, cr.jour, cr.heure, cr.salle, cr.id".format(group_concat('g.nom'), group_concat('g.id') ,"" if modif else ", u.last_name nom, u.first_name prenom, {} jourbis".format(date_plus_jour('s.lundi','cr.jour')),"" if modif else "INNER JOIN accueil_colle c \
+                            ON c.creneau_id=cr.id INNER JOIN accueil_semaine s2 ON (c.semaine_id=s2.id AND s2.lundi BETWEEN %s AND %s)",date_plus_jour('s.lundi','cr.jour'), "" if modif else ",u.last_name, u.first_name")
             with connection.cursor() as cursor:
                 cursor.execute(requete, ([] if modif else [semin.lundi,semax.lundi])+[classe.pk,semin.lundi,semax.lundi])
                 precolles = dictfetchall(cursor)
+                for i in range(len(precolles)):
+                    precolles[i]["id_groupe"] = eval("(" + precolles[i]["id_groupe"] + ",)")
             colles = []
             longueur = creneaux.count()
             for i in range(semaines.count()):
@@ -106,7 +128,7 @@ class ColleManager(models.Manager):
     def agenda(self,colleur):
         semainemin = date.today()+timedelta(days=-28)
         semestre2 = Config.objects.get_config().semestre2
-        requete = "SELECT COUNT(n.id) nbnotes, co.id pk, g.nom nom_groupe, cl.nom nom_classe, {} jour, s.numero, cr.heure heure, cr.salle salle, m.id, m.nom nom_matiere, m.couleur couleur, m.lv lv, m.temps, u2.first_name prenom_eleve, u2.last_name nom_eleve, p.titre titre, p.detail detail, p.fichier fichier\
+        requete = "SELECT COUNT(n.id) nbnotes, {} nom_groupe, {} id_groupes, {} id_colles, cr.id, cl.nom nom_classe, cl.semestres, {} jour, s.numero, cr.heure heure, cr.salle salle, m.id matiere_id, m.nom nom_matiere, m.lv, cl.option1_id, cl.option2_id, m.couleur couleur, m.lv lv, m.temps, u2.first_name prenom_eleve, u2.last_name nom_eleve, p.titre titre, p.detail detail, p.fichier fichier\
                    FROM accueil_colle co\
                    INNER JOIN accueil_creneau cr\
                    ON co.creneau_id = cr.id\
@@ -134,18 +156,29 @@ class ColleManager(models.Manager):
                    LEFT OUTER JOIN accueil_note n\
                    ON n.matiere_id = m.id AND n.colleur_id = c.id AND n.semaine_id=s.id AND (n.eleve_id = e.id OR n.eleve_id = e2.id)\
                    WHERE c.id=%s AND s.lundi >= %s\
-                   GROUP BY co.id, g.nom, g.id, cl.nom, s.id, cr.jour, cr.heure, cr.salle, m.id, m.nom, m.couleur, m.lv, m.temps, u2.first_name, u2.last_name, p.titre, p.detail, p.fichier\
-                   ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'))
+                   GROUP BY cl.nom, cl.semestres, cl.option1_id, cl.option2_id,s.id, cr.id, cr.jour, cr.heure, cr.salle, m.id, m.nom, m.couleur, m.lv, m.temps, u2.first_name, u2.last_name, p.titre, p.detail, p.fichier\
+                   ORDER BY s.lundi,cr.jour,cr.heure".format(group_concat('g.nom'), group_concat('g.id'), group_concat('co.id'), date_plus_jour('s.lundi','cr.jour'))
         with connection.cursor() as cursor:
             cursor.execute(requete,(semestre2, semestre2, colleur.pk,semainemin))
             colles = dictfetchall(cursor)
-        groupeseleve = self.filter(colleur=colleur,semaine__lundi__gte=semainemin,matiere__temps=20).select_related('matiere').prefetch_related('groupe__groupeeleve','groupe__groupeeleve__user')
-        groupes = {}
-        for colle in groupeseleve:
-            groupes[colle.pk] = "; ".join(["{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper()) for eleve in colle.groupe.groupeeleve.all() if not colle.matiere.lv or colle.matiere.lv==1 and eleve.lv1 == colle.matiere or colle.matiere.lv==2 and eleve.lv2 == colle.matiere])
+        eleves = []
+        for colle in colles:
+            print(colle["id_colles"])
+            if colle["temps"] == 30:
+                eleves.append("{} {}".format(colle["nom_eleve"].upper(),colle["prenom_eleve"].title()))
+            elif colle["temps"] == 60:
+                eleves.append(colle["nom_classe"])
+            elif colle["temps"] == 20:
+                if colle["semestres"] and colle["numero"] >= semestre2:
+                    isoption = colle["matiere_id"] == colle["option1_id"] or colle["matiere_id"] == colle["option2_id"]
+                    eleves.append("; ".join(["{} {}".format(x[0].upper(),x[1].title()) for x in Groupe.objects.filter(pk__in=map(int,colle["id_groupes"].split(","))).values_list("groupe2eleve__user__last_name","groupe2eleve__user__first_name","groupe2eleve__lv1","groupe2eleve__lv2","groupe2eleve__option") 
+                        if isoption and x[4] == colle["matiere_id"] or not isoption and colle["lv"] == 0 or colle["lv"] == 1 and x[2] == colle["matiere_id"] or colle["lv"] == 2 and x[3] == colle["matiere_id"]]))
+                else:
+                    eleves.append("; ".join(["{} {}".format(x[0].upper(),x[1].title()) for x in Groupe.objects.filter(pk__in=map(int,colle["id_groupes"].split(","))).values_list("groupeeleve__user__last_name","groupeeleve__user__first_name","groupeeleve__lv1","groupeeleve__lv2") 
+                        if colle["lv"] == 0 or colle["lv"] == 1 and x[2] == colle["matiere_id"] or colle["lv"] == 2 and x[3] == colle["matiere_id"]]))
         return [{"nbnotes":colle["nbnotes"], "nom_groupe":colle["nom_groupe"], "nom_classe":colle["nom_classe"], "jour":colle["jour"], "numero": colle["numero"], "heure":colle["heure"], "salle":colle["salle"], "nom_matiere":colle["nom_matiere"], "couleur":colle["couleur"],
-        "eleve": None if colle["prenom_eleve"] is None else "{} {}".format(colle['prenom_eleve'].title(),colle['nom_eleve'].upper()), "titre":colle["titre"], "fichier":colle["fichier"], "groupe": None if colle["nom_groupe"] is None else groupes[colle["pk"]],
-        "detail":colle["detail"], "temps": colle["temps"], "pk": colle["pk"]} for colle in colles]
+        "eleve": None if colle["prenom_eleve"] is None else "{} {}".format(colle['prenom_eleve'].title(),colle['nom_eleve'].upper()), "titre":colle["titre"], "fichier":colle["fichier"], "groupe": colle["nom_groupe"],
+        "detail":colle["detail"], "temps": colle["temps"], "id_colles": colle["id_colles"],"groupe": eleve} for colle, eleve in zip(colles,eleves)]
 
     def agendaEleve(self,eleve):
         if eleve.classe.semestres:

@@ -469,18 +469,27 @@ def agenda(request):
     return render(request,"colleur/agenda.html",{'colles':colles,'media_url':MEDIA_URL,'jour':jour})
 
 @user_passes_test(is_colleur, login_url='accueil')
-def colleNote(request,id_colle):
+def colleNote(request,id_colles):
     """Récupère la colle dont l'id est id_colle puis redirige vers la page de notation des groupes sur la colle concernée"""
-    colle=get_object_or_404(Colle,pk=id_colle,colleur=request.user.colleur,matiere__in=request.user.colleur.matieres.all()) # on récupère la colle
-    request.session['matiere']=colle.matiere.pk # on met à jour la matière courante
-    eleves = Eleve.objects.filter(groupe = colle.groupe)
-    if colle.matiere.lv == 1:
+    colles=list(Colle.objects.filter(pk__in=id_colles.split(","),colleur=request.user.colleur,matiere__in=request.user.colleur.matieres.all())) # on récupère la colle ou les colles
+    if not colles:
+        raise Http404
+    groupes = [colle.groupe for colle in colles]
+    colle = colles[0]
+    request.session['matiere']=colles[0].matiere.pk # on met à jour la matière courante
+    eleves = Eleve.objects.filter(groupe__in = groupes)
+    semestre2 = Config.objects.get_config().semestre2
+    semaine = colle.semaine.numero
+    classe = colle.creneau.classe
+    if classe.semestres and semaine >= semestre2 and colle.matiere in (classe.option1,classe.option2):
+        eleves = eleves.filter(option = colle.matiere)
+    elif colles[0].matiere.lv == 1:
         eleves = eleves.filter(lv1 = colle.matiere)
-    elif colle.matiere.lv == 2:
+    elif colles[0].matiere.lv == 2:
         eleves = eleves.filter(lv2 = colle.matiere)
     eleves_str = "-".join([str(x.pk) for x in eleves] + ["0"]*(3-eleves.count()))
     note = Note(semaine = colle.semaine, jour = colle.creneau.jour, heure = colle.creneau.heure)
-    return noteEleves(request,colle.creneau.classe.pk,eleves_str,note)
+    return noteEleves(request,classe.pk,eleves_str,note)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def colleNoteEleve(request,id_colle):

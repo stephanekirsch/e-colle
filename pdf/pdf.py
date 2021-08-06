@@ -71,7 +71,6 @@ class easyPdf(Canvas):
 
 def Pdf(classe,semin,semax):
 	"""Renvoie le fichier PDF du colloscope de la classe classe, entre les semaines semin et semax"""
-	groupes=Groupe.objects.filter(groupeeleve__classe=classe).distinct()
 	jours,creneaux,colles,semaines=Colle.objects.classe2colloscope(classe,semin,semax)
 	jours=list(jours)
 	matieres=Matiere.objects.filter(colle__creneau__classe=classe,colle__semaine__lundi__range=(semin.lundi,semax.lundi)).distinct()
@@ -141,9 +140,9 @@ def Pdf(classe,semin,semax):
 					# On place les semaines dans la première colonne
 					data[3+isem-indsemaine][0]="S"+str(semaines[isem])
 					colle=colles[isem][icren]
-					if colle['id_col']:
+					if colle['nbcolles']:
 						if colle['temps']==20:
-							data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(classe.dictColleurs(semin,semax)[colle['id_colleur']],colle['nomgroupe'])
+							data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(classe.dictColleurs(semin,semax)[colle['id_colleur']],colle['groupe'])
 						elif colle['temps']==30:
 							data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(classe.dictColleurs(semin,semax)[colle['id_colleur']],classe.dictEleves()[colle['id_eleve']])
 						elif colle['temps']==60:
@@ -158,36 +157,63 @@ def Pdf(classe,semin,semax):
 	pdf.setFont("Helvetica-Bold",fontsize)
 	largeurcel=(pdf.format[0]-2*pdf.marge_x)/6
 	hauteurcel=(pdf.format[1]-2*pdf.marge_y-70)/12
-	pdf.debutDePage(soustitre="Groupes de colle")
-	groupes = list(groupes)
-	nbGroupes = len(groupes)
-	for indGroupe in range(0,nbGroupes,6):
-		nbGroupesLoc=min(6,nbGroupes-indGroupe)
-		data=[["Groupe {}".format(groupes[indGroupe+i]) for i in range(nbGroupesLoc)]]
-		data += [[""]*nbGroupesLoc for i in range(3)]
-		for iGroupe in range(indGroupe,indGroupe+nbGroupesLoc):
-			ieleve=0
-			for eleve in groupes[iGroupe].groupeeleve.all():
-				ieleve+=1
-				data[ieleve][iGroupe-indGroupe]="{} {} ({})".format(eleve.user.first_name.title(),eleve.user.last_name.upper(),classe.dictEleves()[eleve.id])
-		LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
-										,('VALIGN',(0,0),(-1,-1),'MIDDLE')
-										,('ALIGN',(0,0),(-1,-1),'CENTRE')
-										,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
-										,('SIZE',(0,0),(-1,-1),8)
-										,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))])
-		t=Table(data,colWidths=[largeurcel]*nbGroupesLoc,rowHeights=[hauteurcel]*4)
-		t.setStyle(LIST_STYLE)
-		w,h=t.wrapOn(pdf,0,0)
-		t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-10)
-		pdf.y-=h+10
-	pdf.finDePage()
+	semestre2 = Config.objects.get_config().semestre2
+	if not classe.semestres or semin.numero < semestre2:
+		pdf.debutDePage(soustitre="Groupes de colle" if not classe.semestres else "Groupes de colle du premier semestre")
+		groupes=list(Groupe.objects.filter(groupeeleve__classe=classe).distinct())
+		nbGroupes = len(groupes)
+		for indGroupe in range(0,nbGroupes,6):
+			nbGroupesLoc=min(6,nbGroupes-indGroupe)
+			data=[["Groupe {}".format(groupes[indGroupe+i]) for i in range(nbGroupesLoc)]]
+			data += [[""]*nbGroupesLoc for i in range(3)]
+			for iGroupe in range(indGroupe,indGroupe+nbGroupesLoc):
+				ieleve=0
+				for eleve in groupes[iGroupe].groupeeleve.all():
+					ieleve+=1
+					data[ieleve][iGroupe-indGroupe]="{} {} ({})".format(eleve.user.first_name.title(),eleve.user.last_name.upper(),classe.dictEleves()[eleve.id])
+			LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
+											,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+											,('ALIGN',(0,0),(-1,-1),'CENTRE')
+											,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
+											,('SIZE',(0,0),(-1,-1),8)
+											,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))])
+			t=Table(data,colWidths=[largeurcel]*nbGroupesLoc,rowHeights=[hauteurcel]*4)
+			t.setStyle(LIST_STYLE)
+			w,h=t.wrapOn(pdf,0,0)
+			t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-10)
+			pdf.y-=h+10
+		pdf.finDePage()
+	if classe.semestres and semax.numero >= semestre2:
+		pdf.debutDePage(soustitre="Groupes de colle" if not classe.semestres else "Groupes de colle du second semestre")
+		groupes=list(Groupe.objects.filter(groupe2eleve__classe=classe).distinct())
+		nbGroupes = len(groupes)
+		for indGroupe in range(0,nbGroupes,6):
+			nbGroupesLoc=min(6,nbGroupes-indGroupe)
+			data=[["Groupe {}".format(groupes[indGroupe+i]) for i in range(nbGroupesLoc)]]
+			data += [[""]*nbGroupesLoc for i in range(3)]
+			for iGroupe in range(indGroupe,indGroupe+nbGroupesLoc):
+				ieleve=0
+				for eleve in groupes[iGroupe].groupeeleve.all():
+					ieleve+=1
+					data[ieleve][iGroupe-indGroupe]="{} {} ({})".format(eleve.user.first_name.title(),eleve.user.last_name.upper(),classe.dictEleves()[eleve.id])
+			LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
+											,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+											,('ALIGN',(0,0),(-1,-1),'CENTRE')
+											,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
+											,('SIZE',(0,0),(-1,-1),8)
+											,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))])
+			t=Table(data,colWidths=[largeurcel]*nbGroupesLoc,rowHeights=[hauteurcel]*4)
+			t.setStyle(LIST_STYLE)
+			w,h=t.wrapOn(pdf,0,0)
+			t.drawOn(pdf,(pdf.format[0]-w)/2,pdf.y-h-10)
+			pdf.y-=h+10
+		pdf.finDePage()
 	matieres=Matiere.objects.filter(matieresclasse=classe,colle__creneau__classe=classe,colle__semaine__lundi__range=(semin.lundi,semax.lundi)).distinct()
 	largeurcel=min(150,(pdf.format[0]-2*pdf.marge_x)/max(matieres.count(),1))
 	hauteurcel=40
 	for matiere in matieres:
 		nbcolleurs=Colle.objects.filter(creneau__classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).values('colleur').distinct().count()
-		hauteurcel=min(hauteurcel,(pdf.format[1]-2*pdf.marge_y-70)/nbcolleurs)
+		hauteurcel=min(hauteurcel,(pdf.format[1]-2*pdf.marge_y-140)/nbcolleurs)
 	pdf.debutDePage(soustitre="Liste des colleurs")
 	pdf.x=(pdf.format[0]-matieres.count()*largeurcel)/2
 	pdf.y-=10
@@ -304,7 +330,7 @@ def attestationects(form,elev,classe):
 			pdf.y -= 50
 			pdf.drawCentredString(pdf.format[0]/2,pdf.y, "Valeur du parcours en crédits du système ECTS :")
 			pdf.setFont("Helvetica-Bold",16)
-			pdf.drawString(15*cm,pdf.y,"60")
+			pdf.drawString(15*cm,pdf.y,str(60*classe.annee))
 			pdf.y -= 50
 			pdf.setFont("Helvetica-Oblique",11)
 			pdf.drawCentredString(pdf.format[0]/2,pdf.y, "Mention globale obtenue :")
