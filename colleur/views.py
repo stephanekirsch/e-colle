@@ -6,7 +6,7 @@ from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, 
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV, mixtegroupeSwap, mixtegroupeCreer
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
-from django.db.models import Avg, Min, Max, StdDev, Sum
+from django.db.models import Avg, Min, Max, StdDev, Sum, Count, F
 from django.db.models.functions import Lower
 from datetime import date
 from django.http import Http404, HttpResponse, HttpResponseForbidden, FileResponse
@@ -198,8 +198,12 @@ def resultat2(request,id_classe,id_semin,id_semax):
     generateur = Note.objects.classe2resultat(matiere,classe,semin,semax)
     semaines = next(generateur)
     isprof = is_prof(request.user,matiere,classe)
-    stat_colleurs = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).exclude(note__gt=20).values('colleur__user__first_name','colleur__user__last_name').distinct().annotate(moy=Avg('note'),minimum=Min('note'),maximum=Max('note'),ecarttype=StdDev('note')) if isprof else False
-    return render(request,"colleur/resultat.html",{'form':form,'classe':classe,'semaines':semaines,'matiere':matiere,'notes':generateur,'isprof':isprof,'semin':semin,'semax':semax,'stats':stat_colleurs})
+    stat_colleurs = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).exclude(note__gt=20).values('colleur__user__first_name','colleur__user__last_name').distinct().order_by('colleur__user__last_name','colleur__user__first_name').annotate(moy=Avg('note'),minimum=Min('note'),maximum=Max('note'),ecarttype=StdDev('note')) if isprof else False
+    heures_colleurs = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).values('colleur').order_by('colleur__user__last_name','colleur__user__first_name').annotate(nb=Count('pk')).annotate(heures = matiere.temps*F('nb')) if isprof else False
+    stat_global = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).exclude(note__gt=20).aggregate(moy=Avg('note'),minimum=Min('note'),maximum=Max('note'),ecarttype=StdDev('note')) if isprof else False
+    heures_global = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).aggregate(nb=Count('pk'))['nb']*matiere.temps if isprof else False
+    print(heures_global)
+    return render(request,"colleur/resultat.html",{'form':form,'classe':classe,'semaines':semaines,'matiere':matiere,'notes':generateur,'isprof':isprof,'semin':semin,'semax':semax,'stats':zip(stat_colleurs,heures_colleurs), 'stat_global':stat_global, 'heures_global': heures_global })
 
 @user_passes_test(is_colleur, login_url='accueil')
 def resultatcsv(request,id_classe,id_semin,id_semax):

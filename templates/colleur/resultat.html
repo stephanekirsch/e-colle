@@ -52,14 +52,24 @@
 	<td>Min</td>
 	<td>Max</td>
 	<td>&sigma;</td>
+	<td>Heures</td>
 </tr>
-{% for value in stats %}
+<tr class="plusclair">
+	<td>Global</td>
+	<td>{{stat_global.moy|floatformat:1}}</td>
+	<td>{{stat_global.minimum}}</td>
+	<td>{{stat_global.maximum}}</td>
+	<td>{{stat_global.ecarttype|floatformat:1}}</td>
+	<td>{{heures_global|heurecolle}}</td>
+</tr>
+{% for value, heures in stats %}
 <tr {% cycle '' 'class="plusclair"'%} >
 	<td>{{value.colleur__user__first_name|title}} {{value.colleur__user__last_name|upper}}</td>
 	<td>{{value.moy|floatformat:1}}</td>
 	<td>{{value.minimum}}</td>
 	<td>{{value.maximum}}</td>
 	<td>{{value.ecarttype|floatformat:1}}</td>
+	<td>{{heures.heures|heurecolle}}</td>
 </tr>
 {% endfor %}
 </table>
