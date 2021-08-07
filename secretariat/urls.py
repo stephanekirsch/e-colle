@@ -27,6 +27,7 @@ url(r'^action/groupe/creer/(\d+)$', views.groupeCreer,name="groupecreer_secret")
 url(r'^action/groupe/supprimer/(\d+)$', views.groupeSuppr,name="groupesuppr_secret"),
 url(r'^action/groupe/modifier/(\d+)$', views.groupeModif,name="groupemodif_secret"),
 url(r'^action/groupe/swap/(\d+)$', views.groupeSwap,name="groupeSwap_secret"),
+url(r'^action/groupe/csv/(\d+)$', views.groupecsv,name="groupecsv_secret"),
 url(r'^action/recapitulatif$', views.recapitulatif, name="recapitulatif"),
 url(r'^action/ramassage$', views.ramassage, name="ramassage"),
 url(r'^action/ramassage/suppr/(\d+)$', views.ramassageSuppr, name="ramassagesuppr"),

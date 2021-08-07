@@ -61,6 +61,29 @@ def mixtegroupeSwap(request, classe):
         When(semestres=False, then=Value(True))))
     return redirect('groupe_colleur' if request.user.colleur else 'groupe_secret', classe.pk)
 
+def mixtegroupecsv(request, classe):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="groupes_{}.csv"'.format(classe.nom)
+    writer = csv.writer(response,delimiter=";")
+    if classe.semestres:
+        writer.writerow(["semestre 1","groupe","eleve 1","eleve 2","eleve 3","semestre 2","groupe","eleve 1","eleve 2","eleve 3"])
+        for groupe in Groupe.objects.filter(classe = classe).order_by("nom"):
+            row = ["",groupe.nom]
+            for i,eleve in enumerate(groupe.groupeeleve.order_by("user__last_name", "user__first_name")):
+                row.append("{} {}".format(eleve.user.last_name.upper(), eleve.user.first_name.title()))
+            row += [""]*(2-i) + ["",groupe.nom]
+            for eleve in groupe.groupe2eleve.order_by("user__last_name", "user__first_name"):
+                row.append("{} {}".format(eleve.user.last_name.upper(), eleve.user.first_name.title()))
+            writer.writerow(row)
+    else:
+        writer.writerow(["groupe","eleve 1","eleve 2","eleve 3"])
+        for groupe in Groupe.objects.filter(classe = classe).order_by("nom"):
+            row = [groupe.nom]
+            for eleve in groupe.groupeeleve.order_by("user__last_name", "user__first_name"):
+                row.append("{} {}".format(eleve.user.last_name.upper(), eleve.user.first_name.title()))
+            writer.writerow(row)
+    return response
+
 
 def mixtecolloscope(request,classe,semin,semax,isprof,transpose): 
     form=SemaineForm(request.POST or None,initial={'semin':semin,'semax':semax})

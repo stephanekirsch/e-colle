@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from colleur.forms import ColleurConnexionForm, ProgrammeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm, SelectEleveNoteForm, NoteElevesHeadForm, NoteElevesTailForm, NoteElevesFormset, DevoirForm, CopieForm, CopiesForm
 from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, MatiereECTS, NoteECTS, Devoir, DevoirCorrige, DevoirRendu, Ramassage, Decompte
-from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV, mixtegroupeSwap, mixtegroupeCreer
+from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV, mixtegroupeSwap, mixtegroupeCreer, mixtegroupecsv
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Avg, Min, Max, StdDev, Sum, Count, F
@@ -316,6 +316,14 @@ def groupeSwap(request, id_classe):
     if not modifgroupe(request.user.colleur,classe):
         return HttpResponseForbidden("Accès non autorisé")
     return mixtegroupeSwap(request,classe)
+
+@user_passes_test(is_colleur, login_url='accueil')
+def groupecsv(request, id_classe):
+    """change pour la classe dont l'id est id_classe la propriété de groupes différents ou égaux chaque semestres et renvoie la page des groupes"""
+    classe = get_object_or_404(Classe, pk=id_classe)
+    if not modifgroupe(request.user.colleur,classe):
+        return HttpResponseForbidden("Accès non autorisé")
+    return mixtegroupecsv(request,classe)
     
 @user_passes_test(is_colleur, login_url='accueil')
 def colloscope(request,transpose,id_classe):

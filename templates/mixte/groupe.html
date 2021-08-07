@@ -11,6 +11,7 @@
 </td><td><a href="{% url user.colleur|yesno:'groupeSwap_colleur,groupeSwap_secret' classe.pk %}">Changer</a></td></tr>
 <table class="accueil"><tr><td><a href="{% url user.colleur|yesno:'groupecreer_colleur,groupecreer_secret' classe.pk %}">Nouveau groupe</a></td></tr></table>
 <table class="accueil"><tr><td>Groupes de {{classe}}</td></tr></table>
+<table class="tableausimple"><tr><td><a href="{% url user.colleur|yesno:'groupecsv_colleur,groupecsv_secret' classe.pk %}"><img src="{% static 'images/csv.png' %}" alt="icone csv"/></a></td></tr></table>
 <table class="tableausimple" id="suppr">
 	<tr class="entete">
 		<td>Groupe</td>

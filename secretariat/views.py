@@ -6,7 +6,7 @@ from administrateur.forms import AdminConnexionForm
 from colleur.forms import ECTSForm
 from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm
 from accueil.models import Config, Note, Semaine, Matiere, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, mois, NoteECTS
-from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV, mixtegroupeCreer
+from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV, mixtegroupeCreer, mixtegroupecsv
 from django.http import Http404, HttpResponse,  HttpResponseForbidden
 from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
 from reportlab.platypus import Table, TableStyle
@@ -568,6 +568,14 @@ def groupeSwap(request, id_classe):
         return HttpResponseForbidden("Accès non autorisé")
     classe = get_object_or_404(Classe, pk=id_classe)
     return mixtegroupeSwap(request,classe)
+
+@user_passes_test(is_secret, login_url='accueil')
+def groupecsv(request, id_classe):
+    """change pour la classe dont l'id est id_classe la propriété de groupes différents ou égaux chaque semestres et renvoie la page des groupes"""
+    if not Config.objects.get_config().modif_secret_groupe:
+        return HttpResponseForbidden("Accès non autorisé")
+    classe = get_object_or_404(Classe, pk=id_classe)
+    return mixtegroupecsv(request,classe)
 
 @user_passes_test(is_secret_ects, login_url='login_secret')
 def ectscredits(request,id_classe,form=None):

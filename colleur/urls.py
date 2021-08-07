@@ -21,6 +21,7 @@ url(r'^action/groupe/creer/(\d+)$', views.groupeCreer,name="groupecreer_colleur"
 url(r'^action/groupe/supprimer/(\d+)$', views.groupeSuppr,name="groupesuppr_colleur"),
 url(r'^action/groupe/modifier/(\d+)$', views.groupeModif,name="groupemodif_colleur"),
 url(r'^action/groupe/swap/(\d+)$', views.groupeSwap,name="groupeSwap_colleur"),
+url(r'^action/groupe/csv/(\d+)$', views.groupecsv,name="groupecsv_colleur"),
 url(r'^action/eleves/(\d+)$', views.eleves,name="eleves_colleur"),
 url(r'^action/colloscope/([0-1]{1})/(\d+)$', views.colloscope,name="colloscope_colleur"),
 url(r'^action/colloscope/([0-1]{1})/(\d+)/(\d+)/(\d+)$', views.colloscope2,name="colloscope2_colleur"),
