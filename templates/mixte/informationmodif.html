@@ -1,0 +1,22 @@
+{% extends isadmin|yesno:'administrateur/action.html,secretariat/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+
+
+<form method="POST">
+{% csrf_token %}
+{{form.media}}
+<table class="tableausimple">
+	<tr class="entete">
+		<td colspan="2">{% if modif %}Modification de l'information{% else %}Nouvelle information{% endif %}</td>
+	{{form.as_table}}
+	</tr>
+	<tr><td colspan="2"><input type="submit" /></td></tr>
+</table>
+</form>
+
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+{% endblock %}

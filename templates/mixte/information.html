@@ -1,0 +1,41 @@
+{% extends isadmin|yesno:'administrateur/action.html,secretariat/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+
+<table class="accueil">
+	<tr>
+		<td>Informations page d'accueil</td>
+	</tr>
+</table>
+
+<table class="accueil">
+	<tr>
+		<td><a href="{% url isadmin|yesno:'informationmodif_admin,informationmodif_secret' 0 %}">Nouvelle information</a></td>
+	</tr>
+</table>
+
+<table class="tableausimple" id="suppr">
+	<tr class="entete">
+		<td colspan="5">Informations actuelles</td>
+	</tr>
+	<tr class="entete">
+		<td>Date</td>
+		<td>destinataires</td>
+		<td>Message</td>
+		<td>Modifier</td>
+		<td>Supprimer</td>	
+	</tr>
+	{% for info in infos %}
+	<tr><td>{{info.date|date:"D d M Y"}}</td>
+		<td>{{expe|lookup:info.destinataire}}</td>
+		<td>{{info.message|safe}}</td>
+		<td><a href="{% url isadmin|yesno:'informationmodif_admin,informationmodif_secret' info.pk%}">Modifier</td>
+		<td><a href="{% url isadmin|yesno:'informationsuppr_admin,informationsuppr_secret' info.pk%}">Supprimer</td>
+	</tr>
+	{% endfor %}
+</table>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+{% endblock %}

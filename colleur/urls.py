@@ -10,6 +10,7 @@ url(r'^action/notation/(\d+)/([0-2]{1})$', views.notation,name="notation_colleur
 url(r'^action/note/eleves/(\d+)/(\d+(?:-\d+)*)$', views.noteEleves, name="noteeleves_colleur"),
 url(r'^action/note/modifier/(\d+)$', views.noteModif,name="notemodif_colleur"),
 url(r'^action/note/supprimer/(\d+)$', views.noteSuppr,name="notesuppr_colleur"),
+url(r'^action/trombinoscope/(\d+)$', views.trombinoscope,name="trombinoscope_colleur"),
 url(r'^action/resultat/(\d+)$', views.resultat,name="resultat_colleur"),
 url(r'^action/resultat/(\d+)/(\d+)/(\d+)$', views.resultat2,name="resultat2_colleur"),
 url(r'^action/resultat/csv/(\d+)/(\d+)/(\d+)$', views.resultatcsv,name="resultatcsv_colleur"),

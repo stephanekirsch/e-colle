@@ -6,8 +6,8 @@ from reportlab.platypus import Table, TableStyle, Image, Frame, Paragraph
 from reportlab.lib.styles import ParagraphStyle
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
-from ecolle.settings import RESOURCES_ROOT
-from accueil.models import Groupe, Colle, Matiere, Colleur, NoteECTS, Eleve, Config
+from ecolle.settings import RESOURCES_ROOT, MEDIA_ROOT
+from accueil.models import Groupe, Colle, Matiere, Colleur, NoteECTS, Eleve, Config, Classe
 from reportlab.lib.units import cm
 from unidecode import unidecode
 from os.path import join
@@ -68,6 +68,49 @@ class easyPdf(Canvas):
 		self.setFont("Helvetica-Oblique",8)
 		self.drawCentredString(self.x,self.y,"page n°{}".format(self.getPageNumber()))
 		self.showPage()
+
+def trombinoscopePdf(id_classe):
+	print(A4)
+	classe = get_object_or_404(Classe,pk=id_classe)
+	eleves = Eleve.objects.filter(classe=classe).select_related('user').all()
+	response = HttpResponse(content_type='application/pdf')
+	nomfichier="trombinoscope_{}.pdf".format(unidecode(classe.nom))
+	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
+	pdf = easyPdf(orientation='landscape',titre="Trombinoscope de {}".format(classe.nom),marge_x=30,marge_y=30)
+	for i,eleve in enumerate(eleves):
+		if i%50 == 0:
+			if i != 0:
+				pdf.showPage()
+			pdf.debutDePage()
+			pdf.x = pdf.marge_x
+			pdf.y = pdf.format[1]-pdf.marge_y-3.8*cm
+		if eleve.photo:
+			I = Image(eleve.photo)
+			I.drawHeight = 2.8*cm
+			I.drawWidth = 2.1*cm
+			I.drawOn(pdf,pdf.x,pdf.y)
+			pdf.setFont("Helvetica-Bold",8)
+			pdf.drawCentredString(pdf.x + 1.05*cm,pdf.y - .35*cm,eleve.user.last_name[:17].upper())
+			pdf.setFont("Helvetica",8)
+			pdf.drawCentredString(pdf.x + 1.05*cm,pdf.y - .7*cm,eleve.user.first_name[:20].title())
+		if i % 10 == 9:
+			if i == 49:
+				pdf.showPage()
+				pdf.debutDePage()
+				pdf.x = pdf.marge_x
+				pdf.y = pdf.format[1]-pdf.marge_y-3.8*cm
+			else:
+				pdf.y -= 3.6*cm
+				pdf.x = pdf.marge_x
+		else:
+			pdf.x += 2.85*cm
+	pdf.showPage()
+	pdf.save()
+	fichier = pdf.buffer.getvalue()
+	pdf.buffer.close()
+	response.write(fichier)
+	return response
+	
 
 def Pdf(classe,semin,semax):
 	"""Renvoie le fichier PDF du colloscope de la classe classe, entre les semaines semin et semax"""

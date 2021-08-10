@@ -11,7 +11,7 @@ from django.db.models.functions import Lower
 from datetime import date
 from django.http import Http404, HttpResponse, HttpResponseForbidden, FileResponse
 from django.forms.formsets import formset_factory
-from pdf.pdf import Pdf, creditsects, attestationects
+from pdf.pdf import Pdf, creditsects, attestationects, trombinoscopePdf
 import os
 import csv
 from zipfile import ZipFile
@@ -168,6 +168,10 @@ def noteSuppr(request,id_note):
         return redirect('action_colleur')
     note.delete()
     return redirect('note_colleur', note.classe.pk)
+
+@user_passes_test(is_colleur, login_url='accueil')
+def trombinoscope(request,id_classe):
+    return trombinoscopePdf(id_classe)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def resultat(request,id_classe):

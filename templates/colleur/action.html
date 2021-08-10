@@ -85,6 +85,15 @@
 		{% endif %}
 		{% endwith %}
 		{% endif %}
+		<li><a href="#">Trombinoscope</a>
+			<ul>
+		{% for classe in user.colleur.classes.all %}
+			{% if request.session.matiere in classe.matierespk %}
+				<li><a href="{% url 'trombinoscope_colleur' classe.pk %}">{{classe.nom}}</a></li>
+			{% endif %}
+		{% endfor %}
+			</ul>
+		</li>
 	</ul>
 </div>
 {% endblock %}

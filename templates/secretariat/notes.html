@@ -1,0 +1,40 @@
+{% extends 'secretariat/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil"><tr><td>Notes{% if colleur %} de {{colleur}}{% endif %}</td></tr></table>
+<form method="post">
+	<table class="tableausimple">
+	{% csrf_token %}
+	{{ form.as_table }}
+	<tr><td colspan="2"><input type="submit"/></td></tr>
+</table>
+</form>
+
+{% if notes %}
+<table class="tableausimple">
+	<tr class="entete">
+		<td>Matière</td>
+		<td>Classe</td>
+		<td>Semaine</td>
+		<td>Date</td>
+		<td>Heure</td>
+		<td>Élève</td>
+		<td>Note</td>
+	</tr>
+{% for note in notes %}
+	<tr {% cycle '' 'class="plusclair"'%} >
+		<td>{{note.matiere}}</td>
+		<td>{{note.classe|upper}}</td>
+		<td>S{{note.semaine.numero}}</td>
+		<td>{{note.date_colle|date:"l j F"}}</td>
+		<td>{{note.heure|heure}}</td>
+		<td>{% if note.eleve %}{{note.eleve.user}}{% else %}Élève fictif{% endif %}</td>
+		<td>{% if note.note == 22 %}Abs.{% elif note.note == 21 %}n.n.{% else %}{{note.note}}{% endif %}</td>
+	</tr>
+{% endfor %}
+</table>
+{% endif %}
+
+
+{% endblock %}
