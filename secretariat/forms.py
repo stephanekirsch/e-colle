@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django import forms
 from django.db.models import Max, Min
-from accueil.models import Matiere, Classe, Semaine, Ramassage
+from accueil.models import Matiere, Classe, Semaine, Ramassage, Colleur
 from datetime import date, timedelta
 from django.core.exceptions import ValidationError
 
@@ -71,6 +71,11 @@ class MoisForm(forms.Form):
 class MatiereClasseSelectForm(forms.Form):
     matiere=forms.ModelChoiceField(label="Matière",queryset=Matiere.objects.order_by('nom'),required=True,empty_label=None)
     classe=forms.ModelChoiceField(label="Classe",queryset=Classe.objects.order_by('nom'),required=True,empty_label=None)
+
+class ColleurSelectForm(forms.Form):
+    matiere=forms.ModelChoiceField(label="Matière",queryset=Matiere.objects.order_by('nom'),required=False,empty_label="Toutes")
+    classe=forms.ModelChoiceField(label="Classe",queryset=Classe.objects.order_by('nom'),required=False,empty_label="Toutes")
+    colleur=forms.ModelChoiceField(label="Colleur",queryset=Colleur.objects.order_by("user__last_name","user__first_name"),empty_label=None)
 
 class MatiereClasseSemaineSelectForm(forms.Form):
     matiere=forms.ModelChoiceField(label="Matière",queryset=Matiere.objects.order_by('nom'),required=True,empty_label=None)

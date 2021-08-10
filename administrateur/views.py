@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django.http import HttpResponseForbidden, Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from administrateur.forms import ChercheUserForm, ConfigForm, EleveFormSet, EleveFormSetMdp, ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, SemestreForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm, CsvColleurForm, GenereSemainesForm
+from administrateur.forms import ChercheUserForm, ConfigForm, EleveFormSet, EleveFormSetMdp, ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, SemestreForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm, CsvColleurForm, GenereSemainesForm, InformationForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
@@ -100,6 +100,36 @@ def configconfirm(request):
     return render(request,'administrateur/configconfirm.html')
 
 @ip_filter
+def information(request):
+    """Renvoie la vue de la page où l'on déterminer l'éventuel message d'Accueil des colleurs et/ou élèves"""
+    infos = Information.objects.filter(expediteur = 1)
+    form = InformationForm(request.POST or None, instance = Information(expediteur=1))
+    if form.is_valid():
+        form.save()
+        return redirect('information_admin')
+    return render(request,'mixte/information.html', {'form':form, 'infos': infos, 'expe':{1:"Colleurs", 2:"Élèves", 3:"Tout le monde"} , 'isadmin':True})
+
+@ip_filter
+def informationSuppr(request, id_info):
+    """Supprime l'info dont l"id est id_info"""
+    info = get_object_or_404(Information, pk=id_info)
+    info.delete()
+    return redirect('information_admin')
+
+@ip_filter
+def informationModif(request, id_info):
+    """Modifie l'info dont l"id est id_info"""
+    if id_info != "0":
+        info = get_object_or_404(Information, pk=id_info)
+    else:
+        info = Information(expediteur = 1, destinataire = 3)
+    form = InformationForm(request.POST or None, instance = info)
+    if form.is_valid():
+        form.save()
+        return redirect('information_admin')
+    return render(request, 'mixte/informationmodif.html', {'form':form, 'isadmin': True, "modif": id_info != "0"})
+
+@ip_filter
 def classe(request):
     """Renvoie la vue de la page de gestion des classes"""
     form = ClasseGabaritForm(request.POST or None)
@@ -107,7 +137,7 @@ def classe(request):
         form.save()
         return redirect('gestion_classe')
     classes = Classe.objects.order_by('annee','nom')
-    return render(request,'administrateur/classe.html',{'classes':classes,'form':form})
+    return render(request,'mixte/classe.html',{'classes':classes,'form':form})
 
 @ip_filter
 def classemodif(request, id_classe):

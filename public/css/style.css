@@ -200,6 +200,15 @@ ul.accueil
 	padding:0;
 	font-size:20px;
 }
+.information
+{
+	background: white;
+	padding: 10px;
+}
+.information ul
+{
+	list-style-type:disc;
+}
 .info /* pour les messages de confirmation */
 {
 	color:white;

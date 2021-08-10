@@ -1,4 +1,4 @@
-from .autre import Creneau,Programme,JourFerie,Message,Destinataire,MatiereECTS,NoteECTS,Destinataire
+from .autre import Creneau,Programme,JourFerie,Message,Destinataire,MatiereECTS,NoteECTS,Destinataire,Information
 from .config import Config
 from .matiere import Matiere
 from .classe import Classe,Colleur

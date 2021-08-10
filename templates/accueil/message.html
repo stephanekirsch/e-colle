@@ -27,7 +27,7 @@
 	<tr>
 		<th>Corps du message:</td>
 		<td>
-			<div class="bigscroll">{{message.corps|linebreaksbr}}</div>
+			<div class="bigscroll">{{message.corps|safe}}</div>
 		</td>
 	</tr>
 	{% if message.pj %}

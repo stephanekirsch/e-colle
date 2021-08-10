@@ -16,6 +16,7 @@
 		{% endfor %}
 			</ul>
 		</li>
+		<li><a href="{% url 'notes_secret' %}" title="Notes de colle par colleur">Notes</a></li>
 		{% get_modifgroupe as modif %}
 		{% if modif %}
 		<li><a href="#" title="Gestion des groupes de colle">Groupes</a>

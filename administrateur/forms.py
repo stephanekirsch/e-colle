@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Classe, Matiere, Etablissement, Semaine, Colleur, Eleve, JourFerie, User, Prof, Config,  Note,  Colle, RestrictedImageField
+from accueil.models import Classe, Matiere, Etablissement, Semaine, Colleur, Eleve, JourFerie, User, Prof, Config,  Note,  Colle, RestrictedImageField, Information
 from django.forms.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
@@ -18,6 +18,19 @@ class ConfigForm(forms.ModelForm):
         model = Config
         fields=['nom_etablissement','app_mobile','modif_secret_col','modif_secret_groupe','modif_prof_col','default_modif_col',\
         'modif_prof_groupe','default_modif_groupe','message_eleves','mathjax','ects','nom_adresse_etablissement','ville','academie']
+
+
+class InformationForm(forms.ModelForm):
+    class Meta:
+        model = Information
+        fields = ["destinataire","message"]
+
+    def clean(self):
+        query = Information.objects.filter(expediteur = self.instance.expediteur, destinataire = self.cleaned_data['destinataire'])
+        if self.instance.pk:
+            query = query.exclude(pk = self.instance.pk)
+        if query.exists():
+            raise ValidationError("Il y a déjà un message d'information avec ce destinataire. Effacez-le ou modifiez-le")
 
 
 class ColleurFormSetMdp(forms.BaseFormSet):

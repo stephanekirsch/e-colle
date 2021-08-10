@@ -9,7 +9,7 @@ from PIL import Image
 from django.db.models import Sum, F
 from random import choice
 from .contenttype import ContentTypeRestrictedFileField
-
+from ckeditor.fields import RichTextField
 from .eleve import Eleve
 
 semaine = ["lundi", "mardi","mercredi","jeudi","vendredi","samedi","dimanche"]
@@ -99,6 +99,12 @@ class JourFerie(models.Model):
     nom=models.CharField(max_length=30)
     objects = FerieManager()
 
+class Information(models.Model):
+    expediteur = models.PositiveSmallIntegerField(verbose_name = "Expéditeur", choices = [(1,"Administrateur"), (2,"Secrétariat")], default = 1)
+    destinataire = models.PositiveSmallIntegerField(verbose_name = "destinataires", choices = [(1,"Colleurs"),(2,"Élèves"),(3,"Tout le monde")])
+    date = models.DateTimeField(auto_now_add=True)
+    message = RichTextField(config_name='custom', blank = True, null = True)
+
 class Message(models.Model):
     def update_name(instance, filename):
         return "pj/pj{}.{}".format(texte_aleatoire(20), filename.split(".")[-1])
@@ -108,7 +114,7 @@ class Message(models.Model):
     luPar = models.TextField(verbose_name="lu par: ")
     listedestinataires = models.TextField(verbose_name="Liste des destinataires")
     titre = models.CharField(max_length=100)
-    corps = models.TextField(max_length=2000, blank = True)
+    corps = RichTextField(max_length=2000,blank = True, null = True)
     pj = ContentTypeRestrictedFileField(verbose_name="Pièce jointe",upload_to=update_name,null=True,blank=True,content_types=["text/plain", "text/csv", "application/msword",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpeg", "image/png", "application/vnd.oasis.opendocument.presentation",
         "application/vnd.oasis.opendocument.spreadsheet", "application/vnd.oasis.opendocument.text", "application/vnd.ms-powerpoint",

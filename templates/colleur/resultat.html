@@ -2,7 +2,6 @@
 {% load static %}
 {% load customfilter %}
 {% block body %}
-{% get_mathjax as latex %}
 <table class="accueil"><tr><td>Résultats de la classe {{classe}} en {{matiere}}</td></tr></table>
 <form method="POST">
 {% csrf_token %}

@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django import template
 from datetime import timedelta, date
-from accueil.models import Classe, Config, Destinataire, Matiere
+from accueil.models import Classe, Config, Destinataire, Matiere, Information
 from ecolle.settings import DEFAULT_CSS, GESTION_ADMIN_BDD, MEDIA_URL
 
 register = template.Library()
@@ -9,6 +9,7 @@ register = template.Library()
 @register.filter
 def media(url):
     return MEDIA_URL + url
+
 @register.filter
 def nometab(d):
 	return Config.objects.get_config().nom_etablissement
@@ -59,6 +60,11 @@ def get_admin_bdd():
     return GESTION_ADMIN_BDD
 
 @register.simple_tag
+def get_info():
+    infos = Information.objects.filter(destinataire=3).order_by('-date')
+    return "<br />".join(["[{}/{}]<br />{}".format(info.date.strftime("%A %d %B %Y"),"Administrateur" if info.expediteur == 1 else "Secrétariat",info.message) for info in infos])
+
+@register.simple_tag
 def get_mathjax():
     return Config.objects.get_config().mathjax
 
@@ -78,9 +84,9 @@ def get_modifgroupe():
 def get_classes():
     return Classe.objects.all()
 
+
 @register.simple_tag
 def get_css():
-    print(DEFAULT_CSS)
     return 'css/' + DEFAULT_CSS
 
 @register.filter

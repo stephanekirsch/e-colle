@@ -2,10 +2,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import user_passes_test
-from administrateur.forms import AdminConnexionForm
+from administrateur.forms import AdminConnexionForm, InformationForm
 from colleur.forms import ECTSForm
-from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm
-from accueil.models import Config, Note, Semaine, Matiere, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, mois, NoteECTS
+from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm, ColleurSelectForm
+from accueil.models import Config, Note, Semaine, Matiere, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, mois, NoteECTS, Information
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV, mixtegroupeCreer, mixtegroupecsv
 from django.http import Http404, HttpResponse,  HttpResponseForbidden
 from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
@@ -95,6 +95,62 @@ def resultatcsv(request,id_classe,id_matiere,id_semin,id_semax):
     for note in generateur:
         writer.writerow([note['eleve'],note['rang'],note['moyenne']]+["|".join([notation[note['note']] for note in value]) for value in note['semaine']])
     return response
+
+@user_passes_test(is_secret, login_url='login_secret')
+def information(request):
+    """Renvoie la vue de la page où l'on déterminer l'éventuel message d'Accueil des colleurs et/ou élèves"""
+    infos = Information.objects.filter(expediteur = 2)
+    form = InformationForm(request.POST or None, instance = Information(expediteur=2))
+    if form.is_valid():
+        form.save()
+        return redirect('information_secret')
+    return render(request,'mixte/information.html', {'form':form, 'infos': infos, 'expe':{1:"Colleurs", 2:"Élèves", 3:"Tout le monde"} , 'isadmin':False})
+
+@user_passes_test(is_secret, login_url='login_secret')
+def informationSuppr(request, id_info):
+    """Supprime l'info dont l"id est id_info"""
+    info = get_object_or_404(Information, pk=id_info)
+    info.delete()
+    return redirect('information_secret')
+
+@user_passes_test(is_secret, login_url='login_secret')
+def informationModif(request, id_info):
+    """Modifie l'info dont l"id est id_info"""
+    if id_info != "0":
+        info = get_object_or_404(Information, pk=id_info)
+    else:
+        info = Information(expediteur = 2, destinataire = 3)
+    form = InformationForm(request.POST or None, instance = info)
+    if form.is_valid():
+        form.save()
+        return redirect('information_secret')
+    return render(request, 'mixte/informationmodif.html', {'form':form, 'isadmin': False, "modif": id_info != "0"})
+
+@user_passes_test(is_secret, login_url='login_secret')
+def notes(request):
+    form = ColleurSelectForm(request.POST or None)
+    if request.method == "POST":
+        if form.is_valid():
+            request.session["colleur"] = form.cleaned_data["colleur"].pk
+            request.session["matierenote"] = False if not form.cleaned_data["matiere"] else form.cleaned_data["matiere"].pk
+            request.session["classenote"] = False if not form.cleaned_data["classe"] else form.cleaned_data["classe"].pk
+            return redirect('notes_secret')
+    else:
+        try:
+            colleur = Colleur.objects.get(pk=request.session["colleur"])
+            matiere = False if not request.session["matierenote"] else request.session["matierenote"]
+            classe = False if not request.session["classenote"] else request.session["classenote"]
+        except Exception:
+            colleur = notes = False
+        else:
+            notes = Note.objects.filter(colleur = colleur)
+            if matiere:
+                notes = notes.filter(matiere = matiere)
+            if classe:
+                notes = notes.filter(classe = classe)
+            notes = notes.select_related("eleve","eleve__user","matiere","classe","semaine").order_by('-date_colle','-heure')
+            form = ColleurSelectForm(initial = {"colleur":colleur, "matiere":matiere, "classe":classe})
+    return render(request,"secretariat/notes.html",{"form": form, "colleur": colleur, "notes": notes})
 
 @user_passes_test(is_secret, login_url='login_secret')
 def colloscope(request,transpose,id_classe):

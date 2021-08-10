@@ -128,7 +128,35 @@ INSTALLED_APPS = (
     'secretariat.apps.secretariatConfig',
     'app_mobile.apps.appMobileConfig',
     'customfilter.apps.customfilterConfig',
+    'ckeditor',
 )
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'enterMode': 2,
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Bold', 'Italic', 'Underline','Strike'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink'],
+            ['Undo','Redo'],
+            ['RemoveFormat', 'Source']
+        ]
+    },
+    'custom': {
+        'enterMode': 2,
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Bold', 'Italic', 'Underline','Strike', 'Subscript', 'Superscript'],
+            ['Format', 'TextColor', 'BGColor'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink'],
+            ['HorizontalRule'],
+            ['Undo','Redo'],
+            ['RemoveFormat', 'Source']
+        ]
+    }
+}
 
 MIDDLEWARE = (
     'django.contrib.sessions.middleware.SessionMiddleware',

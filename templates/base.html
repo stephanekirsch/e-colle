@@ -57,7 +57,7 @@
     		{% for message in messages %}
   			  <div {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|linebreaksbr}}</div>
 			{% endfor %}
-			{% endif %}	
+			{% endif %}
 			{% endblock %}
 			{% block body %}
 			{% endblock %}
@@ -67,6 +67,11 @@
 				{% if user.is_authenticated %}
 				<li><a href="{% url 'deconnexion' %}">Déconnexion</a></li>
 				<li><a href="{% url 'profil' %}">Modifier profil</a></li>
+				{% if user.username == 'admin' %}
+				<li><a href="{% url 'information_admin' %}" title="Gestion des informations page d'accueil">Informations</a></li>
+				{% elif user.username == 'Secrétariat' %}
+				<li><a href="{% url 'information_secret' %}" title="Gestion des informations page d'accueil">Informations</a></li>
+				{% endif %}
 				<li><a {% if user.messagesnonlus %} style="{% for i in 'xxxx' %} background: {% cycle '' '-moz-' '-o-' '-webkit-'%}linear-gradient(top, #FF0000,  #0f0f0f) ;{% endfor %}" {% endif %} href="{% url 'messages' %}">Messages({{user.messagesnonlus}}/{{user.totalmessages}})</a></li>
 				{% if user.colleur or user.eleve %}
 				{% get_app_mobile as app_mobile %}
@@ -77,6 +82,21 @@
 				{% endif %}
 			</ul>
 		</div>
+		{% with user.get_info as infos %}
+		{% for info in infos %}
+		<div class="information">
+			[{{info.date|date:'l d F Y'}}/{% if info.expediteur == 1 %}Administrateur{% else %}Secrétariat{% endif %}]<br/>
+			{{info.message|safe}}
+		</div>
+		{% endfor %}
+		{% endwith %}
+
+		{% get_info as infos %}
+		{% if infos%}
+		<div class="information">
+			{{infos|safe}}
+		</div>
+		{% endif %}
 	</div>
 {% block javascript %}
 {% endblock %}

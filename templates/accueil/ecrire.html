@@ -8,6 +8,7 @@
 {% endif %}
 <form method="post" enctype="multipart/form-data">
 	{% csrf_token %}
+	{{form.media}}
 	<table class="tableausimple">
 		<tr >
 			<th rowspan="{{form.rowspan}}">Destinataires</th>

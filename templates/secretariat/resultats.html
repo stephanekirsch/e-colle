@@ -1,5 +1,6 @@
 {% extends 'secretariat/action.html' %}
 {% load static %}
+{% load customfilter %}
 {% block body %}
 <table class="accueil"><tr><td>Classe / Matière / Semaines</td></tr></table>
 <form method="post">
@@ -57,6 +58,8 @@
 {% endif %}
 {% endblock %}
 {% block javascript %}
-<script type="text/javascript" src="{% static 'javascript/tex2html.js' %}"></script>
-<script type="text/javascript" src="{% static 'javascript/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML'%}"></script>
+{% get_mathjax as latex %}
+{% if latex %}
+{% include "mathjax.html" %}
+{% endif %}
 {% endblock %}
