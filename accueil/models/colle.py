@@ -29,7 +29,7 @@ class ColleManager(models.Manager):
         semaines=Semaine.objects.filter(lundi__range=(semin.lundi,semax.lundi))
         if transpose:
             # selection des couples créneau/colleur
-            requete1 = "SELECT DISTINCT m.nom matiere_nom, m.couleur, u.first_name prenom, u.last_name nom, cr.jour jds, cr.heure, cr.salle, cr.id\
+            requete1 = "SELECT DISTINCT m.nom matiere_nom, m.lv, m.couleur, u.first_name prenom, u.last_name nom, cr.jour jds, cr.heure, cr.salle, cr.id\
             FROM accueil_creneau cr \
             INNER JOIN accueil_colle col\
             ON col.creneau_id = cr.id\

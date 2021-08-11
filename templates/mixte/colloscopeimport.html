@@ -1,0 +1,33 @@
+{% extends user.colleur|yesno:'colleur/action.html,secretariat/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil">
+	<tr>
+		<td>Importer un colloscope au format csv pour la classe de {{classe}}</td>
+	</tr>
+</table>
+<form method="POST" enctype="multipart/form-data">
+{% csrf_token %}
+<table class="tableausimple">
+	<tr>
+		<td colspan="2">Les colles pré-existantes des semaines présentes dans le colloscope importé seront effacées<br />
+			Les colles des autres semaines resteront inchangées.<br />
+			Le format csv d'importation est exactement le même que celui exporté en csv:<br />
+			La première ligne du fichier csv est: Matière | nom | prénom | créneau | Salle |  puis les semaines <br />
+			sous la forme 'S' suivi du numéro de semaine<br />
+			Les lignes suivantes sont les données correspondantes pour chaque colleur<br />
+			La matière (attention si c'est une langue, il faut coller au nom '(lv1)' ou '(lv2)' le cas échéant<br />
+			le créneau correspond au jour de la semaine (les 2 première lettres) et de l'heure au format classique<br />
+			par exemple 'ma 15h30' pour mardi à 15h30 <br />
+			la salle <br />
+			Enfin les données suivantes sont les noms des groupes si les  matières sont par groupe, ou les logins des élève si ce sont des matières "solo":<br />
+			On peut trouver les login des élèves en exportant en pdf le colloscope (même s'il est vide)</td>
+	</tr>
+	{{form.as_table}}
+	<td colspan="2"><input type="submit"/></td>
+</tr>
+</table>
+</form>
+
+{% endblock %}

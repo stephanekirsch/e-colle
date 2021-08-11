@@ -89,10 +89,10 @@ def trombinoscopePdf(id_classe):
 			I.drawHeight = 2.8*cm
 			I.drawWidth = 2.1*cm
 			I.drawOn(pdf,pdf.x,pdf.y)
-			pdf.setFont("Helvetica-Bold",8)
-			pdf.drawCentredString(pdf.x + 1.05*cm,pdf.y - .35*cm,eleve.user.last_name[:17].upper())
-			pdf.setFont("Helvetica",8)
-			pdf.drawCentredString(pdf.x + 1.05*cm,pdf.y - .7*cm,eleve.user.first_name[:20].title())
+		pdf.setFont("Helvetica-Bold",8)
+		pdf.drawCentredString(pdf.x + 1.05*cm,pdf.y - .35*cm,eleve.user.last_name[:17].upper())
+		pdf.setFont("Helvetica",8)
+		pdf.drawCentredString(pdf.x + 1.05*cm,pdf.y - .7*cm,eleve.user.first_name[:20].title())
 		if i % 10 == 9:
 			if i == 49:
 				pdf.showPage()

@@ -29,6 +29,7 @@ url(r'^action/colloscope/([0-1]{1})/(\d+)/(\d+)/(\d+)$', views.colloscope2,name=
 url(r'^action/colloscope/pdf/(\d+)/(\d+)/(\d+)$', views.colloscopePdf,name="colloscopepdf_colleur"),
 url(r'^action/colloscope/csv/(\d+)/(\d+)/(\d+)$', views.colloscopeCsv,name="colloscopecsv_colleur"),
 url(r'^action/colloscope/modifier/(\d+)/(\d+)/(\d+)$', views.colloscopeModif,name="colloscopemodif_colleur"),
+url(r'^action/colloscope/importer/(\d+)$', views.colloscopeImport,name="importcolloscope_colleur"),
 url(r'^action/creneau/modifier/(\d+)/(\d+)/(\d+)$', views.creneauModif,name="creneaumodif_colleur"),
 url(r'^action/creneau/supprimer/(\d+)/(\d+)/(\d+)$', views.creneauSuppr,name="creneausuppr_colleur"),
 url(r'^action/creneau/dupliquer/(\d+)/(\d+)/(\d+)$', views.creneauDupli,name="creneaudupli_colleur"),

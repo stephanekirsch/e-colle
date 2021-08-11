@@ -59,7 +59,7 @@ class Creneau(models.Model):
         # minuit
     LISTE_JOUR=enumerate(["lundi","mardi","mercredi","jeudi","vendredi","samedi"])
     jour = models.PositiveSmallIntegerField(choices=LISTE_JOUR,default=0)
-    heure = models.PositiveSmallIntegerField(choices=LISTE_HEURE,default=24)
+    heure = models.PositiveSmallIntegerField(choices=LISTE_HEURE,default=480)
     salle = models.CharField(max_length=20,null=True,blank=True)
     classe = models.ForeignKey("Classe",related_name="classecreneau", on_delete=models.PROTECT)
 

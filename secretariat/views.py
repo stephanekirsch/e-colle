@@ -6,7 +6,7 @@ from administrateur.forms import AdminConnexionForm, InformationForm
 from colleur.forms import ECTSForm
 from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm, ColleurSelectForm
 from accueil.models import Config, Note, Semaine, Matiere, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, mois, NoteECTS, Information
-from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV, mixtegroupeCreer, mixtegroupecsv
+from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV, mixtegroupeCreer, mixtegroupecsv, mixteColloscopeImport
 from django.http import Http404, HttpResponse,  HttpResponseForbidden
 from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
 from reportlab.platypus import Table, TableStyle
@@ -199,6 +199,14 @@ def colloscopeModif(request,id_classe,id_semin,id_semax,creneaumodif=None):
     semin=get_object_or_404(Semaine,pk=id_semin)
     semax=get_object_or_404(Semaine,pk=id_semax)
     return mixtecolloscopemodif(request,classe,semin,semax,creneaumodif)
+
+@user_passes_test(is_secret, login_url='accueil')
+def colloscopeImport(request,id_classe):
+    """Renvoie la vue de la page d'import' du colloscope de la classe dont l'id est id_classe"""
+    classe=get_object_or_404(Classe,pk=id_classe)
+    if not Config.objects.get_config().modif_secret_col:
+        return HttpResponseForbidden("Accès non autorisé")
+    return mixteColloscopeImport(request,classe)
     
 @user_passes_test(is_secret, login_url='accueil')
 def creneauSuppr(request,id_creneau,id_semin,id_semax):

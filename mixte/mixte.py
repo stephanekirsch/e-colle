@@ -5,7 +5,7 @@ from django.db.models import Count, F, Min, Max, Case, Value, When
 from django.http import Http404, HttpResponse
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
-from colleur.forms import SemaineForm, CreneauForm, ColleForm, GroupeForm, Groupe2Form
+from colleur.forms import SemaineForm, CreneauForm, ColleForm, GroupeForm, Groupe2Form, ColloscopeImportForm
 from pdf.pdf import easyPdf
 from reportlab.platypus import Table, TableStyle
 import json
@@ -110,11 +110,11 @@ def mixteCSV(request,classe,semin,semax):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="colloscope_{}_S{}-S{}.csv"'.format(classe.nom, semin.numero, semax.numero)
     jours=['lu', 'ma', 'me', 'je', 've', 'sa']
-    writer = csv.writer(response,delimiter=";")
-    writer.writerow(['Matière','Colleur','Créneau','Salle']+['S{}'.format(semaine.numero) for semaine in semaines])
+    writer = csv.writer(response,delimiter=",")
+    writer.writerow(['Matière','Nom','Prénom','Créneau','Salle']+['S{}'.format(semaine.numero) for semaine in semaines])
     for creneau, groupes in zip(creneaux, groupescolle):
-        cases = [(groupe['groupe'] if groupe['groupe'] is not None else "") if groupe['temps'] == 20  else (classe.dictEleves()[groupe['id_eleve']] if groupe['id_eleve'] is not None else "")  for groupe in groupes]
-        writer.writerow([creneau['matiere_nom'], "{} {}".format(creneau['nom'].upper(), creneau['prenom'].title()) ,
+        cases = [(groupe['groupe'].replace(',',";") if groupe['groupe'] != "0" else "") if groupe['temps'] == 20  else (classe.dictEleves()[groupe['id_eleve']] if groupe['id_eleve'] is not None else "")  for groupe in groupes]
+        writer.writerow([creneau['matiere_nom'] + ("(lv{})".format(creneau['lv']) if creneau['lv'] else ""), creneau['nom'].upper(), creneau['prenom'].title() ,
             "{} {}h{:02d}".format(jours[creneau['jds']], creneau['heure']//60,(creneau['heure']%60)), creneau['salle']] + cases)
     return response
 
@@ -154,6 +154,14 @@ def mixtecolloscopemodif(request,classe,semin,semax,creneaumodif):
     return render(request,'mixte/colloscopeModif.html',
     {'semin':semin,'semax':semax,'form1':form1,'form':form,'form2':form2,'largeur':largeur,'hauteur':hauteur,'groupes':groupes,'matieres':zip(matieres,listeColleurs,matieresgroupes),'matieres2': "" if not semestres else zip(matieres,listeColleurs,matieresgroupes2),'creneau':creneaumodif\
     ,'classe':classe,'semestre2':semestre2,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'dictColleurs':classe.dictColleurs(semin,semax), 'dictGroupes':json.dumps(classe.dictGroupes(False)), 'dictGroupes2':json.dumps(classe.dictGroupes(False, 2) if semestres else ""), 'dictEleves':json.dumps(classe.dictElevespk())})
+
+def mixteColloscopeImport(request, classe):
+    form = ColloscopeImportForm(classe, request.POST or None, request.FILES or None)
+    if form.is_valid():
+        form.save()
+        return redirect('colloscope_colleur'  if request.user.colleur else 'colloscope_secret', 1, classe.pk)
+    return render(request,'mixte/colloscopeimport.html',{'form':form, 'classe':classe})
+
 
 def mixtecreneausuppr(request,creneau,id_semin,id_semax):
     try:

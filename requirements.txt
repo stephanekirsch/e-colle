@@ -5,3 +5,4 @@ qrcode
 reportlab
 Unidecode
 uWSGI
+ckeditor

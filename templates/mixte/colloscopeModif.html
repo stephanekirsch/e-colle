@@ -23,6 +23,7 @@
 <table class="accueil">
 	<tr>
 		<td><a id="compat" href="{% url user.colleur|yesno:'ajaxcompat_colleur,ajaxcompat_secret' classe.pk %}">Vérifier compatibilité</a></td>
+		<td><a href="{% url user.colleur|yesno:'importcolloscope_colleur,importcolloscope_secret' classe.pk %}">Importer colloscope en csv</a></td>
 	</tr>
 </table>
 <form method="POST">

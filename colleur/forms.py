@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Colleur, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS, Devoir, DevoirCorrige, DevoirRendu
+from accueil.models import Colleur, Colle, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS, Devoir, DevoirCorrige, DevoirRendu
 from django.db.models import Q, Count, Value
 from django.db.models.functions import Coalesce
 from datetime import date, timedelta
@@ -11,7 +11,10 @@ from ecolle.settings import RESOURCES_ROOT, MEDIA_ROOT, IMAGEMAGICK
 from os.path import isfile,join
 from os import remove
 from copy import copy
+from _io import TextIOWrapper
+import csv
 from zipfile import ZipFile
+from unidecode import unidecode
 from django.core.files.base import ContentFile
 
 class ColleurConnexionForm(forms.Form):
@@ -494,6 +497,120 @@ class CopiesForm(forms.Form):
                         copiecorrigee = DevoirCorrige(eleve = copie.eleve, devoir = self.devoir, commentaire = "")
                         copiecorrigee.fichier.save(copiecorrigee.update_name() , ContentFile(myfile.read()), save = False)
                         copiecorrigee.save()
+
+class ColloscopeImportForm(forms.Form):
+    def __init__(self, classe, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.classe = classe
+        self.entete = []
+        self.colles = []
+        self.semaines = []
+        self.fields['fichier'] = forms.FileField(label="Fichier csv",required=True)
+
+    def clean(self):
+        matieres = {unidecode(matiere.nom.lower()) + ("(lv{})".format(matiere.lv) if matiere.lv else ""): matiere for matiere in Matiere.objects.filter(matieresclasse=self.classe).distinct()}
+        colleurs = {(unidecode(colleur.user.last_name.lower()), unidecode(colleur.user.first_name.lower())): (colleur, set(colleur.matieres.values_list("pk",flat = True))) for colleur in Colleur.objects.filter(classes=self.classe)}
+        jours = {"lu":0, "ma":1, "me":2, "je":3, "ve":4, "sa":5, "di":6}
+        try:
+            with TextIOWrapper(self.cleaned_data['fichier'].file,encoding = 'utf8',newline='') as csvfile:
+                colloscopereader = csv.reader(csvfile, delimiter=',')
+                self.entete = next(colloscopereader)
+                try:
+                    self.semaines = [Semaine.objects.filter(numero=int(i[1:]))[:1].get() for i in self.entete[5:]]
+                except Exception:
+                    raise ValidationError("erreur dans les numéros de semaine (il faut uniquement des nombres précédés de la lettre 'S')")
+                taille = len(self.entete)
+                if taille <= 5:
+                    raise ValidationError("première ligne du fichier trop courte!")
+                self.colles = []
+                for row in colloscopereader:
+                    if len(row) != taille:
+                        raise ValidationError("longueurs de lignes inconsistantes")
+                    mat = unidecode(row[0].lower())
+                    if mat in matieres:
+                        colle = [matieres[mat]]
+                    else:
+                        raise ValidationError("{} n'est pas une matière de la classe de {}".format(mat,self.classe.nom))
+                    colleur = (unidecode(row[1].lower()),unidecode(row[2].lower()))
+                    if colleur in colleurs and colle[0].pk in colleurs[colleur][1]:
+                        colle.append(colleurs[colleur][0])
+                    else:
+                        raise ValidationError("{} n'est pas colleur de {} dans la matière {}".format(" ".join(colleur), self.classe.nom, mat))
+                    creneau = row[3].split(" ")
+                    if creneau[0] not in jours:
+                        raise ValidationError("{} ne correspond à aucun jour de la semaine").format(creneau[0])
+                    else:
+                        colle.append(jours[creneau[0]])
+                    heure = creneau[1].split("h")
+                    try:
+                        minutes = 60*int(heure[0]) + int(heure[1])
+                    except Exception:
+                        raise ValidationError("l'heure {} est mal formatée".format(creneau[1]))
+                    else:
+                        colle.append(minutes)
+                    colle.append(row[4])
+                    groupes = {groupe.nom: groupe for groupe in Groupe.objects.filter(classe = self.classe)}
+                    eleves = dict(reversed(x) for x in self.classe.loginsEleves())
+                    if colle[0].temps == 20:
+                        for col in row[5:]:
+                            if col == "":
+                                colle.append(None)
+                            else:
+                                groups = []
+                                for x in col.split(";"):
+                                    if x.isdigit() and int(x) in groupes:
+                                        groups.append(groupes[int(x)])
+                                    else:
+                                        raise ValidationError("le groupe {} n'existe pas".format(col))
+                                colle.append(groups)
+                    elif colle[0].temps == 30:
+                        for col in row[5:]:
+                            if col == "":
+                                colle.append(None)
+                            elif col in eleves:
+                                colle.append(eleves[col])
+                            else:
+                                raise ValidationError("{} n'est le login d'aucun élève de {}".format(col,self.classe))
+                    elif colle[0].temps == 60:
+                        for col in row[5:]:
+                            if col:
+                                colle.append(self.classe)
+                            else:
+                                colle.append(None)
+                    self.colles.append(colle)
+        except Exception as e:
+            raise ValidationError("Le fichier doit être un fichier CSV valide, encodé en UTF-8")
+
+    def save(self):
+        # on efface les colles des semaines présentes
+        Colle.objects.filter(semaine__in = self.semaines,creneau__classe = self.classe).delete()
+        for colles in self.colles:
+            colles_a_sauver = []
+            # on chercher un créneau où officie déjà le colleur, dans la même matière, dans la même salle, sinon on le crée
+            creneau = Creneau.objects.filter(jour=colles[2],heure=colles[3],salle=colles[4],classe=self.classe,colle__matiere=colles[0],colle__colleur=colles[1])
+            if creneau.exists() and not Colle.objects.filter(creneau = creneau[0],semaine__in =self.semaines).exists():
+                creneau = creneau[:1][0]
+            else:
+                creneau = Creneau.objects.filter(jour=colles[2],heure=colles[3],salle=colles[4],classe=self.classe,colle__isnull=True)
+                if creneau.exists():
+                    creneau = creneau[:1][0]
+                else:
+                    creneau = Creneau(jour=colles[2],heure=colles[3],salle=colles[4],classe=self.classe)
+                    creneau.save()
+            if colles[0].temps == 20:
+                for col, semaine in zip(colles[5:],self.semaines):
+                    if col:
+                        for groupe in col:
+                            colles_a_sauver.append(Colle(creneau = creneau, colleur = colles[1],matiere = colles[0], groupe = groupe, eleve = None, classe = self.classe, semaine = semaine))
+            elif colles[0].temps == 30:
+                for col, semaine in zip(colles[5:],self.semaines):
+                    if col:
+                        colles_a_sauver.append(Colle(creneau = creneau, colleur = colles[1],matiere = colles[0], groupe = None, eleve = col, classe = self.classe, semaine = semaine))
+            elif colles[0].temps == 60:
+                for col, semaine in zip(colles[5:],self.semaines):
+                    if col:
+                        colles_a_sauver.append(Colle(creneau = creneau, colleur = colles[1],matiere = colles[0], groupe = None, eleve = None, classe = self.classe, semaine = semaine))
+            Colle.objects.bulk_create(colles_a_sauver)
 
 
    
