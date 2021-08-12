@@ -57,45 +57,19 @@ class Command(BaseCommand):
             archive_zip = tarfile.open(os.path.join("..","e-colle.tar.gz"),"r:gz")
             archive_zip.extractall("..")
             # on renomme le nouveau e-colle
+            cwd = os.path.split(os.getcwd())[1]
+            cwd_new = "{}-new".format(cwd)
+            cwd_bak = "{}-bak".format(cwd)
             reps = [f for f in os.listdir("..") if not os.path.isfile(f) and f.startswith("stephanekirsch-e-colle")]
-            os.rename(os.path.join("..",reps[0]),os.path.join("..","e-colle-new"))
+            os.rename(os.path.join("..",reps[0]),os.path.join("..",cwd_new))
             # on récupère les données de config de l'ancien e-colle pour les passer au nouveau.
             self.stdout.write("copie des données de configuration")
-            from ecolle.settings import DEFAULT_ADMIN_PASSWD, DEFAULT_SECRETARIAT_PASSWD, EMAIL_ADMIN, EMAIL_SECRETARIAT, IP_FILTRE_ADMIN,\
-            IP_FILTRE_ADRESSES, DATABASES, BDD, IMAGEMAGICK, ALLOWED_HOSTS, INTERNAL_IPS, SECRET_KEY, TIME_ZONE, HEURE_DEBUT, HEURE_FIN, INTERVALLE
-            try:
-                from ecolle.settings import GESTION_ADMIN_BDD
-            except exception:
-                GESTION_ADMIN_BDD = False
-            db = DATABASES["default"]
-            with open(os.path.join("..","e-colle-new","ecolle","config.py"),"wt",encoding="utf8") as fichier:
-                    fichier.write("DEFAULT_ADMIN_PASSWD = '{}' # mot de passe de l'utilisateur administrateur\n".format(DEFAULT_ADMIN_PASSWD))
-                    fichier.write("DEFAULT_SECRETARIAT_PASSWD = '{}' # mot de passe de l'utilisateur secrétariat\n".format(DEFAULT_SECRETARIAT_PASSWD))
-                    fichier.write("EMAIL_ADMIN = '{}' # email de l'utilisateur administateur\n".format(EMAIL_ADMIN))
-                    fichier.write("EMAIL_SECRETARIAT = '{}' # email de l'utilisateur secrétariat\n".format(EMAIL_SECRETARIAT))
-                    fichier.write("IP_FILTRE_ADMIN = {} # filtrage IP pour l'utilisateur administrateur\n".format(IP_FILTRE_ADMIN))
-                    fichier.write("IP_FILTRE_ADRESSES = (")
-                    taille = len(IP_FILTRE_ADRESSES)
-                    ip_filtre_adresses = ",".join("'" + ip + "'" for ip in IP_FILTRE_ADRESSES)
-                    if taille == 1:
-                        ip_filtre_adresses += ","
-                    fichier.write(ip_filtre_adresses)
-                    fichier.write(") # si IP_FILTER_ADMIN vaut True, liste des IPS autorisées pour l'utilisateur admin (REGEXP)\n")
-                    fichier.write("GESTION_ADMIN_BDD = {} # autorise l'admin a effectuter des opérations sur la BDD (nettoyage entre 2 années + backup/restore)\n".format(GESTION_ADMIN_BDD))
-                    fichier.write("DB_ENGINE = '{}' # base de données (mysql ou postgresql ou sqlite3)\n".format(BDD))
-                    fichier.write("DB_USER = '{}' # nom de l'utilisateur qui a les droits sur la base de données\n".format(db['USER']))
-                    fichier.write("DB_NAME = '{}' # nom de la base de données (ou du fichier .db pour SQLite)\n".format(db['NAME']))
-                    fichier.write("DB_PASSWORD = '{}' # mot de passe pour se connecter à la base de données\n".format(db['PASSWORD']))
-                    fichier.write("DB_HOST = '{}' # adresse locale de la base de données\n".format(db['HOST']))
-                    fichier.write("DB_PORT = '{}' # port de la BDD, vide par défaut. À renseigner si la BDD se trouve sur un port particulier\n".format(db['PORT']))
-                    fichier.write("IMAGEMAGICK = {} # utilisation de ImageMagick pour faire des miniatures de la première page des pdf programmes de colle\n".format(IMAGEMAGICK ))
-                    fichier.write("ALLOWED_HOSTS = {} # liste des noms de domaine autorisés pour accéder à e-colle\n".format(ALLOWED_HOSTS))
-                    fichier.write("INTERNAL_IPS = {} # liste des IP autorisées pour accéder en interne à e-colle quand debug est True\n".format(INTERNAL_IPS))
-                    fichier.write("SECRET_KEY = '{}' # clé secrète aléatoire de 50 caractères\n".format(SECRET_KEY))
-                    fichier.write("TIME_ZONE = '{}' # fuseau horaire\n".format(TIME_ZONE))
-                    fichier.write("HEURE_DEBUT = {} # heure de début des colles (en minutes depuis minuit)\n".format(HEURE_DEBUT))
-                    fichier.write("HEURE_FIN = {} # heure de fin des colles (en minutes depuis minuit)\n".format(HEURE_FIN))
-                    fichier.write("INTERVALLE = {} # intervalle entre 2 créneaux (en minutes)".format(INTERVALLE))
+            import ecolle.config as old_config
+            vars = [x for x in dir(old_config) if x[:2] != "__"]
+            vardict = {s:getattr(old_config,s) for s in vars}
+            with open(os.path.join("..",cwd_new,"ecolle","config.py"),"wt",encoding="utf8") as fichier:
+                for key, value in vardict.items():
+                    fichier.write("{} = {}".format(key,value))
             self.stdout.write("copie terminée")
             self.stdout.write("sauvegarde de la base de données pour avoir un point de sauvegarde en cas d'échec de la mise à jour")
             try:
@@ -114,23 +88,25 @@ class Command(BaseCommand):
                 poursuite = True
             if poursuite: # si la sauvegarde de la base de données a réussi ou si on s'en passe, on met à jour la migration
                 self.stdout.write("Mise à jour de la structure de la base de données")
-                chemin = os.path.join("..","e-colle-new","manage.py")
+                chemin = os.path.join("..",cwd_new,"manage.py")
                 subprocess.run(["python3",chemin,"migrate"])
                 # on copie les fichiers media/backup:
                 self.stdout.write("copie des fichiers media/backup")
-                repertoires = ['programme','image','photos']
+                repertoires = os.path.listdir("media")
+                repertoires = [os.path.join("media", file) for file in repertoires]
+                repertoires = [d in repertoires if os.path.isdir(d)]
                 for rep in repertoires:
                     source = os.path.join("media",rep)
-                    target = os.path.join("..","e-colle-new","media",rep)
+                    target = os.path.join("..",cwd_new,"media",rep)
                     for file in os.listdir(source):
                         filecopy(os.path.join(source,file),target)
                 source = "backup"
-                target = os.path.join("..","e-colle-new","backup")
+                target = os.path.join("..",cwd_new,"backup")
                 for file in os.listdir(source):
                     filecopy(os.path.join(source,file),target)
                 # on renomme e-colle-bak l'ancien réperoire et e-colle le nouveau
-                os.rename(os.path.join("..","e-colle"),os.path.join("..","e-colle-bak"))
-                os.rename(os.path.join("..","e-colle-new"),os.path.join("..","e-colle"))
+                os.rename(os.path.join("..",cwd),os.path.join("..",cwd_bak))
+                os.rename(os.path.join("..",cwd_new),os.path.join("..","e-colle"))
         except Exception as e:
             self.stdout.write(str(e))
             self.stdout.write("la mise à jour n'a pas pu aller jusqu'au bout. Si la migration a eu lieu,\n\
