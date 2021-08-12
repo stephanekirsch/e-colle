@@ -178,26 +178,14 @@ def main():
         liste_echecs.append("python3-pip")
     else:
         print("installation des bibliothèques python requises")
-        for bibli in ["django","pexpect","reportlab","unidecode","pillow","qrcode"]:
-            print("-"*20)
-            completedProcess = pipinstall(bibli)
-            if completedProcess.returncode:
-                print("échec de l'installation de " + bibli)
-                liste_echecs.append(bibli)
-    print("-"*20)
-    print("installation de mysqlclient")
-    completedProcess = aptinstall("libmysqlclient-dev")
-    completedProcess = pipinstall("mysqlclient")
-    if completedProcess.returncode:
-        print("échec de l'installation de mysqlclient")
-        liste_echecs.append("mysqlclient")
-    print("-"*20)
-    print("installation de psycopg2")
-    completedProcess = aptinstall("libpq-dev")
-    completedProcess = pipinstall("psycopg2")
-    if completedProcess.returncode:
-        print("échec de l'installation de psycipg2")
-        liste_echecs.append("psycopg2")
+        with open('requirements.txt', 'rt', encoding = 'utf8',) as fichier:
+            biblis = fichier.read().splitlines()
+            for bibli in biblis:
+                print("-"*20)
+                completedProcess = pipinstall(bibli)
+                if completedProcess.returncode:
+                    print("échec de l'installation de " + bibli)
+                    liste_echecs.append(bibli)
     print("-"*20)
     init = input("Avez-vous initialisé les données du fichier de configuration\n\
         à l'aide de la commande 'python3 manage.py initdata' ?\n\
@@ -213,7 +201,11 @@ def main():
             print("l'initialisation des données de donfiguration a échoué, il faudra le faire à la main")
         else:
             print("l'initialisation des données de configuration a été effectuée avec succès")
-    from ecolle.config import DB_ENGINE, IMAGEMAGICK, DB_PASSWORD
+    from ecolle.config_default import DB_ENGINE, IMAGEMAGICK, DB_PASSWORD
+    try:
+        from ecolle.config import DB_ENGINE, IMAGEMAGICK, DB_PASSWORD
+    except ImportError:
+        pass
     if IMAGEMAGICK:
         print("-"*20)
         print("installation de ImageMagick")

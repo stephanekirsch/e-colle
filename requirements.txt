@@ -1,8 +1,10 @@
+django
+pexpect
 mysqlclient
-Pillow
+pillow
 psycopg2
 qrcode
 reportlab
-Unidecode
+unidecode
 uWSGI
 ckeditor
