@@ -58,7 +58,7 @@ class Command(BaseCommand):
             archive_zip.extractall("..")
             # on renomme le nouveau e-colle
             cwd = os.path.split(os.getcwd())[1]
-            cwd_new = "{}-new".format(cwd)
+            cwd_new = "e-colle-new".format(cwd)
             cwd_bak = "{}-bak".format(cwd)
             reps = [f for f in os.listdir("..") if not os.path.isfile(f) and f.startswith("stephanekirsch-e-colle")]
             os.rename(os.path.join("..",reps[0]),os.path.join("..",cwd_new))
