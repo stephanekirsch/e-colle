@@ -88,8 +88,9 @@ class Command(BaseCommand):
                 poursuite = True
             if poursuite: # si la sauvegarde de la base de données a réussi ou si on s'en passe, on met à jour la migration
                 self.stdout.write("Mise à jour de la structure de la base de données")
-                chemin = os.path.join("..",cwd_new,"manage.py")
-                subprocess.run(["python3",chemin,"migrate"])
+                os.chdir(os.path.join("..",cwd_new))
+                subprocess.run(["pip3","install","requirements.txt"]) # on installe les éventuelles bilbiothèques manquantes
+                subprocess.run(["python3","manage.py","migrate"])
                 # on copie les fichiers media/backup:
                 self.stdout.write("copie des fichiers media/backup")
                 repertoires = os.path.listdir("media")
