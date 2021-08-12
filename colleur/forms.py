@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Colleur, Colle, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS, Devoir, DevoirCorrige, DevoirRendu
+from accueil.models import Colleur, Colle, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS, Devoir, DevoirCorrige, DevoirRendu, TD, Cours, Document
 from django.db.models import Q, Count, Value
 from django.db.models.functions import Coalesce
 from datetime import date, timedelta
@@ -612,6 +612,60 @@ class ColloscopeImportForm(forms.Form):
                         colles_a_sauver.append(Colle(creneau = creneau, colleur = colles[1],matiere = colles[0], groupe = None, eleve = None, classe = self.classe, semaine = semaine))
             Colle.objects.bulk_create(colles_a_sauver)
 
+
+class TDForm(forms.ModelForm):
+    class Meta:
+        model = TD
+        fields=['numero','detail','fichier']
+
+    def __init__(self, matiere, classe, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.matiere = matiere
+        self.classe = classe
+
+    def clean(self):
+        """Vérifie la condition d'unicité de numéro/classe/matière"""
+        query = TD.objects.filter(numero = self.cleaned_data['numero'], matiere = self.matiere, classe = self.classe)
+        if self.instance:
+            query = query.exclude(pk = self.instance.pk)
+        if query.exists():
+            raise ValidationError("il existe déjà un td n°{} dans la classe {} en {}".format(self.cleaned_data['numero'], self.classe, self.matiere))
+
+class CoursForm(forms.ModelForm):
+    class Meta:
+        model = Cours
+        fields=['numero','detail','fichier']
+
+    def __init__(self, matiere, classe, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.matiere = matiere
+        self.classe = classe
+
+    def clean(self):
+        """Vérifie la condition d'unicité de numéro/classe/matière"""
+        query = Cours.objects.filter(numero = self.cleaned_data['numero'], matiere = self.matiere, classe = self.classe)
+        if self.instance:
+            query = query.exclude(pk = self.instance.pk)
+        if query.exists():
+            raise ValidationError("il existe déjà un cours n°{} dans la classe {} en {}".format(self.cleaned_data['numero'], self.classe, self.matiere))
+
+class DocumentForm(forms.ModelForm):
+    class Meta:
+        model = Document
+        fields=['titre','detail','fichier']
+
+    def __init__(self, matiere, classe, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.matiere = matiere
+        self.classe = classe
+
+    def clean(self):
+        """Vérifie la condition d'unicité de numéro/classe/matière"""
+        query = Document.objects.filter(titre = self.cleaned_data['titre'], matiere = self.matiere, classe = self.classe)
+        if self.instance:
+            query = query.exclude(pk = self.instance.pk)
+        if query.exists():
+            raise ValidationError("il existe déjà un document nommé '{}' dans la classe {} en {}".format(self.cleaned_data['titre'], self.classe, self.matiere))
 
    
         

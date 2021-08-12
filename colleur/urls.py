@@ -63,4 +63,13 @@ url(r'^action/devoir/supprimer/(\d+)$', views.devoirSuppr ,name="colleur_devoirs
 url(r'^action/devoir/depot/(\d+)/(\d+)$', views.depotCopie ,name="colleur_depotcopie"),
 url(r'^action/devoir/depot/(\d+)$', views.depotCopies ,name="depot_copies"),
 url(r'^action/devoir/ramasse/(\d+)$', views.ramasseCopies ,name="ramasse_copies"),
+url(r'^action/td/(\d+)$', views.td ,name="colleur_td"),
+url(r'^action/td/modifier/(\d+)$', views.tdModif ,name="colleur_tdmodif"),
+url(r'^action/td/supprimer/(\d+)$', views.tdSuppr ,name="colleur_tdsuppr"),
+url(r'^action/cours/(\d+)$', views.cours ,name="colleur_cours"),
+url(r'^action/cours/modifier/(\d+)$', views.coursModif ,name="colleur_coursmodif"),
+url(r'^action/cours/supprimer/(\d+)$', views.coursSuppr ,name="colleur_courssuppr"),
+url(r'^action/autre/(\d+)$', views.autre ,name="colleur_autre"),
+url(r'^action/autre/modifier/(\d+)$', views.autreModif ,name="colleur_autremodif"),
+url(r'^action/autre/supprimer/(\d+)$', views.autreSuppr ,name="colleur_autresuppr"),
 ]

@@ -1,6 +1,7 @@
 {% extends 'colleur/action.html' %}
 {% load static %}
 {% block body %}
+{% include "colleur/navdocuments.html" %}
 <table class="accueil"><tr><td>Modifier un devoir de {{devoir.classe}} en {{devoir.matiere.nom|title}}</td></tr></table>
 <form method="POST" enctype="multipart/form-data">
 {% csrf_token %}

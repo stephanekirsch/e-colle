@@ -2,6 +2,7 @@
 {% load static %}
 {% load customfilter %}
 {% block body %}
+{% include "colleur/navdocuments.html" %}
 {% get_mathjax as latex %}
 <table class="accueil"><tr><td>Ajouter un devoir en {{matiere.nom|title}}</td></tr></table>
 <form method="POST" enctype="multipart/form-data">

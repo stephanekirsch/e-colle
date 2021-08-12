@@ -12,5 +12,5 @@ from .colle import Colle
 from .eleve import Eleve
 from .ramassage import Ramassage, mois, Decompte
 from .contenttype import RestrictedImageField
-from .devoir import Devoir, DevoirRendu, DevoirCorrige
+from .devoir import Devoir, DevoirRendu, DevoirCorrige, Cours, TD, Document
 

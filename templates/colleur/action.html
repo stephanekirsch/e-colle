@@ -40,7 +40,7 @@
 		</li>
 		<li><a href="{% url 'agenda_colleur' %}">Agenda</a></li>
 		{% if request.session.matiere in user.colleur.allprofsmatieres %}
-		<li><a href="#">Devoirs</a>
+		<li><a href="#">Documents</a>
 			<ul>
 				{% for prof in user.colleur.allprofs %}
 				{% if request.session.matiere == prof.matiere.pk %}

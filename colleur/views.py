@@ -1,8 +1,8 @@
 #-*- coding: utf-8 -*-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from colleur.forms import ColleurConnexionForm, ProgrammeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm, SelectEleveNoteForm, NoteElevesHeadForm, NoteElevesTailForm, NoteElevesFormset, DevoirForm, CopieForm, CopiesForm
-from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, MatiereECTS, NoteECTS, Devoir, DevoirCorrige, DevoirRendu, Ramassage, Decompte
+from colleur.forms import ColleurConnexionForm, ProgrammeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm, SelectEleveNoteForm, NoteElevesHeadForm, NoteElevesTailForm, NoteElevesFormset, DevoirForm, CopieForm, CopiesForm, TDForm, CoursForm, DocumentForm
+from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, MatiereECTS, NoteECTS, Devoir, DevoirCorrige, DevoirRendu, Ramassage, Decompte, TD, Cours, Document
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV, mixtegroupeSwap, mixtegroupeCreer, mixtegroupecsv, mixteColloscopeImport
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
@@ -884,3 +884,125 @@ def ramasseCopies(request, id_devoir):
         raise Http404
 
 
+@user_passes_test(is_colleur, login_url='accueil')
+def td(request,id_classe):
+    """renvoie la page des tds de la classe dont l'id est id_classe, dans la matière courante du professeur"""
+    classe=get_object_or_404(Classe,pk=id_classe)
+    colleur=request.user.colleur
+    matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
+    if not is_prof(request.user,matiere,classe):
+        raise Http404
+    tds=TD.objects.filter(classe=classe,matiere=matiere).all()
+    td = TD(classe=classe,matiere=matiere)
+    form = TDForm(matiere, classe, request.POST or None,request.FILES or None,instance=td)
+    if form.is_valid():
+        form.save()
+        return redirect('colleur_td',classe.pk)
+    return render(request,"colleur/tds.html", {'matiere':matiere , 'form':form, 'tds':tds})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def tdModif(request,id_td):
+    """Renvoie la vue de la page de modification du td dont l'id est id_td"""
+    td=get_object_or_404(TD,pk=id_td)
+    if not is_prof(request.user,td.matiere,td.classe):
+        raise Http404
+    form=TDForm(td.matiere, td.classe, request.POST or None,request.FILES or None, instance=td)
+    oldfile=os.path.join(MEDIA_ROOT,td.fichier.name) if td.fichier else False
+    if form.is_valid():
+        if (request.FILES and 'fichier' in request.FILES or form.cleaned_data['fichier'] is False) and oldfile:
+            if os.path.isfile(oldfile):
+                os.remove(oldfile)
+        form.save()
+        return redirect('colleur_td', td.classe.pk)
+    return render(request,"colleur/tdModif.html",{'td':td,'form':form})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def tdSuppr(request,id_td):
+    """Essaie de supprimer le devoir dont l'id est id_devoir puis redirige vers la page de gestion des tds"""
+    td=get_object_or_404(TD,pk=id_td)
+    if not is_prof(request.user,td.matiere,td.classe):
+        raise Http404
+    td.delete()
+    return redirect('colleur_td', td.classe.pk)
+
+@user_passes_test(is_colleur, login_url='accueil')
+def cours(request,id_classe):
+    """renvoie la page des cours de la classe dont l'id est id_classe, dans la matière courante du professeur"""
+    classe=get_object_or_404(Classe,pk=id_classe)
+    colleur=request.user.colleur
+    matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
+    if not is_prof(request.user,matiere,classe):
+        raise Http404
+    cours=Cours.objects.filter(classe=classe,matiere=matiere).all()
+    cour = Cours(classe=classe,matiere=matiere)
+    form = CoursForm(matiere, classe, request.POST or None,request.FILES or None,instance=cour)
+    if form.is_valid():
+        form.save()
+        return redirect('colleur_cours',classe.pk)
+    return render(request,"colleur/cours.html", {'matiere':matiere , 'form':form, 'cours':cours})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def coursModif(request,id_cours):
+    """Renvoie la vue de la page de modification du cours dont l'id est id_cours"""
+    cours=get_object_or_404(Cours,pk=id_cours)
+    if not is_prof(request.user,cours.matiere,cours.classe):
+        raise Http404
+    form=CoursForm(cours.matiere, cours.classe, request.POST or None,request.FILES or None, instance=cours)
+    oldfile=os.path.join(MEDIA_ROOT,cours.fichier.name) if cours.fichier else False
+    if form.is_valid():
+        if (request.FILES and 'fichier' in request.FILES or form.cleaned_data['fichier'] is False) and oldfile:
+            if os.path.isfile(oldfile):
+                os.remove(oldfile)
+        form.save()
+        return redirect('colleur_cours', cours.classe.pk)
+    return render(request,"colleur/coursModif.html",{'cours':cours,'form':form})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def coursSuppr(request,id_cours):
+    """Essaie de supprimer le cours dont l'id est id_cours puis redirige vers la page de gestion des cours"""
+    cours=get_object_or_404(Cours,pk=id_cours)
+    if not is_prof(request.user,cours.matiere,cours.classe):
+        raise Http404
+    cours.delete()
+    return redirect('colleur_cours', cours.classe.pk)
+
+@user_passes_test(is_colleur, login_url='accueil')
+def autre(request,id_classe):
+    """renvoie la page des documents de la classe dont l'id est id_classe, dans la matière courante du professeur"""
+    classe=get_object_or_404(Classe,pk=id_classe)
+    colleur=request.user.colleur
+    matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
+    if not is_prof(request.user,matiere,classe):
+        raise Http404
+    docs=Document.objects.filter(classe=classe,matiere=matiere).all()
+    doc = Document(classe=classe,matiere=matiere)
+    form = DocumentForm(matiere, classe, request.POST or None,request.FILES or None,instance=doc)
+    if form.is_valid():
+        form.save()
+        return redirect('colleur_autre',classe.pk)
+    return render(request,"colleur/autre.html", {'matiere':matiere , 'form':form, 'docs':docs})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def autreModif(request,id_doc):
+    """Renvoie la vue de la page de modification du document dont l'id est id_doc"""
+    doc=get_object_or_404(Document,pk=id_doc)
+    if not is_prof(request.user,doc.matiere,doc.classe):
+        raise Http404
+    form=DocumentForm(doc.matiere, doc.classe, request.POST or None,request.FILES or None, instance=doc)
+    oldfile=os.path.join(MEDIA_ROOT,doc.fichier.name) if doc.fichier else False
+    if form.is_valid():
+        if (request.FILES and 'fichier' in request.FILES or form.cleaned_data['fichier'] is False) and oldfile:
+            if os.path.isfile(oldfile):
+                os.remove(oldfile)
+        form.save()
+        return redirect('colleur_autre', doc.classe.pk)
+    return render(request,"colleur/autreModif.html",{'doc':doc,'form':form})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def autreSuppr(request,id_doc):
+    """Essaie de supprimer le document dont l'id est id_doc puis redirige vers la page de gestion des documents"""
+    doc=get_object_or_404(Document,pk=id_doc)
+    if not is_prof(request.user,doc.matiere,doc.classe):
+        raise Http404
+    doc.delete()
+    return redirect('colleur_autre', doc.classe.pk)

@@ -1,0 +1,42 @@
+<div id="nav"> 
+	<ul id="menu">
+	{% with user.colleur.allprofs as profs %}
+		<li><a href="#">Devoirs</a>
+			<ul>
+				{% for prof in profs %}
+				{% if request.session.matiere == prof.matiere.pk %}
+				<li><a href="{% url 'colleur_devoirs' prof.classe.pk %}">{{prof.classe}}</a></li>
+				{% endif %}
+				{% endfor %}
+			</ul>
+		</li>
+		<li><a href="#">TDs</a>
+			<ul>
+				{% for prof in profs %}
+				{% if request.session.matiere == prof.matiere.pk %}
+				<li><a href="{% url 'colleur_td' prof.classe.pk %}">{{prof.classe}}</a></li>
+				{% endif %}
+				{% endfor %}
+			</ul>
+		</li>
+		<li><a href="#">Cours</a>
+			<ul>
+				{% for prof in profs %}
+				{% if request.session.matiere == prof.matiere.pk %}
+				<li><a href="{% url 'colleur_cours' prof.classe.pk %}">{{prof.classe}}</a></li>
+				{% endif %}
+				{% endfor %}
+			</ul>
+		</li>
+		<li><a href="#">Autre</a>
+			<ul>
+				{% for prof in profs %}
+				{% if request.session.matiere == prof.matiere.pk %}
+				<li><a href="{% url 'colleur_autre' prof.classe.pk %}">{{prof.classe}}</a></li>
+				{% endif %}
+				{% endfor %}
+			</ul>
+		</li>
+	{% endwith %}
+	</ul>
+</div>

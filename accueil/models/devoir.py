@@ -121,6 +121,48 @@ class DevoirCorrige(models.Model):
     def __str__(self):
         return "Copie corrigée de {} au devoir n°{}".format(self.eleve, self.devoir)
 
+class TD(models.Model):
+    def update_name(instance, filename):
+        return os.path.join("td", "td" + texte_aleatoire(20) + ".pdf")
+    classe = models.ForeignKey("Classe",related_name="classetd",on_delete=models.PROTECT)
+    matiere = models.ForeignKey("Matiere",related_name="matieretd",on_delete=models.PROTECT)
+    numero = models.PositiveSmallIntegerField(verbose_name="Numéro", choices = list(zip(range(1,101),range(1,101))))
+    detail = models.TextField(verbose_name="Détails",null=True,blank=True)
+    date_affichage = models.DateTimeField(auto_now_add = True)
+    fichier = ContentTypeRestrictedFileField(verbose_name="Fichier(pdf)",upload_to=update_name,null=True,blank=True,content_types=["application/pdf"], max_upload_size=2000000)
+
+    class Meta:
+        ordering = ['-numero']
+        unique_together = ['classe', 'matiere', 'numero']
+
+class Cours(models.Model):
+    def update_name(instance, filename):
+        return os.path.join("cours", "cours" + texte_aleatoire(20) + ".pdf")
+    classe = models.ForeignKey("Classe",related_name="classecours",on_delete=models.PROTECT)
+    matiere = models.ForeignKey("Matiere",related_name="matierecours",on_delete=models.PROTECT)
+    numero = models.PositiveSmallIntegerField(verbose_name="Numéro", choices = list(zip(range(1,101),range(1,101))))
+    detail = models.TextField(verbose_name="Détails",null=True,blank=True)
+    date_affichage = models.DateTimeField(auto_now_add = True)
+    fichier = ContentTypeRestrictedFileField(verbose_name="Fichier(pdf)",upload_to=update_name,null=True,blank=True,content_types=["application/pdf"], max_upload_size=10000000)
+
+    class Meta:
+        ordering = ['-numero']
+        unique_together = ['classe', 'matiere', 'numero']
+
+class Document(models.Model):
+    def update_name(instance, filename):
+        return os.path.join("doc", "doc" + texte_aleatoire(20) + ".pdf")
+    classe = models.ForeignKey("Classe",related_name="classedocument",on_delete=models.PROTECT)
+    matiere = models.ForeignKey("Matiere",related_name="matieredocument",on_delete=models.PROTECT)
+    titre = models.CharField(max_length=80,null=True,blank=True)
+    detail = models.TextField(verbose_name="Détails",null=True,blank=True)
+    date_affichage = models.DateTimeField(auto_now_add = True)
+    fichier = ContentTypeRestrictedFileField(verbose_name="Fichier(pdf)",upload_to=update_name,null=True,blank=True,content_types=["application/pdf"], max_upload_size=10000000)
+
+    class Meta:
+        ordering = ['-date_affichage']
+        unique_together = ['classe', 'matiere', 'titre']
+
 @receiver(post_delete, sender=Devoir)
 def devoir_post_delete_function(sender, instance, **kwargs):
     if instance.fichier and instance.fichier.name is not None:
@@ -131,6 +173,28 @@ def devoir_post_delete_function(sender, instance, **kwargs):
         fichier=os.path.join(MEDIA_ROOT,instance.corrige.name)
         if os.path.isfile(fichier):
             os.remove(fichier)
+
+@receiver(post_delete, sender=Cours)
+def cours_post_delete_function(sender, instance, **kwargs):
+    if instance.fichier and instance.fichier.name is not None:
+        fichier=os.path.join(MEDIA_ROOT,instance.fichier.name)
+        if os.path.isfile(fichier):
+            os.remove(fichier)
+
+@receiver(post_delete, sender=TD)
+def td_post_delete_function(sender, instance, **kwargs):
+    if instance.fichier and instance.fichier.name is not None:
+        fichier=os.path.join(MEDIA_ROOT,instance.fichier.name)
+        if os.path.isfile(fichier):
+            os.remove(fichier)
+
+@receiver(post_delete, sender=Document)
+def document_post_delete_function(sender, instance, **kwargs):
+    if instance.fichier and instance.fichier.name is not None:
+        fichier=os.path.join(MEDIA_ROOT,instance.fichier.name)
+        if os.path.isfile(fichier):
+            os.remove(fichier)
+
 
 @receiver(post_delete, sender=DevoirRendu)
 def devoirrendu_post_delete_function(sender, instance, **kwargs):
