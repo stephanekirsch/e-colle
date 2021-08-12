@@ -34,7 +34,7 @@ class Command(BaseCommand):
 		if choix == "2":
 			repertoires = os.path.listdir(MEDIA_ROOT)
 			repertoires = [os.path.join(MEDIA_ROOT, file) for file in repertoires]
-			repertoires = [d in repertoires if os.path.isdir(d)]
+			repertoires = [d for d in repertoires if os.path.isdir(d)]
 			for repertoire in repertoires:
 				for fichiermedia in os.listdir(repertoire):
 					if fichiermedia  != ".gitignore":

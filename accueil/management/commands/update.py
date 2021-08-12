@@ -58,7 +58,7 @@ class Command(BaseCommand):
             archive_zip.extractall("..")
             # on renomme le nouveau e-colle
             cwd = os.path.split(os.getcwd())[1]
-            cwd_new = "e-colle-new".format(cwd)
+            cwd_new = "e-colle-new"
             cwd_bak = "{}-bak".format(cwd)
             reps = [f for f in os.listdir("..") if not os.path.isfile(f) and f.startswith("stephanekirsch-e-colle")]
             os.rename(os.path.join("..",reps[0]),os.path.join("..",cwd_new))
@@ -94,7 +94,7 @@ class Command(BaseCommand):
                 self.stdout.write("copie des fichiers media/backup")
                 repertoires = os.path.listdir("media")
                 repertoires = [os.path.join("media", file) for file in repertoires]
-                repertoires = [d in repertoires if os.path.isdir(d)]
+                repertoires = [d for d in repertoires if os.path.isdir(d)]
                 for rep in repertoires:
                     source = os.path.join("media",rep)
                     target = os.path.join("..",cwd_new,"media",rep)
@@ -106,7 +106,7 @@ class Command(BaseCommand):
                     filecopy(os.path.join(source,file),target)
                 # on renomme e-colle-bak l'ancien réperoire et e-colle le nouveau
                 os.rename(os.path.join("..",cwd),os.path.join("..",cwd_bak))
-                os.rename(os.path.join("..",cwd_new),os.path.join("..","e-colle"))
+                os.rename(os.path.join("..",cwd_new),os.path.join("..",cwd))
         except Exception as e:
             self.stdout.write(str(e))
             self.stdout.write("la mise à jour n'a pas pu aller jusqu'au bout. Si la migration a eu lieu,\n\
