@@ -1,8 +1,9 @@
-{% extends 'colleur/action.html' %}
+{% extends 'eleve/action.html' %}
 {% load static %}
 {% load customfilter %}
 {% block body %}
 {% get_mathjax as latex %}
+{% include "eleve/navdocuments.html" %}
 <table class="accueil"><tr><td>Devoirs de la classe {{classe}}{% if matiere %} en {{matiere}}{% endif %}</td></tr></table>
 <form method="POST">
 	{% csrf_token %}

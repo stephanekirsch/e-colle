@@ -110,7 +110,7 @@ class DevoirCorrige(models.Model):
     def update_name(instance, filename = ""):
         return os.path.join("devoir", "copiecorrige_{}_{}_{}.pdf".format(unidecode(instance.eleve.user.last_name), unidecode(instance.eleve.user.first_name), texte_aleatoire(20)))
     eleve = models.ForeignKey("Eleve", related_name = "devoircorrigeeleve", on_delete = models.PROTECT)
-    devoir = models.ForeignKey("Devoir", related_name = "corrigés", on_delete = models.PROTECT)
+    devoir = models.ForeignKey("Devoir", related_name = "corriges", on_delete = models.PROTECT)
     commentaire = models.TextField(verbose_name="Commentaire",null=True,blank=True)
     fichier = ContentTypeRestrictedFileField(verbose_name="Fichier(pdf)",upload_to=update_name,null=True,blank=True,content_types=["application/pdf"], max_upload_size=10000000)
 

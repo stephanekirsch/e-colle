@@ -2,7 +2,7 @@ from django.shortcuts import HttpResponse, get_object_or_404
 from django.http import HttpResponseForbidden, Http404
 from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
-from accueil.models import Config, Note, Programme, Colle, Message, Destinataire, Creneau, Semaine, Groupe, Matiere, Classe, Eleve, User, Prof, Colleur
+from accueil.models import Config, Note, Programme, Colle, Message, Destinataire, Creneau, Semaine, Groupe, Matiere, Classe, Eleve, User, Prof, Colleur, Devoir, DevoirRendu, DevoirCorrige, TD, Cours, Document
 from django.utils import timezone
 import json
 from datetime import date, datetime, time, timedelta
@@ -16,6 +16,8 @@ def date_serial(obj):
         return int(obj.timestamp())
     if isinstance(obj, date):
         return int(datetime.combine(obj,time(0,0)).replace(tzinfo=timezone.utc).timestamp())
+    if isinstance(obj, time):
+        return 60*obj.hour + obj.minute
     raise TypeError("Type not serializable")
 
 
@@ -141,6 +143,18 @@ def results(request):
     return HttpResponse(json.dumps(
         list(Note.objects.bilanEleve(user.eleve, False, False))))
 
+def documents(request):
+    user = request.user
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
+    classe = user.eleve.classe
+    devoirs = list(Devoir.objects.filter(classe = classe).values())
+    devoirsrendus = list(DevoirRendu.objects.filter(eleve = user.eleve).values())
+    devoirscorriges = list(DevoirCorrige.objects.filter(eleve = user.eleve).values())
+    cours = list(Cours.objects.filter(classe = classe).values())
+    tds = list(TD.objects.filter(classe=classe).values())
+    documents = list(Document.objects.filter(classe=classe).values())
+    return HttpResponse(json.dumps([devoirs,devoirsrendus,devoirscorriges,cours,tds,documents], default=date_serial))
 
 def colles(request):
     user = request.user
@@ -586,3 +600,24 @@ def addmessage(request):
         Destinataire.objects.bulk_create([Destinataire(user=personne,message=message) for personne in destinataires])
     return HttpResponse(json.dumps({'pk': message.pk, 'date': int(message.date.strftime(
         '%s')), 'listedestinataires': message.listedestinataires, 'titre': message.titre, 'corps': message.corps}))
+
+def documents_prof(request):
+    user = request.user
+    if not checkcolleur(user):
+        return HttpResponseForbidden("not authenticated")
+    profs = Prof.objects.filter(colleur = user.colleur)
+    devoirs = []
+    devoirsrendus = []
+    devoirscorriges = []
+    cours = []
+    tds = []
+    documents = []
+    for prof in profs:
+        devoir = Devoir.objects.filter(classe = prof.classe, matiere = prof.matiere)
+        devoirsrendus += list(DevoirRendu.objects.filter(devoir__in=devoir).values())
+        devoirscorriges += list(DevoirRendu.objects.filter(devoir__in=devoir).values())
+        devoirs += list(devoir.values())
+        cours += list(Cours.objects.filter(classe = prof.classe, matiere = prof.matiere).values())
+        tds += list(TD.objects.filter(classe = prof.classe, matiere = prof.matiere).values())
+        documents += list(Document.objects.filter(classe = prof.classe, matiere = prof.matiere).values())
+    return HttpResponse(json.dumps([devoirs,devoirsrendus,devoirscorriges,cours,tds,documents], default=date_serial))

@@ -21,5 +21,7 @@ urlpatterns = [
     url(r'^addsinglegrade$', views.addsinglegrade, name="add_single_grade_app_mobile"),
     url(r'^addgroupgrades$', views.addgroupgrades, name="add_group_grades_app_mobile"),
     url(r'^adddraftgrades$', views.adddraftgrades, name="add_draft_grades_app_mobile"),
-    url(r'^addmessage$', views.addmessage, name="add_message_app_mobile")
+    url(r'^addmessage$', views.addmessage, name="add_message_app_mobile"),
+    url(r'^documents$', views.documents, name="documents_app_mobile"),
+    url(r'^documentsprof$', views.documents_prof, name="documentsprof_app_mobile"),
 ]

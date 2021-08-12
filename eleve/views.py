@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from eleve.forms import EleveConnexionForm, MatiereForm, CopieForm
 from colleur.forms import SemaineForm
-from accueil.models import Note, Programme, Colle, Semaine, Groupe, Devoir, DevoirRendu
+from accueil.models import Note, Programme, Colle, Semaine, Groupe, Devoir, DevoirRendu, TD, Cours, Document
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Max
 from datetime import date, datetime
@@ -124,8 +124,6 @@ def colloscopePdf(request,id_semin,id_semax):
 def devoirs(request):
 	"""renvoie la page des devoirs de la classe de l'élève"""
 	classe=request.user.eleve.classe
-	if classe != request.user.eleve.classe :
-		raise Http404
 	form=MatiereForm(classe,request.POST or None)
 	matiere=None
 	if form.is_valid():
@@ -160,3 +158,45 @@ def depotCopie(request, id_devoir):
 		form.save()
 		return redirect("eleve_devoirs")
 	return render(request, "eleve/renducopie.html", {'form': form, 'devoir': devoir})
+
+@user_passes_test(is_eleve, login_url='accueil')
+def tds(request):
+	"""renvoie la page des tds de la classe de l'élève"""
+	classe=request.user.eleve.classe
+	form=MatiereForm(classe,request.POST or None)
+	matiere=None
+	if form.is_valid():
+		matiere=form.cleaned_data['matiere']
+	tds = TD.objects.filter(classe = classe)
+	if matiere is not None:
+		tds = tds.filter(matiere = matiere)
+	tds = tds.order_by('-date_affichage')
+	return render(request,"eleve/tds.html", {'form': form, 'classe':classe, 'tds':tds, 'matiere': matiere})
+
+@user_passes_test(is_eleve, login_url='accueil')
+def cours(request):
+	"""renvoie la page des cours de la classe de l'élève"""
+	classe=request.user.eleve.classe
+	form=MatiereForm(classe,request.POST or None)
+	matiere=None
+	if form.is_valid():
+		matiere=form.cleaned_data['matiere']
+	cours = Cours.objects.filter(classe = classe)
+	if matiere is not None:
+		cours = cours.filter(matiere = matiere)
+	cours = cours.order_by('-date_affichage')
+	return render(request,"eleve/cours.html", {'form': form, 'classe':classe, 'cours':cours, 'matiere': matiere})
+
+@user_passes_test(is_eleve, login_url='accueil')
+def autre(request):
+	"""renvoie la page des documents de la classe de l'élève"""
+	classe=request.user.eleve.classe
+	form=MatiereForm(classe,request.POST or None)
+	matiere=None
+	if form.is_valid():
+		matiere=form.cleaned_data['matiere']
+	docs = Document.objects.filter(classe = classe)
+	if matiere is not None:
+		docs = docs.filter(matiere = matiere)
+	docs = docs.order_by('-date_affichage')
+	return render(request,"eleve/autre.html", {'form': form, 'classe':classe, 'docs':docs, 'matiere': matiere})

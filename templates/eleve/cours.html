@@ -1,0 +1,34 @@
+{% extends 'eleve/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+{% include "eleve/navdocuments.html" %}
+<table class="accueil"><tr><td>Cours de la classe {{classe}}{% if matiere %} en {{matiere}}{% endif %}</td></tr></table>
+<form method="POST">
+	{% csrf_token %}
+	<table class="tableausimple">
+		{{ form.as_table }}
+		<tr><td colspan="2"><input type="submit"/></td></tr>
+	</table>
+</form>
+<table class="tableausimple" id="suppr">
+	<tr class="entete">
+		{% if not matiere %}
+		<td>Matière</td>
+		{% endif %}
+		<td>Numéro</td>
+		<td>Détails</td>
+		<td>Fichier</td>
+	</tr>
+	{% for cour in cours %}
+	<tr>
+		{% if not matiere %}
+		<td style="background-color:{{cour.matiere.couleur}}">{{cour.matiere.nom|title}}</td>
+		{% endif %}
+		<td>{{cour.numero}}</td>
+		<td>{{cour.detail|linebreaksbr}}</td>
+		<td><a href="{{cour.fichier.url}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a><br>
+	</tr>
+	{% endfor %}
+</table>
+{% endblock %}
