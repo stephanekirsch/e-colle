@@ -32,7 +32,9 @@ class Command(BaseCommand):
 	def gere_media(self, fichier_media, choix):
 		"""vide la bdd puis y insère les données de la sauvegarde json"""
 		if choix == "2":
-			repertoires = [os.path.join(MEDIA_ROOT, x) for x in ('devoir', 'programme', 'image', 'photos', 'pj')]
+			repertoires = os.path.listdir(MEDIA_ROOT)
+			repertoires = [os.path.join(MEDIA_ROOT, file) for file in repertoires]
+			repertoires = [d in repertoires if os.path.isdir(d)]
 			for repertoire in repertoires:
 				for fichiermedia in os.listdir(repertoire):
 					if fichiermedia  != ".gitignore":
