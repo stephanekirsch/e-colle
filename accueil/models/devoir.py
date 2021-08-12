@@ -94,8 +94,8 @@ class Devoir(models.Model):
 class DevoirRendu(models.Model):
     def update_name(instance, filename):
         return os.path.join("devoir", "rendu_{}_{}_{}.pdf".format(unidecode(instance.eleve.user.last_name), unidecode(instance.eleve.user.first_name), texte_aleatoire(20)))
-    eleve = models.ForeignKey("Eleve", related_name = "devoireleve", on_delete = models.PROTECT)
-    devoir = models.ForeignKey("Devoir", related_name = "rendus", on_delete = models.PROTECT)
+    eleve = models.ForeignKey("Eleve", related_name = "devoireleve", on_delete = models.CASCADE)
+    devoir = models.ForeignKey("Devoir", related_name = "rendus", on_delete = models.CASCADE)
     date_rendu = models.DateTimeField(auto_now = True)
     fichier = ContentTypeRestrictedFileField(verbose_name="Fichier(pdf)",upload_to=update_name,null=True,blank=True,content_types=["application/pdf"], max_upload_size=10000000)
 
