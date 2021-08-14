@@ -137,7 +137,7 @@ def classe(request):
         form.save()
         return redirect('gestion_classe')
     classes = Classe.objects.order_by('annee','nom')
-    return render(request,'mixte/classe.html',{'classes':classes,'form':form})
+    return render(request,'administrateur/classe.html',{'classes':classes,'form':form})
 
 @ip_filter
 def classemodif(request, id_classe):
