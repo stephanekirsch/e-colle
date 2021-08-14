@@ -531,7 +531,7 @@ class ColloscopeImportForm(forms.Form):
                 colloscopereader = csv.reader(csvfile, delimiter=',')
                 self.entete = next(colloscopereader)
                 try:
-                    self.semaines = [Semaine.objects.filter(numero=int(i[1:]))[:1].get() for i in self.entete[5:]]
+                    self.semaines = [Semaine.objects.get(numero = p2.search(x).group()) for x in self.entete[5:]]
                 except Exception:
                     raise ValidationError("erreur dans les numéros de semaine (il faut uniquement des nombres précédés de la lettre 'S')")
                 taille = len(self.entete)
@@ -589,7 +589,7 @@ class ColloscopeImportForm(forms.Form):
                                 sgroupes = p1.findall(col)
                                 eleves_tot = []
                                 for sgroupe in sgroupes:
-                                    groupe_numero = int(p2.findall(sgroupe)[0])
+                                    groupe_numero = int(p2.search(sgroupe).group())
                                     eleves_position = [x for x in p3.findall(sgroupe) if x != '']
                                     if eleves_position == []:
                                         eleves_position = "abc"
@@ -624,7 +624,7 @@ class ColloscopeImportForm(forms.Form):
                     else:
                         self.colles.append(colle)
         except Exception as e:
-            raise ValidationError("Le fichier doit être un fichier CSV valide, encodé en UTF-8"+str(e))
+            raise ValidationError("Le fichier doit être un fichier CSV valide, encodé en UTF-8")
 
     def save(self):
         # on efface les colles des semaines présentes
