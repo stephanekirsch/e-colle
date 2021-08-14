@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Colleur, Colle, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS, Devoir, DevoirCorrige, DevoirRendu, TD, Cours, Document
+from accueil.models import Colleur, Colle, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS, Devoir, DevoirCorrige, DevoirRendu, TD, Cours, Document, Config
 from django.db.models import Q, Count, Value
 from django.db.models.functions import Coalesce
 from datetime import date, timedelta
@@ -13,6 +13,7 @@ from os import remove
 from copy import copy
 from _io import TextIOWrapper
 import csv
+import re
 from zipfile import ZipFile
 from unidecode import unidecode
 from django.core.files.base import ContentFile
@@ -508,9 +509,23 @@ class ColloscopeImportForm(forms.Form):
         self.fields['fichier'] = forms.FileField(label="Fichier csv",required=True)
 
     def clean(self):
+        def indice(subs,i):
+            if subs is None:
+                return None
+            if len(subs) > i:
+                return subs[i]
+            return None 
         matieres = {unidecode(matiere.nom.lower()) + ("(lv{})".format(matiere.lv) if matiere.lv else ""): matiere for matiere in Matiere.objects.filter(matieresclasse=self.classe).distinct()}
         colleurs = {(unidecode(colleur.user.last_name.lower()), unidecode(colleur.user.first_name.lower())): (colleur, set(colleur.matieres.values_list("pk",flat = True))) for colleur in Colleur.objects.filter(classes=self.classe)}
         jours = {"lu":0, "ma":1, "me":2, "je":3, "ve":4, "sa":5, "di":6}
+        p1 = re.compile('\\d+a?b?c?')
+        p2 = re.compile('\\d+')
+        p3 = re.compile('a?b?c?')
+        dico = {'a':0,'b':1,'c':2}
+        if self.classe.semestres:
+            semestre2 = Config.objects.get_config().semestre2
+        else:
+            semestre2 = 100
         try:
             with TextIOWrapper(self.cleaned_data['fichier'].file,encoding = 'utf8',newline='') as csvfile:
                 colloscopereader = csv.reader(csvfile, delimiter=',')
@@ -524,6 +539,7 @@ class ColloscopeImportForm(forms.Form):
                     raise ValidationError("première ligne du fichier trop courte!")
                 self.colles = []
                 for row in colloscopereader:
+                    maxnum = 0
                     if len(row) != taille:
                         raise ValidationError("longueurs de lignes inconsistantes")
                     mat = unidecode(row[0].lower())
@@ -557,18 +573,42 @@ class ColloscopeImportForm(forms.Form):
                                 colle.append(None)
                             else:
                                 groups = []
-                                for x in col.split(";"):
+                                for x in p2.findall(col):
                                     if x.isdigit() and int(x) in groupes:
                                         groups.append(groupes[int(x)])
                                     else:
                                         raise ValidationError("le groupe {} n'existe pas".format(col))
                                 colle.append(groups)
                     elif colle[0].temps == 30:
-                        for col in row[5:]:
+                        for (col,semaine) in zip(row[5:],self.semaines):
                             if col == "":
                                 colle.append(None)
                             elif col in eleves:
                                 colle.append(eleves[col])
+                            elif col[0].isdigit():
+                                sgroupes = p1.findall(col)
+                                eleves_tot = []
+                                for sgroupe in sgroupes:
+                                    groupe_numero = int(p2.findall(sgroupe)[0])
+                                    eleves_position = [x for x in p3.findall(sgroupe) if x != '']
+                                    if eleves_position == []:
+                                        eleves_position = "abc"
+                                    else:
+                                        eleves_position = eleves_position[0]
+                                    groupe = Groupe.objects.filter(nom=groupe_numero,classe=self.classe)
+                                    if groupe.exists():
+                                        groupe = groupe.get()
+                                        if semaine.numero < semestre2:
+                                            eleves = list(groupe.groupeeleve.all())
+                                        else:
+                                            eleves = list(groupe.groupe2eleve.all())
+                                        for p in eleves_position:
+                                            pos = dico[p]
+                                            if pos < len(eleves):
+                                                eleves_tot.append(eleves[pos])
+                                if len(eleves_tot) > maxnum:
+                                    maxnum = len(eleves_tot)
+                                colle.append(eleves_tot)
                             else:
                                 raise ValidationError("{} n'est le login d'aucun élève de {}".format(col,self.classe))
                     elif colle[0].temps == 60:
@@ -577,9 +617,14 @@ class ColloscopeImportForm(forms.Form):
                                 colle.append(self.classe)
                             else:
                                 colle.append(None)
-                    self.colles.append(colle)
+                    if maxnum:
+                        for i in range(maxnum):
+                            souscolle = colle[:5] + [indice(element,i) for element in colle[5:]]
+                            self.colles.append(souscolle)
+                    else:
+                        self.colles.append(colle)
         except Exception as e:
-            raise ValidationError("Le fichier doit être un fichier CSV valide, encodé en UTF-8")
+            raise ValidationError("Le fichier doit être un fichier CSV valide, encodé en UTF-8"+str(e))
 
     def save(self):
         # on efface les colles des semaines présentes
