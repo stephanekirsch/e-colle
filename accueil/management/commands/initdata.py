@@ -3,11 +3,17 @@ from ecolle.settings import CHEMINVERSECOLLE
 import os
 import re
 from random import choice
-from ecolle.config import *
+from ecolle.config_default import *
+try:
+    from ecolle.config import *
+except ImportError:
+    pass
 from ecolle.settings import DATABASES, BDD
+
 
 def texte_aleatoire(taille):
     return "".join(choice("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+@()!-&") for i in range(taille))
+
 
 class Command(BaseCommand):
     help = """ré-initialise les données du fichier config.py"""
@@ -209,7 +215,3 @@ class Command(BaseCommand):
                 Vous devrez le remplir à la main")
         else:
             self.stdout.write("mise à jout du fichier config.py réalisée avec succès")
-
-
-
-        
