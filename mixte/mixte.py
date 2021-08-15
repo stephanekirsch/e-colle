@@ -178,8 +178,10 @@ def mixtecreneaudupli(user,creneau,id_semin,id_semax):
 
 def mixteajaxcompat(classe):
     LISTE_JOURS=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche']
-    colleurs = Colle.objects.filter(groupe__classe=classe).values('colleur__user__first_name','colleur__user__last_name','semaine__numero','creneau__jour','creneau__heure').annotate(nbcolles = Count('pk',distinct=True)).filter(nbcolles__gt=1).order_by('semaine__numero','creneau__jour','creneau__heure','colleur__user__last_name','colleur__user__first_name')
+    colleurs = Colle.objects.filter(creneau__classe=classe,matiere__temps__gt=20).values('colleur__user__first_name','colleur__user__last_name','semaine__numero','creneau__jour','creneau__heure').annotate(nbcolles = Count('pk',distinct=True)).filter(nbcolles__gt=1).order_by('semaine__numero','creneau__jour','creneau__heure','colleur__user__last_name','colleur__user__first_name')
     colleurs="\n".join(["le colleur {} {} a {} colles en semaine {} le {} à {}h{:02d}".format(valeur['colleur__user__first_name'].title(),valeur['colleur__user__last_name'].upper(),valeur['nbcolles'],valeur['semaine__numero'],LISTE_JOURS[valeur['creneau__jour']],valeur['creneau__heure']//60,valeur['creneau__heure']%60) for valeur in colleurs])
+    colleurs_groupe = Colle.objects.compatColleur(classe.pk)
+    colleurs += "\n".join(["le colleur {} {} colle {} étudiants en semaine {} le {} à {}h{:02d}".format(valeur['prenom'].title(),valeur['nom'].upper(),valeur['nbeleves'],valeur['numero'],LISTE_JOURS[valeur['jour']],valeur['heure']//60,valeur['heure']%60) for valeur in colleurs_groupe])
     eleves = Colle.objects.filter(groupe__classe=classe).values('groupe__nom','semaine__numero','creneau__jour','creneau__heure').annotate(nbcolles = Count('pk',distinct=True)).filter(nbcolles__gt=1).order_by('semaine__numero','creneau__jour','creneau__heure','groupe__nom')
     eleves="\n".join(["le groupe {} a {} colles en semaine {} le {} à {}h{:02d}".format(valeur['groupe__nom'],valeur['nbcolles'],valeur['semaine__numero'],LISTE_JOURS[valeur['creneau__jour']],valeur['creneau__heure']//60,valeur['creneau__heure']%60) for valeur in eleves])
     elevesolo = Colle.objects.compatEleve(classe.pk)

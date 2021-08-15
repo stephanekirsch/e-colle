@@ -320,15 +320,21 @@ class ColleManager(models.Manager):
             ON co.semaine_id = s.id\
             LEFT OUTER JOIN accueil_groupe g\
             ON co.groupe_id = g.id\
-            LEFT OUTER JOIN accueil_eleve e\
-            ON (e.id = co.eleve_id OR s.numero < %s AND e.groupe_id = g.id OR s.numero >= %s AND e.groupe2_id = g.id)\
-            INNER JOIN accueil_user u\
-            ON u.eleve_id = e.id\
+            LEFT OUTER JOIN accueil_matiere m\
+            ON co.matiere_id = m.id\
             INNER JOIN accueil_creneau cr\
             ON co.creneau_id = cr.id\
+            LEFT OUTER JOIN accueil_classe cl\
+            ON cr.classe_id = cl.id\
+            INNER JOIN accueil_eleve e\
+            ON (s.numero < %s AND e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
+            OR (s.numero >= %s AND e.groupe2_id = g.id AND (m.id != cl.option1_id AND m.id != cl.option2_id OR e.option_id = m.id) AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
+            OR e.id=co.eleve_id\
+            INNER JOIN accueil_user u\
+            ON u.eleve_id = e.id\
             WHERE cr.classe_id=%s\
             GROUP BY s.numero, cr.jour, cr.heure, u.first_name, u.last_name\
-            HAVING COUNT(DISTINCT co.id) > 1 AND COUNT(g.id) < COUNT(DISTINCT co.id)\
+            HAVING COUNT(DISTINCT co.id) > 1\
             ORDER BY s.numero, cr.jour, cr.heure, u.first_name, u.last_name"
             with connection.cursor() as cursor:
                 cursor.execute(requete,(semestre2, semestre2, id_classe))
@@ -338,17 +344,80 @@ class ColleManager(models.Manager):
             FROM accueil_colle co\
             LEFT OUTER JOIN accueil_groupe g\
             ON co.groupe_id = g.id\
-            LEFT OUTER JOIN accueil_eleve e\
-            ON (e.id = co.eleve_id OR e.groupe_id = g.id)\
+            LEFT OUTER JOIN accueil_matiere m\
+            ON co.matiere_id = m.id\
+            INNER JOIN accueil_creneau cr\
+            ON co.creneau_id = cr.id\
+            LEFT OUTER JOIN accueil_classe cl\
+            ON cr.classe_id = cl.id\
+            INNER JOIN accueil_eleve e\
+            ON e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id) OR e.id=co.eleve_id\
             INNER JOIN accueil_semaine s\
             ON co.semaine_id = s.id\
             INNER JOIN accueil_user u\
             ON u.eleve_id = e.id\
-            INNER JOIN accueil_creneau cr\
-            ON co.creneau_id = cr.id\
             WHERE cr.classe_id=%s\
             GROUP BY s.numero, cr.jour, cr.heure, u.first_name, u.last_name\
-            HAVING COUNT(DISTINCT co.id) > 1 AND COUNT(g.id) < COUNT(DISTINCT co.id)\
+            HAVING COUNT(DISTINCT co.id) > 1\
+            ORDER BY s.numero, cr.jour, cr.heure, u.first_name, u.last_name"
+            with connection.cursor() as cursor:
+                cursor.execute(requete,(id_classe,))
+                incompat = dictfetchall(cursor)
+        return incompat
+
+    def compatColleur(self,id_classe):
+        classe = get_object_or_404(Classe, pk=id_classe)
+        if classe.semestres:
+            semestre2 = Config.objects.get_config().semestre2
+            requete = "SELECT COUNT(DISTINCT e.id) nbeleves, COUNT(g.id), s.numero numero, cr.jour jour, cr.heure heure, u.first_name prenom, u.last_name nom\
+            FROM accueil_colle co\
+            INNER JOIN accueil_semaine s\
+            ON co.semaine_id = s.id\
+            LEFT OUTER JOIN accueil_groupe g\
+            ON co.groupe_id = g.id\
+            LEFT OUTER JOIN accueil_matiere m\
+            ON co.matiere_id = m.id\
+            INNER JOIN accueil_creneau cr\
+            ON co.creneau_id = cr.id\
+            INNER JOIN accueil_colleur col\
+            ON co.colleur_id = col.id\
+            LEFT OUTER JOIN accueil_classe cl\
+            ON cr.classe_id = cl.id\
+            INNER JOIN accueil_eleve e\
+            ON (s.numero < %s AND e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
+            OR (s.numero >= %s AND e.groupe2_id = g.id AND (m.id != cl.option1_id AND m.id != cl.option2_id OR e.option_id = m.id) AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
+            OR e.id=co.eleve_id\
+            INNER JOIN accueil_user u\
+            ON u.colleur_id = col.id\
+            WHERE cr.classe_id=%s AND m.temps = 20\
+            GROUP BY s.numero, cr.jour, cr.heure, u.first_name, u.last_name\
+            HAVING COUNT(DISTINCT e.id) > 3\
+            ORDER BY s.numero, cr.jour, cr.heure, u.first_name, u.last_name"
+            with connection.cursor() as cursor:
+                cursor.execute(requete,(semestre2, semestre2, id_classe))
+                incompat = dictfetchall(cursor)
+        else:
+            requete = "SELECT COUNT(DISTINCT e.id) nbeleves, COUNT(g.id), s.numero numero, cr.jour jour, cr.heure heure, u.first_name prenom, u.last_name nom\
+            FROM accueil_colle co\
+            LEFT OUTER JOIN accueil_groupe g\
+            ON co.groupe_id = g.id\
+            LEFT OUTER JOIN accueil_matiere m\
+            ON co.matiere_id = m.id\
+            INNER JOIN accueil_creneau cr\
+            ON co.creneau_id = cr.id\
+            INNER JOIN accueil_colleur col\
+            ON co.colleur_id = col.id\
+            LEFT OUTER JOIN accueil_classe cl\
+            ON cr.classe_id = cl.id\
+            INNER JOIN accueil_eleve e\
+            ON e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id) OR e.id=co.eleve_id\
+            INNER JOIN accueil_semaine s\
+            ON co.semaine_id = s.id\
+            INNER JOIN accueil_user u\
+            ON u.colleur_id = col.id\
+            WHERE cr.classe_id=%s  AND m.temps = 20\
+            GROUP BY s.numero, cr.jour, cr.heure, u.first_name, u.last_name\
+            HAVING COUNT(DISTINCT co.id) > 1\
             ORDER BY s.numero, cr.jour, cr.heure, u.first_name, u.last_name"
             with connection.cursor() as cursor:
                 cursor.execute(requete,(id_classe,))

@@ -398,12 +398,13 @@ class NoteElevesFormset(forms.BaseFormSet):
         nbNotesColleur = nbNotesColleur.count()
         if nbNotesColleur + len(self.eleves) > 3:
             raise ValidationError("Vous avez trop de notes sur ce créneau horaire")
-        nbNotesEleve=Note.objects.filter(semaine=self.headForm.cleaned_data['semaine'],matiere=self.headForm.matiere,colleur=self.headForm.colleur,eleve__in=self.eleves)
-        if self.headForm.instance.pk: # si on modifie une note:
-            nbNotesEleve = nbNotesEleve.exclude(pk = self.headForm.instance.pk)
-        nbNotesEleve = nbNotesEleve.exists()
-        if nbNotesEleve:
-            raise ValidationError("Vous avez déjà noté un des élèves cette semaine dans cette matière")
+        if self.headForm.matiere.temps == 20:
+            nbNotesEleve=Note.objects.filter(semaine=self.headForm.cleaned_data['semaine'],matiere=self.headForm.matiere,colleur=self.headForm.colleur,eleve__in=self.eleves)
+            if self.headForm.instance.pk: # si on modifie une note:
+                nbNotesEleve = nbNotesEleve.exclude(pk = self.headForm.instance.pk)
+            nbNotesEleve = nbNotesEleve.exists()
+            if nbNotesEleve:
+                raise ValidationError("Vous avez déjà noté un des élèves cette semaine dans cette matière")
 
     def save(self):
         """sauvegarde en base de données les notes"""
