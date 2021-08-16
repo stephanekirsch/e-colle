@@ -323,7 +323,7 @@ def colleurDonnees(request):
     eleves = []
     for classe in classes:
         eleves_classe = [[eleve[0].pk, eleve[0].user.first_name.title() + " " + eleve[0].user.last_name.upper(), eleve[1], 0 if not eleve[0].groupe else eleve[0].groupe.pk,
-               0 if not eleve[0].lv1 else eleve[0].lv1.pk, 0 if not eleve[0].lv2 else eleve[0].lv2.pk, classe.pk, order,0 if not eleve[0].groupe2 else eleve[0].groupe2.pk,] for order, eleve in enumerate(classe.loginsEleves())]
+               0 if not eleve[0].lv1 else eleve[0].lv1.pk, 0 if not eleve[0].lv2 else eleve[0].lv2.pk, classe.pk, order,0 if not eleve[0].groupe2 else eleve[0].groupe2.pk, None if not eleve[0].photo else eleve[0].photo.url] for order, eleve in enumerate(classe.loginsEleves())]
         eleves.extend(eleves_classe)
     colleurs = [[colleur[0].pk, colleur[0].user.first_name.title() + " " + colleur[0].user.last_name.upper(), colleur[1], order]
                 for order, colleur in enumerate(classe.loginsColleurs(colleur = user.colleur))]
