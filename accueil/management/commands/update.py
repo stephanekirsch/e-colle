@@ -69,7 +69,10 @@ class Command(BaseCommand):
             vardict = {s:getattr(old_config,s) for s in vars}
             with open(os.path.join("..",cwd_new,"ecolle","config.py"),"wt",encoding="utf8") as fichier:
                 for key, value in vardict.items():
-                    fichier.write("{} = {}\n".format(key,value))
+                    if type(value) is str:
+                        fichier.write("{} = '{}'\n".format(key,value))
+                    else:
+                        fichier.write("{} = {}\n".format(key,value))
             self.stdout.write("copie terminée")
             self.stdout.write("sauvegarde de la base de données pour avoir un point de sauvegarde en cas d'échec de la mise à jour")
             try:
