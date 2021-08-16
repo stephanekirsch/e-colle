@@ -218,11 +218,6 @@ def main():
             subprocess.run(["sudo","python3","imagemagick.py"])
     print("-"*20)
     if DB_ENGINE == "postgresql":
-        print("installation de psycopg2")
-        completedProcess = pipinstall("psycopg2")
-        if completedProcess.returncode:
-            print("échec de l'installation de psycopg2")
-            liste_echecs.append("psycopg2")
         print("installation de postgresql")
         completedProcess = aptinstall("postgresql")
         if completedProcess.returncode:
@@ -230,12 +225,12 @@ def main():
             liste_echecs.append("postgresql")
         elif "pexpect" not in liste_echecs:
             configpostgresl()
-    elif DB_ENGINE == "mysql":
-        print("installation de mysqlclient")
-        completedProcess = pipinstall("mysqlclient")
+        print("installation de psycopg2")
+        completedProcess = pipinstall("psycopg2")
         if completedProcess.returncode:
-            print("échec de l'installation de mysqlclient")
-            liste_echecs.append("mysqlclient")
+            print("échec de l'installation de psycopg2")
+            liste_echecs.append("psycopg2")
+    elif DB_ENGINE == "mysql":
         print("installation de mysql")
         completedProcess = aptinstall("mysql-server")
         if completedProcess.returncode:
@@ -243,6 +238,11 @@ def main():
             liste_echecs.append("mysql")
         elif "pexpect" not in liste_echecs:
             configmysql()
+        print("installation de mysqlclient")
+        completedProcess = pipinstall("mysqlclient")
+        if completedProcess.returncode:
+            print("échec de l'installation de mysqlclient")
+            liste_echecs.append("mysqlclient")
     elif DB_ENGINE == "sqlite3":
         print("installation de sqlite3")
         completedProcess = aptinstall("sqlite3")
