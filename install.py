@@ -18,7 +18,11 @@ def pipinstall(package):
 
 def configpostgresl():
     from pexpect import spawn, TIMEOUT
-    from ecolle.config import DB_PASSWORD, DB_NAME, DB_USER, DB_PORT, DB_HOST
+    from ecolle.config_default import DB_PASSWORD, DB_NAME, DB_USER, DB_PORT, DB_HOST
+    try:
+        from ecolle.config import DB_PASSWORD, DB_NAME, DB_USER, DB_PORT, DB_HOST
+    except Exception:
+        pass
     if DB_PASSWORD =="":
         return
     print("-"*20)
@@ -68,7 +72,7 @@ def configpostgresl():
                 p.sendline(postgrespasswd)
             print("base de données recréée")
     p.sendline("exit")
-    p.close
+    p.close()
 
 def configmysql():
     from pexpect import spawn, TIMEOUT
