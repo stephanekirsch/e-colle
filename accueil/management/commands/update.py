@@ -94,6 +94,7 @@ class Command(BaseCommand):
                 os.chdir(os.path.join("..",cwd_new))
                 subprocess.run(["pip3","install", "-r","requirements.txt"]) # on installe les éventuelles bilbiothèques manquantes
                 subprocess.run(["python3","manage.py","migrate"])
+                os.chdir(os.path.join("..",cwd))
                 # on copie les fichiers media/backup:
                 self.stdout.write("copie des fichiers media/backup")
                 repertoires = os.listdir("media")
