@@ -96,7 +96,7 @@ class Command(BaseCommand):
                 subprocess.run(["python3","manage.py","migrate"])
                 # on copie les fichiers media/backup:
                 self.stdout.write("copie des fichiers media/backup")
-                repertoires = os.path.listdir("media")
+                repertoires = os.listdir("media")
                 repertoires = [os.path.join("media", file) for file in repertoires]
                 repertoires = [d for d in repertoires if os.path.isdir(d)]
                 for rep in repertoires:
