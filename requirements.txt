@@ -1,10 +1,8 @@
 django
 pexpect
-mysqlclient
 pillow
-psycopg2
 qrcode
 reportlab
 unidecode
 uWSGI
-ckeditor
+django-ckeditor

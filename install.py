@@ -218,6 +218,11 @@ def main():
             subprocess.run(["sudo","python3","imagemagick.py"])
     print("-"*20)
     if DB_ENGINE == "postgresql":
+        print("installation de psycopg2")
+        completedProcess = pipinstall("psycopg2")
+        if completedProcess.returncode:
+            print("échec de l'installation de psycopg2")
+            liste_echecs.append("psycopg2")
         print("installation de postgresql")
         completedProcess = aptinstall("postgresql")
         if completedProcess.returncode:
@@ -226,6 +231,11 @@ def main():
         elif "pexpect" not in liste_echecs:
             configpostgresl()
     elif DB_ENGINE == "mysql":
+        print("installation de mysqlclient")
+        completedProcess = pipinstall("mysqlclient")
+        if completedProcess.returncode:
+            print("échec de l'installation de mysqlclient")
+            liste_echecs.append("mysqlclient")
         print("installation de mysql")
         completedProcess = aptinstall("mysql-server")
         if completedProcess.returncode:
