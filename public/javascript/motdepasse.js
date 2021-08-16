@@ -14,6 +14,7 @@ var listemdp = document.querySelectorAll("input[id$=password]");
 var listenom = document.querySelectorAll("input[id$=last_name]");
 var listeprenom = document.querySelectorAll("input[id$=first_name]");
 var listeidentifiant = document.querySelectorAll("input[id$=username]");
+var listeemail = document.querySelectorAll("input[id$=email]");
 var listeclasse = document.querySelectorAll("select[id$=classe]");
 var listematiere = document.querySelectorAll("select[id$=matiere]");
 var matiere = false;
@@ -82,6 +83,7 @@ function createcsv(){
 	var listenom = document.querySelectorAll("input[id$=last_name]");
 	var listeprenom = document.querySelectorAll("input[id$=first_name]");
 	var listeidentifiant = document.querySelectorAll("input[id$=username]");
+	var listeemail = document.querySelectorAll("input[id$=email]");
 	var listeclasse = document.querySelectorAll("select[id$=classe]");
 	var listematiere = document.querySelectorAll("select[id$=matiere]");
 	var a = window.document.createElement('a');
@@ -91,7 +93,7 @@ function createcsv(){
 	} else {
 		innerBlob+=",classe"
 	}
-	innerBlob+=',mot de passe\n';
+	innerBlob+=',email,mot de passe\n';
 	if (matiere){
 		for (var i = 0 ; i < listenom.length; i++) {
 			innerBlob += listenom[i].value.toUpperCase()+','+listeprenom[i].value.toLowerCase()+','+listeidentifiant[i].value+',';
@@ -111,11 +113,11 @@ function createcsv(){
 				}
 			};
 			matieres = matieres.slice(0,-1);// on retire le dernier "-"
-			innerBlob+= matieres + ',' + classes + ',' + listemdp[i].value+'\n';
+			innerBlob+= matieres + ',' + classes + ',' + listeemail[i].value + ',' +listemdp[i].value+'\n';
 		};
 	} else {
 		for (var i = 0 ; i < listenom.length; i++) {
-		innerBlob += listenom[i].value.toUpperCase()+','+listeprenom[i].value.toLowerCase()+','+listeidentifiant[i].value+','+listeclasse[i][parseInt(listeclasse[i].selectedIndex)].innerHTML+','+listemdp[i].value+'\n';
+		innerBlob += listenom[i].value.toUpperCase()+','+listeprenom[i].value.toLowerCase()+','+listeidentifiant[i].value+','+listeclasse[i][parseInt(listeclasse[i].selectedIndex)].innerHTML+','+listeemail[i].value+','+listemdp[i].value+'\n';
 		};
 	}
 	a.href = window.URL.createObjectURL(new Blob([innerBlob], {type: 'text/csv'}));
