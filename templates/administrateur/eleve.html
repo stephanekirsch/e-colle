@@ -70,12 +70,13 @@
 		{% endfor %}
 		<tr class="plusclair">
 			<td><label for = "check">Tout cocher</label><br/><input type="checkbox" id="check"/></td>
-			<td colspan="3"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
+			<td colspan="3"><input id = "email" type="submit" value="envoyer un email à la sélection" name="email"/></td>
+			<td colspan="2"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
 			<td colspan="2"><input type="submit" value="Modifier la sélection" name="modifier"/></td>
 			<td colspan="2"><input type="submit" value="Transférer la sélection en" name="transferer"/> {{ form2.klasse }}</td>
 			<td colspan="2"><input type="submit" value="passer la sélection en option" name="change_option"/>{{form2.option}}</td>
-			<td colspan="3"><input type="submit" value="passer la sélection en lv1" name="change_lv1"/>{{form2.lv1}}</td>
-			<td colspan="3"><input type="submit" value="passer la sélection en lv2" name="change_lv2"/>{{form2.lv2}}</td>
+			<td colspan="2"><input type="submit" value="passer la sélection en lv1" name="change_lv1"/>{{form2.lv1}}</td>
+			<td colspan="2"><input type="submit" value="passer la sélection en lv2" name="change_lv2"/>{{form2.lv2}}</td>
 		</tr>
 	</table>
 	</form>
@@ -83,4 +84,5 @@
 {% block javascript %}
 <script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
 <script type="text/javascript" src="{% static 'javascript/selection.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/mail.js' %}"></script>
 {% endblock %}

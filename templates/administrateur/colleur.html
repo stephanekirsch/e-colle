@@ -63,8 +63,9 @@
 		{% endfor %}
 		<tr class="plusclair">
 			<td><label for = "check">Tout cocher</label><br/><input type="checkbox" id="check"/></td>
-			<td colspan="7"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
-			<td colspan="6"><input type="submit" value="Modifier la sélection" name="modifier"/></td>
+			<td colspan="4"><input id = "email" type="submit" value="envoyer un email à la sélection" name="email"/></td>
+			<td colspan="4"><input type="submit" value="Modifier la sélection" name="modifier"/></td>
+			<td colspan="4"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
 		</tr>
 	</table>
 	</form>
@@ -72,4 +73,5 @@
 {% block javascript %}
 <script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
 <script type="text/javascript" src="{% static 'javascript/selection.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/mail.js' %}"></script>
 {% endblock %}
