@@ -100,8 +100,8 @@ class Command(BaseCommand):
                 repertoires = [os.path.join("media", file) for file in repertoires]
                 repertoires = [d for d in repertoires if os.path.isdir(d)]
                 for rep in repertoires:
-                    source = os.path.join("media",rep)
-                    target = os.path.join("..",cwd_new,"media",rep)
+                    source = rep
+                    target = os.path.join("..",cwd_new,rep)
                     for file in os.listdir(source):
                         filecopy(os.path.join(source,file),target)
                 source = "backup"
