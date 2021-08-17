@@ -250,6 +250,7 @@ def semaine(request):
     """Renvoie la vue de la page de gestion des semaines"""
     lundimax=Semaine.objects.aggregate(Max('lundi'))
     numeromax=Semaine.objects.aggregate(Max('numero'))
+    semaines = Semaine.objects.order_by('lundi')
     semaine=Semaine()
     if lundimax['lundi__max'] is not None and numeromax['numero__max'] is not None:
         semaine.lundi=lundimax['lundi__max']+timedelta(days=7)
@@ -258,12 +259,10 @@ def semaine(request):
     if form.is_valid():
         form.save()
         return redirect('gestion_semaine')
-    if Semaine.objects.exists():
-        semaines = Semaine.objects.order_by('lundi')
-        form2 = SemestreForm(request.POST or None, initial = {'semestre': Config.objects.get_config().semestre2})
-        if form2.is_valid():
-            form2.save()
-            return redirect('gestion_semaine')
+    form2 = SemestreForm(request.POST or None, initial = {'semestre': Config.objects.get_config().semestre2})
+    if form2.is_valid():
+        form2.save()
+        return redirect('gestion_semaine')
     return render(request,'administrateur/semaine.html',{'semaines':semaines,'form':form, 'form2': form2 })
 
 @ip_filter
