@@ -155,7 +155,9 @@ def documents(request):
     cours = list(Cours.objects.filter(classe = classe).values())
     tds = list(TD.objects.filter(classe=classe).values())
     documents = list(Document.objects.filter(classe=classe).values())
-    return HttpResponse(json.dumps([devoirs,devoirsrendus,devoirscorriges,cours,tds,documents], default=date_serial))
+    matieres = list(Matiere.objects.filter(
+        matieresclasse=classe).values_list('pk', 'nom', 'couleur', 'lv'))
+    return HttpResponse(json.dumps([matieres,devoirs,devoirsrendus,devoirscorriges,cours,tds,documents], default=date_serial))
 
 def colles(request):
     user = request.user
