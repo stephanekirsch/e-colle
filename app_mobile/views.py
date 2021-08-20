@@ -175,7 +175,7 @@ def colles(request):
     groupes = list(Groupe.objects.filter(
         classe=classe).values_list('pk', 'nom'))
     matieres = list(Matiere.objects.filter(
-        matieresclasse=classe).values_list('pk', 'nom', 'couleur', 'lv'))
+        matieresclasse=classe).values('pk', 'nom', 'couleur', 'lv'))
     eleves = [[eleve.pk, eleve.user.first_name.title() + " " + eleve.user.last_name.upper(), login, 0 if not eleve.groupe else eleve.groupe.pk,
                0 if not eleve.lv1 else eleve.lv1.pk, 0 if not eleve.lv2 else eleve.lv2.pk, 0 if not eleve.option else eleve.option.pk, 0 if not eleve.groupe2 else eleve.groupe2.pk] for eleve, login in classe.loginsEleves()]
     colleurs = [[colleur.pk, colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), login]
