@@ -334,7 +334,7 @@ def colleurDonnees(request):
     profs = Prof.objects.filter(classe__in = user.colleur.classes.all(), matiere__in = user.colleur.matieres.all()).values_list('colleur__pk','classe__pk','matiere__pk')
     profspp = Prof.objects.filter(classe__in = pp).values_list('colleur__pk','classe__pk','matiere__pk')
 
-    return HttpResponse(json.dumps({'colleurmatieres': colleurmatieres, 'colleurclasses': colleurclasses,'classes': list(classes.values_list('id','nom')),'pp': list(pp.values_list('id')), 'profs': list(profs | profspp), 'notes': Note.objects.listeNotesApp(user.colleur),
+    return HttpResponse(json.dumps({'colleurmatieres': colleurmatieres, 'colleurclasses': colleurclasses,'classes': list(classes.values_list('id','nom','annee','semestres','option1','option2')),'pp': list(pp.values_list('id')), 'profs': list(profs | profspp), 'notes': Note.objects.listeNotesApp(user.colleur),
         'programmes': list(Programme.objects.filter(classe__in=user.colleur.classes.all()).order_by('-semaine__lundi').values_list('matiere__pk',
         'classe__pk', 'semaine__numero', 'semaine__lundi', 'titre', 'detail', 'fichier')), 'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
                                     'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs}, default=date_serial))
