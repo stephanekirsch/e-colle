@@ -24,6 +24,9 @@ class Command(BaseCommand):
                         accueil_devoir,\
                         accueil_devoircorrige,\
                         accueil_devoirrendu,\
+                        accueil_td,\
+                        accueil_cours,\
+                        accueil_document,\
                         accueil_jourferie,\
                         accueil_message,\
                         accueil_note,\
@@ -44,6 +47,9 @@ class Command(BaseCommand):
                         TRUNCATE TABLE accueil_devoir;\
                         TRUNCATE TABLE accueil_devoircorrige;\
                         TRUNCATE TABLE accueil_devoirrendu;\
+                        TRUNCATE TABLE accueil_cours;\
+                        TRUNCATE TABLE accueil_td;\
+                        TRUNCATE TABLE accueil_document;\
                         TRUNCATE TABLE accueil_jourferie;\
                         TRUNCATE TABLE accueil_message;\
                         TRUNCATE TABLE accueil_note;\
@@ -63,6 +69,9 @@ class Command(BaseCommand):
                         cursor.execute("DELETE FROM accueil_devoir;")
                         cursor.execute("DELETE FROM accueil_devoircorrige;")
                         cursor.execute("DELETE FROM accueil_devoirrendu;")
+                        cursor.execute("DELETE FROM accueil_cours;")
+                        cursor.execute("DELETE FROM accueil_td;")
+                        cursor.execute("DELETE FROM accueil_document;")
                         cursor.execute("DELETE FROM accueil_jourferie;")
                         cursor.execute("DELETE FROM accueil_message;")
                         cursor.execute("DELETE FROM accueil_note;")
