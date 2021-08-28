@@ -142,9 +142,12 @@ def results(request):
     if not checkeleve(user):
         return HttpResponseForbidden("not authenticated")
     semestre2 = Config.objects.get_config().semestre2
-    semaine = get_object_or_404(Semaine, numero = semestre2)
-    return HttpResponse(json.dumps({ 'global': list(Note.objects.bilanEleve(user.eleve, False, False)), 'sem1': list(Note.objects.bilanEleve(user.eleve, False, semaine,True)),
+    try:
+        semaine = Semaine.objects.filter(numero = semestre2).get()
+        return HttpResponse(json.dumps({ 'global': list(Note.objects.bilanEleve(user.eleve, False, False)), 'sem1': list(Note.objects.bilanEleve(user.eleve, False, semaine,True)),
         "sem2": list(Note.objects.bilanEleve(user.eleve, semaine, False))}))
+    except Exception:
+        return HttpResponse(json.dumps({ 'global': list(Note.objects.bilanEleve(user.eleve, False, False))}))
 
 def documents(request):
     user = request.user
