@@ -118,23 +118,37 @@ class NoteManager(models.Manager):
             notes = dictfetchall(cursor)
         return notes
 
-    def bilanEleve(self,eleve,semin,semax):
+    def bilanEleve(self,eleve,semin,semax,strict=False):
         matieres = self.filter(eleve=eleve).exclude(note__gt=20)
         if semin:
-            matieres=matieres.filter(semaine__lundi__range=(semin.lundi,semax.lundi))
+            matieres=matieres.filter(semaine__lundi__gte=semin.lundi)
+        if semax and not strict:
+            matieres=matieres.filter(semaine__lundi__lte=semax.lundi)
+        elif semax:
+            matieres=matieres.filter(semaine__lundi__lt=semax.lundi)
         matieres=matieres.values_list('matiere__pk').order_by('matiere__nom').distinct()
         moyenne = self.filter(eleve=eleve,matiere__pk__in=matieres).exclude(note__gt=20)
         moyenne_classe = self.filter(matiere__pk__in=matieres,classe=eleve.classe,eleve__isnull=False).exclude(note__gt=20) 
         if semin:
-            moyenne=moyenne.filter(semaine__lundi__range=[semin.lundi,semax.lundi])
-            moyenne_classe = moyenne_classe.filter(semaine__lundi__range=[semin.lundi,semax.lundi])
+            moyenne=moyenne.filter(semaine__lundi__gte=semin.lundi)
+            moyenne_classe = moyenne_classe.filter(semaine__lundi__gte=semin.lundi)
+        if semax and not strict:
+            moyenne=moyenne.filter(semaine__lundi__lte=semax.lundi)
+            moyenne_classe = moyenne_classe.filter(semaine__lundi__lte=semax.lundi)
+        elif semax:
+            moyenne=moyenne.filter(semaine__lundi__lt=semax.lundi)
+            moyenne_classe = moyenne_classe.filter(semaine__lundi__lt=semax.lundi)
         moyenne = list(moyenne.values('matiere__nom','matiere__couleur').annotate(Avg('note'),Min('note'),Max('note'),Count('note'),StdDev('note')).order_by('matiere__nom'))
         moyenne_classe = moyenne_classe.values('matiere__pk').annotate(Avg('note')).order_by('matiere__nom')
         rangs=[]
         for i,matiere in enumerate(matieres):
             rang=self.exclude(note__gt=20).filter(classe=eleve.classe,eleve__isnull=False,matiere__pk=matiere[0])
             if semin:
-                rang=rang.filter(semaine__lundi__range=[semin.lundi,semax.lundi])
+                rang=rang.filter(semaine__lundi__gte=semin.lundi)
+            if semax and not strict:
+                rang=rang.filter(semaine__lundi__lte=semax.lundi)
+            elif semax:
+                rang=rang.filter(semaine__lundi__lt=semax.lundi)
             if moyenne[i]['note__avg']:
                 rang=rang.values('eleve').annotate(Avg('note')).filter(note__avg__gt=moyenne[i]['note__avg']+0.0001).count()+1
             else:
