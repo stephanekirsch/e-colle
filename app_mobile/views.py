@@ -95,7 +95,7 @@ def connect(request):
                                                 'classes_id': "__".join([str(classe.pk) for classe in classes]),
                                                 'classes_name': "__".join([classe.nom for classe in classes]),
                                                 'classes_year': "__".join([classe.annee for classe in classes]),
-                                                'classes_semestres': "__".join([int(classe.semestres) for classe in classes]),
+                                                'classes_semestres': "__".join([str(classe.semestres) for classe in classes]),
                                                 'classes_options': "__".join(["{}-{}".format(0 if not classe.option1 else classe.option1.pk, 0 if not classe.option2 else classe.option2.pk) for classe in classe]),
                                                 'subjects_id': "__".join([str(matiere.pk) for matiere in matieres]),
                                                 'subjects_name': "__".join([str(matiere) for matiere in matieres]),
