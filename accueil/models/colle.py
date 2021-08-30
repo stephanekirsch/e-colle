@@ -16,7 +16,7 @@ def group_concat(arg):
     if BDD == 'postgresql' or BDD == 'postgresql_psycopg2':
         return "STRING_AGG(DISTINCT CAST(COALESCE({0:},0) AS TEXT), ',' ORDER BY CAST(COALESCE({0:},0) AS TEXT))".format(arg)
     elif BDD == 'mysql':
-        return "GROUP_CONCAT(DISTINCT CAST(COALESCE({0:},0) AS TEXT) ORDER BY CAST(COALESCE({0:},0) AS TEXT))".format(arg)
+        return "GROUP_CONCAT(DISTINCT COALESCE({0:},0))".format(arg)
     elif BDD == 'sqlite3':
         return "GROUP_CONCAT(DISTINCT CAST (COALESCE({},0) AS TEXT))".format(arg)
     else:

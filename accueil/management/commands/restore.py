@@ -27,7 +27,8 @@ class Command(BaseCommand):
 		else:
 			self.stdout.write("Insertion de la sauvegarde dans la base de données terminée.")
 		finally:
-			os.remove(fichier_json)
+			pass
+			#os.remove(fichier_json)
 
 	def gere_media(self, fichier_media, choix):
 		"""vide la bdd puis y insère les données de la sauvegarde json"""

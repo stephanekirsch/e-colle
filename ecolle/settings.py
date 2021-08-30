@@ -99,13 +99,16 @@ BACKUP_ROOT = path.join(CHEMINVERSECOLLE, 'backup')
 
 RESOURCES_ROOT = path.join(CHEMINVERSECOLLE, 'resources')
 
+STATICFILES_DIRS = (
+    path.join(CHEMINVERSECOLLE, 'public'),
+)
 
 
 MEDIA_URL = '/media/'
 
 STATIC_URL = '/static/'
 
-STATIC_ROOT = path.join(CHEMINVERSECOLLE, 'public')
+#STATIC_ROOT = path.join(CHEMINVERSECOLLE, 'public')
 
 APPEND_SLASH = False
 
