@@ -87,7 +87,7 @@ class Command(BaseCommand):
                 messages.append(texte)
                 self.stdout.write(texte)
             else:
-                for folder in ('programme', 'image', 'devoir'):
+                for folder in set(os.listdir(MEDIA_ROOT))-{'photos'}:
                     repertoire = os.path.join(MEDIA_ROOT, folder)
                     try:
                         for fichier in os.listdir(repertoire):
