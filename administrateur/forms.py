@@ -593,7 +593,7 @@ class SelectEleveForm(forms.Form):
         if klasse:
             query = Eleve.objects.filter(classe=klasse).select_related('user','classe','lv1','lv2')
             query2 = Matiere.objects.filter(matieresclasse=klasse)
-            options_pk = set((klasse.option1.pk, klasse.option2.pk)) - {None}
+            options_pk = set((klasse.option1.pk if klasse.option1 else None, klasse.option2.pk if klasse.option2 else None)) - {None}
             if options_pk:
                 query2 = query2.filter(pk__in=options_pk)
         else:
