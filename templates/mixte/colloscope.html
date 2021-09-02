@@ -74,6 +74,7 @@
 		{% endif %}
 		{% if colle.salle %}Salle: {{colle.salle}}{% endif %}
 		</p></div>
+		{% if colle.ferie %} <div class="popup">{{colle.ferie}}</div> {% endif %}
 		</td>{% elif colle.ferie %}<td style="background-color:rgba(0,0,0,.4);"><div class="popup">{{colle.ferie}}</div></td>{% else %}<td></td>{% endif %}
 		{% endfor %}
 	</tr>
