@@ -166,7 +166,7 @@ def eleve_post_save_function(sender, instance, **kwargs):
                 abscisse=(image.size[0]-300)//2
                 image=image.crop((abscisse,0,abscisse+300,400))
             elif ratio<.75:
-                image=image.resize((300,int(400/ratio)))
+                image=image.resize((300,int(300/ratio)))
                 ordonnee=(image.size[1]-400)//2
                 image=image.crop((0,ordonnee,300,ordonnee+400))
             else:
