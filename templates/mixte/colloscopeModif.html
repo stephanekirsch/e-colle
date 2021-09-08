@@ -83,10 +83,11 @@
 		<td style="min-width:100px;">S{{semaine}}</td>
 		{% for colle in colles %}
 		<td class="matiere">
-			<ul>
-				<li class="niveau1" {% if colle.nbcolles %}style="background-color:{{colle.couleur}}">{{dictColleurs|lookup:colle.id_colleur}}:{% if colle.temps == 20%}{{colle.groupe}}{% elif colle.temps == 30%}{% with colle.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}{% else %}>:{% endif %}</li>
-				{% if colle.ferie %}
+			<ul>{% if colle.ferie %}
+				<li class="niveau1" style="background-color:rgba(0,0,0,.4);"{% if colle.nbcolles %}>{{dictColleurs|lookup:colle.id_colleur}}:{% if colle.temps == 20%}{{colle.groupe}}{% elif colle.temps == 30%}{% with colle.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}{% else %}>:{% endif %}</li>
 				<li style="background-color:rgba(0,0,0,.4);"><div class="popup">{{colle.ferie}}</div></li>
+				{% else %}
+				<li class="niveau1" {% if colle.nbcolles %}style="background-color:{{colle.couleur}};">{{dictColleurs|lookup:colle.id_colleur}}:{% if colle.temps == 20%}{{colle.groupe}}{% elif colle.temps == 30%}{% with colle.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}{% else %}>:{% endif %}</li>
 				{% endif %}
 		 		<li class="niveau1bis" id="{{semaine.pk}}_{{colle.id_cr}}"></li>
 		 	</ul>

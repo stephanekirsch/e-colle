@@ -285,6 +285,7 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
             except Exception:
                 pass
             i+=1
+        print(json.dumps(creneaux))
         return HttpResponse(json.dumps(creneaux))
     if duree == 1 and int(id_groupe):
         groupe = get_object_or_404(Groupe,pk=id_groupe)

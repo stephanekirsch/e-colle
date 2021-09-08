@@ -316,16 +316,24 @@ grise.firstElementChild.addEventListener('submit',function(e)
 				{
 					grise.parentNode.removeChild(grise);
 					var reponsejson=eval('('+xhr.responseText+')');
-					var couleur = reponsejson.couleur;
 					var creneau = reponsejson.creneau;
+					if ("couleur" in reponsejson) {
+					var couleur = reponsejson.couleur;
 					var colleur = reponsejson.colleur;
-					var semgroupe = reponsejson.semgroupe;
 					for (var i = 0; i < semgroupe.length; i++)
 					{
 						var colle=document.getElementById(semgroupe[i].semaine+'_'+creneau).parentNode.firstElementChild;
 						colle.innerHTML=colleur+":"+semgroupe[i].groupe;
 						colle.style.backgroundColor=couleur;
-					}
+					} 
+				} else {
+					for (var i = 0; i < semgroupe.length; i++)
+					{
+						var colle=document.getElementById(semgroupe[i].semaine+'_'+creneau).parentNode.firstElementChild;
+						colle.innerHTML=":"
+						colle.style.backgroundColor="";
+					} 
+				}
 				}
 				else
 				{

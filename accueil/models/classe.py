@@ -151,11 +151,13 @@ class Classe(models.Model):
     option1 = models.ForeignKey(
         'Matiere',
         null=True,
+        blank=True,
         related_name='classeoption1',
         on_delete=models.SET_NULL)
     option2 = models.ForeignKey(
         'Matiere',
         null=True,
+        blank=True,
         related_name='classeoption2',
         on_delete=models.SET_NULL)
 
