@@ -281,11 +281,10 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
             try:
                 semainecolle=Semaine.objects.get(numero=numero)
                 Colle.objects.filter(creneau=creneau,semaine=semainecolle).delete()
-                creneaux['semgroupe'].append({'semaine':semainecolle.pk})
+                creneaux['semgroupe'].append({'semaine':semainecolle.numero})
             except Exception:
                 pass
             i+=1
-        print(json.dumps(creneaux))
         return HttpResponse(json.dumps(creneaux))
     if duree == 1 and int(id_groupe):
         groupe = get_object_or_404(Groupe,pk=id_groupe)
