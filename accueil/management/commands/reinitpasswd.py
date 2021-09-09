@@ -63,13 +63,3 @@ class Command(ReinitPasswd):
                         print("Le mot de passe secrétariat a bien été mis à jour")
                         secret.set_password(pwd1)
                         secret.save()
-
-
-
-
-                    
-
-
-
-
-
