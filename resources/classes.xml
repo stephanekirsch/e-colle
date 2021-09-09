@@ -6,6 +6,11 @@
 		<matiere nom="Français/Philo" temps="30"></matiere>
 		<matiere nom="Chimie" temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
+		<matiere nom="Allemand" temps="20" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="1"></matiere>
+		<matiere nom="Italien" temps="20" lv="1"></matiere>
+		<matiere nom="Arabe" temps="20" lv="1"></matiere>
+		<matiere nom="Chinois" temps="20" lv="1"></matiere>
 		<matiere nom="S.I.I." temps="20"></matiere>
 	</classe>
 
@@ -38,6 +43,24 @@
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
+		<matiere nom="Allemand" temps="20" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="1"></matiere>
+		<matiere nom="Italien" temps="20" lv="1"></matiere>
+		<matiere nom="Arabe" temps="20" lv="1"></matiere>
+		<matiere nom="Chinois" temps="20" lv="1"></matiere>
+	</classe>
+
+	<classe nom="MP2I" precision="Mathématiques, Physique, Ingénierie et Informatique" annee="1" type="Scientifique" domaine="Mathématiques, physique, informatique" >
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Informatique" temps="20"></matiere>
+		<matiere nom="Français/Philo" temps="30"></matiere>
+		<matiere nom="Anglais" temps="20" lv="1"></matiere>
+		<matiere nom="Allemand" temps="20" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="1"></matiere>
+		<matiere nom="Italien" temps="20" lv="1"></matiere>
+		<matiere nom="Arabe" temps="20" lv="1"></matiere>
+		<matiere nom="Chinois" temps="20" lv="1"></matiere>
 	</classe>
 
 	<classe nom="BCPST" precision="Biologie, Chimie, Physique, Sciences de la Terre" annee="1" type="Scientifique" domaine="Mathématiques, sciences de la vie et de la terre, physique, chimie ">
@@ -46,6 +69,11 @@
 		<matiere nom="Chimie" temps="20"></matiere>
 		<matiere nom="S.V.T." temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
+		<matiere nom="Allemand" temps="20" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="1"></matiere>
+		<matiere nom="Italien" temps="20" lv="1"></matiere>
+		<matiere nom="Arabe" temps="20" lv="1"></matiere>
+		<matiere nom="Chinois" temps="20" lv="1"></matiere>
 		<matiere nom="Informatique" temps="60"></matiere>
 	</classe>
 
@@ -62,8 +90,14 @@
 	<classe nom="PSI" precision="Physique, Sciences de l'ingénieur" annee="2" type="Scientifique" domaine="Mathématiques, physique, sciences de l'ingénieur" >
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Chimie" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
+		<matiere nom="Allemand" temps="20" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="1"></matiere>
+		<matiere nom="Italien" temps="20" lv="1"></matiere>
+		<matiere nom="Arabe" temps="20" lv="1"></matiere>
+		<matiere nom="Chinois" temps="20" lv="1"></matiere>
 		<matiere nom="S.I.I." temps="20"></matiere>
 	</classe>
 
@@ -98,6 +132,11 @@
 		<matiere nom="Français/Philo" temps="30"></matiere>
 		<matiere nom="Chimie" temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
+		<matiere nom="Allemand" temps="20" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="1"></matiere>
+		<matiere nom="Italien" temps="20" lv="1"></matiere>
+		<matiere nom="Arabe" temps="20" lv="1"></matiere>
+		<matiere nom="Chinois" temps="20" lv="1"></matiere>
 	</classe>
 
 	<classe nom="MP" precision="Mathématiques, Physique" annee="2" type="Scientifique" domaine="Mathématiques, physique">
@@ -105,7 +144,26 @@
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
+		<matiere nom="Allemand" temps="20" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="1"></matiere>
+		<matiere nom="Italien" temps="20" lv="1"></matiere>
+		<matiere nom="Arabe" temps="20" lv="1"></matiere>
+		<matiere nom="Chinois" temps="20" lv="1"></matiere>
 	</classe>
+
+	<classe nom="MPI" precision="Mathématiques, Physique et Informatique" annee="2" type="Scientifique" domaine="Mathématiques, physique, informatique" >
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Physique" temps="20"></matiere>
+		<matiere nom="Informatique" temps="20"></matiere>
+		<matiere nom="Français/Philo" temps="30"></matiere>
+		<matiere nom="Anglais" temps="20" lv="1"></matiere>
+		<matiere nom="Allemand" temps="20" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="1"></matiere>
+		<matiere nom="Italien" temps="20" lv="1"></matiere>
+		<matiere nom="Arabe" temps="20" lv="1"></matiere>
+		<matiere nom="Chinois" temps="20" lv="1"></matiere>
+	</classe>
+
 
 	<classe nom="TPC" precision="Technologie, Physique, Chimie" annee="2" type="Scientifique" domaine="Mathématiques, physique, chimie">
 		<matiere nom="Mathématiques" temps="20"></matiere>
@@ -123,6 +181,11 @@
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
 		<matiere nom="Géographie" temps="20"></matiere>
 		<matiere nom="Informatique" temps="60"></matiere>
+		<matiere nom="Allemand" temps="20" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="1"></matiere>
+		<matiere nom="Italien" temps="20" lv="1"></matiere>
+		<matiere nom="Arabe" temps="20" lv="1"></matiere>
+		<matiere nom="Chinois" temps="20" lv="1"></matiere>
 	</classe>
 
 	<classe nom="TB" precision="Technologie, Biologie" annee="2" type="Scientifique" domaine="Mathématiques, physique, sciences de la vie et de la terre">
@@ -135,6 +198,46 @@
 		<matiere nom="Informatique" temps="60"></matiere>
 	</classe>
 
+	<classe nom="ECG" precision="Économique et Commerciale, voie Générale" annee="1" type="Économique" domaine="Mathématiques, économie">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Culture gé." temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" lv="1"></matiere>
+		<matiere nom="Allemand" temps="20" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="1"></matiere>
+		<matiere nom="Italien" temps="20" lv="1"></matiere>
+		<matiere nom="Arabe" temps="20" lv="1"></matiere>
+		<matiere nom="Chinois" temps="20" lv="1"></matiere>
+		<matiere nom="Anglais" temps="20" lv="2"></matiere>
+		<matiere nom="Allemand" temps="20" lv="2"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="2"></matiere>
+		<matiere nom="Italien" temps="20" lv="2"></matiere>
+		<matiere nom="Arabe" temps="20" lv="2"></matiere>
+		<matiere nom="Chinois" temps="20" lv="2"></matiere>
+		<matiere nom="H.G.G." temps="20"></matiere>
+		<matiere nom="E.S.H." temps="20"></matiere>
+		<matiere nom="Informatique" temps="60"></matiere>
+	</classe>
+
+	<classe nom="ECG" precision="Économique et Commerciale, voie Générale" annee="2" type="Économique" domaine="Mathématiques, économie">
+		<matiere nom="Mathématiques" temps="20"></matiere>
+		<matiere nom="Culture gé." temps="20"></matiere>
+		<matiere nom="Anglais" temps="20" lv="1"></matiere>
+		<matiere nom="Allemand" temps="20" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="1"></matiere>
+		<matiere nom="Italien" temps="20" lv="1"></matiere>
+		<matiere nom="Arabe" temps="20" lv="1"></matiere>
+		<matiere nom="Chinois" temps="20" lv="1"></matiere>
+		<matiere nom="Anglais" temps="20" lv="2"></matiere>
+		<matiere nom="Allemand" temps="20" lv="2"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="2"></matiere>
+		<matiere nom="Italien" temps="20" lv="2"></matiere>
+		<matiere nom="Arabe" temps="20" lv="2"></matiere>
+		<matiere nom="Chinois" temps="20" lv="2"></matiere>
+		<matiere nom="H.G.G." temps="20"></matiere>
+		<matiere nom="E.S.H." temps="20"></matiere>
+		<matiere nom="Informatique" temps="60"></matiere>
+	</classe>
+<!--
 	<classe nom="ECS" precision="Économique et Commerciale, option Scientifique" annee="1" type="Économique" domaine="Mathématiques, économie">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
@@ -142,25 +245,48 @@
 		<matiere nom="H.G.E." temps="20"></matiere>
 		<matiere nom="Informatique" temps="60"></matiere>
 	</classe>
-
+-->
 	<classe nom="ECS" precision="Économique et Commerciale, option Scientifique" annee="2" type="Économique" domaine="Mathématiques, économie">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
-		<matiere nom="H.G.E." temps="20"></matiere>
+		<matiere nom="Allemand" temps="20" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="1"></matiere>
+		<matiere nom="Italien" temps="20" lv="1"></matiere>
+		<matiere nom="Arabe" temps="20" lv="1"></matiere>
+		<matiere nom="Chinois" temps="20" lv="1"></matiere>
+		<matiere nom="Anglais" temps="20" lv="2"></matiere>
+		<matiere nom="Allemand" temps="20" lv="2"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="2"></matiere>
+		<matiere nom="Italien" temps="20" lv="2"></matiere>
+		<matiere nom="Arabe" temps="20" lv="2"></matiere>
+		<matiere nom="Chinois" temps="20" lv="2"></matiere>
+		<matiere nom="H.G.G." temps="20"></matiere>
 	</classe>
 
+<!--
 	<classe nom="ECE" precision="Économique et Commerciale, option Économique" annee="1" type="Économique" domaine="Mathématiques, économie">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
 		<matiere nom="A.E.H.S.C." temps="20"></matiere>
 	</classe>
-
+-->
 	<classe nom="ECE" precision="Économique et Commerciale, option Économique" annee="2" type="Économique" domaine="Mathématiques, économie">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
+		<matiere nom="Allemand" temps="20" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="1"></matiere>
+		<matiere nom="Italien" temps="20" lv="1"></matiere>
+		<matiere nom="Arabe" temps="20" lv="1"></matiere>
+		<matiere nom="Chinois" temps="20" lv="1"></matiere>
+		<matiere nom="Anglais" temps="20" lv="2"></matiere>
+		<matiere nom="Allemand" temps="20" lv="2"></matiere>
+		<matiere nom="Espagnol" temps="20" lv="2"></matiere>
+		<matiere nom="Italien" temps="20" lv="2"></matiere>
+		<matiere nom="Arabe" temps="20" lv="2"></matiere>
+		<matiere nom="Chinois" temps="20" lv="2"></matiere>
 		<matiere nom="A.E.H.S.C." temps="20"></matiere>
 	</classe>
 
@@ -189,10 +315,21 @@
 		<matiere nom="Français" temps="30"></matiere>
 		<matiere nom="Latin" temps="30"></matiere>
 		<matiere nom="Grec" temps="30"></matiere>
-		<matiere nom="Anglais" temps="30" lv="1"></matiere>
-		<matiere nom="Anglais" temps="30" lv="2"></matiere>
 		<matiere nom="Histoire" temps="30"></matiere>
 		<matiere nom="Géographie" temps="30"></matiere>
+		<matiere nom="Histoire des Arts" temps="30"></matiere>
+		<matiere nom="Anglais" temps="30" lv="1"></matiere>
+		<matiere nom="Allemand" temps="30" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="30" lv="1"></matiere>
+		<matiere nom="Italien" temps="30" lv="1"></matiere>
+		<matiere nom="Arabe" temps="30" lv="1"></matiere>
+		<matiere nom="Chinois" temps="30" lv="1"></matiere>
+		<matiere nom="Anglais" temps="30" lv="2"></matiere>
+		<matiere nom="Allemand" temps="30" lv="2"></matiere>
+		<matiere nom="Espagnol" temps="30" lv="2"></matiere>
+		<matiere nom="Italien" temps="30" lv="2"></matiere>
+		<matiere nom="Arabe" temps="30" lv="2"></matiere>
+		<matiere nom="Chinois" temps="30" lv="2"></matiere>
 	</classe>
 
 	<classe nom="Khâgne" annee="2" type="Littéraire" domaine="Français, philosophie, latin, grec, histoire-géographie">
@@ -201,9 +338,18 @@
 		<matiere nom="Latin" temps="30"></matiere>
 		<matiere nom="Grec" temps="30"></matiere>
 		<matiere nom="Anglais" temps="30" lv="1"></matiere>
-		<matiere nom="Anglais" temps="30" lv="2"></matiere>
+		<matiere nom="Allemand" temps="30" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="30" lv="1"></matiere>
+		<matiere nom="Italien" temps="30" lv="1"></matiere>
+		<matiere nom="Arabe" temps="30" lv="1"></matiere>
+		<matiere nom="Chinois" temps="30" lv="1"></matiere>
 		<matiere nom="Histoire" temps="30"></matiere>
 		<matiere nom="Géographie" temps="30"></matiere>
+		<matiere nom="Opt. L. Mod." temps="30"></matiere>
+		<matiere nom="Opt. L. Cla." temps="30"></matiere>
+		<matiere nom="Opt. Philo" temps="30"></matiere>
+		<matiere nom="Opt. Hist." temps="30"></matiere>
+		<matiere nom="Opt. Géo." temps="30"></matiere>
 	</classe>
 
 	<classe nom="Hypokhâgne B/L" annee="1" type="Littéraire" domaine="Français, mathématiques, philosophie, latin, grec, histoire-géographie">
@@ -212,7 +358,17 @@
 		<matiere nom="Latin" temps="30"></matiere>
 		<matiere nom="Grec" temps="30"></matiere>
 		<matiere nom="Anglais" temps="30" lv="1"></matiere>
+		<matiere nom="Allemand" temps="30" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="30" lv="1"></matiere>
+		<matiere nom="Italien" temps="30" lv="1"></matiere>
+		<matiere nom="Arabe" temps="30" lv="1"></matiere>
+		<matiere nom="Chinois" temps="30" lv="1"></matiere>
 		<matiere nom="Anglais" temps="30" lv="2"></matiere>
+		<matiere nom="Allemand" temps="30" lv="2"></matiere>
+		<matiere nom="Espagnol" temps="30" lv="2"></matiere>
+		<matiere nom="Italien" temps="30" lv="2"></matiere>
+		<matiere nom="Arabe" temps="30" lv="2"></matiere>
+		<matiere nom="Chinois" temps="30" lv="2"></matiere>
 		<matiere nom="Histoire" temps="30"></matiere>
 		<matiere nom="Géographie" temps="30"></matiere>
 		<matiere nom="Mathématiques" temps="20"></matiere>
@@ -225,7 +381,10 @@
 		<matiere nom="Latin" temps="30"></matiere>
 		<matiere nom="Grec" temps="30"></matiere>
 		<matiere nom="Anglais" temps="30" lv="1"></matiere>
-		<matiere nom="Anglais" temps="30" lv="2"></matiere>
+		<matiere nom="Allemand" temps="30" lv="1"></matiere>
+		<matiere nom="Espagnol" temps="30" lv="1"></matiere>
+		<matiere nom="Italien" temps="30" lv="1"></matiere>
+		<matiere nom="Arabe" temps="30" lv="1"></matiere>
 		<matiere nom="Histoire" temps="30"></matiere>
 		<matiere nom="Géographie" temps="30"></matiere>
 		<matiere nom="Mathématiques" temps="20"></matiere>
