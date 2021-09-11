@@ -487,26 +487,19 @@ def eleve(request):
 @ip_filter
 def elevecsv(request):
     """Renvoie la vue de la page d'ajout d'élèves via un fichier CSV"""
-    form = CsvForm(request.POST or None, request.FILES or None,initial = {'nom':'Nom','prenom':'Prénom', 'ddn': 'Date de naissance', 'ldn': 'Commune', 'ine': 'Numéro INE','email':'Adresse mail'})
+    form = CsvForm(request.POST or None, request.FILES or None,initial = {'nom':'Nom','prenom':'Prénom', 'nomclasse': 'Classe', 'email': 'Adresse mail', 'identifiant': 'Identifiant', 'motdepasse': 'Mot de passe', 'lv1': 'lv1', 'lv2': 'lv2', 'ddn': 'Date de naissance', 'ldn': 'Commune', 'ine': 'Numéro INE'})
     if form.is_valid():
-        try:
-            with TextIOWrapper(form.cleaned_data['fichier'].file,encoding = 'utf8') as fichiercsv:
-                dialect = csv.Sniffer().sniff(fichiercsv.read(4096))
-                nom,prenom,ddn,ldn,ine,email=form.cleaned_data['nom'],form.cleaned_data['prenom'],form.cleaned_data['ddn'],form.cleaned_data['ldn'],form.cleaned_data['ine'],form.cleaned_data['email']
-                fichiercsv.seek(0)
-                reader = csv.DictReader(fichiercsv, dialect=dialect)
-                ligne = next(reader)
-                if not(nom in ligne and prenom in ligne):
-                    messages.error(request,"Les intitulés des champs nom et/ou prénom sont inexacts")
-                else:
-                    fichiercsv.seek(0)
-                    next(reader)
-                    initial = [{'last_name': ligneLoc[nom],'first_name':ligneLoc[prenom],'ddn':None if ddn not in ligneLoc else ligneLoc[ddn],'ldn':None if ldn not in ligneLoc else ligneLoc[ldn],\
-                    'ine':'' if ine not in ligneLoc else ligneLoc[ine],'email':'' if email not in ligneLoc else ligneLoc[email],'classe':form.cleaned_data['classe']} for ligneLoc in reader]
-                    return eleveajout(request,initial=initial)
-        except Exception as e:
-                messages.error(request,"Le fichier doit être un fichier CSV valide, encodé en UTF-8")
+        if form.cleaned_data["importdirect"]:
+            try:
+                form.save()
+                return redirect("gestion_eleve")
+            except Exception as e:
+                messages.error(request,str(e))
                 return redirect('csv_eleve')
+        else:
+            initial = [{"last_name": user.last_name or "", "first_name": user.first_name or "", "username": user.username or "", "password": mdp ,
+            "email": user.email or "", "classe": eleve.classe if hasattr(eleve,'classe') else None, "ldn": eleve.ldn, "ddn": eleve.ddn.strftime('%d/%m/%Y'), "ine": eleve.ine, "lv1": eleve.lv1, "lv2": eleve.lv2 } for user, eleve, mdp in zip(form.users,form.eleves,form.mdp)]
+            return eleveajout(request, initial = initial)
     return render(request,'administrateur/elevecsv.html',{'form':form})
 
 @ip_filter

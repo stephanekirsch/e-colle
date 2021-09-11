@@ -6,8 +6,78 @@
 	<form method="POST" enctype="multipart/form-data">
 		{% csrf_token %}
 	<table class="tableausimple">
-		{{ form.as_table }}	
-		<tr><td colspan="2"><input type="submit" value="Valider" name="csv"/></td></tr>	
+		{% if form.non_field_errors %}
+			<tr>
+				<td colspan="3" class = error>{{ form.non_field_errors }}</td>
+			</tr>
+		{% endif %}
+		<tr><th colspan="3">Sélectionner les champs que vous voulez importer et préciser leur nom exact</td></tr>
+		<tr>
+			<td colspan="2"> {{ form.nom.label_tag }} </td>
+			<td> {{ form.nom.errors }} {{form.nom}}</td>
+		</tr>
+		<tr>
+			<td colspan="2"> {{ form.prenom.label_tag }} </td>
+			<td> {{ form.prenom.errors }} {{form.prenom}}</td>
+		</tr>
+		<tr>
+			<td>{{form.getemail}}</td>
+			<td> {{ form.email.label_tag }} </td>
+			<td> {{ form.email.errors }} {{form.email}}</td>
+		</tr>
+		<tr>
+			<td>{{form.getclasse}}</td>
+			<td> {{ form.nomclasse.label_tag }} </td>
+			<td> {{ form.nomclasse.errors }} {{form.nomclasse}}</td>
+		</tr>
+		<tr>
+			<td>{{form.getidentifiant}}</td>
+			<td> {{ form.identifiant.label_tag }} </td>
+			<td> {{ form.identifiant.errors }} {{form.identifiant}}</td>
+		</tr>
+		<tr>
+			<td>{{form.getmotdepasse}}</td>
+			<td> {{ form.motdepasse.label_tag }} </td>
+			<td> {{ form.motdepasse.errors }} {{form.motdepasse}}</td>
+		</tr>
+		<tr>
+			<td>{{form.getlv1}}</td>
+			<td> {{ form.lv1.label_tag }} </td>
+			<td> {{ form.lv1.errors }} {{form.lv1}}</td>
+		</tr>
+		<tr>
+			<td>{{form.getlv2}}</td>
+			<td> {{ form.lv2.label_tag }} </td>
+			<td> {{ form.lv2.errors }} {{form.lv2}}</td>
+		</tr>
+		<tr>
+			<td>{{form.getddn}}</td>
+			<td> {{ form.ddn.label_tag }} </td>
+			<td> {{ form.ddn.errors }} {{form.ddn}}</td>
+		</tr>
+		<tr>
+			<td>{{form.getldn}}</td>
+			<td> {{ form.ldn.label_tag }} </td>
+			<td> {{ form.ldn.errors }} {{form.ldn}}</td>
+		</tr>
+		<tr>
+			<td>{{form.getine}}</td>
+			<td> {{ form.ine.label_tag }} </td>
+			<td> {{ form.ine.errors }} {{form.ine}}</td>
+		</tr>
+		<tr>
+			<td colspan="2"> {{ form.fichier.label_tag }} </td>
+			<td> {{ form.fichier.errors }} {{form.fichier}}</td>
+		</tr>
+		<tr>
+			<td colspan="2"> {{ form.importdirect.label_tag }} </td>
+			<td> {{ form.importdirect.errors }} {{form.importdirect}} <br> {{form.importdirect.help_text}}</td>
+		</tr>
+		<tr>
+			<td colspan="2"> {{ form.classe.label_tag }} </td>
+			<td> {{ form.classe.errors }} {{form.classe}}<br> {{form.classe.help_text}}</td>
+		</tr>
+		<tr><td colspan="3"><input type="submit" value="Valider" name="csv"/></td></tr>	
 	</table>
 	</form>
 		}

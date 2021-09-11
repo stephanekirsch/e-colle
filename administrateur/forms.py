@@ -10,7 +10,9 @@ from ecolle.settings import RESOURCES_ROOT, MEDIA_ROOT
 from xml.etree import ElementTree as etree
 from random import choice
 from os import path, remove
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+import csv
+from _io import TextIOWrapper
 
 
 class ConfigForm(forms.ModelForm):
@@ -630,12 +632,174 @@ class MatiereClasseSelectForm(forms.Form):
 class CsvForm(forms.Form):
     nom = forms.CharField(label="intitulé du champ nom",required=True,max_length=30)
     prenom = forms.CharField(label="intitulé du champ prénom",required=True,max_length=30)
-    ddn = forms.CharField(label="intitulé du champ date de naissance (pour ECTS, facultatif)",required=False,max_length=30)
-    ldn = forms.CharField(label="intitulé du champ lieu de naissance (pour ECTS, facultatif)",required=False,max_length=50)
-    ine = forms.CharField(label="intitulé du champ numéro INE (pour ETCS, facultatif)",required=False,max_length=30)
-    email = forms.CharField(label="intitulé du champ email(facultatif)",required=False,max_length=30)
+    email = forms.CharField(label="intitulé du champ email",required=False,max_length=50)
+    getemail = forms.BooleanField(label="email", required = False)
+    nomclasse = forms.CharField(label="intitulé du champ classe",required=True,max_length=30)
+    getclasse = forms.BooleanField(label="classe", required = False)
+    identifiant = forms.CharField(label="intitulé du champ identifiant",required=True,max_length=30)
+    getidentifiant = forms.BooleanField(label="identifiant", required = False)
+    motdepasse = forms.CharField(label="intitulé du champ mot de passe",required=True,max_length=30)
+    getmotdepasse = forms.BooleanField(label="mot de passe", required = False)
+    lv1 = forms.CharField(label="intitulé du champ lv1",required=True,max_length=30)
+    getlv1 = forms.BooleanField(label="lv1", required = False)
+    lv2 = forms.CharField(label="intitulé du champ lv2",required=True,max_length=30)
+    getlv2 = forms.BooleanField(label="lv2", required = False)
+    ddn = forms.CharField(label="intitulé du champ date de naissance (pour ECTS)",required=False,max_length=30)
+    getddn = forms.BooleanField(label="date de naissance", required = False)
+    ldn = forms.CharField(label="intitulé du champ lieu de naissance (pour ECTS)",required=False,max_length=50)
+    getldn = forms.BooleanField(label="lieu de naissance", required = False)
+    ine = forms.CharField(label="intitulé du champ numéro INE (pour ECTS)",required=False,max_length=30)
+    getine = forms.BooleanField(label="INE", required = False)
     fichier = forms.FileField(label="Fichier csv",required=True)
-    classe=forms.ModelChoiceField(label="Classe",queryset=Classe.objects.order_by('nom'), empty_label="Non définie",required=False) 
+    importdirect = forms.BooleanField(label="import direct", required = False, help_text="(cocher si le fichier csv contient déjà toutes les infos nécessaires et qu'il\
+     n'y a rien à retoucher)")
+    classe=forms.ModelChoiceField(label="Classe", help_text="(ignoré si la classe est importée depuis le fichier csv)", queryset=Classe.objects.order_by('nom'), empty_label="Non définie",required=False) 
+
+
+    def clean(self):
+        # on vérifie qu'il n'y a pas d'incohérence
+        if self.cleaned_data['importdirect'] and  (not self.cleaned_data['getidentifiant'] or not self.cleaned_data['getmotdepasse']):
+            raise ValidationError("Pour un import direct il faut valider au moins les champs identifiant et mot de passe")
+        with TextIOWrapper(self.cleaned_data['fichier'].file,encoding = 'utf8') as fichiercsv:
+            dialect = csv.Sniffer().sniff(fichiercsv.read(4096))
+            self.champs = {self.cleaned_data['nom'], self.cleaned_data['prenom']}
+            if self.cleaned_data['getemail']:
+                self.champs.add(self.cleaned_data['email'])
+            if self.cleaned_data['getidentifiant']:
+                self.champs.add(self.cleaned_data['identifiant'])
+            if self.cleaned_data['getmotdepasse']:
+                self.champs.add(self.cleaned_data['motdepasse'])
+            if self.cleaned_data['getclasse']:
+                self.champs.add(self.cleaned_data['nomclasse'])
+            if self.cleaned_data['getlv1']:
+                self.champs.add(self.cleaned_data['lv1'])
+            if self.cleaned_data['getlv2']:
+                self.champs.add(self.cleaned_data['lv2'])
+            if self.cleaned_data['getldn']:
+                self.champs.add(self.cleaned_data['ldn'])
+            if self.cleaned_data['getddn']:
+                self.champs.add(self.cleaned_data['ddn'])
+            if self.cleaned_data['getine']:
+                self.champs.add(self.cleaned_data['ine'])
+            reader = csv.DictReader(fichiercsv, dialect=dialect)
+            fichiercsv.seek(0)
+            ligne = next(reader)
+            erreurs = [x for x in self.champs if x not in ligne]
+            if erreurs:
+                raise ValidationError("Les intitulés des champs suivants sont inexacts: {}".format(erreurs))
+            self.users = []
+            self.eleves = []
+            self.mdp = []
+            fichiercsv.seek(0)
+            next(reader)
+            for i, ligne in enumerate(reader):
+                args = dict()
+                eleveclasse = elevelv1 = elevelv2 = eleveddn = eleveldn = eleveine = False
+                if self.cleaned_data["getclasse"]:
+                    donnee = ligne[self.cleaned_data['nomclasse']]
+                    if donnee != "": 
+                        try:
+                            args['classe'] = Classe.objects.get(nom__iexact=donnee.lower())
+                        except Exception as e:
+                            raise ValidationError(str(e))
+                if 'classe' not in args and self.cleaned_data['classe'] is not None:
+                    try:
+                        args["classe"] = self.cleaned_data["classe"]
+                    except Exception as e:
+                        raise ValidationError(str(e))
+                if self.cleaned_data["getlv1"]:
+                    donnee = ligne[self.cleaned_data['lv1']]
+                    if donnee != "": 
+                        try:
+                            elevelv1 = Matiere.objects.filter(lv=1, nom__iexact=donnee.lower())
+                            if 'classe' in args:
+                                elevelv1 = elevelv1.filter(matieresclasse=args['classe'])
+                            args['lv1'] = elevelv1.all()[0]
+                        except Exception as e:
+                            raise ValidationError(str(e))
+                if self.cleaned_data["getlv1"]:
+                    donnee = ligne[self.cleaned_data['lv1']]
+                    if donnee != "": 
+                        try:
+                            elevelv1 = Matiere.objects.filter(lv=1, nom__iexact=donnee.lower())
+                            if 'classe' in args:
+                                elevelv1 = elevelv1.filter(matieresclasse=args['classe'])
+                            args['lv1'] = elevelv1.all()[0]
+                        except Exception as e:
+                            raise ValidationError(str(e))
+                if self.cleaned_data["getldn"]:
+                    try:
+                        args['ldn'] = ligne[self.cleaned_data[ldn]]
+                    except Exception as e:
+                        raise ValidationError(str(e))
+                if self.cleaned_data["getddn"]:
+                    donnee = ligne[self.cleaned_data["ddn"]]
+                    if donnee != "":
+                        try:
+                            args['ddn'] = datetime.strptime(donnee, '%d/%m/%Y')
+                        except Exception as e:
+                            raise ValidationError("la date de naissance de l'élève à la ligne {} est invalide".format(i))
+                if self.cleaned_data["getine"]:
+                    try:
+                        args['ine'] = ligne[self.cleaned_data['ine']]
+                    except Exception as e:
+                        raise ValidationError(str(e))
+                try:
+                    self.eleves.append(Eleve(**args))
+                except Exception as e:
+                        raise ValidationError(str(e))
+                args.clear()
+                try:
+                    args['last_name'] = ligne[self.cleaned_data['nom']]
+                except Exception as e:
+                     raise ValidationError(str(e))
+                try:
+                    args['first_name'] = ligne[self.cleaned_data['prenom']]
+                except Exception as e:
+                     raise ValidationError(str(e))
+                if self.cleaned_data["getidentifiant"]:
+                    donnee = ligne[self.cleaned_data['identifiant']]
+                    if donnee == "" and self.cleaned_data["importdirect"]:
+                        raise ValidationError("il manque l'identifiant pour l'élève de rang {}".format(i))
+                    elif donnee != "":
+                        try:
+                            args['username'] = donnee
+                        except Exception as e:
+                            raise ValidationError(str(e))
+                if self.cleaned_data["getemail"]:
+                    donnee = ligne[self.cleaned_data['email']]
+                    if donnee != "":
+                        try:
+                            args['email'] = donnee
+                        except Exception as e:
+                            raise ValidationError(str(e))
+                try:
+                    user = User(**args)
+                except Exception as e:
+                    raise ValidationError(str(e))
+                self.users.append(user)
+                mdp = ""
+                if self.cleaned_data["getmotdepasse"]:
+                    mdp = ligne[self.cleaned_data['motdepasse']]
+                    if mdp == "" and self.cleaned_data["importdirect"]:
+                        raise ValidationError("il manque le mot de passe pour l'élève de rang {}".format(i))
+                self.mdp.append(mdp) 
+
+    def save(self):
+        if self.cleaned_data["importdirect"]:
+            with transaction.atomic():
+                for user, eleve, mdp in zip(self.users, self.eleves, self.mdp):
+                    eleve.save()
+                    user.eleve = eleve
+                    user.set_password(mdp)
+                User.objects.bulk_create(self.users)
+
+
+
+
+
+
+
 
 class CsvColleurForm(forms.Form):
     nom = forms.CharField(label="intitulé du champ nom",required=True,max_length=30)

@@ -92,7 +92,8 @@ class Groupe2Form(forms.Form):
         if query.exists():
             self.fields['lv21'] = MatiereChoiceField(label="LV2",queryset=query,empty_label="Tout",required=False)
             self.fields['lv22'] = MatiereChoiceField(label="LV2",queryset=query,empty_label="Tout",required=False)
-        query = Matiere.objects.filter(pk__in=(classe.option1.pk,classe.option2.pk)).distinct()
+        options = {classe.option1.pk if classe.option1 is not None else None, classe.option2.pk if classe.option2 is not None else None} - {None}
+        query = Matiere.objects.filter(pk__in=options).distinct()
         if query.exists():
             self.fields['option'] = MatiereChoiceField(label="Option",queryset=query,empty_label="Tout",required=False)
 
