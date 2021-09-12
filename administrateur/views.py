@@ -498,7 +498,7 @@ def elevecsv(request):
                 return redirect('csv_eleve')
         else:
             initial = [{"last_name": user.last_name or "", "first_name": user.first_name or "", "username": user.username or "", "password": mdp ,
-            "email": user.email or "", "classe": eleve.classe if hasattr(eleve,'classe') else None, "ldn": eleve.ldn, "ddn": eleve.ddn.strftime('%d/%m/%Y'), "ine": eleve.ine, "lv1": eleve.lv1, "lv2": eleve.lv2 } for user, eleve, mdp in zip(form.users,form.eleves,form.mdp)]
+            "email": user.email or "", "classe": eleve.classe if hasattr(eleve,'classe') else None, "ldn": eleve.ldn, "ddn": "" if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'), "ine": eleve.ine, "lv1": eleve.lv1, "lv2": eleve.lv2 } for user, eleve, mdp in zip(form.users,form.eleves,form.mdp)]
             return eleveajout(request, initial = initial)
     return render(request,'administrateur/elevecsv.html',{'form':form})
 

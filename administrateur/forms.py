@@ -632,7 +632,7 @@ class MatiereClasseSelectForm(forms.Form):
 class CsvForm(forms.Form):
     nom = forms.CharField(label="intitulé du champ nom",required=True,max_length=30)
     prenom = forms.CharField(label="intitulé du champ prénom",required=True,max_length=30)
-    email = forms.CharField(label="intitulé du champ email",required=False,max_length=50)
+    email = forms.CharField(label="intitulé du champ email",required=False,max_length=60)
     getemail = forms.BooleanField(label="email", required = False)
     nomclasse = forms.CharField(label="intitulé du champ classe",required=True,max_length=30)
     getclasse = forms.BooleanField(label="classe", required = False)
