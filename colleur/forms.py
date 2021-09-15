@@ -625,6 +625,8 @@ class ColloscopeImportForm(forms.Form):
                             self.colles.append(souscolle)
                     else:
                         self.colles.append(colle)
+        except ValidationError as e:
+            raise ValidationError(str(e))
         except Exception as e:
             raise ValidationError("Le fichier doit être un fichier CSV valide, encodé en UTF-8")
 
