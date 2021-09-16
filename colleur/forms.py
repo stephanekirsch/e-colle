@@ -556,7 +556,7 @@ class ColloscopeImportForm(forms.Form):
                         raise ValidationError("{} n'est pas colleur de {} dans la matière {}".format(" ".join(colleur), self.classe.nom, mat))
                     creneau = row[3].split(" ")
                     if creneau[0] not in jours:
-                        raise ValidationError("{} ne correspond à aucun jour de la semaine").format(creneau[0])
+                        raise ValidationError("{} ne correspond à aucun jour de la semaine".format(creneau[0]))
                     else:
                         colle.append(jours[creneau[0]])
                     heure = creneau[1].split("h")
