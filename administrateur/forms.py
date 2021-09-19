@@ -920,8 +920,8 @@ class CsvColleurForm(forms.Form):
                 for user, classes, matieres in zip(self.users, self.classes, self.matieres, self.mdp):
                     colleur = Colleur()
                     colleur.save()
-                    colleur.classes.add(classes)
-                    colleur.matieres.add(matieres)
+                    colleur.classes.add(*list(classes))
+                    colleur.matieres.add(*list(matieres)
                     user.colleur = colleur
                     user.set_password(mdp)
                 User.objects.bulk_create(self.users)
