@@ -867,7 +867,7 @@ class CsvColleurForm(forms.Form):
                     donnee = [x.strip() for x in ligne[self.cleaned_data['nommatieres']].split(";")]
                     if donnee != [""]: 
                         try:
-                            donnee = map(lambda n: Q(nom__iexact=n), donnee)
+                            donnee = map(lambda n: Q(nomcomplet__iexact=n), donnee)
                             donnee = reduce(lambda a, b: a | b, donnee)
                             matieres = Matiere.objects.filter(donnee)
                         except Exception as e:
