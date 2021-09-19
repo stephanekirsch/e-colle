@@ -13,6 +13,7 @@ from os import path, remove
 from datetime import date, timedelta, datetime
 import csv
 from _io import TextIOWrapper
+from functools import reduce
 
 
 class ConfigForm(forms.ModelForm):
