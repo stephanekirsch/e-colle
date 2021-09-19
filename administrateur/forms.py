@@ -922,7 +922,7 @@ class CsvColleurForm(forms.Form):
     def save(self):
         if self.cleaned_data["importdirect"]:
             with transaction.atomic():
-                for user, classes, matieres in zip(self.users, self.classes, self.matieres, self.mdp):
+                for user, classes, matieres, mdp in zip(self.users, self.classes, self.matieres, self.mdp):
                     colleur = Colleur()
                     colleur.save()
                     colleur.classes.add(*list(classes))
