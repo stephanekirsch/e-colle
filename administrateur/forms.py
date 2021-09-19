@@ -857,7 +857,7 @@ class CsvColleurForm(forms.Form):
                             classes = Classe.objects.filter(donnee)
                         except Exception as e:
                             raise ValidationError(str(e))
-                if classes and self.cleaned_data['classe'] is not None:
+                if not classes and self.cleaned_data['classe']:
                     try:
                         classes = [self.cleaned_data["classe"]]
                     except Exception as e:
@@ -871,7 +871,7 @@ class CsvColleurForm(forms.Form):
                             matieres = Matiere.objects.filter(donnee)
                         except Exception as e:
                             raise ValidationError(str(e))
-                if matieres and self.cleaned_data['matiere'] is not None:
+                if not matieres and self.cleaned_data['matiere']:
                     try:
                         matieres = [self.cleaned_data["matiere"]]
                     except Exception as e:

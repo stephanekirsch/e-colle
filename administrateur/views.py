@@ -515,8 +515,9 @@ def colleurcsv(request):
                 messages.error(request,str(e))
                 return redirect('csv_colleur')
         else:
+            print(form.classes)
             initial = [{"last_name": user.last_name or "", "first_name": user.first_name or "", "username": user.username or "", "password": mdp ,
-            "email": user.email or "", "classes": classes, "matieres": matieres} for user, classes, matieres, mdp in zip(form.users,form.classes,form.matieres,form.mdp)]
+            "email": user.email or "", "classe": classes, "matiere": matieres} for user, classes, matieres, mdp in zip(form.users,form.classes,form.matieres,form.mdp)]
             return colleurajout(request, initial = initial)
     return render(request,'administrateur/colleurcsv.html',{'form':form})
 
