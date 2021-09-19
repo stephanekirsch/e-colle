@@ -852,7 +852,9 @@ class CsvColleurForm(forms.Form):
                     donnee = [x.strip().lower() for x in ligne[self.cleaned_data['nomclasses']].split(";")]
                     if donnee != [""]: 
                         try:
-                            classes = Classe.objects.filter(nom__iexact__in=donnee)
+                            donnee = map(lambda n: Q(nom__iexact=n), donnee)
+                            donnee = reduce(lambda a, b: a | b, donnee)
+                            classes = Classe.objects.filter(donnee)
                         except Exception as e:
                             raise ValidationError(str(e))
                 if classes and self.cleaned_data['classe'] is not None:
@@ -864,7 +866,9 @@ class CsvColleurForm(forms.Form):
                     donnee = [x.strip() for x in ligne[self.cleaned_data['nommatieres']].split(";")]
                     if donnee != [""]: 
                         try:
-                            matieres = Matiere.objects.filter(nomcomplet__iexact__in=donnee)
+                            donnee = map(lambda n: Q(nom__iexact=n), donnee)
+                            donnee = reduce(lambda a, b: a | b, donnee)
+                            matieres = Matiere.objects.filter(donnee)
                         except Exception as e:
                             raise ValidationError(str(e))
                 if matieres and self.cleaned_data['matiere'] is not None:
