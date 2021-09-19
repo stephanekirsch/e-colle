@@ -516,7 +516,7 @@ def colleurcsv(request):
                 return redirect('csv_colleur')
         else:
             initial = [{"last_name": user.last_name or "", "first_name": user.first_name or "", "username": user.username or "", "password": mdp ,
-            "email": user.email or "", "classes": colleur.classes if hasattr(colleurs,'classes') else None, "matieres": colleur.matieres if hasattr(colleurs,'matieres') else None} for user, colleur, mdp in zip(form.users,form.colleurs,form.mdp)]
+            "email": user.email or "", "classes": classes, "matieres": matieres} for user, classes, matieres, mdp in zip(form.users,form.classes,form.matieres,form.mdp)]
             return colleurajout(request, initial = initial)
     return render(request,'administrateur/colleurcsv.html',{'form':form})
 

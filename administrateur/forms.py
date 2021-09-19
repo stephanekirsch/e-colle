@@ -839,42 +839,42 @@ class CsvColleurForm(forms.Form):
             if erreurs:
                 raise ValidationError("Les intitulés des champs suivants sont inexacts: {}".format(erreurs))
             self.users = []
-            self.colleurs = []
+            self.classes = []
+            self.matieres = []
             self.mdp = []
             fichiercsv.seek(0)
             next(reader)
             for i, ligne in enumerate(reader):
                 args = dict()
-                eleveclasse = elevelv1 = elevelv2 = eleveddn = eleveldn = eleveine = False
+                classes = []
+                matieres = []
                 if self.cleaned_data["getclasses"]:
-                    donnee = [x.strip().lower() for x in ligne[self.cleaned_data['nomclasse']].split(";")]
+                    donnee = [x.strip().lower() for x in ligne[self.cleaned_data['nomclasses']].split(";")]
                     if donnee != [""]: 
                         try:
-                            args['classes'] = Classe.objects.filter(nom__iexact__in=donnee)
+                            classes = Classe.objects.filter(nom__iexact__in=donnee)
                         except Exception as e:
                             raise ValidationError(str(e))
-                if 'classes' not in args and self.cleaned_data['classe'] is not None:
+                if classes and self.cleaned_data['classe'] is not None:
                     try:
-                        args["classes"] = [self.cleaned_data["classe"]]
+                        classes = [self.cleaned_data["classe"]]
                     except Exception as e:
                         raise ValidationError(str(e))
                 if self.cleaned_data["getmatieres"]:
-                    donnee = [x.strip() for x in ligne[self.cleaned_data['nommatiere']].split(";")]
+                    donnee = [x.strip() for x in ligne[self.cleaned_data['nommatieres']].split(";")]
                     if donnee != [""]: 
                         try:
-                            args['matieres'] = Matiere.objects.filter(nomcomplet__iexact__in=donnee)
+                            matieres = Matiere.objects.filter(nomcomplet__iexact__in=donnee)
                         except Exception as e:
                             raise ValidationError(str(e))
-                if 'matieres' not in args and self.cleaned_data['matiere'] is not None:
+                if matieres and self.cleaned_data['matiere'] is not None:
                     try:
-                        args["matieres"] = [self.cleaned_data["matiere"]]
+                        matieres = [self.cleaned_data["matiere"]]
                     except Exception as e:
                         raise ValidationError(str(e))
                 try:
-                    colleur = Colleur()
-                    colleur.classes.add(*args['classes'])
-                    colleur.matieres.add(*args['matieres'])
-                    self.colleurs.append(colleur)
+                    self.classes.append(classes)
+                    self.matieres.append(matieres)
                 except Exception as e:
                         raise ValidationError(str(e))
                 args.clear()
@@ -917,8 +917,11 @@ class CsvColleurForm(forms.Form):
     def save(self):
         if self.cleaned_data["importdirect"]:
             with transaction.atomic():
-                for user, colleur, mdp in zip(self.users, self.colleurs, self.mdp):
+                for user, classes, matieres in zip(self.users, self.classes, self.matieres, self.mdp):
+                    colleur = Colleur()
                     colleur.save()
+                    colleur.classes.add(classes)
+                    colleur.matieres.add(matieres)
                     user.colleur = colleur
                     user.set_password(mdp)
                 User.objects.bulk_create(self.users)
