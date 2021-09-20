@@ -730,7 +730,7 @@ class CsvForm(forms.Form):
                             raise ValidationError(str(e))
                 if self.cleaned_data["getldn"]:
                     try:
-                        args['ldn'] = ligne[self.cleaned_data[ldn]]
+                        args['ldn'] = ligne[self.cleaned_data['ldn']]
                     except Exception as e:
                         raise ValidationError(str(e))
                 if self.cleaned_data["getddn"]:
