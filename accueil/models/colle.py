@@ -164,7 +164,7 @@ class ColleManager(models.Manager):
         eleves = []
         for colle in colles:
             print(colle["id_colles"])
-            if colle["temps"] == 30:
+            if colle["temps"] not in (20,60):
                 eleves.append("{} {}".format(colle["nom_eleve"].upper(),colle["prenom_eleve"].title()))
             elif colle["temps"] == 60:
                 eleves.append(colle["nom_classe"])

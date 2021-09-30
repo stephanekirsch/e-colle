@@ -211,7 +211,7 @@ class Classe(models.Model):
         matiereeleves = []
         listeEleves = self.loginsEleves()
         for matiere in self.matieres.filter(colleur__classes=self).distinct():
-            if matiere.temps != 30:
+            if matiere.temps in (20,60):
                 matiereeleves.append(None)
             elif not matiere.lv:
                 matiereeleves.append(listeEleves)
@@ -325,7 +325,7 @@ class Classe(models.Model):
     def dictElevespk(self):
         dictEleves = dict()
         listeEleves = [True]*Eleve.objects.filter(classe=self).count()
-        for matiere in self.matieres.filter(temps=30):
+        for matiere in self.matieres.exclude(temps__in=(20,60)):
             if matiere.lv == 0:
                 dictEleves[matiere.pk] = listeEleves
             elif matiere.lv == 1:
