@@ -84,9 +84,9 @@
 		{% for colle in colles %}
 		<td class="matiere">
 			<ul>{% if colle.ferie %}
-				<li class="niveau1" style="background-color:rgba(0,0,0,.4);"{% if colle.nbcolles %}>{{dictColleurs|lookup:colle.id_colleur}}:{% if colle.temps == 20%}{{colle.groupe}}{% elif colle.temps == 30%}{% with colle.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}{% else %}>:{% endif %}<div class="popup">{{colle.ferie}}</div></li>
+				<li class="niveau1" style="background-color:rgba(0,0,0,.4);"{% if colle.nbcolles %}>{{dictColleurs|lookup:colle.id_colleur}}:{% if colle.temps == 20%}{{colle.groupe}}{% elif colle.temps != 60%}{% with colle.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}{% else %}>:{% endif %}<div class="popup">{{colle.ferie}}</div></li>
 				{% else %}
-				<li class="niveau1" {% if colle.nbcolles %}style="background-color:{{colle.couleur}};">{{dictColleurs|lookup:colle.id_colleur}}:{% if colle.temps == 20%}{{colle.groupe}}{% elif colle.temps == 30%}{% with colle.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}{% else %}>:{% endif %}</li>
+				<li class="niveau1" {% if colle.nbcolles %}style="background-color:{{colle.couleur}};">{{dictColleurs|lookup:colle.id_colleur}}:{% if colle.temps == 20%}{{colle.groupe}}{% elif colle.temps != 60%}{% with colle.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}{% else %}>:{% endif %}</li>
 				{% endif %}
 		 		<li class="niveau1bis" id="{{semaine.numero}}_{{colle.id_cr}}"></li>
 		 	</ul>

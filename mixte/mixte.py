@@ -322,7 +322,7 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
         return HttpResponse(json.dumps(creneaux))
     permutation = int(permutation)
     groupe=None if matiere.temps!=20 else get_object_or_404(Groupe,pk=id_groupe)
-    eleve=None if matiere.temps!=30 else get_object_or_404(Eleve,pk=id_eleve)
+    eleve=None if matiere.temps in (20,60)  else get_object_or_404(Eleve,pk=id_eleve)
     semestre2 = Config.objects.get_config().semestre2
     if creneau.classe.semestres and semaine.numero < semestre2 and semaine.numero + duree > semestre2: # si à cheval sur les 2 semestres
         duree = semestre2-semaine.numero    
@@ -345,7 +345,7 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
                 groupeseleves=list(Groupe.objects.filter(classe=creneau.classe,groupeeleve__lv2=matiere).distinct().order_by('nom'))
         groupeseleves.sort(key = lambda x:int(x.nom))
         rang=groupeseleves.index(groupe)
-    elif matiere.temps == 30:
+    elif matiere.temps != 60:
         if matiere.lv == 0:
             groupeseleves=list(Eleve.objects.filter(classe=creneau.classe))
         elif matiere.lv == 1:
@@ -368,7 +368,7 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
             except:
                 pass
             i+=1
-    elif matiere.temps == 30:
+    elif matiere.temps != 60:
         for numero in range(numsemaine,numsemaine+duree,frequence):
             try:
                 semainecolle=Semaine.objects.get(numero=numero)
@@ -380,7 +380,7 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
             except Exception:
                 pass
             i+=1
-    elif matiere.temps == 60:
+    else:
         for numero in range(numsemaine,numsemaine+duree,frequence):
             try:
                 semainecolle=Semaine.objects.get(numero=numero)

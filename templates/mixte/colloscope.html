@@ -53,7 +53,7 @@
 		<td style="min-width:100px;">S{{semaine}}</td>
 		{% for colle in colles %}
 		{% if colle.nbcolles %}<td class="colloscope" style="background-color:{{colle.couleur}}">{{dictColleurs|lookup:colle.id_colleur}}:{% if colle.temps == 20 %}{{colle.groupe}}
-			{% elif colle.temps == 30%}{% with colle.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}
+			{% elif colle.temps != 60%}{% with colle.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}
 		<div class="colle"><p>Date: {{colle.jourbis|date:"j/n"}} à {{colle.heure|heure}}<br/>
 		Colleur: {{colle.prenom|title}} {{colle.nom|upper}}<br/>
 		Matière: {{colle.nom_matiere}}<br/>
@@ -69,7 +69,7 @@
 		{{dictgroupes|lookup:colle.id_matiere|lookup:id|lookup:1}}
 		{% endfor %}
 		{% endif %}<br/>
-		{% elif colle.temps == 30 %}
+		{% elif colle.temps != 60 %}
 		Élève: {{colle.prenom_eleve|title}} {{colle.nom_eleve|upper}}<br/>
 		{% endif %}
 		{% if colle.salle %}Salle: {{colle.salle}}{% endif %}

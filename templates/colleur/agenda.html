@@ -30,7 +30,7 @@
 	<td>{{colle.nom_classe}}</td>
 	{% endif %}
 	<td>{% if colle.salle %}{{colle.salle}}{% endif %}</td>
-	<td>{% if colle.jour <= jour %}{% if colle.nbnotes == 0 %}{% if colle.temps == 20 %}<a href="{% url 'collenote_colleur' colle.id_colles %}">{% elif colle.temps == 30 %}<a href="{% url 'collenoteeleve_colleur' id_colles %}">{% elif colle.temps == 60 %}<a href="{% url 'collenoteeleve_colleur' colle.id_colles %}">{% endif %}Noter</a>{% endif %}{% endif %}</td>
+	<td>{% if colle.jour <= jour %}{% if colle.nbnotes == 0 %}{% if colle.temps == 20 %}<a href="{% url 'collenote_colleur' colle.id_colles %}">{% elif colle.temps == 60 %}<a href="{% url 'collenoteeleve_colleur' colle.id_colles %}">{% else %}<a href="{% url 'collenoteeleve_colleur' id_colles %}">{% endif %}Noter</a>{% endif %}{% endif %}</td>
 </tr>
 {% endfor %}
 </table>

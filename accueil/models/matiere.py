@@ -44,6 +44,7 @@ class Matiere(models.Model):
     CHOIX_TEMPS = (
         (20, '20 min (par groupe de 3)'),
         (30, '30 min (solo)'),
+        (45, '45 min (solo)'),
         (60, '60 min (informatique)')
     )
     temps = models.PositiveSmallIntegerField(
@@ -61,5 +62,4 @@ class Matiere(models.Model):
         unique_together = (('nom','lv','temps'))
 
     def __str__(self):
-        dico = {20:'Gr', 30:'So', 60:'Cl'}
-        return self.nom.title() + "({})".format("/".join([dico[self.temps]] + (["LV{}".format(self.lv)] if self.lv else []))) 
+        return self.nom.title() + "({})".format("/".join((["LV{}".format(self.lv)] if self.lv else []) + ["{}min".format(self.temps)])) 

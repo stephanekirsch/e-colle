@@ -581,7 +581,13 @@ class ColloscopeImportForm(forms.Form):
                                     else:
                                         raise ValidationError("le groupe {} n'existe pas".format(col))
                                 colle.append(groups)
-                    elif colle[0].temps == 30:
+                    elif colle[0].temps == 60:
+                        for col in row[5:]:
+                            if col:
+                                colle.append(self.classe)
+                            else:
+                                colle.append(None)
+                    else:
                         for (col,semaine) in zip(row[5:],self.semaines):
                             if col == "":
                                 colle.append(None)
@@ -613,12 +619,6 @@ class ColloscopeImportForm(forms.Form):
                                 colle.append(eleves_tot)
                             else:
                                 raise ValidationError("{} n'est le login d'aucun élève de {}".format(col,self.classe))
-                    elif colle[0].temps == 60:
-                        for col in row[5:]:
-                            if col:
-                                colle.append(self.classe)
-                            else:
-                                colle.append(None)
                     if maxnum:
                         for i in range(maxnum):
                             souscolle = colle[:5] + [indice(element,i) for element in colle[5:]]
@@ -635,7 +635,7 @@ class ColloscopeImportForm(forms.Form):
         Colle.objects.filter(semaine__in = self.semaines,creneau__classe = self.classe).delete()
         for colles in self.colles:
             colles_a_sauver = []
-            # on chercher un créneau où officie déjà le colleur, dans la même matière, dans la même salle, sinon on le crée
+            # on cherche un créneau où officie déjà le colleur, dans la même matière, dans la même salle, sinon on le crée
             creneau = Creneau.objects.filter(jour=colles[2],heure=colles[3],salle=colles[4],classe=self.classe,colle__matiere=colles[0],colle__colleur=colles[1])
             if creneau.exists() and not Colle.objects.filter(creneau = creneau[0],semaine__in =self.semaines).exists():
                 creneau = creneau[:1][0]
@@ -651,15 +651,15 @@ class ColloscopeImportForm(forms.Form):
                     if col:
                         for groupe in col:
                             colles_a_sauver.append(Colle(creneau = creneau, colleur = colles[1],matiere = colles[0], groupe = groupe, eleve = None, classe = self.classe, semaine = semaine))
-            elif colles[0].temps == 30:
-                for col, semaine in zip(colles[5:],self.semaines):
-                    if col:
-                        colles_a_sauver.append(Colle(creneau = creneau, colleur = colles[1],matiere = colles[0], groupe = None, eleve = col, classe = self.classe, semaine = semaine))
             elif colles[0].temps == 60:
                 for col, semaine in zip(colles[5:],self.semaines):
                     if col:
                         colles_a_sauver.append(Colle(creneau = creneau, colleur = colles[1],matiere = colles[0], groupe = None, eleve = None, classe = self.classe, semaine = semaine))
-            Colle.objects.bulk_create(colles_a_sauver)
+            else:
+                for col, semaine in zip(colles[5:],self.semaines):
+                    if col:
+                        colles_a_sauver.append(Colle(creneau = creneau, colleur = colles[1],matiere = colles[0], groupe = None, eleve = col, classe = self.classe, semaine = semaine))
+                        Colle.objects.bulk_create(colles_a_sauver)
 
 
 class TDForm(forms.ModelForm):
