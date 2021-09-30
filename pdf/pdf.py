@@ -190,7 +190,7 @@ def Pdf(classe,semin,semax):
 							data[3+isem-indsemaine][1+icren-indcreneau]="{}".format(classe.dictColleurs(semin,semax)[colle['id_colleur']])
 						else:
 							data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(classe.dictColleurs(semin,semax)[colle['id_colleur']],classe.dictEleves()[colle['id_eleve']])
-												LIST_STYLE.add('BACKGROUND',(1+icren-indcreneau,3+isem-indsemaine),(1+icren-indcreneau,3+isem-indsemaine),couleurs[colle['id_matiere']])
+						LIST_STYLE.add('BACKGROUND',(1+icren-indcreneau,3+isem-indsemaine),(1+icren-indcreneau,3+isem-indsemaine),couleurs[colle['id_matiere']])
 			t=Table(data,colWidths=[70]+nbCreneauxLoc*[largeurcel],rowHeights=(3+nbSemainesLoc)*[hauteurcel])
 			t.setStyle(LIST_STYLE)
 			w,h=t.wrapOn(pdf,0,0)
