@@ -148,14 +148,6 @@ function majGroupes()
 			trgroupe.firstElementChild.nextElementSibling.replaceChild(dictselectgroupe[matiere],trgroupe.firstElementChild.nextElementSibling.firstElementChild);
 		}
 	}
-	else if (temps[matiere] == '30')
-	{
-		trcolleur.style.display="table-row";
-		trgroupe.style.display="none";
-		treleve.style.display="table-row";
-		trpermu.style.display="table-row";
-		treleve.firstElementChild.nextElementSibling.replaceChild(dictselecteleve[matiere],treleve.firstElementChild.nextElementSibling.firstElementChild);
-	}
 	else if (temps[matiere] == '60')
 	{
 		trcolleur.style.display="table-row";
@@ -163,6 +155,15 @@ function majGroupes()
 		treleve.style.display="none";
 		trpermu.style.display="none";
 	}
+	else
+	{
+		trcolleur.style.display="table-row";
+		trgroupe.style.display="none";
+		treleve.style.display="table-row";
+		trpermu.style.display="table-row";
+		treleve.firstElementChild.nextElementSibling.replaceChild(dictselecteleve[matiere],treleve.firstElementChild.nextElementSibling.firstElementChild);
+	}
+	
 }
 majColleur();
 matcolleur.addEventListener('change',function(){ videColleur();majColleur()},true);

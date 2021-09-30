@@ -110,6 +110,5 @@ def getLu(message,user):
 @register.filter
 def option(matiere,classe):
     if matiere.lv == 0 and (classe.option1 == matiere or classe.option2 == matiere):
-        temps = {20:"Gr", 30: "So", 60: "Cl"}
-        return "{} ({}/{}))".format(matiere.nom.title(), temps[matiere.temps],"opt")
+        return "{} ({}min/opt))".format(matiere.nom.title(), matiere.temps)
     return str(matiere)
