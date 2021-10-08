@@ -659,7 +659,7 @@ class ColloscopeImportForm(forms.Form):
                 for col, semaine in zip(colles[5:],self.semaines):
                     if col:
                         colles_a_sauver.append(Colle(creneau = creneau, colleur = colles[1],matiere = colles[0], groupe = None, eleve = col, classe = self.classe, semaine = semaine))
-                        Colle.objects.bulk_create(colles_a_sauver)
+            Colle.objects.bulk_create(colles_a_sauver)
 
 
 class TDForm(forms.ModelForm):
