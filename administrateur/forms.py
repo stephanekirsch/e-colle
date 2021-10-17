@@ -717,14 +717,14 @@ class CsvForm(forms.Form):
                             args['lv1'] = elevelv1.all()[0]
                         except Exception as e:
                             raise ValidationError(str(e))
-                if self.cleaned_data["getlv1"]:
-                    donnee = ligne[self.cleaned_data['lv1']]
+                if self.cleaned_data["getlv2"]:
+                    donnee = ligne[self.cleaned_data['lv2']]
                     if donnee != "": 
                         try:
-                            elevelv1 = Matiere.objects.filter(lv=1, nom__iexact=donnee.lower())
+                            elevelv2 = Matiere.objects.filter(lv=1, nom__iexact=donnee.lower())
                             if 'classe' in args:
-                                elevelv1 = elevelv1.filter(matieresclasse=args['classe'])
-                            args['lv1'] = elevelv1.all()[0]
+                                elevelv2 = elevelv2.filter(matieresclasse=args['classe'])
+                            args['lv2'] = elevelv2.all()[0]
                         except Exception as e:
                             raise ValidationError(str(e))
                 if self.cleaned_data["getldn"]:
@@ -795,20 +795,131 @@ class CsvForm(forms.Form):
                 User.objects.bulk_create(self.users)
 
 
-
-
-
-
-
-
 class CsvColleurForm(forms.Form):
     nom = forms.CharField(label="intitulé du champ nom",required=True,max_length=30)
     prenom = forms.CharField(label="intitulé du champ prénom",required=True,max_length=30)
-    email = forms.CharField(label="intitulé du champ email(facultatif)",required=False,max_length=30)
-    matiere=forms.ModelChoiceField(label="Matière",queryset=Matiere.objects.order_by('nom'), empty_label="Non définie",required=False)
-    classe=forms.ModelChoiceField(label="Classe",queryset=Classe.objects.order_by('nom'), empty_label="Non définie",required=False)
+    email = forms.CharField(label="intitulé du champ email",required=False,max_length=30)
+    getemail = forms.BooleanField(label="email", required = False)
+    nomclasses = forms.CharField(label="intitulé du champ classes",required=False,max_length=30)
+    getclasses = forms.BooleanField(label="classe", required = False)
+    identifiant = forms.CharField(label="intitulé du champ identifiant",required=True,max_length=30)
+    getidentifiant = forms.BooleanField(label="identifiant", required = False)
+    motdepasse = forms.CharField(label="intitulé du champ mot de passe",required=True,max_length=30)
+    getmotdepasse = forms.BooleanField(label="mot de passe", required = False) 
+    nommatieres = forms.CharField(label="intitulé du champ matières",required=False,max_length=30)
+    getmatieres = forms.BooleanField(label="matières", required = False)
     fichier = forms.FileField(label="Fichier csv",required=True)
+    importdirect = forms.BooleanField(label="import direct", required = False, help_text="(cocher si le fichier csv contient déjà toutes les infos nécessaires et qu'il\
+     n'y a rien à retoucher)")
+    classe=forms.ModelChoiceField(label="Classe", help_text="(ignoré si la/les classe(s) est (sont) importée(s) depuis le fichier csv)", queryset=Classe.objects.order_by('nom'), empty_label="Non définie",required=False) 
+    matiere=forms.ModelChoiceField(label="Matière", help_text="(ignoré si la/les matières est (sont) importée(s) depuis le fichier csv)", queryset=Matiere.objects.order_by('nom'), empty_label="Non définie",required=False)
 
 
+    def clean(self):
+        # on vérifie qu'il n'y a pas d'incohérence
+        if self.cleaned_data['importdirect'] and  (not self.cleaned_data['getidentifiant'] or not self.cleaned_data['getmotdepasse']):
+            raise ValidationError("Pour un import direct il faut valider au moins les champs identifiant et mot de passe")
+        with TextIOWrapper(self.cleaned_data['fichier'].file,encoding = 'utf8') as fichiercsv:
+            dialect = csv.Sniffer().sniff(fichiercsv.read(4096))
+            self.champs = {self.cleaned_data['nom'], self.cleaned_data['prenom']}
+            if self.cleaned_data['getemail']:
+                self.champs.add(self.cleaned_data['email'])
+            if self.cleaned_data['getidentifiant']:
+                self.champs.add(self.cleaned_data['identifiant'])
+            if self.cleaned_data['getmotdepasse']:
+                self.champs.add(self.cleaned_data['motdepasse'])
+            if self.cleaned_data['getclasses']:
+                self.champs.add(self.cleaned_data['nomclasses'])
+            if self.cleaned_data['getmatieres']:
+                self.champs.add(self.cleaned_data['nommatieres'])
+            reader = csv.DictReader(fichiercsv, dialect=dialect)
+            fichiercsv.seek(0)
+            ligne = next(reader)
+            erreurs = [x for x in self.champs if x not in ligne]
+            if erreurs:
+                raise ValidationError("Les intitulés des champs suivants sont inexacts: {}".format(erreurs))
+            self.users = []
+            self.colleurs = []
+            self.mdp = []
+            fichiercsv.seek(0)
+            next(reader)
+            for i, ligne in enumerate(reader):
+                args = dict()
+                eleveclasse = elevelv1 = elevelv2 = eleveddn = eleveldn = eleveine = False
+                if self.cleaned_data["getclasses"]:
+                    donnee = [x.strip().lower() for x in ligne[self.cleaned_data['nomclasse']].split(";")]
+                    if donnee != [""]: 
+                        try:
+                            args['classes'] = Classe.objects.filter(nom__iexact__in=donnee)
+                        except Exception as e:
+                            raise ValidationError(str(e))
+                if 'classes' not in args and self.cleaned_data['classe'] is not None:
+                    try:
+                        args["classes"] = [self.cleaned_data["classe"]]
+                    except Exception as e:
+                        raise ValidationError(str(e))
+                if self.cleaned_data["getmatieres"]:
+                    donnee = [x.strip() for x in ligne[self.cleaned_data['nommatiere']].split(";")]
+                    if donnee != [""]: 
+                        try:
+                            args['matieres'] = Matiere.objects.filter(nomcomplet__iexact__in=donnee)
+                        except Exception as e:
+                            raise ValidationError(str(e))
+                if 'matieres' not in args and self.cleaned_data['matiere'] is not None:
+                    try:
+                        args["matieres"] = [self.cleaned_data["matiere"]]
+                    except Exception as e:
+                        raise ValidationError(str(e))
+                try:
+                    colleur = Colleur()
+                    colleur.classes.add(*args['classes'])
+                    colleur.matieres.add(*args['matieres'])
+                    self.colleurs.append(colleur)
+                except Exception as e:
+                        raise ValidationError(str(e))
+                args.clear()
+                try:
+                    args['last_name'] = ligne[self.cleaned_data['nom']]
+                except Exception as e:
+                     raise ValidationError(str(e))
+                try:
+                    args['first_name'] = ligne[self.cleaned_data['prenom']]
+                except Exception as e:
+                     raise ValidationError(str(e))
+                if self.cleaned_data["getidentifiant"]:
+                    donnee = ligne[self.cleaned_data['identifiant']]
+                    if donnee == "" and self.cleaned_data["importdirect"]:
+                        raise ValidationError("il manque l'identifiant pour le colleur de rang {}".format(i))
+                    elif donnee != "":
+                        try:
+                            args['username'] = donnee
+                        except Exception as e:
+                            raise ValidationError(str(e))
+                if self.cleaned_data["getemail"]:
+                    donnee = ligne[self.cleaned_data['email']]
+                    if donnee != "":
+                        try:
+                            args['email'] = donnee
+                        except Exception as e:
+                            raise ValidationError(str(e))
+                try:
+                    user = User(**args)
+                except Exception as e:
+                    raise ValidationError(str(e))
+                self.users.append(user)
+                mdp = ""
+                if self.cleaned_data["getmotdepasse"]:
+                    mdp = ligne[self.cleaned_data['motdepasse']]
+                    if mdp == "" and self.cleaned_data["importdirect"]:
+                        raise ValidationError("il manque le mot de passe pour le colleur de rang {}".format(i))
+                self.mdp.append(mdp)
 
+    def save(self):
+        if self.cleaned_data["importdirect"]:
+            with transaction.atomic():
+                for user, colleur, mdp in zip(self.users, self.colleurs, self.mdp):
+                    colleur.save()
+                    user.colleur = colleur
+                    user.set_password(mdp)
+                User.objects.bulk_create(self.users)
 

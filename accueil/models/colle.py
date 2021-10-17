@@ -187,7 +187,7 @@ class ColleManager(models.Manager):
                        FROM accueil_colle co\
                        INNER JOIN accueil_creneau cr\
                        ON co.creneau_id = cr.id\
-                       INNER JOIN accueilclasse cl\
+                       INNER JOIN accueil_classe cl\
                        ON cr.classe_id = cl.id\
                        INNER JOIN accueil_matiere m\
                        ON co.matiere_id = m.id\
@@ -201,7 +201,7 @@ class ColleManager(models.Manager):
                        ON co.groupe_id = g.id\
                        INNER JOIN accueil_eleve e\
                        ON (s.numero < %s AND e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
-                       OR (s.numero >= %s AND e.groupe2_id = g.id AND (m.id != cl.option1 AND m.id != cl.option2 OR e.option = m.id) AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
+                       OR (s.numero >= %s AND e.groupe2_id = g.id AND (m.id != cl.option1_id AND m.id != cl.option2_id OR e.option_id = m.id) AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
                        OR e.id=co.eleve_id\
                        LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier FROM accueil_programme_semaine ps\
                        INNER JOIN accueil_programme sub\

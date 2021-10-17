@@ -505,25 +505,19 @@ def elevecsv(request):
 @ip_filter
 def colleurcsv(request):
     """Renvoie la vue de la page d'ajout de colleurs via un fichier CSV"""
-    form = CsvColleurForm(request.POST or None, request.FILES or None,initial = {'nom':'Nom','prenom':'Prénom','email':'Adresse mail', 'matiere': 'Matière'})
+    form = CsvColleurForm(request.POST or None, request.FILES or None, initial = {'nom':'Nom','prenom':'Prénom','email':'Adresse mail', 'identifiant': 'Identifiant', 'motdepasse': 'Mot de passe', 'nommatieres': 'Matières', 'nomclasses': 'Classes'})
     if form.is_valid():
-        try:
-            with TextIOWrapper(form.cleaned_data['fichier'].file,encoding = 'utf8') as fichiercsv:
-                dialect = csv.Sniffer().sniff(fichiercsv.read(4096))
-                nom,prenom,email=form.cleaned_data['nom'],form.cleaned_data['prenom'],form.cleaned_data['email']
-                fichiercsv.seek(0)
-                reader = csv.DictReader(fichiercsv, dialect=dialect)
-                ligne = next(reader)
-                if not(nom in ligne and prenom in ligne):
-                    messages.error(request,"Les intitulés des champs nom et/ou prénom sont inexacts")
-                else:
-                    fichiercsv.seek(0)
-                    next(reader)
-                    initial = [{'last_name': ligneLoc[nom],'first_name':ligneLoc[prenom],'email':'' if email not in ligneLoc else ligneLoc[email],'matiere': form.cleaned_data['matiere'], 'classe': form.cleaned_data['classe']} for ligneLoc in reader]
-                    return colleurajout(request,initial=initial)
-        except Exception as e:
-            messages.error(request,"Le fichier doit être un fichier CSV valide, encodé en UTF-8: {}".format(e))
-            return redirect('csv_colleur')
+        if form.cleaned_data["importdirect"]:
+            try:
+                form.save()
+                return redirect("gestion_colleur")
+            except Exception as e:
+                messages.error(request,str(e))
+                return redirect('csv_colleur')
+        else:
+            initial = [{"last_name": user.last_name or "", "first_name": user.first_name or "", "username": user.username or "", "password": mdp ,
+            "email": user.email or "", "classes": colleur.classes if hasattr(colleurs,'classes') else None, "matieres": colleur.matieres if hasattr(colleurs,'matieres') else None} for user, colleur, mdp in zip(form.users,form.colleurs,form.mdp)]
+            return colleurajout(request, initial = initial)
     return render(request,'administrateur/colleurcsv.html',{'form':form})
 
 @ip_filter
