@@ -238,7 +238,7 @@ def programme(request,id_classe):
     matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
     if classe not in request.user.colleur.classes.all() or matiere.pk not in classe.matierespk():
         raise Http404
-    programmes=Programme.objects.filter(classe=classe,matiere=matiere).prefetch_related('semaine').annotate(semainemax=Max('semaine')).order_by('-semainemax')
+    programmes=Programme.objects.filter(classe=classe,matiere=matiere).prefetch_related('semaine').order_by('-semaine__numero')
     isprof=False
     if is_prof(request.user,matiere,classe):
         isprof=True
