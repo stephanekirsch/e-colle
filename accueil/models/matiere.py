@@ -41,12 +41,10 @@ class Matiere(models.Model):
     nom = models.CharField(max_length=20)
     nomcomplet = models.CharField(max_length=30, default="")
     couleur = models.CharField(max_length=7, choices=LISTE_COULEURS, default='#696969')
-    CHOIX_TEMPS = (
-        (20, '20 min (par groupe de 3)'),
-        (30, '30 min (solo)'),
-        (45, '45 min (solo)'),
-        (60, '60 min (informatique)')
-    )
+    CHOIX_TEMPS = [
+        (t, "{} min".format(t))
+        for t in range(5,65,5)
+    ]
     temps = models.PositiveSmallIntegerField(
         choices=CHOIX_TEMPS, 
         verbose_name="minutes/colle/élève", 

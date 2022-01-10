@@ -299,7 +299,7 @@ class Classe(models.Model):
             if semestre == 2:
                 groupes = groupes.prefetch_related('groupe2eleve','groupe2eleve__user')
             listegroupes = {groupe.pk: (groupe.nom,"; ".join(["{} {}".format(eleve.user.first_name.title(), eleve.user.last_name.upper()) for eleve in getattr(groupe, attribut).all()])) for groupe in groupes}
-            for matiere in self.matieres.filter(temps=20):
+            for matiere in self.matieres.all():
                 if (self.option1 == matiere or self.option2 == matiere) and semestre == 2:
                     dictgroupes[matiere.pk] = {groupe.pk: (groupe.nom,"; ".join(["{} {}".format(eleve.user.first_name.title(),eleve.user.last_name.upper()) for eleve in groupe.groupe2eleve.all() if eleve.option==matiere])) for groupe in groupes}
                 elif matiere.lv == 0:
@@ -311,7 +311,7 @@ class Classe(models.Model):
         else:
             groupes = Groupe.objects.filter(classe=self)
             listegroupes = [True]*groupes.count()
-            for matiere in self.matieres.filter(temps=20):
+            for matiere in self.matieres.all():
                 if (self.option1 == matiere or self.option2 == matiere) and semestre == 2:
                     dictgroupes[matiere.pk] = [any(eleve.option==matiere for eleve in groupe.groupe2eleve.all()) for groupe in groupes]
                 elif matiere.lv == 0:
@@ -325,7 +325,7 @@ class Classe(models.Model):
     def dictElevespk(self):
         dictEleves = dict()
         listeEleves = [True]*Eleve.objects.filter(classe=self).count()
-        for matiere in self.matieres.exclude(temps__in=(20,60)):
+        for matiere in self.matieres.all():
             if matiere.lv == 0:
                 dictEleves[matiere.pk] = listeEleves
             elif matiere.lv == 1:

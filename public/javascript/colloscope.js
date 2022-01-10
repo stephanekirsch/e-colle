@@ -27,6 +27,7 @@ var annul=document.getElementById('annul');
 annul.onclick=function(){return false};
 var compat=document.getElementById('compat');
 compat.onclick=function(){return false};
+var trgsc = document.getElementById('id_GSC');
 var trcolleur = document.getElementById('id_colleur').parentNode.parentNode;
 var treleve = document.getElementById('id_eleve').parentNode.parentNode;
 var trgroupe = document.getElementById('id_groupe').parentNode.parentNode;
@@ -82,6 +83,7 @@ function videColleur()
 		option = colleurs.firstElementChild;
 	}
 }
+
 function majColleur()
 {
 	matiere=matcolleur.value;
@@ -130,43 +132,50 @@ function majColleur()
 }
 function majGroupes()
 {
+	radio = document.querySelector('input[name="GSC"]:checked');
 	if (matiere == "-1"){
 		trcolleur.style.display="none";
 		treleve.style.display="none";
 		trgroupe.style.display="none";
 		trpermu.style.display="none";
 	}
-	else if (temps[matiere] == '20')
-	{
-		trcolleur.style.display="table-row";
-		treleve.style.display="none";
-		trgroupe.style.display="table-row";
-		trpermu.style.display="table-row";
-		if (semestres && semestre2 <= semaine) {
-			trgroupe.firstElementChild.nextElementSibling.replaceChild(dictselectgroupe2[matiere],trgroupe.firstElementChild.nextElementSibling.firstElementChild);
-		} else {
-			trgroupe.firstElementChild.nextElementSibling.replaceChild(dictselectgroupe[matiere],trgroupe.firstElementChild.nextElementSibling.firstElementChild);
+	else if (radio != null) {
+		val = radio.value
+		if (val == '0')
+		{
+			trcolleur.style.display="table-row";
+			treleve.style.display="none";
+			trgroupe.style.display="table-row";
+			trpermu.style.display="table-row";
+			if (semestres && semestre2 <= semaine) {
+				trgroupe.firstElementChild.nextElementSibling.replaceChild(dictselectgroupe2[matiere],trgroupe.firstElementChild.nextElementSibling.firstElementChild);
+			} else {
+				trgroupe.firstElementChild.nextElementSibling.replaceChild(dictselectgroupe[matiere],trgroupe.firstElementChild.nextElementSibling.firstElementChild);
+			}
 		}
-	}
-	else if (temps[matiere] == '60')
-	{
-		trcolleur.style.display="table-row";
-		trgroupe.style.display="none";
-		treleve.style.display="none";
-		trpermu.style.display="none";
-	}
-	else
-	{
-		trcolleur.style.display="table-row";
-		trgroupe.style.display="none";
-		treleve.style.display="table-row";
-		trpermu.style.display="table-row";
-		treleve.firstElementChild.nextElementSibling.replaceChild(dictselecteleve[matiere],treleve.firstElementChild.nextElementSibling.firstElementChild);
+		else if (val == '2')
+		{
+			trcolleur.style.display="table-row";
+			trgroupe.style.display="none";
+			treleve.style.display="none";
+			trpermu.style.display="none";
+		}
+		else
+		{
+			trcolleur.style.display="table-row";
+			trgroupe.style.display="none";
+			treleve.style.display="table-row";
+			trpermu.style.display="table-row";
+			treleve.firstElementChild.nextElementSibling.replaceChild(dictselecteleve[matiere],treleve.firstElementChild.nextElementSibling.firstElementChild);
+		}
 	}
 	
 }
 majColleur();
 matcolleur.addEventListener('change',function(){ videColleur();majColleur()},true);
+majGroupes()
+trgsc.addEventListener('change', majGroupes
+,true);
 compat.addEventListener('click',function(){
 var lienajax4 = compat.href;
 xhr4 = new XMLHttpRequest;
@@ -283,6 +292,12 @@ if (cible.nodeName.toLowerCase()=='a' && cible.parentNode.nodeName.toLowerCase()
 }},true);
 grise.firstElementChild.addEventListener('submit',function(e)
 {
+	radio = document.querySelector('input[name="GSC"]:checked');
+	if (radio == null) {
+		val = '2';
+	} else {
+		val = radio.value;
+	}
 	e.preventDefault();
 	var lienajax = grise.firstElementChild.action;
 	lienajax=lienajax.replace('creneau',semcren[1]);
@@ -295,18 +310,19 @@ grise.firstElementChild.addEventListener('submit',function(e)
 	lienajax=lienajax.replace('matiere', mat);
 	lienajax=lienajax.replace('kolleur', kolleur);
 	var groupe = document.getElementById('id_groupe').value;
-	if (groupe == ""){
-		groupe = "0";
+	if (!(val == '0' & groupe != "")){
+		groupe = '0'
 	}
 	lienajax=lienajax.replace('groupe', groupe);
 	var eleve = document.getElementById('id_eleve').value;
-	if (eleve == ""){
-		eleve = "0";
+	if (!(val == '1' & eleve != "")){
+		eleve = '0';
 	}
 	lienajax=lienajax.replace('eleve', eleve);
 	lienajax=lienajax.replace('duree',document.getElementById('id_duree').value);
 	lienajax=lienajax.replace('frequence',document.getElementById('id_frequence').value);
 	lienajax=lienajax.replace('permu',document.getElementById('id_permutation').value);
+	console.log(lienajax)
 	xhr=new XMLHttpRequest;
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == 4) {
@@ -400,4 +416,5 @@ grise.firstElementChild.addEventListener('submit',function(e)
 			}}
 			xhr.open('GET' , lienajax,true);
 			xhr.send(null);
-		},true)
+		},
+true);

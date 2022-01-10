@@ -215,6 +215,7 @@ class ColleForm(forms.Form):
         except Exception:
             self.fields['matiere']=forms.ModelChoiceField(queryset=query1,empty_label=None)
         self.fields['colleur']=forms.ModelChoiceField(queryset=query2,empty_label=None)
+        self.fields['GSC']=forms.ChoiceField(label="Groupe/Solo/Classe",choices=[(0,'Groupe'),(1,'Solo'),(2,'Classe')], widget=forms.RadioSelect)
         try:
             self.fields['groupe']=forms.ModelChoiceField(queryset=query3,empty_label=None,initial=query3[0])
         except Exception:

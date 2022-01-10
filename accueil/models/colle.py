@@ -163,12 +163,12 @@ class ColleManager(models.Manager):
             colles = dictfetchall(cursor)
         eleves = []
         for colle in colles:
-            print(colle["id_colles"])
-            if colle["temps"] not in (20,60):
-                eleves.append("{} {}".format(colle["nom_eleve"].upper(),colle["prenom_eleve"].title()))
-            elif colle["temps"] == 60:
-                eleves.append(colle["nom_classe"])
-            elif colle["temps"] == 20:
+            if colle["id_groupes"] == "0":
+                if colle["nom_eleve"]:
+                    eleves.append("{} {}".format(colle["nom_eleve"].upper(),colle["prenom_eleve"].title()))
+                else:
+                    eleves.append(colle["nom_classe"])
+            else:
                 if colle["semestres"] and colle["numero"] >= semestre2:
                     isoption = colle["matiere_id"] == colle["option1_id"] or colle["matiere_id"] == colle["option2_id"]
                     eleves.append("; ".join(["{} {}".format(x[0].upper(),x[1].title()) for x in Groupe.objects.filter(pk__in=map(int,colle["id_groupes"].split(","))).values_list("groupe2eleve__user__last_name","groupe2eleve__user__first_name","groupe2eleve__lv1","groupe2eleve__lv2","groupe2eleve__option") 

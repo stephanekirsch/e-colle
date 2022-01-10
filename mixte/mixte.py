@@ -141,8 +141,12 @@ def mixtecolloscopemodif(request,classe,semin,semax,creneaumodif):
     matieres = list(classe.matieres.filter(colleur__classes=classe, colleur__user__is_active = True).order_by('nom','lv','temps').values_list('pk','nom','couleur','temps','lv').annotate(nb=Count("colleur")))
     colleurs = list(Colleur.objects.exclude(matieres = None).filter(classes=classe, matieres__in = classe.matieres.all(), user__is_active = True).values_list('pk','user__first_name','user__last_name').order_by("matieres__nom", "matieres__lv", "matieres__temps", "user__last_name", "user__first_name"))
     groupes = Groupe.objects.filter(classe=classe)
-    matieresgroupes = [[groupe for groupe in groupes if matiere.temps == 20 and groupe.haslangue(matiere)] for matiere in classe.matieres.filter(colleur__classes=classe).distinct().order_by("nom", "lv", "temps")]
-    matieresgroupes2 = [[groupe for groupe in groupes if matiere.temps == 20 and groupe.haslangue(matiere, 2)] for matiere in classe.matieres.filter(colleur__classes=classe).distinct().order_by("nom", "lv", "temps")] if semestres else []
+    matieresgroupes = [[groupe for groupe in groupes if groupe.haslangue(matiere)] for matiere in classe.matieres.filter(colleur__classes=classe).distinct().order_by("nom", "lv", "temps")]
+    if not any(matieresgroupes):
+        matieresgroupes = False
+    matieresgroupes2 = [[groupe for groupe in groupes if groupe.haslangue(matiere, 2)] for matiere in classe.matieres.filter(colleur__classes=classe).distinct().order_by("nom", "lv", "temps")] if semestres else []
+    if not any (matieresgroupes2):
+        matieresgroupes2 = False
     listeColleurs = []
     for x in matieres:
         listeColleurs.append(colleurs[:x[5]])
@@ -225,21 +229,18 @@ def mixteajaxcolloscope(matiere,colleur,groupe,semaine,creneau):
     Colle(semaine=semaine,creneau=creneau,groupe=groupe,colleur=colleur,matiere=matiere).save()
     return HttpResponse("{}:{}".format(creneau.classe.dictColleurs()[colleur.pk],noms))
 
-def mixteajaxcolloscopeeleve(matiere,colleur, id_eleve,semaine,creneau,login):
+def mixteajaxcolloscopeeleve(matiere,colleur,id_eleve,semaine,creneau,login):
     try:
         eleve = Eleve.objects.get(pk=id_eleve)
     except Exception:
-        if matiere.temps == 60:
-            eleve = None
-        else:
-            raise Http404
+        eleve = None
     Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
     feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
     colle=Colle(semaine=semaine,creneau=creneau,colleur=colleur,eleve=eleve,matiere=matiere)
     if eleve is None:
         colle.classe=creneau.classe
         colle.save()
-        return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':')
+        return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':'+colle.classe.nom[:4])
     else:
         colle.save()
         return HttpResponse(creneau.classe.dictColleurs()[colleur.pk]+':'+login)
@@ -274,6 +275,8 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
     creneaux['semgroupe']=[]
     duree = int(duree)
     frequence = int(frequence)
+    id_groupe = int(id_groupe)
+    id_eleve = int(id_eleve)
     numsemaine=semaine.numero
     if matiere == -1: # si on ne fait qu'effacer
         i = 0
@@ -286,7 +289,7 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
                 pass
             i+=1
         return HttpResponse(json.dumps(creneaux))
-    if duree == 1 and int(id_groupe):
+    if duree == 1 and id_groupe:
         groupe = get_object_or_404(Groupe,pk=id_groupe)
         if Colle.objects.filter(semaine=semaine, creneau=creneau).exclude(colleur=colleur).exists() or Colle.objects.filter(semaine=semaine, creneau=creneau).exclude(matiere=matiere).exists():
             Colle.objects.filter(semaine=semaine,creneau=creneau).delete()
@@ -321,12 +324,12 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
         creneaux['semgroupe'] = [{'semaine':semaine.numero,'groupe':noms}]
         return HttpResponse(json.dumps(creneaux))
     permutation = int(permutation)
-    groupe=None if matiere.temps!=20 else get_object_or_404(Groupe,pk=id_groupe)
-    eleve=None if matiere.temps in (20,60)  else get_object_or_404(Eleve,pk=id_eleve)
+    groupe=None if not id_groupe else get_object_or_404(Groupe,pk=id_groupe)
+    eleve=None if not id_eleve else get_object_or_404(Eleve,pk=id_eleve)
     semestre2 = Config.objects.get_config().semestre2
     if creneau.classe.semestres and semaine.numero < semestre2 and semaine.numero + duree > semestre2: # si à cheval sur les 2 semestres
         duree = semestre2-semaine.numero    
-    if matiere.temps == 20:
+    if id_groupe:
         if creneau.classe.semestres and semaine.numero >= semestre2:
             if matiere in (creneau.classe.option1, creneau.classe.option2):
                 groupeseleves=list(Groupe.objects.filter(classe=creneau.classe,groupe2eleve__option=matiere).distinct().order_by('nom'))
@@ -345,7 +348,7 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
                 groupeseleves=list(Groupe.objects.filter(classe=creneau.classe,groupeeleve__lv2=matiere).distinct().order_by('nom'))
         groupeseleves.sort(key = lambda x:int(x.nom))
         rang=groupeseleves.index(groupe)
-    elif matiere.temps != 60:
+    elif id_eleve:
         if matiere.lv == 0:
             groupeseleves=list(Eleve.objects.filter(classe=creneau.classe))
         elif matiere.lv == 1:
@@ -357,7 +360,7 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
     creneaux={'creneau':creneau.pk,'couleur':matiere.couleur,'colleur':creneau.classe.dictColleurs()[colleur.pk]}
     creneaux['semgroupe']=[]
     feries = [dic['date'] for dic in JourFerie.objects.all().values('date')]
-    if matiere.temps == 20:
+    if id_groupe:
         for numero in range(numsemaine,numsemaine+duree,frequence):
             try:
                 semainecolle=Semaine.objects.get(numero=numero)
@@ -368,7 +371,7 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
             except:
                 pass
             i+=1
-    elif matiere.temps != 60:
+    elif id_eleve:
         for numero in range(numsemaine,numsemaine+duree,frequence):
             try:
                 semainecolle=Semaine.objects.get(numero=numero)
@@ -387,7 +390,7 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
                 if semainecolle.lundi + timedelta(days = creneau.jour) not in feries:
                     Colle.objects.filter(creneau=creneau,semaine=semainecolle).delete()
                     Colle(creneau=creneau,colleur=colleur,matiere=matiere,eleve=None,semaine=semainecolle,classe = creneau.classe).save()
-                    creneaux['semgroupe'].append({'semaine':semainecolle.numero,'groupe':""})
+                    creneaux['semgroupe'].append({'semaine':semainecolle.numero,'groupe':creneau.classe.nom[:4]})
             except Exception:
                 pass
     return HttpResponse(json.dumps(creneaux))
