@@ -500,9 +500,12 @@ def colleNote(request,id_colles):
     groupes = [colle.groupe for colle in colles]
     colle = colles[0]
     request.session['matiere']=colles[0].matiere.pk # on met à jour la matière courante
-    eleves = Eleve.objects.filter(groupe__in = groupes)
     semestre2 = Config.objects.get_config().semestre2
     semaine = colle.semaine.numero
+    if classe.semestres and semaine >= semestre2:
+        eleves = Eleve.objects.filter(groupe2__in = groupes)
+    else:
+        eleves = Eleve.objects.filter(groupe__in = groupes)
     classe = colle.creneau.classe
     if classe.semestres and semaine >= semestre2 and colle.matiere in (classe.option1,classe.option2):
         eleves = eleves.filter(option = colle.matiere)
