@@ -142,11 +142,11 @@ def mixtecolloscopemodif(request,classe,semin,semax,creneaumodif):
     colleurs = list(Colleur.objects.exclude(matieres = None).filter(classes=classe, matieres__in = classe.matieres.all(), user__is_active = True).values_list('pk','user__first_name','user__last_name').order_by("matieres__nom", "matieres__lv", "matieres__temps", "user__last_name", "user__first_name"))
     groupes = Groupe.objects.filter(classe=classe)
     matieresgroupes = [[groupe for groupe in groupes if groupe.haslangue(matiere)] for matiere in classe.matieres.filter(colleur__classes=classe).distinct().order_by("nom", "lv", "temps")]
-    if not any(matieresgroupes):
-        matieresgroupes = False
+    # if not any(matieresgroupes):
+    #     matieresgroupes = False
     matieresgroupes2 = [[groupe for groupe in groupes if groupe.haslangue(matiere, 2)] for matiere in classe.matieres.filter(colleur__classes=classe).distinct().order_by("nom", "lv", "temps")] if semestres else []
-    if not any (matieresgroupes2):
-        matieresgroupes2 = False
+    # if not any (matieresgroupes2):
+    #     matieresgroupes2 = False
     listeColleurs = []
     for x in matieres:
         listeColleurs.append(colleurs[:x[5]])
