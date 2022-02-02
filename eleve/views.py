@@ -102,10 +102,11 @@ def colloscope(request):
 	jours,creneaux,colles,semaines = Colle.objects.classe2colloscope(classe,semin,semax)
 	semestre2 = Config.objects.get_config().semestre2
 	semestres = classe.semestres and semestre2 <= semax.numero
+	dictGroupes2 = classe.dictGroupes(True, 2) if semestres else False
 	if not semestres:
 		semestre2 = 1000
 	return render(request,'eleve/colloscope.html',
-	{'semin':semin,'semax':semax,'semestre2': semestre2 ,'form':form,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'listegroupes':listegroupes,'dictColleurs':classe.dictColleurs(semin,semax)})
+	{'semin':semin,'semax':semax,'semestre2': semestre2, 'dictgroupes':classe.dictGroupes(), 'dictgroupes2': dictGroupes2, 'form':form,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'listegroupes':listegroupes,'dictColleurs':classe.dictColleurs(semin,semax)})
 
 @user_passes_test(is_eleve, login_url='accueil')
 def agenda(request):
