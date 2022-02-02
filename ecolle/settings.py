@@ -54,6 +54,8 @@ SESSION_COOKIE_AGE = 31536000 # cookie de session valable un an, pour éviter le
 # on récupère le nom du SGBD: mysql ou sqlite3 ou postgresql ou oracle.
 BDD = DB_ENGINE
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
