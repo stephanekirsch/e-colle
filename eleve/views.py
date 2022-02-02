@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from eleve.forms import EleveConnexionForm, MatiereForm, CopieForm
 from colleur.forms import SemaineForm
-from accueil.models import Note, Programme, Colle, Semaine, Groupe, Devoir, DevoirRendu, TD, Cours, Document
+from accueil.models import Note, Programme, Colle, Semaine, Groupe, Devoir, DevoirRendu, TD, Cours, Document, Config
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Max
 from datetime import date, datetime
