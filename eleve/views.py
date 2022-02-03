@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from eleve.forms import EleveConnexionForm, MatiereForm, CopieForm
 from colleur.forms import SemaineForm
-from accueil.models import Note, Programme, Colle, Semaine, Groupe, Devoir, DevoirRendu, TD, Cours, Document
+from accueil.models import Note, Programme, Colle, Semaine, Groupe, Devoir, DevoirRendu, TD, Cours, Document, Config
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Max
 from datetime import date, datetime
@@ -72,7 +72,7 @@ def programme(request):
 	programmes = Programme.objects.filter(classe=eleve.classe).prefetch_related('semaine')
 	if matiere:
 		programmes=programmes.filter(matiere=matiere)
-	programmes = programmes.annotate(semainemax=Max('semaine')).select_related('matiere').order_by('-semainemax','matiere__nom')
+	programmes = programmes.annotate(semainemax=Max('semaine')).select_related('matiere').order_by('-semaine__numero','matiere__nom')
 	#programmes=programmes.values('matiere__couleur','matiere__nom','semaine__numero','titre','fichier','detail').order_by('-semaine__lundi','matiere__nom')
 	return render(request,'eleve/programme.html',{'form':form,'matiere':matiere,'programmes':programmes,'media_url':MEDIA_URL,'jpeg':IMAGEMAGICK})
 
@@ -100,8 +100,13 @@ def colloscope(request):
 		elevegroupe="; ".join([eleve['user__first_name'].title()+' '+eleve['user__last_name'].upper() for eleve in groupe.groupeeleve.values('user__first_name','user__last_name')])
 		listegroupes[groupe.pk] = [groupe.nom,elevegroupe]
 	jours,creneaux,colles,semaines = Colle.objects.classe2colloscope(classe,semin,semax)
+	semestre2 = Config.objects.get_config().semestre2
+	semestres = classe.semestres and semestre2 <= semax.numero
+	dictGroupes2 = classe.dictGroupes(True, 2) if semestres else False
+	if not semestres:
+		semestre2 = 1000
 	return render(request,'eleve/colloscope.html',
-	{'semin':semin,'semax':semax,'form':form,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'listegroupes':listegroupes,'dictColleurs':classe.dictColleurs(semin,semax)})
+	{'semin':semin,'semax':semax,'semestre2': semestre2, 'dictgroupes':classe.dictGroupes(), 'dictgroupes2': dictGroupes2, 'form':form,'classe':classe,'jours':jours,'creneaux':creneaux,'listejours':["lundi","mardi","mercredi","jeudi","vendredi","samedi"],'collesemaine':zip(semaines,colles),'listegroupes':listegroupes,'dictColleurs':classe.dictColleurs(semin,semax)})
 
 @user_passes_test(is_eleve, login_url='accueil')
 def agenda(request):

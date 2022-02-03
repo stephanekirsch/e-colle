@@ -236,7 +236,7 @@ def Pdf(classe,semin,semax):
 			data += [[""]*nbGroupesLoc for i in range(3)]
 			for iGroupe in range(indGroupe,indGroupe+nbGroupesLoc):
 				ieleve=0
-				for eleve in groupes[iGroupe].groupeeleve.all():
+				for eleve in groupes[iGroupe].groupe2eleve.all():
 					ieleve+=1
 					data[ieleve][iGroupe-indGroupe]="{} {} ({})".format(eleve.user.first_name.title(),eleve.user.last_name.upper(),classe.dictEleves()[eleve.id])
 			LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))

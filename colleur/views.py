@@ -238,7 +238,7 @@ def programme(request,id_classe):
     matiere=get_object_or_404(Matiere,pk=request.session['matiere'],colleur=colleur)
     if classe not in request.user.colleur.classes.all() or matiere.pk not in classe.matierespk():
         raise Http404
-    programmes=Programme.objects.filter(classe=classe,matiere=matiere).prefetch_related('semaine').annotate(semainemax=Max('semaine')).order_by('-semainemax')
+    programmes=Programme.objects.filter(classe=classe,matiere=matiere).prefetch_related('semaine').order_by('-semaine__numero')
     isprof=False
     if is_prof(request.user,matiere,classe):
         isprof=True
@@ -500,10 +500,13 @@ def colleNote(request,id_colles):
     groupes = [colle.groupe for colle in colles]
     colle = colles[0]
     request.session['matiere']=colles[0].matiere.pk # on met à jour la matière courante
-    eleves = Eleve.objects.filter(groupe__in = groupes)
     semestre2 = Config.objects.get_config().semestre2
     semaine = colle.semaine.numero
     classe = colle.creneau.classe
+    if classe.semestres and semaine >= semestre2:
+        eleves = Eleve.objects.filter(groupe2__in = groupes)
+    else:
+        eleves = Eleve.objects.filter(groupe__in = groupes)
     if classe.semestres and semaine >= semestre2 and colle.matiere in (classe.option1,classe.option2):
         eleves = eleves.filter(option = colle.matiere)
     elif colles[0].matiere.lv == 1:
