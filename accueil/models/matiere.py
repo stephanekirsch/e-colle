@@ -61,5 +61,5 @@ class Matiere(models.Model):
         unique_together = (('nom','lv','temps'))
 
     def __str__(self):
-        dico = {20:'Gr', 30:'So', 60:'Cl'}
+        dico = {20:'Gr', 30:'So', 60:'Cl', 45: '45'}
         return self.nom.title() + "({})".format("/".join([dico[self.temps]] + (["LV{}".format(self.lv)] if self.lv else []))) 

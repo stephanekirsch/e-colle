@@ -171,10 +171,10 @@ class ColleManager(models.Manager):
             elif colle["temps"] == 20:
                 if colle["semestres"] and colle["numero"] >= semestre2:
                     isoption = colle["matiere_id"] == colle["option1_id"] or colle["matiere_id"] == colle["option2_id"]
-                    eleves.append("; ".join(["{} {}".format(x[0].upper(),x[1].title()) for x in Groupe.objects.filter(pk__in=map(int,colle["id_groupes"].split(","))).values_list("groupe2eleve__user__last_name","groupe2eleve__user__first_name","groupe2eleve__lv1","groupe2eleve__lv2","groupe2eleve__option") 
+                    eleves.append("; ".join(["{} {}".format("" if x[0] is None else x[0].upper(),"" if x[1] is None else x[1].title()) for x in Groupe.objects.filter(pk__in=map(int,colle["id_groupes"].split(","))).values_list("groupe2eleve__user__last_name","groupe2eleve__user__first_name","groupe2eleve__lv1","groupe2eleve__lv2","groupe2eleve__option") 
                         if isoption and x[4] == colle["matiere_id"] or not isoption and colle["lv"] == 0 or colle["lv"] == 1 and x[2] == colle["matiere_id"] or colle["lv"] == 2 and x[3] == colle["matiere_id"]]))
                 else:
-                    eleves.append("; ".join(["{} {}".format(x[0].upper(),x[1].title()) for x in Groupe.objects.filter(pk__in=map(int,colle["id_groupes"].split(","))).values_list("groupeeleve__user__last_name","groupeeleve__user__first_name","groupeeleve__lv1","groupeeleve__lv2") 
+                    eleves.append("; ".join(["{} {}".format("" if x[0] is None else x[0].upper(),"" if x[1] is None else x[1].title()) for x in Groupe.objects.filter(pk__in=map(int,colle["id_groupes"].split(","))).values_list("groupeeleve__user__last_name","groupeeleve__user__first_name","groupeeleve__lv1","groupeeleve__lv2") 
                         if colle["lv"] == 0 or colle["lv"] == 1 and x[2] == colle["matiere_id"] or colle["lv"] == 2 and x[3] == colle["matiere_id"]]))
         return [{"nbnotes":colle["nbnotes"], "nom_groupe":colle["nom_groupe"], "nom_classe":colle["nom_classe"], "jour":colle["jour"], "numero": colle["numero"], "heure":colle["heure"], "salle":colle["salle"], "nom_matiere":colle["nom_matiere"], "couleur":colle["couleur"],
         "eleve": None if colle["prenom_eleve"] is None else "{} {}".format(colle['prenom_eleve'].title(),colle['nom_eleve'].upper()), "titre":colle["titre"], "fichier":colle["fichier"], "groupe": colle["nom_groupe"],
