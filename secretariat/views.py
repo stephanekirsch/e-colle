@@ -332,6 +332,25 @@ def recapitulatif(request):
     return render(request,"secretariat/recapitulatif.html",{'form':form,'decompte':listeDecompte,'effectifs':effectifs})
 
 @user_passes_test(is_secret, login_url='login_secret')
+def compta(request):
+    LISTE_NOTES = list(range(21)) + ["n.n","Abs"]
+    notes = Note.objects.select_related("colleur__user","eleve__user", "semaine","classe").order_by('colleur__user__last_name', 'colleur__user_firstname', 'date_colle')
+    nomfichier="compta.csv"
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
+    writer = csv.writer(response)
+    writer.writerow(["Nom","prénom","Matière","classe","étudiant","semaine","date","heure","note","temps (min)"])
+    for note in notes:
+        # writer.writerow([note["colleur__user__last_name"].upper(), note["colleur__user__first_name"].title(), note["matiere__nom"].title(),
+        #     "élève fictif" if note["eleve"] is None else "{} {}".format(note["eleve__user__last_name"].upper,note["eleve__user__first_name"].title()),
+        #     note["semaine__numero"], note["date_colle"].strftime("%d/%m/%Y"), "{}h{:02d}".format(note["heure"]//60,note["heure"]%60), LISTE_NOTES[note["note"]]])
+        writer.writerow([note.colleur.user.last_name.upper(), note.colleur.user.first_name.title(), note.matiere.nom.title(), note.classe.nom,
+            "élève fictif" if note.eleve is None else "{} {}".format(note.eleve.user.last_name.upper(),note.eleve.user.first_name.title()),
+            note.semaine.numero, note.date_colle.strftime("%d/%m/%Y"), "{}h{:02d}".format(note.heure//60,note.heure%60), LISTE_NOTES[note.note], note.matiere.temps])
+
+    return response
+
+@user_passes_test(is_secret, login_url='login_secret')
 def ramassage(request):
     """Renvoie la vue de la page de ramassage des heures de colle"""
     form = RamassageForm(request.POST or None)
@@ -365,7 +384,7 @@ def ramassageCSV(request,id_ramassage,parMois = 0, full = 0):
     nomfichier="ramassage{}_{}-{}_{}.csv".format(debut.month,debut.year,fin.month,fin.year)
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
     writer = csv.writer(response)
-    writer.writerow(["Matière","Établissement","Grade","Nom","Prénomm"]+ (["mois"] if parMois else []) +["{}è. ann.  {}".format(annee,effectif) for annee,effectif in effectifs])
+    writer.writerow(["Matière","Établissement","Grade","Nom","Prénom"]+ (["mois"] if parMois else []) +["{}è. ann.  {}".format(annee,effectif) for annee,effectif in effectifs])
     LISTE_GRADES=["inconnu","certifié","bi-admissible","agrégé","chaire sup"]
     if parMois:
         for matiere, etablissement, grade, colleur_nom, colleur_prenom, _, moi, heures in listeDecompte:

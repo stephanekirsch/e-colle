@@ -85,7 +85,7 @@ class Devoir(models.Model):
     objects = DevoirManager()
 
     class Meta:
-        ordering = ['date_affichage']
+        ordering = ['-numero']
         unique_together = ['numero', 'classe', 'matiere']
 
     def __str__(self):
