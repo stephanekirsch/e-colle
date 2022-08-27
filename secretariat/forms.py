@@ -1,8 +1,9 @@
 #-*- coding: utf-8 -*-
 from django import forms
+from django.forms.widgets import SelectDateWidget
 from django.db.models import Max, Min
 from accueil.models import Matiere, Classe, Semaine, Ramassage, Colleur
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from django.core.exceptions import ValidationError
 
 def mois():
@@ -24,22 +25,7 @@ def incremente_mois(moment):
         return date(moment.year+moment.month//12,moment.month%12+1,1) - timedelta(days=1)
 
 class RamassageForm(forms.Form):
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-        print("init")
-        moisMin,moisMax=mois()
-        moiscourant=moisMin
-        LISTE_MOIS =[moiscourant]
-        moiscourant=incremente_mois(moiscourant)
-        while moiscourant<=moisMax:
-            LISTE_MOIS.append(moiscourant)
-            moiscourant=incremente_mois(moiscourant)
-        LISTE_MOIS=[(x,x.strftime('%B %Y')) for x in LISTE_MOIS]
-        if Ramassage.objects.exists(): # s'il existe déjà des ramassages
-            maxmois = Ramassage.objects.aggregate(Max('moisFin'))['moisFin__max']
-            self.fields['moisFin'] = forms.ChoiceField(label="jusqu'à (inclus)",choices = (lambda t,z:[(x,y) for x,y in z if x > t])(maxmois,LISTE_MOIS))
-        else:
-            self.fields['moisFin'] = forms.ChoiceField(label="jusqu'à (inclus)",choices = LISTE_MOIS)
+    moisFin = forms.DateField(label="jusqu'au (inclus)", widget=SelectDateWidget(years=[date.today().year+i-1 for i in range(2)]), initial=datetime.now())
 
     def clean(self):
         """Vérifie qu'il n'existe pas de ramassage d'un mois identique ou postérieur"""

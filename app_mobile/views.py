@@ -81,7 +81,7 @@ def connect(request):
                                                 'classe_option2': 0 if not classe.option2 else classe.option2.pk,
                                                 'semestre2': -1 if not classe.semestres else Config.objects.get_config().semestre2, 
                                                 'group': "" if user.eleve.groupe is None else user.eleve.groupe.nom,
-                                                'version': "2.3",
+                                                'version': "2.4",
                                                 'compose': Config.objects.get_config().message_eleves,
                                                 'heure_debut': HEURE_DEBUT,
                                                 'heure_fin': HEURE_FIN,
@@ -101,7 +101,7 @@ def connect(request):
                                                 'subjects_name': "__".join([str(matiere) for matiere in matieres]),
                                                 'subjects_color': "__".join([matiere.couleur for matiere in matieres]),
                                                 'semestre2': Config.objects.get_config().semestre2,
-                                                'version': "2.3",
+                                                'version': "2.4",
                                                 'heure_debut': HEURE_DEBUT,
                                                 'heure_fin': HEURE_FIN,
                                                 'intervalle': INTERVALLE}))
@@ -119,7 +119,7 @@ def agendaprograms(request):
     agendas = Colle.objects.agendaEleveApp(user.eleve)
     programmes = Programme.objects.filter(classe=user.eleve.classe).values('pk',
         'matiere__couleur', 'matiere__nom', 'semaine__numero', 'semaine__lundi', 'titre', 'fichier', 'detail').order_by('-semaine__lundi', 'matiere__nom')
-    return HttpResponse(json.dumps({'agendas': agendas, 'programs': list(programmes)}, default=date_serial))
+    return HttpResponse(json.dumps({'agendas': agendas, 'programs': list(programmes), 'semestre2': [{'sem2': -1 if not user.eleve.classe.semestres else Config.objects.get_config().semestre2}]}, default=date_serial))
 
 def grades(request):
     """renvoie les notes de l'utilisateur connecté au format json"""
@@ -342,7 +342,7 @@ def colleurDonnees(request):
     return HttpResponse(json.dumps({'colleurmatieres': colleurmatieres, 'colleurclasses': colleurclasses,'classes': list(classes.values_list('id','nom','annee','semestres','option1','option2')),'pp': list(pp.values_list('id')), 'profs': list(profs | profspp), 'notes': Note.objects.listeNotesApp(user.colleur),
         'programmes': list(Programme.objects.filter(classe__in=user.colleur.classes.all()).order_by('-semaine__lundi').values_list('matiere__pk',
         'classe__pk', 'semaine__numero', 'semaine__lundi', 'titre', 'detail', 'fichier')), 'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
-                                    'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs}, default=date_serial))
+                                    'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'semestre2': [[Config.objects.get_config().semestre2]]}, default=date_serial))
 
 def deletegrade(request, note_id):
     """efface la note dont l'identifiant est note_id"""

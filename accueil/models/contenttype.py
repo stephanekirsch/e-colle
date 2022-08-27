@@ -1,7 +1,7 @@
 from django.db.models import FileField
 from django.forms import ImageField
 from django.forms import forms
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 def fileformat(taille):
     if taille < 1000:
