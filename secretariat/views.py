@@ -381,7 +381,7 @@ def ramassageCSV(request,id_ramassage,parMois = 0, full = 0):
         debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
     fin = ramassage.moisFin
     listeDecompte, effectifs = Ramassage.objects.decompteRamassage(ramassage, csv = True, parClasse = False, parMois =parMois, full = full)
-    nomfichier="ramassage{}_{}-{}_{}.csv".format(debut.month,debut.year,fin.month,fin.year)
+    nomfichier="ramassage{}-{}-{}_{}-{}-{}.csv".format(debut.year,debut.month,debut.day,fin.year,fin.month,fin.day)
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
     writer = csv.writer(response)
     writer.writerow(["Matière","Établissement","Grade","Nom","Prénom"]+ (["mois"] if parMois else []) +["{}è. ann.  {}".format(annee,effectif) for annee,effectif in effectifs])

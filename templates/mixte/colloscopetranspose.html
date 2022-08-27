@@ -49,8 +49,8 @@
 		<td>{{creneau.salle}}</td>
 		{% for groupe in groupes %}
 			{% if groupe.nbcolles %}
-			<td class="colloscope">{% if groupe.temps == 20 %}{{groupe.groupe}}{% elif groupe.temps != 60 %}{% with groupe.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% endif %}<div class="colle"><p>
-		{% if groupe.temps == 20 %}
+			<td class="colloscope">{% if groupe.groupe != '0' %}{{groupe.groupe}}{% elif groupe.id_eleve != None %}{% with groupe.id_eleve as key %}{{classe.dictEleves|lookup:key}}{% endwith %}{% else %}{{classe}}{% endif %}<div class="colle"><p>
+		{% if groupe.groupe != '0' %}
 		S {{ groupe.numero }} / Groupe {{groupe.groupe}}: {% if semestre2 <= groupe.numero %}
 		{% for id in groupe.id_groupe %}
 		{% if not forloop.first %}; {% endif %}
@@ -62,8 +62,10 @@
 		{{dictgroupes|lookup:groupe.id_matiere|lookup:id|lookup:1}}
 		{% endfor %}
 		{% endif %}<br/>
-		{% elif groupe.temps != 60 %}
-		Élève: {{groupe.prenom|title}} {{groupe.nom|upper}}<br/>
+		{% elif groupe.id_eleve != None %}
+		S {{ groupe.numero }} / Élève: {{groupe.prenom|title}} {{groupe.nom|upper}}<br/>
+		{% else %}
+		Classe: {{classe}}</br>
 		{% endif %}
 		</p></div>
 		</td>

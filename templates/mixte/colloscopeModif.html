@@ -123,32 +123,29 @@
 <ul id="niveau2bis">
 	<li><a id="creneaux" href="false" style="background-color:#888888">creneaux multiples</a></li>
 	<li><a href="{% url user.colleur|yesno:'ajaxeffacer_colleur,ajaxeffacer_secret' 'semaine' 'creneau' %}">Effacer</a></li>
-	<li>Groupe
-		<ul class="niveau3"><
-			{% for matiere,colleurs,groupes in matieres2 %}
-			<li style="background-color:{{matiere.2}}">{{matiere.1|title}} {% if matiere.4 != 0 %}(LV{{matiere.4}}) {% endif %}
-				{% if classe.option1.pk == matiere.0 or classe.option2.pk == matiere.0 %}(Option){% endif %}
-				<ul class="niveau3">
-					{% for colleur in colleurs %}
-					<li style="background-color:{{matiere.2}}">{{colleur.1|title}} {{colleur.2|upper}} ({{classe.dictColleurs|lookup:colleur.0}})
-						<ul class="niveau4">
-							{% for groupe in groupes %}
-							<li><a href="{% url user.colleur|yesno:'ajax_colleur,ajax_secret' matiere.0 colleur.0 groupe.pk 'semaine' 'creneau' %}">G{{groupe}}</a></li>
-							{% endfor %}
-							{% for eleve,login in classe.loginsEleves %}
-							<li ><a style="background-color: gray;" href="{% url user.colleur|yesno:'ajax_colleur_eleve,ajax_secret_eleve' matiere.0 colleur.0 eleve.pk 'semaine' 'creneau' 	login %}">{{eleve}} ({{login}})</a></li>
-							{% endfor %}
-							<li><a href="{% url user.colleur|yesno:'ajax_colleur_eleve,ajax_secret_eleve' matiere.0 colleur.0 0 'semaine' 'creneau' 'no' %}">{{classe}}</a>
-							</li>
-						</ul>
-					</li>
+	{% for matiere,colleurs,groupes in matieres2 %}
+	<li style="background-color:{{matiere.2}}">{{matiere.1|title}} {% if matiere.4 != 0 %}(LV{{matiere.4}}) {% endif %}
+		{% if classe.option1.pk == matiere.0 or classe.option2.pk == matiere.0 %}(Option){% endif %}
+		<ul class="niveau3">
+			{% for colleur in colleurs %}
+			<li style="background-color:{{matiere.2}}">{{colleur.1|title}} {{colleur.2|upper}} ({{classe.dictColleurs|lookup:colleur.0}})
+				<ul class="niveau4">
+					{% for groupe in groupes %}
+					<li><a href="{% url user.colleur|yesno:'ajax_colleur,ajax_secret' matiere.0 colleur.0 groupe.pk 'semaine' 'creneau' %}">G{{groupe}}</a></li>
 					{% endfor %}
+					{% for eleve,login in classe.loginsEleves %}
+					<li ><a style="background-color: gray;" href="{% url user.colleur|yesno:'ajax_colleur_eleve,ajax_secret_eleve' matiere.0 colleur.0 eleve.pk 'semaine' 'creneau' 	login %}">{{eleve}} ({{login}})</a></li>
+					{% endfor %}
+					<li><a href="{% url user.colleur|yesno:'ajax_colleur_eleve,ajax_secret_eleve' matiere.0 colleur.0 0 'semaine' 'creneau' 'no' %}">{{classe}}</a>
+					</li>
 				</ul>
 			</li>
 			{% endfor %}
 		</ul>
 	</li>
+	{% endfor %}
 </ul>
+
 {% endif %}
 <div style="width:{{largeur}};height:{{hauteur}}"></div>
 <div id="grise">

@@ -22,7 +22,7 @@
 	<td style="background-color:{% if colle.jour <= jour %}grey{% else %}{{colle.couleur}}{% endif %}">{{colle.nom_matiere|title}}</td>
 	<td>{{ colle.nom_classe |default_if_none:''}}</td>
 	<td>{% if colle.fichier != None and colle.fichier != "" %}<a href="{{media_url}}{{colle.fichier}}">{% if colle.titre %}{{colle.titre}}{% endif %}</a>{% elif colle.titre %}{{ colle.titre }}{% endif %}{% if colle.detail %}<div class="popup">{% if latex %}{{colle.detail}}{% else %}{{colle.detail|linebreaksbr}}{% endif %}</div>{% endif %}</td>
-	{% if colle.nom_groupe %}
+	{% if colle.nom_groupe != '0' %}
 	<td>{{colle.nom_groupe}}<div class="popup">{{ colle.groupe }}</div></td>
 	{% elif colle.eleve %}
 	<td>{{colle.eleve}}</td>
@@ -30,7 +30,7 @@
 	<td>{{colle.nom_classe}}</td>
 	{% endif %}
 	<td>{% if colle.salle %}{{colle.salle}}{% endif %}</td>
-	<td>{% if colle.jour <= jour %}{% if colle.nbnotes == 0 %}{% if colle.temps == 20 %}<a href="{% url 'collenote_colleur' colle.id_colles %}">{% elif colle.temps == 60 %}<a href="{% url 'collenoteeleve_colleur' colle.id_colles %}">{% else %}<a href="{% url 'collenoteeleve_colleur' id_colles %}">{% endif %}Noter</a>{% endif %}{% endif %}</td>
+	<td>{% if colle.jour <= jour %}{% if colle.nbnotes == 0 %}{% if colle.nom_groupe != '0' %}<a href="{% url 'collenote_colleur' colle.id_colles %}">{% elif colle.eleve%}<a href="{% url 'collenoteeleve_colleur' colle.id_colles %}">{% else %}<a href="{% url 'collenoteeleve_colleur' colle.id_colles %}">{% endif %}Noter</a>{% endif %}{% endif %}</td>
 </tr>
 {% endfor %}
 </table>

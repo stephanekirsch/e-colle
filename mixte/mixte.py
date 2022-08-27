@@ -408,7 +408,7 @@ def mixteRamassagePdfParClasse(ramassage,total,parmois,full,colleur=False):
 	fin = ramassage.moisFin
 	moisdebut = 12*debut.year+debut.month-1
 	decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = True, parMois=bool(parmois), full = full, colleur = colleur)
-	nomfichier="ramassagePdfParclasse{}_{}-{}_{}.pdf".format(debut.month,debut.year,fin.month,fin.year)
+	nomfichier="ramassagePdfParclasse{}-{}-{}_{}-{}-{}.pdf".format(debut.year,debut.month,debut.day,fin.year,fin.month,fin.day)
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
 	pdf = easyPdf(titre="Ramassage des colles de {} {} à {} {}".format(LISTE_MOIS[debut.month],debut.year,LISTE_MOIS[fin.month],fin.year),marge_x=30,marge_y=30)
 	largeurcel=(pdf.format[0]-2*pdf.marge_x)/(10+parmois)
