@@ -34,6 +34,7 @@ url(r'^action/groupe/modifier/(\d+)$', views.groupeModif,name="groupemodif_secre
 url(r'^action/groupe/swap/(\d+)$', views.groupeSwap,name="groupeSwap_secret"),
 url(r'^action/groupe/csv/(\d+)$', views.groupecsv,name="groupecsv_secret"),
 url(r'^action/recapitulatif$', views.recapitulatif, name="recapitulatif"),
+url(r'^action/compta$', views.compta, name="compta"),
 url(r'^action/ramassage$', views.ramassage, name="ramassage"),
 url(r'^action/ramassage/suppr/(\d+)$', views.ramassageSuppr, name="ramassagesuppr"),
 url(r'^action/ramassage/pdf/(\d+)/(\d+)/(\d+)$', views.ramassagePdf, name="ramassagepdf"),

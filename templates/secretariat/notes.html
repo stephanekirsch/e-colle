@@ -2,6 +2,13 @@
 {% load static %}
 {% load customfilter %}
 {% block body %}
+<table class="tableausimple">
+	<tr class="entete">
+		<th>Récapitulatif de toutes les notes</th>
+		<td><a href="{% url 'compta' %}"><img src="{% static 'images/csv.png' %}"/></a></td>
+	</tr>
+</table>
+
 <table class="accueil"><tr><td>Notes{% if colleur %} de {{colleur}}{% endif %}</td></tr></table>
 <form method="post">
 	<table class="tableausimple">

@@ -61,3 +61,4 @@ class Matiere(models.Model):
 
     def __str__(self):
         return self.nom.title() + "({})".format("/".join((["LV{}".format(self.lv)] if self.lv else []) + ["{}min".format(self.temps)])) 
+
