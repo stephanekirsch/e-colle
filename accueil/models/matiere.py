@@ -43,7 +43,7 @@ class Matiere(models.Model):
     couleur = models.CharField(max_length=7, choices=LISTE_COULEURS, default='#696969')
     CHOIX_TEMPS = [
         (t, "{} min".format(t))
-        for t in range(5,65,5)
+        for t in range(0,125,5)
     ]
     temps = models.PositiveSmallIntegerField(
         choices=CHOIX_TEMPS, 
