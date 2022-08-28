@@ -570,7 +570,6 @@ class ColloscopeImportForm(forms.Form):
                         colle.append(minutes)
                     colle.append(row[4])
                     eleves = dict(reversed(x) for x in self.classe.loginsEleves())
-                    # if colle[0].temps == 20:
                     for (col,semaine) in zip(row[5:],self.semaines):
                         if col == "": # colle vide
                             colle.append(None)
@@ -581,9 +580,9 @@ class ColloscopeImportForm(forms.Form):
                                     groups.append(groupes[int(x)])
                                 else:
                                     raise ValidationError("le groupe {} n'existe pas".format(col))
-                            colle.append(groups)
+                            colle.append(('gr',groups))
                         elif col.lower() == self.classe.nom.lower(): # colle classe
-                            colle.append(self.classe)
+                            colle.append(('cl',self.classe))
                         else: # colle élève 
                             if col in eleves:
                                 colle.append(eleves[col])
@@ -610,7 +609,7 @@ class ColloscopeImportForm(forms.Form):
                                                 eleves_tot.append(eleves[pos])
                                 if len(eleves_tot) > maxnum:
                                     maxnum = len(eleves_tot)
-                                colle.append(eleves_tot)
+                                colle.append(('so',eleves_tot))
                             else:
                                 raise ValidationError("{} n'est le login d'aucun élève de {}".format(col,self.classe))
                     if maxnum:
@@ -640,19 +639,16 @@ class ColloscopeImportForm(forms.Form):
                 else:
                     creneau = Creneau(jour=colles[2],heure=colles[3],salle=colles[4],classe=self.classe)
                     creneau.save()
-            if colles[0].temps == 20:
-                for col, semaine in zip(colles[5:],self.semaines):
-                    if col:
-                        for groupe in col:
+            for col, semaine in zip(colles[5:],self.semaines):
+                if col is not None:
+                    gsc, data = col
+                    if gsc == "gr":
+                        for groupe in data:
                             colles_a_sauver.append(Colle(creneau = creneau, colleur = colles[1],matiere = colles[0], groupe = groupe, eleve = None, classe = self.classe, semaine = semaine))
-            elif colles[0].temps == 60:
-                for col, semaine in zip(colles[5:],self.semaines):
-                    if col:
+                    elif gsc == "so":
+                        colles_a_sauver.append(Colle(creneau = creneau, colleur = colles[1],matiere = colles[0], groupe = None, eleve = data, classe = self.classe, semaine = semaine))
+                    else:
                         colles_a_sauver.append(Colle(creneau = creneau, colleur = colles[1],matiere = colles[0], groupe = None, eleve = None, classe = self.classe, semaine = semaine))
-            else:
-                for col, semaine in zip(colles[5:],self.semaines):
-                    if col:
-                        colles_a_sauver.append(Colle(creneau = creneau, colleur = colles[1],matiere = colles[0], groupe = None, eleve = col, classe = self.classe, semaine = semaine))
             Colle.objects.bulk_create(colles_a_sauver)
 
 
