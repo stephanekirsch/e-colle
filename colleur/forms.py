@@ -520,6 +520,7 @@ class ColloscopeImportForm(forms.Form):
             return None 
         matieres = {unidecode(matiere.nom.lower()) + ("(lv{})".format(matiere.lv) if matiere.lv else ""): matiere for matiere in Matiere.objects.filter(matieresclasse=self.classe).distinct()}
         colleurs = {(unidecode(colleur.user.last_name.lower()), unidecode(colleur.user.first_name.lower())): (colleur, set(colleur.matieres.values_list("pk",flat = True))) for colleur in Colleur.objects.filter(classes=self.classe)}
+        groupes = {groupe.nom: groupe for groupe in Groupe.objects.filter(classe = self.classe)}
         jours = {"lu":0, "ma":1, "me":2, "je":3, "ve":4, "sa":5, "di":6}
         p1 = re.compile('\\d+a?b?c?')
         p2 = re.compile('\\d+')
@@ -568,31 +569,23 @@ class ColloscopeImportForm(forms.Form):
                     else:
                         colle.append(minutes)
                     colle.append(row[4])
-                    groupes = {groupe.nom: groupe for groupe in Groupe.objects.filter(classe = self.classe)}
                     eleves = dict(reversed(x) for x in self.classe.loginsEleves())
-                    if colle[0].temps == 20:
-                        for col in row[5:]:
-                            if col == "":
-                                colle.append(None)
-                            else:
-                                groups = []
-                                for x in p2.findall(col):
-                                    if x.isdigit() and int(x) in groupes:
-                                        groups.append(groupes[int(x)])
-                                    else:
-                                        raise ValidationError("le groupe {} n'existe pas".format(col))
-                                colle.append(groups)
-                    elif colle[0].temps == 60:
-                        for col in row[5:]:
-                            if col:
-                                colle.append(self.classe)
-                            else:
-                                colle.append(None)
-                    else:
-                        for (col,semaine) in zip(row[5:],self.semaines):
-                            if col == "":
-                                colle.append(None)
-                            elif col in eleves:
+                    # if colle[0].temps == 20:
+                    for (col,semaine) in zip(row[5:],self.semaines):
+                        if col == "": # colle vide
+                            colle.append(None)
+                        elif col.isdigit() or ";" in col: # colle groupe(s)
+                            groups = []
+                            for x in p2.findall(col):
+                                if x.isdigit() and int(x) in groupes:
+                                    groups.append(groupes[int(x)])
+                                else:
+                                    raise ValidationError("le groupe {} n'existe pas".format(col))
+                            colle.append(groups)
+                        elif col.lower() == self.classe.nom.lower(): # colle classe
+                            colle.append(self.classe)
+                        else: # colle élève 
+                            if col in eleves:
                                 colle.append(eleves[col])
                             elif col[0].isdigit():
                                 sgroupes = p1.findall(col)
