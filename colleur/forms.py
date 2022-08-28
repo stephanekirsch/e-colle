@@ -585,7 +585,7 @@ class ColloscopeImportForm(forms.Form):
                             colle.append(('cl',self.classe))
                         else: # colle élève 
                             if col in eleves:
-                                colle.append(eleves[col])
+                                colle.append(('so',eleves[col]))
                             elif col[0].isdigit():
                                 sgroupes = p1.findall(col)
                                 eleves_tot = []
