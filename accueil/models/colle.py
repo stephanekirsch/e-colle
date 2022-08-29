@@ -204,7 +204,7 @@ class ColleManager(models.Manager):
                        ON (s.numero < %s AND e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
                        OR (s.numero >= %s AND e.groupe2_id = g.id AND ((cl.option1_id IS NULL OR m.id != cl.option1_id) AND (cl.option2_id IS NULL OR m.id != cl.option2_id) OR e.option_id = m.id) AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
                        OR e.id=co.eleve_id\
-                       OR co.eleve_id IS NULL AND co.groupe_id IS NULL\
+                       OR co.eleve_id IS NULL AND co.groupe_id IS NULL AND co.classe_id = e.classe_id\
                        LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier FROM accueil_programme_semaine ps\
                        INNER JOIN accueil_programme sub\
                        ON ps.programme_id = sub.id) p\
@@ -233,7 +233,7 @@ class ColleManager(models.Manager):
                        ON co.groupe_id = g.id\
                        INNER JOIN accueil_eleve e\
                        ON e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id) OR e.id=co.eleve_id\
-                       OR co.eleve_id IS NULL AND co.groupe_id IS NULL\
+                       OR co.eleve_id IS NULL AND co.groupe_id IS NULL AND co.classe_id = e.classe_id\
                        LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier FROM accueil_programme_semaine ps\
                        INNER JOIN accueil_programme sub\
                        ON ps.programme_id = sub.id) p\
@@ -268,7 +268,7 @@ class ColleManager(models.Manager):
                        ON (s.numero < %s AND e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
                        OR (s.numero >= %s AND e.groupe2_id = g.id AND ((cl.option1_id IS NULL OR m.id != cl.option1_id) AND (cl.option2_id IS NULL OR m.id != cl.option2_id) OR e.option_id = m.id) AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
                        OR e.id=co.eleve_id\
-                       OR co.eleve_id IS NULL AND co.groupe_id IS NULL\
+                       OR co.eleve_id IS NULL AND co.groupe_id IS NULL AND co.classe_id = e.classe_id\
                        LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier, sub.id FROM accueil_programme_semaine ps\
                        INNER JOIN accueil_programme sub\
                        ON ps.programme_id = sub.id) p\
@@ -295,7 +295,7 @@ class ColleManager(models.Manager):
                        ON co.groupe_id = g.id\
                        INNER JOIN accueil_eleve e\
                        ON e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id) OR e.id=co.eleve_id\
-                       OR co.eleve_id IS NULL AND co.groupe_id IS NULL\
+                       OR co.eleve_id IS NULL AND co.groupe_id IS NULL AND co.classe_id = e.classe_id\
                        LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier, sub.id FROM accueil_programme_semaine ps\
                        INNER JOIN accueil_programme sub\
                        ON ps.programme_id = sub.id) p\
