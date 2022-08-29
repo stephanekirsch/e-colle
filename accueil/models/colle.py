@@ -181,6 +181,7 @@ class ColleManager(models.Manager):
         "detail":colle["detail"], "temps": colle["temps"], "id_colles": colle["id_colles"],"groupe": eleve} for colle, eleve in zip(colles,eleves)]
 
     def agendaEleve(self,eleve):
+        print("agendaEleve")
         if eleve.classe.semestres:
             semestre2 = Config.objects.get_config().semestre2
             requete = "SELECT s.lundi lundi, s.numero, {} jour, cr.heure heure, cr.salle salle, m.nom nom_matiere, m.couleur couleur, u.first_name prenom, u.last_name nom, p.titre titre, p.detail detail, p.fichier fichier\
@@ -203,6 +204,7 @@ class ColleManager(models.Manager):
                        ON (s.numero < %s AND e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
                        OR (s.numero >= %s AND e.groupe2_id = g.id AND ((cl.option1_id IS NULL OR m.id != cl.option1_id) AND (cl.option2_id IS NULL OR m.id != cl.option2_id) OR e.option_id = m.id) AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
                        OR e.id=co.eleve_id\
+                       OR co.eleve_id IS NULL AND co.groupe_id IS NULL\
                        LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier FROM accueil_programme_semaine ps\
                        INNER JOIN accueil_programme sub\
                        ON ps.programme_id = sub.id) p\
@@ -210,7 +212,7 @@ class ColleManager(models.Manager):
                        WHERE e.id=%s AND s.lundi >= %s\
                        ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'))
             with connection.cursor() as cursor:
-                cursor.execute(requete,(semestre2,semestre2,eleve.classe.pk,eleve.pk,date.today()+timedelta(days=-27)))
+                cursor.execute(requete,(semestre2,semestre2,eleve.classe.pk,eleve.pk,date.today()+timedelta(days=-28)))
                 colles = dictfetchall(cursor)
         else:
             requete = "SELECT s.lundi lundi, s.numero, {} jour, cr.heure heure, cr.salle salle, m.nom nom_matiere, m.couleur couleur, u.first_name prenom, u.last_name nom, p.titre titre, p.detail detail, p.fichier fichier\
@@ -231,6 +233,7 @@ class ColleManager(models.Manager):
                        ON co.groupe_id = g.id\
                        INNER JOIN accueil_eleve e\
                        ON e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id) OR e.id=co.eleve_id\
+                       OR co.eleve_id IS NULL AND co.groupe_id IS NULL\
                        LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier FROM accueil_programme_semaine ps\
                        INNER JOIN accueil_programme sub\
                        ON ps.programme_id = sub.id) p\
@@ -238,7 +241,7 @@ class ColleManager(models.Manager):
                        WHERE e.id=%s AND s.lundi >= %s\
                        ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'))
             with connection.cursor() as cursor:
-                cursor.execute(requete,(eleve.classe.pk,eleve.pk,date.today()+timedelta(days=-27)))
+                cursor.execute(requete,(eleve.classe.pk,eleve.pk,date.today()+timedelta(days=-28)))
                 colles = dictfetchall(cursor)
         return colles
 
@@ -265,6 +268,7 @@ class ColleManager(models.Manager):
                        ON (s.numero < %s AND e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
                        OR (s.numero >= %s AND e.groupe2_id = g.id AND ((cl.option1_id IS NULL OR m.id != cl.option1_id) AND (cl.option2_id IS NULL OR m.id != cl.option2_id) OR e.option_id = m.id) AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id))\
                        OR e.id=co.eleve_id\
+                       OR co.eleve_id IS NULL AND co.groupe_id IS NULL\
                        LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier, sub.id FROM accueil_programme_semaine ps\
                        INNER JOIN accueil_programme sub\
                        ON ps.programme_id = sub.id) p\
@@ -272,7 +276,7 @@ class ColleManager(models.Manager):
                        WHERE e.id=%s AND s.lundi >= %s\
                        ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'))
             with connection.cursor() as cursor:
-                cursor.execute(requete,(semestre2, semestre2, eleve.classe.pk,eleve.pk,date.today()+timedelta(days=-27)))
+                cursor.execute(requete,(semestre2, semestre2, eleve.classe.pk,eleve.pk,date.today()+timedelta(days=-28)))
                 colles = dictfetchall(cursor)
         else:
             requete = "SELECT s.numero, {} jour, cr.heure heure, cr.salle salle, m.nom nom_matiere, m.couleur couleur, u.first_name prenom, u.last_name nom, p.id id_programme\
@@ -291,6 +295,7 @@ class ColleManager(models.Manager):
                        ON co.groupe_id = g.id\
                        INNER JOIN accueil_eleve e\
                        ON e.groupe_id = g.id AND (m.lv=0 OR m.lv=1 AND e.lv1_id=m.id OR m.lv=2 AND e.lv2_id=m.id) OR e.id=co.eleve_id\
+                       OR co.eleve_id IS NULL AND co.groupe_id IS NULL\
                        LEFT OUTER JOIN (SELECT ps.semaine_id, sub.matiere_id, sub.classe_id, sub.titre, sub.detail, sub.fichier, sub.id FROM accueil_programme_semaine ps\
                        INNER JOIN accueil_programme sub\
                        ON ps.programme_id = sub.id) p\
@@ -298,7 +303,7 @@ class ColleManager(models.Manager):
                        WHERE e.id=%s AND s.lundi >= %s\
                        ORDER BY s.lundi,cr.jour,cr.heure".format(date_plus_jour('s.lundi','cr.jour'))
             with connection.cursor() as cursor:
-                cursor.execute(requete,(eleve.classe.pk,eleve.pk,date.today()+timedelta(days=-27)))
+                cursor.execute(requete,(eleve.classe.pk,eleve.pk,date.today()+timedelta(days=-28)))
                 colles = dictfetchall(cursor)
         return [{'time': int(datetime.combine(agenda['jour'], time(*divmod(agenda['heure'],60))).replace(tzinfo=timezone.utc).timestamp()),
                                      'room':agenda['salle'],
