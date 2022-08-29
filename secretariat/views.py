@@ -266,14 +266,14 @@ def ajaxcolloscope(request, id_matiere, id_colleur, id_groupe, numero_semaine, i
     
 
 @user_passes_test(is_secret, login_url='accueil')
-def ajaxcolloscopeeleve(request, id_matiere, id_colleur, id_eleve, id_semaine, id_creneau, login):
+def ajaxcolloscopeeleve(request, id_matiere, id_colleur, id_eleve, numero_semaine, id_creneau, login):
     """Ajoute la colle propre au quintuplet (matière,colleur,eleve,semaine,créneau) et renvoie le username du colleur
     en effaçant au préalable toute colle déjà existante sur ce couple créneau/semaine"""
     if not Config.objects.get_config().modif_secret_col:
         return HttpResponseForbidden("Accès non autorisé")
     matiere=get_object_or_404(Matiere,pk=id_matiere)
     colleur=get_object_or_404(Colleur,pk=id_colleur)
-    semaine=get_object_or_404(Semaine,pk=id_semaine)
+    semaine=get_object_or_404(Semaine,numero=numero_semaine)
     creneau=get_object_or_404(Creneau,pk=id_creneau)
     return mixteajaxcolloscopeeleve(matiere,colleur, id_eleve,semaine,creneau,login)
 
@@ -288,7 +288,7 @@ def ajaxcolloscopeeffacer(request, numero_semaine, id_creneau):
     return mixteajaxcolloscopeeffacer(semaine,creneau)
 
 @user_passes_test(is_secret, login_url='accueil')
-def ajaxcolloscopemulti(request, id_matiere, id_colleur, id_groupe, id_eleve, id_semaine, id_creneau, duree, frequence, permutation):
+def ajaxcolloscopemulti(request, id_matiere, id_colleur, id_groupe, id_eleve, numero_semaine, id_creneau, duree, frequence, permutation):
     """Compte le nombre de colles présente sur les couples créneau/semaine sur le créneau dont l'id est id_creneau
     et les semaines dont le numéro est compris entre celui de la semaine d'id id_semaine et ce dernier + duree
     et dont le numéro est congru à celui de la semaine d'id id_semaine modulo frequence
@@ -302,12 +302,12 @@ def ajaxcolloscopemulti(request, id_matiere, id_colleur, id_groupe, id_eleve, id
     else:
         matiere = -1
         colleur = 0
-    semaine=get_object_or_404(Semaine,pk=id_semaine)
+    semaine=get_object_or_404(Semaine,numero=numero_semaine)
     creneau=get_object_or_404(Creneau,pk=id_creneau)
     return mixteajaxcolloscopemulti(matiere,colleur,id_groupe,id_eleve,semaine,creneau,duree, frequence, permutation)
     
 @user_passes_test(is_secret, login_url='accueil')
-def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_eleve, id_semaine, id_creneau, duree, frequence, permutation):
+def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_eleve, numero_semaine, id_creneau, duree, frequence, permutation):
     """ajoute les colles sur les couples créneau/semaine sur le créneau dont l'id est id_creneau
     et les semaines dont le numéro est compris entre celui de la semaine d'id id_semaine et ce dernier + duree
     et dont le numéro est congru à celui de la semaine d'id id_semaine modulo frequence, avec le colleur dont l'id est id_colleur
@@ -316,7 +316,7 @@ def ajaxcolloscopemulticonfirm(request, id_matiere, id_colleur, id_groupe, id_el
         return HttpResponseForbidden("Accès non autorisé")
     matiere=get_object_or_404(Matiere,pk=id_matiere)
     colleur=get_object_or_404(Colleur,pk=id_colleur)
-    semaine=get_object_or_404(Semaine,pk=id_semaine)
+    semaine=get_object_or_404(Semaine,numero=numero_semaine)
     creneau=get_object_or_404(Creneau,pk=id_creneau)
     return mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,creneau,duree, frequence, permutation)
 

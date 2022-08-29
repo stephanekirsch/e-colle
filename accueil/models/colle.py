@@ -181,7 +181,6 @@ class ColleManager(models.Manager):
         "detail":colle["detail"], "temps": colle["temps"], "id_colles": colle["id_colles"],"groupe": eleve} for colle, eleve in zip(colles,eleves)]
 
     def agendaEleve(self,eleve):
-        print("agendaEleve")
         if eleve.classe.semestres:
             semestre2 = Config.objects.get_config().semestre2
             requete = "SELECT s.lundi lundi, s.numero, {} jour, cr.heure heure, cr.salle salle, m.nom nom_matiere, m.couleur couleur, u.first_name prenom, u.last_name nom, p.titre titre, p.detail detail, p.fichier fichier\
