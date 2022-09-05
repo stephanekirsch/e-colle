@@ -540,7 +540,7 @@ class ProfForm(forms.Form):
         self.classe=classe
         for matiere in classe.matieres.all():
             query=Colleur.objects.filter(matieres=matiere,classes=classe,user__is_active=True).order_by('user__last_name','user__last_name')
-            self.fields[str(matiere.pk)] = forms.ModelMultipleChoiceField(label=matiere,queryset=query,required=False)
+            self.fields[str(matiere.pk)] = forms.ModelMultipleChoiceField(label=str(matiere),queryset=query,required=False)
         query2 = Colleur.objects.filter(classes=classe,user__is_active=True)
         self.fields['profprincipal'] = forms.ModelChoiceField(label="prof principal",queryset=query2,required=False)
 
