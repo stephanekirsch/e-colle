@@ -305,12 +305,14 @@ class SemaineForm(forms.ModelForm):
         self.instance.numero = self.cleaned_data['numero']
         self.instance.save()
 
-class SemestreForm(forms.Form):
+def get_semaines():
     try:
-        LISTE_SEMAINES = [ (semaine.numero, "S{}".format(semaine.numero))  for semaine in Semaine.objects.order_by("numero")]
+        return [ (semaine.numero, "S{}".format(semaine.numero))  for semaine in Semaine.objects.order_by("numero")]
     except Exception:
-        LISTE_SEMAINES = []
-    semestre = forms.ChoiceField(label="début du second semestre", choices = LISTE_SEMAINES, required = False)
+        return []
+
+class SemestreForm(forms.Form):
+    semestre = forms.ChoiceField(label="début du second semestre", choices = get_semaines, required = False)
 
     def save(self):
         Config.objects.all().update(semestre2 = self.cleaned_data['semestre'])
