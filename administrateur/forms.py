@@ -687,6 +687,8 @@ class CsvForm(forms.Form):
             reader = csv.DictReader(fichiercsv, dialect=dialect)
             fichiercsv.seek(0)
             ligne = next(reader)
+            print(self.champs)
+            print(ligne)
             erreurs = [x for x in self.champs if x not in ligne]
             if erreurs:
                 raise ValidationError("Les intitulés des champs suivants sont inexacts: {}".format(erreurs))

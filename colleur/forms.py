@@ -515,8 +515,13 @@ class ColloscopeImportForm(forms.Form):
         def indice(subs,i):
             if subs is None:
                 return None
-            if len(subs) > i:
-                return subs[i]
+            if subs[0] != 'so':
+                if i == 0:
+                    return subs
+                else:
+                    return None
+            if len(subs[1]) > i:
+                return (subs[0],subs[1][i])
             return None 
         matieres = {unidecode(matiere.nom.lower()) + ("(lv{})".format(matiere.lv) if matiere.lv else ""): matiere for matiere in Matiere.objects.filter(matieresclasse=self.classe).distinct()}
         colleurs = {(unidecode(colleur.user.last_name.lower()), unidecode(colleur.user.first_name.lower())): (colleur, set(colleur.matieres.values_list("pk",flat = True))) for colleur in Colleur.objects.filter(classes=self.classe)}
