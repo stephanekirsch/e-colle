@@ -31,7 +31,7 @@
 		<td>
 		{% for eleve in groupe.groupeeleve.all %}
 		{{eleve}} {% with eleve.lv1.pk as elv1 %} {% if elv1 %} (LV1: {{lv1|lookup:elv1}}) {% endif %} {% endwith %}
-		{% with eleve.lv2.pk as elv2 %} {% if elv2 %}<br/>(LV2: {{lv1|lookup:elv2}}) {% endif %} {% endwith %}
+		{% with eleve.lv2.pk as elv2 %} {% if elv2 %}<br/>(LV2: {{lv2|lookup:elv2}}) {% endif %} {% endwith %}
 		<br/>
 		{% endfor %}
 		</td>
@@ -40,7 +40,7 @@
 		<td>
 		{% for eleve in groupe.groupe2eleve.all %}
 		{{eleve}} {% with eleve.lv1.pk as elv1 %} {% if elv1 != 0  %} (LV1: {{lv1|lookup:elv1}}) {% endif %} {% endwith %}
-		{% with eleve.lv2.pk as elv2 %} {% if elv2 %} <br/>(LV2: {{lv1|lookup:elv2}}) {% endif %} {% endwith %}
+		{% with eleve.lv2.pk as elv2 %} {% if elv2 %} <br/>(LV2: {{lv2|lookup:elv2}}) {% endif %} {% endwith %}
 		{% with eleve.option as opt %} {% if opt %} <br/>(Option: {{opt.nom|title}}) {% endif %} {% endwith %}
 		<br/>
 		{% endfor %}

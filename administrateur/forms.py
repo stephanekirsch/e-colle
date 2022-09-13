@@ -687,8 +687,6 @@ class CsvForm(forms.Form):
             reader = csv.DictReader(fichiercsv, dialect=dialect)
             fichiercsv.seek(0)
             ligne = next(reader)
-            print(self.champs)
-            print(ligne)
             erreurs = [x for x in self.champs if x not in ligne]
             if erreurs:
                 raise ValidationError("Les intitulés des champs suivants sont inexacts: {}".format(erreurs))
@@ -726,7 +724,7 @@ class CsvForm(forms.Form):
                     donnee = ligne[self.cleaned_data['lv2']]
                     if donnee != "": 
                         try:
-                            elevelv2 = Matiere.objects.filter(lv=1, nom__iexact=donnee.lower())
+                            elevelv2 = Matiere.objects.filter(lv=2, nom__iexact=donnee.lower())
                             if 'classe' in args:
                                 elevelv2 = elevelv2.filter(matieresclasse=args['classe'])
                             args['lv2'] = elevelv2.all()[0]
