@@ -536,7 +536,7 @@ class ColloscopeImportForm(forms.Form):
         else:
             semestre2 = 100
         try:
-            with TextIOWrapper(self.cleaned_data['fichier'].file,encoding = 'utf8',newline='') as csvfile:
+            with TextIOWrapper(self.cleaned_data['fichier'].file,encoding = 'utf-8-sig',newline='') as csvfile:
                 colloscopereader = csv.reader(csvfile, delimiter=',')
                 self.entete = next(colloscopereader)
                 try:

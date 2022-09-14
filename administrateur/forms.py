@@ -663,7 +663,7 @@ class CsvForm(forms.Form):
         # on vérifie qu'il n'y a pas d'incohérence
         if self.cleaned_data['importdirect'] and  (not self.cleaned_data['getidentifiant'] or not self.cleaned_data['getmotdepasse']):
             raise ValidationError("Pour un import direct il faut valider au moins les champs identifiant et mot de passe")
-        with TextIOWrapper(self.cleaned_data['fichier'].file,encoding = 'utf8') as fichiercsv:
+        with TextIOWrapper(self.cleaned_data['fichier'].file,encoding = 'utf-8-sig') as fichiercsv:
             dialect = csv.Sniffer().sniff(fichiercsv.read(4096))
             self.champs = {self.cleaned_data['nom'], self.cleaned_data['prenom']}
             if self.cleaned_data['getemail']:
@@ -717,7 +717,9 @@ class CsvForm(forms.Form):
                             elevelv1 = Matiere.objects.filter(lv=1, nom__iexact=donnee.lower())
                             if 'classe' in args:
                                 elevelv1 = elevelv1.filter(matieresclasse=args['classe'])
-                            args['lv1'] = elevelv1.all()[0]
+                            matieres = elevelv1.all()
+                            if matieres:
+                                args['lv1'] = matieres[0]
                         except Exception as e:
                             raise ValidationError(str(e))
                 if self.cleaned_data["getlv2"]:
@@ -727,7 +729,9 @@ class CsvForm(forms.Form):
                             elevelv2 = Matiere.objects.filter(lv=2, nom__iexact=donnee.lower())
                             if 'classe' in args:
                                 elevelv2 = elevelv2.filter(matieresclasse=args['classe'])
-                            args['lv2'] = elevelv2.all()[0]
+                            matieres = elevelv2.all()
+                            if matieres:
+                                args['lv2'] = matieres[0]
                         except Exception as e:
                             raise ValidationError(str(e))
                 if self.cleaned_data["getldn"]:
