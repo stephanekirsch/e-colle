@@ -152,10 +152,16 @@ def classemodif(request, id_classe):
 @ip_filter
 def classesuppr(request, id_classe):
     """essaie de supprimer la classe dont l'id est id_classe, puis redirige vers la page de gestion des classes"""
-    try:
-        get_object_or_404(Classe,pk=id_classe).delete()
-    except Exception:
-        messages.error(request,"Impossible d'effacer la classe car elle est présente chez certains élèves")
+    nbeleves = Eleve.objects.filter(classe__pk = id_classe).count()
+    if nbeleves:
+        messages.error(request,"Impossible d'effacer la classe elle contient {} élèves".format(nbeleves))
+    else:
+        try:
+            with transaction.atomic():
+                Groupe.objects.filter(classe__pk==id_classe).delete()
+                get_object_or_404(Classe,pk=id_classe).delete()
+        except Exception as e:
+            messages.error(request,"Impossible d'effacer la classe: " + str(e))
     return redirect('gestion_classe')
 
 @ip_filter
