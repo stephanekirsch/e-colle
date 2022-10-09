@@ -69,10 +69,10 @@ def programme(request):
 	if form.is_valid():
 		matiere=form.cleaned_data['matiere']
 	eleve = request.user.eleve
-	programmes = Programme.objects.filter(classe=eleve.classe).prefetch_related('semaine')
+	programmes = Programme.objects.filter(classe=eleve.classe)
 	if matiere:
 		programmes=programmes.filter(matiere=matiere)
-	programmes = programmes.annotate(semainemax=Max('semaine')).select_related('matiere').order_by('-semaine__numero','matiere__nom')
+	programmes = programmes.annotate(semainemax=Max('semaine')).select_related('matiere').order_by('-semainemax','matiere__nom')
 	#programmes=programmes.values('matiere__couleur','matiere__nom','semaine__numero','titre','fichier','detail').order_by('-semaine__lundi','matiere__nom')
 	return render(request,'eleve/programme.html',{'form':form,'matiere':matiere,'programmes':programmes,'media_url':MEDIA_URL,'jpeg':IMAGEMAGICK})
 
