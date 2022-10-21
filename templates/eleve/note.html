@@ -30,7 +30,7 @@
 		<td>{{note.date_colle|date:"l j F"}}</td>
 		<td>{{note.prenom|title}} {{note.nom|upper}}</td>
 		<td>{% if note.titre != None %}{{note.titre|title}}<div class="popup">{% if latex %}{{note.programme}}{% else %}{{note.programme|linebreaksbr}}{% endif %}</div>{% endif %}</td>
-		<td>{% if note.note = 21 %}n.n{% else %}{% if note.note = 22 %}Abs{% else %}{{note.note}}{% endif %}{% endif %}</td>
+		<td>{% if note.note == 21 %}n.n{% else %}{% if note.note == 22 %}Abs{% else %}{{note.note}}{% endif %}{% endif %}</td>
 		<td>{% if note.commentaire %}lire<div class="popup">{% if latex %}{{note.commentaire}}{% else %}{{note.commentaire|linebreaksbr}}{% endif %}</div>{% endif %}</td>
 	</tr>
 {% endfor %}
