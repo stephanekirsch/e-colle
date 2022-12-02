@@ -389,11 +389,11 @@ def ramassageCSV(request,id_ramassage,parMois = 0, full = 0):
     if parMois:
         for matiere, etablissement, grade, colleur_nom, colleur_prenom, _, moi, heures in listeDecompte:
             writer.writerow([matiere.title(), etablissement.title(),
-                                LISTE_GRADES[grade], colleur_nom.upper(), colleur_prenom.title(), LISTE_MOIS[moi%12+1]] + ["{:.02f}".format(heures[i]/60).replace('.',',') for i in range(len(effectifs))])
+                                LISTE_GRADES[grade], colleur_nom.upper(), colleur_prenom.title(), LISTE_MOIS[moi%12+1]] + ["{:.2f}".format(heures[i]/60).replace('.',',') for i in range(len(effectifs))])
     else:
         for matiere, etablissement, grade, colleur_nom, colleur_prenom, _, heures in listeDecompte:
             writer.writerow([matiere.title(), etablissement.title(),
-                                LISTE_GRADES[grade], colleur_nom.upper(), colleur_prenom.title()] + ["{:.02f}".format(heures[i]/60).replace('.',',') for i in range(len(effectifs))])
+                                LISTE_GRADES[grade], colleur_nom.upper(), colleur_prenom.title()] + ["{:.2f}".format(heures[i]/60).replace('.',',') for i in range(len(effectifs))])
     return response
 
 @user_passes_test(is_secret, login_url='login_secret')
@@ -453,7 +453,7 @@ def ramassagePdf(request, id_ramassage, parMois = 0, full = 0):
                                 LIST_STYLE.add('TEXTCOLOR',(4,ligneMois),(4+len(effectifs),ligneMois),(1,0,0))
                             data[ligneMois][4]=LISTE_MOIS_COURT[moi%12]
                             for i in range(len(effectifs)):
-                                data[ligneMois][i+5]="{:.02f}h".format(decomptes[i]/60).replace('.',',')
+                                data[ligneMois][i+5]="{:.2f}h".format(decomptes[i]/60).replace('.',',')
                             ligneMois+=1
                             if ligneMois==24 and nbKolleurs>23: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau
                                 t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel,largeurcel]+[largeurcel]*len(effectifs),rowHeights=min((1+nbKolleurs),24)*[hauteurcel])
@@ -496,7 +496,7 @@ def ramassagePdf(request, id_ramassage, parMois = 0, full = 0):
                     for colleur, decomptes in listeColleurs:
                         data[ligneColleur][3]=colleur
                         for i in range(len(effectifs)):
-                            data[ligneColleur][i+4]="{:.02f}h".format(decomptes[i]/60).replace('.',',')
+                            data[ligneColleur][i+4]="{:.2f}h".format(decomptes[i]/60).replace('.',',')
                         ligneColleur+=1
                         if ligneColleur==24 and nbKolleurs>23: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau
                             t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel]+[largeurcel]*len(effectifs),rowHeights=min((1+nbKolleurs),24)*[hauteurcel])
@@ -568,7 +568,7 @@ def ramassageCSVParClasse(request, id_ramassage, totalParmois, full = 0):
         for decompte in decomptes:
             heures = int(decompte[-1])
             writer.writerow([decompte[1], decompte[3], decompte[4].title(),
-                            LISTE_GRADES[decompte[5]], decompte[6].upper(), decompte[7].title()] + ([LISTE_MOIS[decompte[9]%12+1]] if parmois else []) + ["{:.02f}".format(heures/60).replace('.',',')])
+                            LISTE_GRADES[decompte[5]], decompte[6].upper(), decompte[7].title()] + ([LISTE_MOIS[decompte[9]%12+1]] if parmois else []) + ["{:.2f}".format(heures/60).replace('.',',')])
     elif len(decomptes) > 0:
         last_classe, last_classe_nom, last_matiere = decomptes[0][0], decomptes[0][1], decomptes[0][3]
         total_classe, total_matiere = 0, 0
@@ -577,25 +577,25 @@ def ramassageCSVParClasse(request, id_ramassage, totalParmois, full = 0):
             heures = decompte[-1]
             if matiere != last_matiere or classe != last_classe: # si on change de matière ou de classe, on met le total matière
                 writer.writerow([""]*(6+parmois))
-                writer.writerow([last_classe_nom, "total {}".format(last_matiere.title())]+[""]*(4+parmois) +["{:.02f}".format(total_matiere/60).replace('.',',')])
+                writer.writerow([last_classe_nom, "total {}".format(last_matiere.title())]+[""]*(4+parmois) +["{:.2f}".format(total_matiere/60).replace('.',',')])
                 writer.writerow([""]*(6+parmois))
                 total_classe += total_matiere
                 total_matiere = 0
             if classe != last_classe: # si on change de classe, on met le total classe
-                writer.writerow(["total {}".format(last_classe_nom)]+[""]*(5+parmois) +["{:.02f}".format(total_classe/60).replace('.',',')])
+                writer.writerow(["total {}".format(last_classe_nom)]+[""]*(5+parmois) +["{:.2f}".format(total_classe/60).replace('.',',')])
                 writer.writerow([""]*(6+parmois))
                 writer.writerow([""]*(6+parmois))
                 total_classe = 0
             heures = int(decompte[-1])
             writer.writerow([decompte[1], decompte[3], decompte[4].title(),
-                        LISTE_GRADES[decompte[5]], decompte[6].upper(), decompte[7].title()] + ([LISTE_MOIS[decompte[-2]%12+1]] if parmois else []) + ["{:.02f}".format(heures/60).replace('.',',')])
+                        LISTE_GRADES[decompte[5]], decompte[6].upper(), decompte[7].title()] + ([LISTE_MOIS[decompte[-2]%12+1]] if parmois else []) + ["{:.2f}".format(heures/60).replace('.',',')])
             total_matiere += heures
             last_classe, last_classe_nom, last_matiere = decompte[0], decompte[1], decompte[3]
         writer.writerow([""]*(6+parmois))
-        writer.writerow([last_classe_nom, "total {}".format(last_matiere.title())]+[""]*(4+parmois) +["{:.02f}".format(total_matiere/60).replace('.',',')])
+        writer.writerow([last_classe_nom, "total {}".format(last_matiere.title())]+[""]*(4+parmois) +["{:.2f}".format(total_matiere/60).replace('.',',')])
         writer.writerow([""]*(6+parmois))
         total_classe += total_matiere
-        writer.writerow(["total {}".format(last_classe_nom)]+[""]*(5+parmois) +["{:.02f}".format(total_classe/60).replace('.',',')])
+        writer.writerow(["total {}".format(last_classe_nom)]+[""]*(5+parmois) +["{:.2f}".format(total_classe/60).replace('.',',')])
         writer.writerow([""]*(6+parmois))
         writer.writerow([""]*(6+parmois))
     return response

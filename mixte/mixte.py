@@ -455,7 +455,7 @@ def mixteRamassagePdfParClasse(ramassage,total,parmois,full,colleur=False):
 								if moi<moisdebut:
 									LIST_STYLE.add('TEXTCOLOR',(4,ligneMois),(5,ligneMois),(1,0,0))
 								data[ligneMois][4]=LISTE_MOIS[moi%12+1]
-								data[ligneMois][5]="{:.02f}h".format(heures/60).replace('.',',')
+								data[ligneMois][5]="{:.2f}h".format(heures/60).replace('.',',')
 								ligneMois+=1
 								if ligneMois==23 and nbKolleurs>22: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau
 									t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel, largeurcel, largeurcel],rowHeights=min((1+nbKolleurs),23)*[hauteurcel])
@@ -499,7 +499,7 @@ def mixteRamassagePdfParClasse(ramassage,total,parmois,full,colleur=False):
 						for colleur, heures in listeColleurs:
 							totalmatiere += heures
 							data[ligneColleur][3]=colleur
-							data[ligneColleur][4]="{:.02f}h".format(heures/60).replace('.',',')
+							data[ligneColleur][4]="{:.2f}h".format(heures/60).replace('.',',')
 							ligneColleur+=1
 							if ligneColleur==23 and nbKolleurs>22: # si le tableau prend toute une page (et qu'il doit continuer), on termine la page et on recommence un autre tableau
 								t=Table(data,colWidths=[2*largeurcel,3*largeurcel,largeurcel,3*largeurcel, largeurcel],rowHeights=min((1+nbKolleurs),23)*[hauteurcel])
@@ -538,7 +538,7 @@ def mixteRamassagePdfParClasse(ramassage,total,parmois,full,colleur=False):
 			if total:
 				LIST_STYLE.add('SPAN',(0,ligneColleur),(3+parmois,ligneColleur))
 				LIST_STYLE.add('BACKGROUND',(0,ligneColleur),(-1,ligneColleur),(.8,.8,.8))
-				data[ligneColleur] = ["total {}".format(matiere.title())]+[""]*(3+parmois)+["{:.02f}h".format(totalmatiere/60).replace('.',',')]
+				data[ligneColleur] = ["total {}".format(matiere.title())]+[""]*(3+parmois)+["{:.2f}h".format(totalmatiere/60).replace('.',',')]
 				ligneEtab+=1
 				ligneGrade+=1
 				ligneMat+=1
@@ -572,7 +572,7 @@ def mixteRamassagePdfParClasse(ramassage,total,parmois,full,colleur=False):
 		if total:
 			LIST_STYLE.add('SPAN',(0,ligneColleur),(3+parmois,ligneColleur))
 			LIST_STYLE.add('BACKGROUND',(0,ligneColleur),(-1,ligneColleur),(.7,.7,.7))
-			data[ligneColleur] = ["total {}".format(classe)]+[""]*(3+parmois)+["{:.02f}h".format(totalclasse/60).replace('.',',')]
+			data[ligneColleur] = ["total {}".format(classe)]+[""]*(3+parmois)+["{:.2f}h".format(totalclasse/60).replace('.',',')]
 			ligneEtab+=1
 			ligneGrade+=1
 			ligneMat+=1
