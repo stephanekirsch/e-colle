@@ -207,7 +207,7 @@ def resultat2(request,id_classe,id_semin,id_semax):
     heures_colleurs = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).values('colleur').order_by('colleur__user__last_name','colleur__user__first_name').annotate(nb=Count('pk')).annotate(heures = matiere.temps*F('nb')) if isprof else False
     stat_global = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).exclude(note__gt=20).aggregate(moy=Avg('note'),minimum=Min('note'),maximum=Max('note'),ecarttype=StdDev('note')) if isprof else False
     heures_global = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).aggregate(nb=Count('pk'))['nb']*matiere.temps if isprof else False
-    return render(request,"colleur/resultat.html",{'large': nbSemaines >= 20,'form':form,'classe':classe,'semaines':semaines,'matiere':matiere,'notes':generateur,'isprof':isprof,'semin':semin,'semax':semax,'stats':zip(stat_colleurs,heures_colleurs) if isprof else False, 'stat_global':stat_global, 'heures_global': heures_global })
+    return render(request,"colleur/resultat.html",{'largeur': 450+41*nbSemaines,'form':form,'classe':classe,'semaines':semaines,'matiere':matiere,'notes':generateur,'isprof':isprof,'semin':semin,'semax':semax,'stats':zip(stat_colleurs,heures_colleurs) if isprof else False, 'stat_global':stat_global, 'heures_global': heures_global })
 
 @user_passes_test(is_colleur, login_url='accueil')
 def resultatcsv(request,id_classe,id_semin,id_semax):
