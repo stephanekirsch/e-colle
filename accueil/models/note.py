@@ -94,6 +94,9 @@ class NoteManager(models.Manager):
                 note['semaine'].append(Note.objects.filter(eleve=eleve,matiere=matiere,semaine=semaine).values('note','colleur__user__first_name','colleur__user__last_name','commentaire'))
             yield note
 
+    def nbSemaines(self,matiere,classe,semin,semax):
+        return Semaine.objects.filter(semainenote__classe=classe,semainenote__matiere=matiere,lundi__range=(semin.lundi,semax.lundi)).distinct().count()
+
     def noteEleve(self,eleve,matiere=None):
         requete = "SELECT m.nom nom_matiere, m.couleur couleur, n.date_colle date_colle, u.first_name prenom, u.last_name nom, p.titre titre, p.detail programme, n.note note, n.commentaire commentaire\
                    FROM accueil_note n\
