@@ -246,7 +246,7 @@
 		<matiere nom="Informatique" temps="60"></matiere>
 	</classe>
 -->
-	<classe nom="ECS" precision="Économique et Commerciale, option Scientifique" annee="2" type="Économique" domaine="Mathématiques, économie">
+<!-- 	<classe nom="ECS" precision="Économique et Commerciale, option Scientifique" annee="2" type="Économique" domaine="Mathématiques, économie">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
@@ -262,7 +262,7 @@
 		<matiere nom="Arabe" temps="20" lv="2"></matiere>
 		<matiere nom="Chinois" temps="20" lv="2"></matiere>
 		<matiere nom="H.G.G." temps="20"></matiere>
-	</classe>
+	</classe> -->
 
 <!--
 	<classe nom="ECE" precision="Économique et Commerciale, option Économique" annee="1" type="Économique" domaine="Mathématiques, économie">
@@ -272,7 +272,7 @@
 		<matiere nom="A.E.H.S.C." temps="20"></matiere>
 	</classe>
 -->
-	<classe nom="ECE" precision="Économique et Commerciale, option Économique" annee="2" type="Économique" domaine="Mathématiques, économie">
+<!-- 	<classe nom="ECE" precision="Économique et Commerciale, option Économique" annee="2" type="Économique" domaine="Mathématiques, économie">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
@@ -288,7 +288,7 @@
 		<matiere nom="Arabe" temps="20" lv="2"></matiere>
 		<matiere nom="Chinois" temps="20" lv="2"></matiere>
 		<matiere nom="A.E.H.S.C." temps="20"></matiere>
-	</classe>
+	</classe> -->
 
 	<classe nom="ECT" precision="Économique et Commerciale, option Technologique" annee="1" type="Économique" domaine="Mathématiques, économie">
 		<matiere nom="Mathématiques" temps="20"></matiere>
