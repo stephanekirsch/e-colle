@@ -151,6 +151,27 @@ class Command(BaseCommand):
             except Exception:
                 self.stdout.write("réponse invalide")
         self.stdout.write("-"*20)
+        while loop:
+            passwordmin = input("taille minimale des mots de passe: ".format(PASSWORDMIN))
+            try:
+                passwordmin = PASSWORDMIN if passwordmin == "" else int(passwordmin)
+                loop = False
+            except Exception:
+                self.stdout.write("réponse invalide")
+        self.stdout.write("-"*20)
+        while loop:
+            passwordspec = input("nombre minimal de minuscules, majuscules, chiffres, ponctuation dans les mots de passe (sous forme d'une liste de 4 entiers) : ".format(PASSWORDSPEC))
+            try:
+                passwordspec = PASSWORDSPEC if passwordspec == "" else eval(passwordmin)
+                if passwordspec is None:
+                    loop = False
+                else:
+                    passwordspec = [int(x) for x in passwordspec[4:]]
+                    if len(passwordspec) == 4:
+                        loop = False
+            except Exception:
+                self.stdout.write("réponse invalide")
+        self.stdout.write("-"*20)
         # fin entrée des données
         # écriture dans le fichier config.py
         try:
@@ -209,6 +230,11 @@ class Command(BaseCommand):
                     .format(HEURE_FIN if heure_fin == "" else heure_fin))
                 fichier.write("INTERVALLE = {} # intervalle entre 2 créneaux (en minutes)"\
                     .format(INTERVALLE if intervalle == "" else intervalle))
+                fichier.write("PASSWORDMIN = {} # taille minimale des mots de passe"\
+                    .format(PASSWORDMIN if passwordmin == "" else passwordmin))
+                fichier.write("PASSWORDSPEC = {} # None si pas d'autres conditions, sinon [nombre minimum de minuscules ASCII,\
+                 nombre minimum de majuscule ASCII, nombre minimum de chiffres, nombre minimum de caractères de ponctuation]"\
+                    .format(PASSWORDSPEC if passwordspec == "" else passwordspec))
         except Exception as e:
             print(e)
             self.stdout.write("erreur lors de la modification du fichier config.py\n\

@@ -19,7 +19,7 @@ from os.path import join
 import os
 import bz2
 from _io import TextIOWrapper
-from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES, MEDIA_ROOT, BACKUP_ROOT, GESTION_ADMIN_BDD
+from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES, MEDIA_ROOT, BACKUP_ROOT, GESTION_ADMIN_BDD, PASSWORDMIN, PASSWORDSPEC
 import re 
 from io import BytesIO
 from accueil.management.commands.nouvelle_annee import Command as NouvelleAnnee
@@ -368,7 +368,7 @@ def colleurmodif(request, chaine_colleurs):
             return redirect('gestion_colleur')
     else:
         formset = Colleurformset(listeColleurs,initial=[{'last_name':colleur.user.last_name,'first_name':colleur.user.first_name,'username':colleur.user.username,'email':colleur.user.email,'is_active':colleur.user.is_active,'grade':colleur.grade,'etablissement':colleur.etablissement,'matiere':colleur.matieres.all(),'classe':colleur.classes.all()} for colleur in listeColleurs]) 
-    return render(request,'administrateur/colleurmodif.html',{'formset':formset})
+    return render(request,'administrateur/colleurmodif.html',{'pwdmin':PASSWORDMIN, 'pwdspec':PASSWORDSPEC,'formset':formset})
 
 def colleurajout(request, initial = None):
     """Renvoie la vue de la page d'ajout de colleurs"""
@@ -388,7 +388,7 @@ def colleurajout(request, initial = None):
             matiere = None
         Colleurformset = formset_factory(ColleurFormMdp,extra=0)
         formset=Colleurformset( initial = [{ 'matiere' : matiere}])
-    return render(request,'administrateur/colleurajout.html',{'formset':formset})
+    return render(request,'administrateur/colleurajout.html',{'pwdmin':PASSWORDMIN, 'pwdspec':PASSWORDSPEC,'formset':formset})
 
 @ip_filter
 def colleursuppr(request, id_colleur):
@@ -539,7 +539,7 @@ def elevemodif(request, chaine_eleves):
         formset = EleveFormset(chaine_eleves=listeEleves,initial=[{'last_name':eleve.user.last_name,'first_name':eleve.user.first_name,'ine':eleve.ine,\
             'ldn': eleve.ldn,'ddn': None if not eleve.ddn else eleve.ddn.strftime('%d/%m/%Y'),'username':eleve.user.username,'email':eleve.user.email,\
             'classe':eleve.classe,'photo':eleve.photo,'lv1':eleve.lv1,'lv2':eleve.lv2, 'option': eleve.option} for eleve in listeEleves])
-    return render(request,'administrateur/elevemodif.html',{'formset':formset})
+    return render(request,'administrateur/elevemodif.html',{'pwdmin':PASSWORDMIN, 'pwdspec':PASSWORDSPEC,'formset':formset})
 
 @ip_filter
 def elevesuppr(request, id_eleve):
@@ -570,7 +570,7 @@ def eleveajout(request,initial=None):
             classe = None
         EleveFormset = formset_factory(EleveFormMdp,extra=0)
         formset=EleveFormset( initial = [{ 'classe' : classe}])
-    return render(request,'administrateur/eleveajout.html',{'formset':formset})
+    return render(request,'administrateur/eleveajout.html',{'pwdmin':PASSWORDMIN, 'pwdspec':PASSWORDSPEC,'formset':formset})
 
 @ip_filter
 def prof(request):

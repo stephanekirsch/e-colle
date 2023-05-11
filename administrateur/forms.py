@@ -790,6 +790,8 @@ class CsvForm(forms.Form):
                     mdp = ligne[self.cleaned_data['motdepasse']]
                     if mdp == "" and self.cleaned_data["importdirect"]:
                         raise ValidationError("il manque le mot de passe pour l'élève de rang {}".format(i))
+                    elif self.cleaned_data["importdirect"]:
+                        validate_password(mdp)
                 self.mdp.append(mdp) 
 
     def save(self):
@@ -923,6 +925,8 @@ class CsvColleurForm(forms.Form):
                     mdp = ligne[self.cleaned_data['motdepasse']]
                     if mdp == "" and self.cleaned_data["importdirect"]:
                         raise ValidationError("il manque le mot de passe pour le colleur de rang {}".format(i))
+                    elif self.cleaned_data["importdirect"]:
+                        validate_password(mdp)
                 self.mdp.append(mdp)
 
     def save(self):

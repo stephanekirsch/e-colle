@@ -8,19 +8,12 @@ try:
 except ImportError:
     DEBUG = False
 
-# =============================================================================
-#                            INFORMATIONS À REMPLIR
-# =============================================================================
-
 from .config_default import *
 try:
     from .config import *
 except ImportError:
     pass
 
-# =============================================================================
-#                        FIN INFORMATIONS À REMPLIR
-# =============================================================================
 
 # les couples nom/email du (des) administrateur(s) du site
 ADMINS = (
@@ -84,7 +77,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
         'OPTIONS': {
-            'min_length': 8,
+            'min_length': PASSWORDMIN,
         }
     },
     {
@@ -94,6 +87,12 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+if PASSWORDSPEC is not None:
+    AUTH_PASSWORD_VALIDATORS.append({'NAME': 'ecolle.validators.LowerCaseValidator', 'OPTIONS': {'min_minuscules': PASSWORDSPEC[0]}})
+    AUTH_PASSWORD_VALIDATORS.append({'NAME': 'ecolle.validators.UpperCaseValidator', 'OPTIONS': {'min_majuscules': PASSWORDSPEC[1]}})
+    AUTH_PASSWORD_VALIDATORS.append({'NAME': 'ecolle.validators.DigitValidator', 'OPTIONS': {'min_chiffres': PASSWORDSPEC[2]}})
+    AUTH_PASSWORD_VALIDATORS.append({'NAME': 'ecolle.validators.PunctuationValidator', 'OPTIONS': {'min_ponctuation': PASSWORDSPEC[3]}})
 
 
 MEDIA_ROOT = path.join(CHEMINVERSECOLLE, 'media')

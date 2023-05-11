@@ -1,15 +1,32 @@
-function alea()
-{
-    var texte = "";
-    var possible = "ABCDEFGHJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789";
-
-    for( var i=0; i < 10; i++ )
-        texte += possible.charAt(Math.floor(Math.random() * possible.length));
-
-    return texte;
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = array[i];
+    array[i] = array[j];
+    array[j] = temp;
+  }
 }
 
 var csv = false;
+var taille = 10;
+var min_minuscule = 0;
+var min_majuscule = 0;
+var min_chiffre = 0;
+var min_ponctuation = 0;
+var pwdmin = parseInt(document.getElementById("hide1").value);
+if (!isNaN(pwdmin)) {
+	taille = Math.max(10,pwdmin); 
+}
+var pwdspec = document.getElementById("hide2").value;
+if (pwdspec != "None")
+{
+	var liste = eval(pwdspec);
+	min_minuscule = liste[0];
+	min_majuscule = liste[1];
+	min_chiffre = liste[2];
+	min_ponctuation = liste[3];
+}
+
 var listemdp = document.querySelectorAll("input[id$=password]");
 var listenom = document.querySelectorAll("input[id$=last_name]");
 var listeprenom = document.querySelectorAll("input[id$=first_name]");
@@ -35,6 +52,33 @@ td2.appendChild(lien2);
 lien2.href="#";
 titre.parentNode.appendChild(td2);
 
+
+function alea()
+{
+    var texte = [];
+    var minuscule = "abcdefghijklmnopqrstuvwxyz"
+    var majuscule = "ABCDEFGHIJkLMNOPQRSTUVWXYZ"
+    var chiffre = "0123456789"
+    var ponctuation = "!\"#$%&'()*+,-./:;<=>?@[\\]_{|}~"
+    var possible = minuscule + majuscule + chiffre;
+    for( var i=0; i < min_minuscule; i++ ) {
+        texte.push(minuscule.charAt(Math.floor(Math.random() * minuscule.length)));
+    }
+    for( var i=0; i < min_majuscule; i++ ) {
+        texte.push(majuscule.charAt(Math.floor(Math.random() * majuscule.length)));
+    }
+    for( var i=0; i < min_chiffre; i++ ) {
+        texte.push(chiffre.charAt(Math.floor(Math.random() * chiffre.length)));
+    }
+    for( var i=0; i < min_ponctuation; i++ ) {
+        texte.push(ponctuation.charAt(Math.floor(Math.random() * ponctuation.length)));
+    }
+    for( var i=0; i < taille - min_ponctuation - min_majuscule - min_minuscule - min_chiffre; i++ ) {
+        texte.push(possible.charAt(Math.floor(Math.random() * possible.length)));
+    }
+    shuffleArray(texte);
+    return texte.join("");
+}
 
 function createlien(){
 	var td2 = document.createElement("td");

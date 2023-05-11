@@ -135,10 +135,11 @@ def installapache():
 
 def configapache():
     code1 = subprocess.run(["sudo","a2enmod","wsgi"]).returncode # activation du mod wsgi
+    code3 = subprocess.run(["sudo","a2enmod","ssl"]).returncode # activation du mod ssl
     # lecture de e-colle.conf
     subprocess.run(["sudo","python3","apacheconf.py"])
     code2 = subprocess.run(["sudo","a2ensite","e-colle.conf"]).returncode # activation du site
-    if not(code1 or code2):
+    if not(code1 or code2 or code3):
         droits()
     subprocess.run(["sudo","service","apache2","reload"])
 
@@ -158,8 +159,8 @@ def main():
     if platform.system().lower() != 'linux':
         print("cette commande ne fonctionne que sous linux")
         return
-    if sys.version[:3] < '3.5':
-        print("Il vous faut une version de de Python >= 3.5")
+    if sys.version[:3] < '3.8':
+        print("Il vous faut une version de de Python >= 3.8")
         return
     p = subprocess.Popen("command -v apt",shell=True,stdout=subprocess.PIPE)
     result = p.communicate()[0]
@@ -227,6 +228,10 @@ def main():
         if completedProcess.returncode:
             print("échec de l'installation de postgresql")
             liste_echecs.append("postgresql")
+        completedProcess = aptinstall("libpq-dev")
+        if completedProcess.returncode:
+            print("échec de l'installation de libpq-dev")
+            liste_echecs.append("libpq-dev")
         elif "pexpect" not in liste_echecs:
             configpostgresl()
         print("installation de psycopg2")

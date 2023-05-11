@@ -19,3 +19,5 @@ TIME_ZONE = 'Europe/Paris' # fuseau horaire
 HEURE_DEBUT = 480 # heure de début des colles (en minutes depuis minuit)
 HEURE_FIN = 1200 # heure de fin des colles (en minutes depuis minuit)
 INTERVALLE = 30 # intervalle entre 2 créneaux (en minutes)
+PASSWORDMIN = 10 # taille minimale des mots de passe
+PASSWORDSPEC = None # None si pas d'autres conditions, sinon [nombre minimum de minuscules ASCII, nombre minimum de majuscules ASCII, nombre minimum de chiffres, nombre minimum de caractères de ponctuation]
