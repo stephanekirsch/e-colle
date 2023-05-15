@@ -682,8 +682,6 @@ def ectsmatieres(request,id_classe):
 def ectsmatieremodif(request,id_matiere):
     """Renvoie la vue de la page de modification des matières ects de la classe"""
     matiere = get_object_or_404(MatiereECTS,pk=id_matiere)
-    if not is_profprincipal(request.user,matiere.classe):
-        return HttpResponseForbidden("Accès non autorisé")
     form = MatiereECTSForm(request.POST or None,instance=matiere)
     form.fields['profs'].queryset=Colleur.objects.filter(classes=matiere.classe,colleurprof__classe=matiere.classe).order_by('user__last_name','user__first_name')
     if form.is_valid():
@@ -695,10 +693,6 @@ def ectsmatieremodif(request,id_matiere):
 def ectsmatieresuppr(request,id_matiere):
     """Supprime la matière ects dont l'id est id_matiere puis renvoie la page des matières ECTS"""
     matiere = get_object_or_404(MatiereECTS,pk=id_matiere)
-    if not is_profprincipal(request.user,matiere.classe):
-        return HttpResponseForbidden("Accès non autorisé")
-    if not is_profprincipal(request.user,matiere.classe):
-        return HttpResponseForbidden("Accès non autorisé")
     try:
         matiere.delete()
     except Exception:
