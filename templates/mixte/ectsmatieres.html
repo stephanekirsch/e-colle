@@ -1,9 +1,14 @@
-{% extends 'colleur/action.html' %}
+{% extends user.colleur|yesno:'colleur/action.html,secretariat/action.html' %}
 {% load static %}
 {% load customfilter %}
 {% block body %}
+{% if user.colleur and user.colleur.classeprofprincipal.all %}
 {% include "colleur/navects.html" %}
-<table class="accueil"><tr><td>Matières ECTS de {{classe}}</td></tr></table>
+{% endif %}
+{% if user.username.lower == "secrétariat" %}
+{% include "secretariat/navects.html" %}
+{% endif %}
+<table class="accueil"><tr><td>Matières ECTS de {{classe}} {{user.username}}</td></tr></table>
 
 <table class="tableausimple" id="suppr">
 	<tr class="entete" rowspan="2">
@@ -25,8 +30,8 @@
 		<td>{% for colleur in matiere.profs.all %}{{colleur}}<br/>{% endfor%}</td>
 		<td>{% if matiere.semestre1 %}{{matiere.semestre1}}{% endif %}</td>
 		<td>{% if matiere.semestre2 %}{{matiere.semestre2}}{% endif %}</td>
-		<td><a class="bouton" href="{% url 'ects_matiere_modif' matiere.pk %}">Modifier</a></td>
-		<td><a class="bouton" href="{% url 'ects_matiere_suppr' matiere.pk %}">Supprimer</a></td>
+		<td><a class="bouton" href="{% url user.colleur|yesno:'ects_matiere_modif,secret_ects_matiere_modif' matiere.pk %}">Modifier</a></td>
+		<td><a class="bouton" href="{% url user.colleur|yesno:'ects_matiere_suppr,secret_ects_matiere_suppr' matiere.pk %}">Supprimer</a></td>
 	</tr>
 	{% endfor %}
 </table>

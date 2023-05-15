@@ -1,5 +1,8 @@
 from django.db import models
 
+PROF = 1
+SECRETARIAT = 2
+
 class ConfigManager(models.Manager):
     def get_config(self):
         try:
@@ -15,6 +18,7 @@ class ConfigManager(models.Manager):
                             message_eleves=False,
                             mathjax=True,
                             ects=False,
+                            modif_ects=PROF, # 1 = prof, 2 = secrétariat, 3 = les 2.
                             nom_adresse_etablissement="",
                             academie="",
                             ville="",
@@ -65,6 +69,11 @@ class Config(models.Model):
     ects = models.BooleanField(
             verbose_name="Gestion des fiches de crédits ECTS",
             default=False
+    )
+    ects_modif = models.PositiveSmallIntegerField(
+            verbose_name="droit de modification sur les matières/coefficients ECTS",
+            choices=[(0,"Personne"),(PROF,"Professeur principal"),(SECRETARIAT,"Secrétariat"),(PROF|SECRETARIAT,"Les 2")],
+            default = PROF
     )
     nom_adresse_etablissement = models.TextField(
             verbose_name="Nom complet de l'établissement + adresse",

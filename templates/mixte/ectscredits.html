@@ -5,6 +5,9 @@
 {% if user.colleur and user.colleur.classeprofprincipal.all %}
 {% include "colleur/navects.html" %}
 {% endif %}
+{% if user.username.lower == "secrétariat" and modif %}
+{% include "secretariat/navects.html" %}
+{% endif %}
 <table class="accueil"><tr><td>Fiches de crédits ECTS en {{classe}}</td></tr></table>
 
 <form method="POST" id="form">

@@ -17,6 +17,7 @@ import csv
 from zipfile import ZipFile
 from ecolle.settings import MEDIA_ROOT, MEDIA_URL, IMAGEMAGICK
 from io import BytesIO
+PROF = 1
 
 def is_colleur(user):
     """Renvoie True si l'utilisateur est authentifié et est un colleur, False sinon"""
@@ -28,8 +29,12 @@ def is_colleur_ects(user):
     """Renvoie True si l'utilisateur est authentifié et est un colleur et ECTS est activé, False sinon"""
     return is_colleur and Config.objects.get_config().ects
 
+def is_colleur_modif_ects(user):
+    """Renvoie True si l'utilisateur est authentifié et est un colleur et ECTS est activé et si les professeurs principaux ont le droit de modifier les matières ECTS, False sinon"""
+    return is_colleur_ects(user) and Config.objects.get_config().ects_modif&PROF!=0
+
 def is_prof(user,matiere,classe):
-    """Renvoie True si l'utilisateur est un prof de la classe classe et dans la matière matière, False sinon"""
+    """Renvoie True si l'utilisateur est un prof de la classe classe et dans la matière matière et eut modifier les matières/coefficients ECTS, False sinon"""
     if matiere==None:
         return Prof.objects.filter(classe=classe,colleur=user.colleur).exists()
     else:
@@ -646,7 +651,7 @@ def ectsmatieres(request,id_classe):
     if form.is_valid():
         form.save()
         return redirect('ects_matieres',classe.pk)
-    return render(request,'colleur/ectsmatieres.html',{'classe':classe,'matieresECTS':matieresECTS,'form':form})
+    return render(request,'mixte/ectsmatieres.html',{'classe':classe,'matieresECTS':matieresECTS,'form':form})
 
 @user_passes_test(is_colleur_ects, login_url='accueil')
 def ectsmatieremodif(request,id_matiere):
@@ -659,7 +664,7 @@ def ectsmatieremodif(request,id_matiere):
     if form.is_valid():
         form.save()
         return redirect('ects_matieres',matiere.classe.pk)
-    return render(request,'colleur/ectsmatieremodif.html',{'matiere':matiere,'form':form})
+    return render(request,'mixte/ectsmatieremodif.html',{'matiere':matiere,'form':form})
 
 @user_passes_test(is_colleur_ects, login_url='accueil')
 def ectsmatieresuppr(request,id_matiere):
@@ -692,7 +697,7 @@ def ectsnotes(request,id_classe):
     nbsemestres=[]
     for matiere in matieres:
         nbsemestres.append(int(matiere.semestre1 is not None)+int(matiere.semestre2 is not None))
-    return render(request,'colleur/ectsnotes.html',{'classe':classe,'matieres':matieres,'listeNotes':listeNotes,'listNotes':listNotes,'form':form,'nbsemestres':nbsemestres})
+    return render(request,'colleur/ectsnotes.html',{'modif':is_colleur_modif_ects(request.user),'classe':classe,'matieres':matieres,'listeNotes':listeNotes,'listNotes':listNotes,'form':form,'nbsemestres':nbsemestres})
 
 @user_passes_test(is_colleur_ects, login_url='accueil')
 def ectsnotesmodif(request,id_matiere,chaine_eleves):
@@ -709,9 +714,9 @@ def ectsnotesmodif(request,id_matiere,chaine_eleves):
         initial = NoteECTS.objects.noteEleves(matiere,listeEleves)
         formset = NoteEleveformset(listeEleves,matiere,initial=initial)
     nbsemestres = 1+int(matiere.semestre1 is not None)+int(matiere.semestre2 is not None)
-    return render(request,'colleur/ectsnotesmodif.html',{'formset':formset,'matiere':matiere,'nbsemestres':nbsemestres})
+    return render(request,'colleur/ectsnotesmodif.html',{'modif':is_colleur_modif_ects(request.user),'formset':formset,'matiere':matiere,'nbsemestres':nbsemestres})
 
-@user_passes_test(is_colleur_ects, login_url='accueil')
+@user_passes_test(is_colleur_modif_ects, login_url='accueil')
 def ectscredits(request,id_classe,form=None):
     classe =get_object_or_404(Classe,pk=id_classe)
     if not is_profprincipal(request.user,classe):
@@ -722,7 +727,7 @@ def ectscredits(request,id_classe,form=None):
     credits,total = NoteECTS.objects.credits(classe)        
     return render(request,'mixte/ectscredits.html',{'classe':classe,'credits':credits,'form':form,'total':total,"nbeleves":eleves.order_by().count()})
 
-@user_passes_test(is_colleur_ects, login_url='accueil')
+@user_passes_test(is_colleur_modif_ects, login_url='accueil')
 def ficheectspdf(request,id_eleve):
     eleve = get_object_or_404(Eleve,pk=id_eleve)
     if not is_profprincipal(request.user,eleve.classe):
@@ -736,7 +741,7 @@ def ficheectspdf(request,id_eleve):
     else:
         raise Http404
 
-@user_passes_test(is_colleur_ects, login_url='accueil')
+@user_passes_test(is_colleur_modif_ects, login_url='accueil')
 def attestationectspdf(request,id_eleve):
     eleve = get_object_or_404(Eleve,pk=id_eleve)
     if not is_profprincipal(request.user,eleve.classe):
@@ -764,7 +769,7 @@ def ficheectsclassepdf(request,id_classe):
     else:
         raise Http404
 
-@user_passes_test(is_colleur_ects, login_url='accueil')
+@user_passes_test(is_colleur_modif_ects, login_url='accueil')
 def attestationectsclassepdf(request,id_classe):
     classe = get_object_or_404(Classe,pk=id_classe)
     if not is_profprincipal(request.user,classe):

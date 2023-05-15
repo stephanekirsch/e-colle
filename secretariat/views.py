@@ -3,9 +3,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import user_passes_test
 from administrateur.forms import AdminConnexionForm, InformationForm
-from colleur.forms import ECTSForm
+from colleur.forms import ECTSForm, MatiereECTSForm
 from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm, ColleurSelectForm
-from accueil.models import Config, Note, Semaine, Matiere, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, mois, NoteECTS, Information
+from accueil.models import Config, Note, Semaine, Matiere, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, mois, MatiereECTS, NoteECTS, Information
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupeSwap, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV, mixtegroupeCreer, mixtegroupecsv, mixteColloscopeImport
 from django.http import Http404, HttpResponse,  HttpResponseForbidden
 from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
@@ -13,6 +13,7 @@ from reportlab.platypus import Table, TableStyle
 from datetime import timedelta
 from django.db.models import Max, Min
 import csv
+SECRETARIAT = 2
 
 def is_secret(user):
     """Renvoie True si l'utilisateur est le secrétariat, False sinon"""
@@ -21,6 +22,10 @@ def is_secret(user):
 def is_secret_ects(user):
     """Renvoie True si l'utilisateur est le secrétariat et ECTS activé, False sinon"""
     return is_secret(user) and Config.objects.get_config().ects
+
+def is_secret_modif_ects(user):
+    """Renvoie True si l'utilisateur est le secrétariat et ECTS activé avec droits  de modification des matires et des coeffs, False sinon"""
+    return is_secret_ects(user) and Config.objects.get_config().ects_modif&SECRETARIAT!=0
 
 def connec(request):
     """Renvoie la vue de la page de connexion du secrétariat. Si le secrétariat est déjà connecté, redirige vers la page d'accueil du secrétariat"""
@@ -660,6 +665,58 @@ def groupecsv(request, id_classe):
     classe = get_object_or_404(Classe, pk=id_classe)
     return mixtegroupecsv(request,classe)
 
+@user_passes_test(is_secret_modif_ects, login_url='login_secret')
+def ectsmatieres(request,id_classe):
+    """Renvoie la vue de la page de gestion des matières ects de la classe"""
+    classe = get_object_or_404(Classe,pk=id_classe)
+    matieresECTS = MatiereECTS.objects.filter(classe=classe).prefetch_related('profs').order_by('nom','precision')
+    newMatiere = MatiereECTS(classe=classe)
+    form = MatiereECTSForm(request.POST or None,instance=newMatiere)
+    form.fields['profs'].queryset=Colleur.objects.filter(classes=classe,colleurprof__classe=classe).order_by('user__last_name','user__first_name')
+    if form.is_valid():
+        form.save()
+        return redirect('secret_ects_matieres',classe.pk)
+    return render(request,'mixte/ectsmatieres.html',{'classe':classe,'matieresECTS':matieresECTS,'form':form})
+
+@user_passes_test(is_secret_modif_ects, login_url='login_secret')
+def ectsmatieremodif(request,id_matiere):
+    """Renvoie la vue de la page de modification des matières ects de la classe"""
+    matiere = get_object_or_404(MatiereECTS,pk=id_matiere)
+    if not is_profprincipal(request.user,matiere.classe):
+        return HttpResponseForbidden("Accès non autorisé")
+    form = MatiereECTSForm(request.POST or None,instance=matiere)
+    form.fields['profs'].queryset=Colleur.objects.filter(classes=matiere.classe,colleurprof__classe=matiere.classe).order_by('user__last_name','user__first_name')
+    if form.is_valid():
+        form.save()
+        return redirect('secret_ects_matieres',matiere.classe.pk)
+    return render(request,'mixte/ectsmatieremodif.html',{'matiere':matiere, 'classe':matiere.classe, 'form':form})
+
+@user_passes_test(is_secret_modif_ects, login_url='login_secret')
+def ectsmatieresuppr(request,id_matiere):
+    """Supprime la matière ects dont l'id est id_matiere puis renvoie la page des matières ECTS"""
+    matiere = get_object_or_404(MatiereECTS,pk=id_matiere)
+    if not is_profprincipal(request.user,matiere.classe):
+        return HttpResponseForbidden("Accès non autorisé")
+    if not is_profprincipal(request.user,matiere.classe):
+        return HttpResponseForbidden("Accès non autorisé")
+    try:
+        matiere.delete()
+    except Exception:
+        messages.error(request,"Impossible de l'effacer (des élèves y ont des notes)")
+    return redirect('secret_ects_matieres',matiere.classe.pk)
+
+@user_passes_test(is_secret_ects, login_url='login_secret')
+def ectsnotes(request,id_classe):
+    """Renvoie la vue de la page des notes ECTS ects de la classe"""
+    classe = get_object_or_404(Classe,pk=id_classe)
+    matieres = MatiereECTS.objects.filter(classe=classe).order_by('nom','precision')
+    listNotes = list("ABCDEF")
+    listeNotes = NoteECTS.objects.note(classe,matieres)
+    nbsemestres=[]
+    for matiere in matieres:
+        nbsemestres.append(int(matiere.semestre1 is not None)+int(matiere.semestre2 is not None))
+    return render(request,'secretariat/ectsnotes.html',{'eleves':Eleve.objects.filter(classe=classe) ,'classe':classe,'matieres':matieres,'listeNotes':listeNotes,'listNotes':listNotes,'nbsemestres':nbsemestres})
+
 @user_passes_test(is_secret_ects, login_url='login_secret')
 def ectscredits(request,id_classe,form=None):
     classe =get_object_or_404(Classe,pk=id_classe)
@@ -667,7 +724,8 @@ def ectscredits(request,id_classe,form=None):
     if not form:
         form=ECTSForm(classe,request.POST or None)
     credits,total = NoteECTS.objects.credits(classe)
-    return render(request,'mixte/ectscredits.html',{'classe':classe,'credits':credits,'form':form,'total':total,"nbeleves":eleves.order_by().count()})
+    print(is_secret_modif_ects(request.user))
+    return render(request,'mixte/ectscredits.html',{'modif':is_secret_modif_ects(request.user),'classe':classe,'credits':credits,'form':form,'total':total,"nbeleves":eleves.order_by().count()})
 
 @user_passes_test(is_secret_ects, login_url='login_secret')
 def ficheectspdf(request,id_eleve):

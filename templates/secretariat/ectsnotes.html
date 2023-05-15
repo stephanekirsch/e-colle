@@ -1,11 +1,9 @@
-{% extends 'colleur/action.html' %}
+{% extends 'secretariat/action.html' %}
 {% load static %}
 {% load customfilter %}
 {% block body %}
-{% if user.colleur.classeprofprincipal.all and modif %}
-{% include "colleur/navects.html" %}
-{% endif %}
-<table class="accueil"><tr><td>Notes ECTS de {{classe}}</td></tr></table>
+{% include "secretariat/navects.html" %}
+<table class="accueil"><tr><td>Notes ECTS de {{classe}}{{modif}}</td></tr></table>
 <table class="tableausimple">
 	<tr>
 		<td>A: Très Bien</td>
@@ -16,11 +14,9 @@
 		<td>F: Insuffisant (invalide tous les crédits)</td>		
 	</tr>
 </table>
-<form method="post">
-	{% csrf_token %}
 <table class="tableausimple" id="suppr">
 	<tr class="entete">
-		<td rowspan="2">Élève{% if form.errors %}{{form.eleve.errors}}{% endif %}</td>
+		<td rowspan="2">Élève</td>
 		{% for matiere,nbsem in matieres|tzip:nbsemestres %}
 		<td colspan="{{nbsem}}">{{matiere}}</td>
 		{% endfor %}
@@ -35,9 +31,9 @@
 		{% endif %}
 	{% endfor %}	
 	</tr>
-	{% for notes,widget in listeNotes|tzip:form.eleve %}
+	{% for notes,eleve in listeNotes|tzip:eleves %}
 	<tr>
-		<td>{{widget}}</td>
+		<td>{{eleve}}</td>
 		{% for note,matiere in notes|tzip:matieres %}
 		{% if matiere.semestre1 != None %}
 		<td>{% if note.note1 != None %}{{listNotes|lookup:note.note1}}{% endif %}</td>
@@ -48,16 +44,5 @@
 		{% endfor %}
 	</tr>
 	{% endfor %}
-	<tr class="plusclair">
-		<td><label for ="check_{{matiere.pk}}">Tout cocher</label><br/><input type="checkbox" id="check"/></td>
-		{% for matiere,nbsem in matieres|tzip:nbsemestres %}
-		<td colspan="{{nbsem}}"><input type="submit" value="Modifier la sélection" name="{{matiere.pk}}"/></td>
-		{% endfor %}
-	</tr>
 </table>
-</form>
-{% endblock %}
-
-{% block javascript %}
-<script type="text/javascript" src="{% static 'javascript/selection.js' %}"></script>
 {% endblock %}
