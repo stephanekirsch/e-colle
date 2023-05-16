@@ -638,7 +638,7 @@ def eleves(request,id_classe):
         semaines = matierenote = None
     return render(request,'colleur/eleves.html',{'eleve':eleve,'semin':semin,'semax':semax,'form':form,'form2':form2,'matierenote':matierenote,'semaines':semaines})
 
-@user_passes_test(is_colleur_ects, login_url='accueil')
+@user_passes_test(is_colleur_modif_ects, login_url='accueil')
 def ectsmatieres(request,id_classe):
     """Renvoie la vue de la page de gestion des matières ects de la classe"""
     classe = get_object_or_404(Classe,pk=id_classe)
@@ -653,7 +653,7 @@ def ectsmatieres(request,id_classe):
         return redirect('ects_matieres',classe.pk)
     return render(request,'mixte/ectsmatieres.html',{'classe':classe,'matieresECTS':matieresECTS,'form':form})
 
-@user_passes_test(is_colleur_ects, login_url='accueil')
+@user_passes_test(is_colleur_modif_ects, login_url='accueil')
 def ectsmatieremodif(request,id_matiere):
     """Renvoie la vue de la page de modification des matières ects de la classe"""
     matiere = get_object_or_404(MatiereECTS,pk=id_matiere)
@@ -666,7 +666,7 @@ def ectsmatieremodif(request,id_matiere):
         return redirect('ects_matieres',matiere.classe.pk)
     return render(request,'mixte/ectsmatieremodif.html',{'matiere':matiere,'form':form})
 
-@user_passes_test(is_colleur_ects, login_url='accueil')
+@user_passes_test(is_colleur_modif_ects, login_url='accueil')
 def ectsmatieresuppr(request,id_matiere):
     """Supprime la matière ects dont l'id est id_matiere puis renvoie la page des matières ECTS"""
     matiere = get_object_or_404(MatiereECTS,pk=id_matiere)
