@@ -291,7 +291,7 @@ class NoteECTSManager(models.Manager):
             semestre3 = NoteECTS.objects.filter(eleve=eleve,matiere__classe__annee=2,semestre=1).distinct().count()
             ng1 = NoteGlobaleECTS.objects.filter(annee=1,eleve=eleve)
             ng2 = NoteGlobaleECTS.objects.filter(annee=2,eleve=eleve)
-            return notes[:semestre1], notes[semestre1:], None if not ng1.exists() else ng1[0].note, notes2[:semestre3], notes[semestre3:], None if not ng2.exists() else ng2[0].note
+            return notes[:semestre1], notes[semestre1:], None if not ng1.exists() else ng1[0].note, notes2[:semestre3], notes2[semestre3:], None if not ng2.exists() else ng2[0].note
 
     def moyenneECTS(self,eleve):
         if not eleve.classe: return 0
