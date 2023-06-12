@@ -51,6 +51,7 @@ re_path(r'^action/ects/matiere/modif/(\d+)$', views.ectsmatieremodif,name="ects_
 re_path(r'^action/ects/matiere/suppr/(\d+)$', views.ectsmatieresuppr,name="ects_matiere_suppr"),
 re_path(r'^action/ects/notes/(\d+)$', views.ectsnotes,name="ects_notes"),
 re_path(r'^action/ects/notes/modif/(\d+)/(\d+(?:-\d+)*)$', views.ectsnotesmodif,name="ects_notes_modif"),
+re_path(r'^action/ects/noteglobale/modif/(\d+)/(\d+)/(\d+(?:-\d+)*)$', views.ectsnoteglobalemodif,name="ects_noteglobale_modif"),
 re_path(r'^action/ects/credits/(\d+)$', views.ectscredits,name="ects_credits"),
 re_path(r'^action/ects/fiche/(\d+)$', views.ficheectspdf,name="ects_fiche"),
 re_path(r'^action/ects/attestation/(\d+)$', views.attestationectspdf,name="ects_attestation"),

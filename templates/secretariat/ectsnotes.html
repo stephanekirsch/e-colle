@@ -20,6 +20,12 @@
 		{% for matiere,nbsem in matieres|tzip:nbsemestres %}
 		<td colspan="{{nbsem}}">{{matiere}}</td>
 		{% endfor %}
+		{% if annee2 %}
+		<td rowspan="2">Note Globale sur les 2 ans</td>
+		<td rowspan="2">Rappel 1ère annee</td>
+		{% else %}
+		<td rowspan="2">Note Globale de l'année</td>
+		{% endif %}
 	</tr>
 	<tr class="entete">
 	{% for matiere in matieres %}
@@ -34,7 +40,7 @@
 	{% for notes,eleve in listeNotes|tzip:eleves %}
 	<tr>
 		<td>{{eleve}}</td>
-		{% for note,matiere in notes|tzip:matieres %}
+		{% for note,matiere in notes.0|tzip:matieres %}
 		{% if matiere.semestre1 != None %}
 		<td>{% if note.note1 != None %}{{listNotes|lookup:note.note1}}{% endif %}</td>
 		{% endif %}
@@ -42,6 +48,10 @@
 		<td>{% if note.note2 != None %}{{listNotes|lookup:note.note2}}{% endif %}</td>
 		{% endif %}
 		{% endfor %}
+		<td>{% if notes.1.note != None %}{{listNotes|lookup:notes.1.note}}{% endif %}</td>
+		{% if annee2 %}
+		<td>{% if notes.2.note != None %}{{listNotes|lookup:notes.2.note}}{% endif %}</td>
+		{% endif %}
 	</tr>
 	{% endfor %}
 </table>

@@ -30,7 +30,6 @@ class Command(BaseCommand):
                         accueil_jourferie,\
                         accueil_message,\
                         accueil_note,\
-                        accueil_noteects,\
                         accueil_programme,\
                         accueil_programme_semaine,\
                         accueil_ramassage,\
@@ -53,7 +52,6 @@ class Command(BaseCommand):
                         TRUNCATE TABLE accueil_jourferie;\
                         TRUNCATE TABLE accueil_message;\
                         TRUNCATE TABLE accueil_note;\
-                        TRUNCATE TABLE accueil_noteects;\
                         TRUNCATE TABLE accueil_programme;\
                         TRUNCATE TABLE accueil_programme_semaine;\
                         TRUNCATE TABLE accueil_ramassage;\
@@ -75,7 +73,6 @@ class Command(BaseCommand):
                         cursor.execute("DELETE FROM accueil_jourferie;")
                         cursor.execute("DELETE FROM accueil_message;")
                         cursor.execute("DELETE FROM accueil_note;")
-                        cursor.execute("DELETE FROM accueil_noteects;")
                         cursor.execute("DELETE FROM accueil_programme;")
                         cursor.execute("DELETE FROM accueil_programme_semaine;")
                         cursor.execute("DELETE FROM accueil_ramassage;")

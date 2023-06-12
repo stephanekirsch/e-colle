@@ -337,7 +337,7 @@ def attestationects(form,elev,classe):
 		I2.drawWidth = 3*cm
 	newpage = False
 	for eleve,credit in zip(eleves,credits):
-		if elev or credit and credit['ddn'] and credit['ine'] and credit['sem1']==30 and credit['sem2']==30: # si l'élève a bien toutes les infos/crédits
+		if elev or credit and credit['ddn'] and credit['ine'] and (credit['sem1']==30 and credit['sem2']==30 or credit['note'] is not None): # si l'élève a bien toutes les infos/crédits
 			if newpage:# si ce n'est pas la première page, on change de page
 				pdf.showPage()
 			pdf.y = pdf.format[1]-pdf.marge_y-1.8*cm
@@ -560,7 +560,7 @@ def creditsects(form,elev,classe):
 	p16=Paragraph(texte,styleTitre)
 	p17=Paragraph("<br/> <br/>",style)
 	for eleve,credit in zip(eleves,credits):
-		if elev or credit and credit['ddn'] and credit['ine'] and credit['sem1']==30 and credit['sem2']==30: # si l'élève a bien toutes les infos/crédits
+		if elev or credit and credit['ddn'] and credit['ine'] and (credit['sem1']==30 and credit['sem2']==30 or credit['note'] is not None): # si l'élève a bien toutes les infos/crédits
 			if newpage:# si ce n'est pas la première page, on change de page
 				pdf.showPage()
 			pdf.y = pdf.format[1]-pdf.marge_y-1.8*cm
@@ -609,37 +609,82 @@ def creditsects(form,elev,classe):
 			pdf.y = pdf.format[1]-pdf.marge_y-12
 			pdf.setFont('Helvetica-Bold',12)
 			pdf.drawCentredString(10.5*cm,pdf.y,"RELEVÉ DE RÉSULTATS (classe {})".format(filiere + ('*' if etoile and classe.annee == 2 else '')))
-			sem1,sem2 = NoteECTS.objects.notePDF(eleve)
-			data=[["ENSEIGNEMENTS","Crédits ECTS","Mention"],["Premier semestre","",""]]
+			annee1 = eleve.classe.annee == 1
+			if annee1:
+				sem1,sem2,ng1 = NoteECTS.objects.notePDF(eleve)
+			else:
+				sem1,sem2,ng1,sem3,sem4,ng2 = NoteECTS.objects.notePDF(eleve)
+			data=[["ENSEIGNEMENTS","Crédits ECTS","Mention"]]
 			sp=0 # variable qui va contenir la somme pondérée des notes en vue du calcul de la mention globale
 			coeff = 0 # somme des coeffs pour vérifier si on en a 60 au total
-			for note in sem1:
-				data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[2],LIST_NOTES[note[4]]])
-				sp+=note[2]*note[4]
-				if note[4] !=5:
-					coeff+=note[2]
-			data.append(["Deuxième semestre","",""])
-			for note in sem2:
-				data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[3],LIST_NOTES[note[4]]])
-				sp+=note[3]*note[4]
-				if note[4] !=5:
-					coeff+=note[3]
+			lignes = []
+			pos=1
+			if sem1:
+				data.append(["Premier semestre","",""])
+				lignes.append(pos)
+				pos+=1
+				for note in sem1:
+					pos+=1
+					data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[2],LIST_NOTES[note[4]]])
+					sp+=note[2]*note[4]
+					if note[4] !=5:
+						coeff+=note[2]
+			if sem2:
+				data.append(["Deuxième semestre","",""])
+				lignes.append(pos)
+				pos+=1
+				for note in sem2:
+					pos+=1
+					data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[3],LIST_NOTES[note[4]]])
+					sp+=note[3]*note[4]
+					if note[4] !=5:
+						coeff+=note[3]
+			if not sem1 and not sem2 and ng1 is not None:
+				data.append(["Première année","",""])
+				data.append(["Mention Globale première année","60","ABCDEF"[ng1]])
+				lignes+=[pos]
+				pos+=2
+			if ng1 is not None: # si note globale pour le premier semestre, on écrase le reste pour le calcul de la moyenne
+				coeff = 60
+				sp = 60*ng1
+			if not annee1:
+				coeff2 = 0
+				sp2 = 0
+				if sem3:
+					data.append(["Troisième semestre","",""])
+					lignes.append(pos)
+					pos+=1
+					for note in sem3:
+						pos+=1
+						data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[2],LIST_NOTES[note[4]]])
+						sp2+=note[2]*note[4]
+						if note[4] !=5:
+							coeff2+=note[2]
+				if sem4:
+					data.append(["Quatrième semestre","",""])
+					lignes.append(pos)
+					pos+=1
+					for note in sem4:
+						pos+=1
+						data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[3],LIST_NOTES[note[4]]])
+						sp2+=note[3]*note[4]
+						if note[4] !=5:
+							coeff2+=note[3]
+				if not sem3 and not sem4 and ng2 is not None:
+					data.append(["Deuxième année","",""])
+					data.append(["Mention Globale Deuxième année","60" if coeff == 60 else "120","ABCDEF"[ng2]])
+					lignes+=[pos]
+					pos+=2
 			LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),.8,(0,0,0))
-										,('SPAN',(0,1),(2,1))
-										,('SPAN',(0,2+len(sem1)),(2,2+len(sem1)))
 										,('FACE',(0,0),(-1,-1),'Helvetica-Bold')
 										,('SIZE',(0,0),(-1,-1),8)
-										,('SIZE',(0,1),(2,1),9)
-										,('SIZE',(0,2+len(sem1)),(2,2+len(sem1)),9)
 										,('SIZE',(0,0),(2,0),10)
 										,('VALIGN',(0,0),(-1,-1),'MIDDLE')
 										,('ALIGN',(0,2),(0,-1),'LEFT')
 										,('ALIGN',(1,0),(2,-1),'CENTRE')
-										,('ALIGN',(0,0),(2,1),'CENTRE')
-										,('ALIGN',(0,2+len(sem1)),(2,2+len(sem1)),'CENTRE')
-										,('BACKGROUND',(0,1),(2,1),'#DDDDDD')
-										,('BACKGROUND',(0,2+len(sem1)),(2,2+len(sem1)),'#DDDDDD')])
-			t=Table(data,colWidths=[13*cm,2.8*cm,2.5*cm],rowHeights=[.8*cm]*(3+len(sem1)+len(sem2)))
+										,('ALIGN',(0,0),(2,0),'CENTRE')] + [('SPAN',(0,x),(2,x)) for x in lignes] + [('SIZE',(0,x),(2,x),9) for x in lignes]\
+									 + [('ALIGN',(0,x),(2,x),'CENTRE') for x in lignes] + [('BACKGROUND',(0,x),(2,x),'#DDDDDD') for x in lignes])
+			t=Table(data,colWidths=[13*cm,2.8*cm,2.5*cm],rowHeights=[.8*cm]*(len(data)))
 			t.setStyle(LIST_STYLE)
 			w,h=t.wrapOn(pdf,0,0)
 			pdf.y-=h+5
@@ -647,12 +692,26 @@ def creditsects(form,elev,classe):
 			t.drawOn(pdf,pdf.x,pdf.y)
 			pdf.y-=20
 			pdf.setFont('Helvetica-Bold',10)
-			if coeff == 60:
-				pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[int(sp/60+.5)]))
+			if annee1:
+				if ng1 is not None:
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[ng1]))
+				elif coeff == 60:
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round(sp1)/60]))
+				else:
+					pdf.setFillColor((1,0,0))
+					pdf.drawString(pdf.x,pdf.y,"Pas de mention, il manque {} crédits".format(60-coeff))
+					pdf.setFillColor((0,0,0))
 			else:
-				pdf.setFillColor((1,0,0))
-				pdf.drawString(pdf.x,pdf.y,"Pas de mention, il manque {} crédits".format(60-coeff))
-				pdf.setFillColor((0,0,0))
+				if ng2 is not None:
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[ng2]))
+				elif coeff2 == 60 and coeff == 60:
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round(sp1+sp2)/120]))
+				elif coeff2 == 60:
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round(sp2)/60]))
+				else:
+					pdf.setFillColor((1,0,0))
+					pdf.drawString(pdf.x,pdf.y,"Pas de mention, il manque {} crédits".format(60-coeff2))
+					pdf.setFillColor((0,0,0))
 			pdf.drawRightString(pdf.format[0]-pdf.x-15,pdf.y,"Cachet et signature")
 			pdf.y-= 3.2*cm
 			if I2:

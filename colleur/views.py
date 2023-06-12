@@ -1,8 +1,8 @@
 #-*- coding: utf-8 -*-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from colleur.forms import ColleurConnexionForm, ProgrammeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteEleveFormSet, ECTSForm, SelectEleveNoteForm, NoteElevesHeadForm, NoteElevesTailForm, NoteElevesFormset, DevoirForm, CopieForm, CopiesForm, TDForm, CoursForm, DocumentForm
-from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, MatiereECTS, NoteECTS, Devoir, DevoirCorrige, DevoirRendu, Ramassage, Decompte, TD, Cours, Document
+from colleur.forms import ColleurConnexionForm, ProgrammeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteGlobaleEleveForm, NoteEleveFormSet, NoteGlobaleEleveFormSet, ECTSForm, SelectEleveNoteForm, NoteElevesHeadForm, NoteElevesTailForm, NoteElevesFormset, DevoirForm, CopieForm, CopiesForm, TDForm, CoursForm, DocumentForm
+from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, MatiereECTS, NoteECTS, NoteGlobaleECTS, Devoir, DevoirCorrige, DevoirRendu, Ramassage, Decompte, TD, Cours, Document
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV, mixtegroupeSwap, mixtegroupeCreer, mixtegroupecsv, mixteColloscopeImport
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
@@ -684,20 +684,25 @@ def ectsmatieresuppr(request,id_matiere):
 def ectsnotes(request,id_classe):
     """Renvoie la vue de la page de gestion des matières ects de la classe"""
     classe = get_object_or_404(Classe,pk=id_classe)
+    pp = is_profprincipal(request.user,classe)
     matieres = MatiereECTS.objects.filter(classe=classe,profs=request.user.colleur).order_by('nom','precision')
-    if not matieres.exists():
+    if not matieres.exists() and not pp:
         return HttpResponseForbidden("Vous n'êtes pas habilité à attribuer des crédits ECTS aux élèves de cette classe")
     listNotes = list("ABCDEF")
-    listeNotes = NoteECTS.objects.note(classe,matieres)
+    nomat, listeNotes = NoteECTS.objects.note(classe,matieres)
     form = SelectEleveForm(classe,request.POST or None)
     if form.is_valid():
+        if 'global' in request.POST:
+            return redirect('ects_noteglobale_modif',classe.pk,classe.annee,"-".join([str(eleve.pk) for eleve in form.cleaned_data['eleve']]))
+        if 'global2' in request.POST:
+            return redirect('ects_noteglobale_modif',classe.pk,1,"-".join([str(eleve.pk) for eleve in form.cleaned_data['eleve']]))
         for matiere in matieres:
             if str(matiere.pk) in request.POST:
                 return redirect('ects_notes_modif',matiere.pk,"-".join([str(eleve.pk) for eleve in form.cleaned_data['eleve']]))
     nbsemestres=[]
     for matiere in matieres:
         nbsemestres.append(int(matiere.semestre1 is not None)+int(matiere.semestre2 is not None))
-    return render(request,'colleur/ectsnotes.html',{'modif':is_colleur_modif_ects(request.user),'classe':classe,'matieres':matieres,'listeNotes':listeNotes,'listNotes':listNotes,'form':form,'nbsemestres':nbsemestres})
+    return render(request,'colleur/ectsnotes.html',{'modif':is_colleur_modif_ects(request.user),'annee2': classe.annee == 2, 'nomat': nomat,'pp':pp,'classe':classe,'matieres':matieres,'listeNotes':listeNotes,'listNotes':listNotes,'form':form,'nbsemestres':nbsemestres})
 
 @user_passes_test(is_colleur_ects, login_url='accueil')
 def ectsnotesmodif(request,id_matiere,chaine_eleves):
@@ -715,6 +720,24 @@ def ectsnotesmodif(request,id_matiere,chaine_eleves):
         formset = NoteEleveformset(listeEleves,matiere,initial=initial)
     nbsemestres = 1+int(matiere.semestre1 is not None)+int(matiere.semestre2 is not None)
     return render(request,'colleur/ectsnotesmodif.html',{'modif':is_colleur_modif_ects(request.user),'formset':formset,'matiere':matiere,'nbsemestres':nbsemestres})
+
+@user_passes_test(is_colleur_ects, login_url='accueil')
+def ectsnoteglobalemodif(request,id_classe,annee,chaine_eleves):
+    """Renvoie la vue de la page de modification de la note globale ECTS des élèves sélectionnés, dont l'id fait partie de chaine_eleves, dans la classe indiquée et pour l'année indiquée"""
+    classe = get_object_or_404(Classe,pk=id_classe)
+    if not is_profprincipal(request.user,classe):
+        return HttpResponseForbidden("Accès non autorisé")
+    listeEleves = Eleve.objects.filter(pk__in=[int(i) for i in chaine_eleves.split("-")],classe=classe).order_by('user__last_name','user__first_name').select_related('user')
+    NoteGlobaleEleveformset = formset_factory(NoteGlobaleEleveForm,extra=0,max_num=listeEleves.count(),formset=NoteGlobaleEleveFormSet)
+    if request.method == 'POST':
+        formset = NoteGlobaleEleveformset(annee,listeEleves,request.POST)
+        if formset.is_valid():
+            formset.save()
+            return redirect('ects_notes',classe.pk)
+    else:
+        initial = NoteGlobaleECTS.objects.noteEleves(classe,annee,listeEleves)
+        formset = NoteGlobaleEleveformset(annee,listeEleves,initial=initial)
+    return render(request,'colleur/ectsnoteglobalemodif.html',{'modif':is_colleur_modif_ects(request.user),'formset':formset,"annee": annee, 'classe': classe})
 
 @user_passes_test(is_colleur_modif_ects, login_url='accueil')
 def ectscredits(request,id_classe,form=None):

@@ -224,7 +224,37 @@ class NoteECTSManager(models.Manager):
                 cursor.execute(requete,(classe.pk,classe.pk,matiere.pk))
                 notes = dictfetchall(cursor)
             listeNotes.append(notes)
-        return zip(*[note for note in listeNotes])
+        requete = "SELECT DISTINCT e.id id_eleve, u.first_name prenom,u.last_name nom, n.note note\
+            FROM accueil_eleve e\
+            INNER JOIN accueil_user u\
+            ON u.eleve_id=e.id\
+            LEFT OUTER JOIN accueil_noteglobaleects n\
+            ON n.eleve_id = e.id AND n.annee = %s\
+            WHERE e.classe_id=%s\
+            ORDER BY u.last_name,u.first_name"
+        with connection.cursor() as cursor:
+            cursor.execute(requete,(classe.annee,classe.pk,))
+            notes = dictfetchall(cursor)
+        if classe.annee == 2:
+            requete = "SELECT DISTINCT e.id id_eleve, u.first_name prenom,u.last_name nom, n.note note\
+            FROM accueil_eleve e\
+            INNER JOIN accueil_user u\
+            ON u.eleve_id=e.id\
+            LEFT OUTER JOIN accueil_noteglobaleects n\
+            ON n.eleve_id = e.id AND n.annee = 1\
+            WHERE e.classe_id=%s\
+            ORDER BY u.last_name,u.first_name"
+            with connection.cursor() as cursor:
+                cursor.execute(requete,(classe.pk,))
+                notesbis = dictfetchall(cursor)
+        if listeNotes:
+            if classe.annee == 1:
+                return False, list(zip(zip(*[note for note in listeNotes]), notes))
+            else:
+                return False, list(zip(zip(*[note for note in listeNotes]), notes, notesbis))
+        if classe.annee == 1:
+            return True, [notes]
+        return True, zip(notes,notesbis)
 
     def noteEleves(self,matiere,listeEleves):
         requete = "SELECT u.first_name prenom, u.last_name nom, ne1.note semestre1, ne2.note semestre2\
@@ -247,18 +277,50 @@ class NoteECTSManager(models.Manager):
         return notes
 
     def notePDF(self,eleve):
-        notes = list(NoteECTS.objects.filter(eleve=eleve).values_list('matiere__nom','matiere__precision','matiere__semestre1','matiere__semestre2','note').order_by('semestre','matiere__nom'))
-        semestre1 = NoteECTS.objects.filter(eleve=eleve,semestre=1).count()
-        return notes[:semestre1],notes[semestre1:]
+        if eleve.classe is None:
+            return [],[]
+        if eleve.classe.annee == 1:
+            notes = list(NoteECTS.objects.filter(eleve=eleve).values_list('matiere__nom','matiere__precision','matiere__semestre1','matiere__semestre2','note').order_by('semestre','matiere__nom'))
+            semestre1 = NoteECTS.objects.filter(eleve=eleve,semestre=1).count()
+            ng = NoteGlobaleECTS.objects.filter(annee=1,eleve=eleve)
+            return notes[:semestre1], notes[semestre1:], None if not ng.exists() else ng[0].note
+        else:
+            notes = list(NoteECTS.objects.filter(eleve=eleve,matiere__classe__annee=1).values_list('matiere__nom','matiere__precision','matiere__semestre1','matiere__semestre2','note').order_by('semestre','matiere__nom'))
+            semestre1 = NoteECTS.objects.filter(eleve=eleve,matiere__classe__annee=1,semestre=1).distinct().count()
+            notes2 = list(NoteECTS.objects.filter(eleve=eleve,matiere__classe__annee=2).values_list('matiere__nom','matiere__precision','matiere__semestre1','matiere__semestre2','note').order_by('semestre','matiere__nom'))
+            semestre3 = NoteECTS.objects.filter(eleve=eleve,matiere__classe__annee=2,semestre=1).distinct().count()
+            ng1 = NoteGlobaleECTS.objects.filter(annee=1,eleve=eleve)
+            ng2 = NoteGlobaleECTS.objects.filter(annee=2,eleve=eleve)
+            return notes[:semestre1], notes[semestre1:], None if not ng1.exists() else ng1[0].note, notes2[:semestre3], notes[semestre3:], None if not ng2.exists() else ng2[0].note
 
     def moyenneECTS(self,eleve):
-        somme = NoteECTS.objects.filter(eleve=eleve,semestre=1).annotate(notepond=F('note')*F('matiere__semestre1')).aggregate(sp=Sum('notepond'))['sp']
-        somme += NoteECTS.objects.filter(eleve=eleve,semestre=2).annotate(notepond=F('note')*F('matiere__semestre2')).aggregate(sp=Sum('notepond'))['sp']
-        return int(somme/60+.5)
+        if not eleve.classe: return 0
+        annee = eleve.classe.annee
+        note = NoteGlobaleECTS.objects.filter(eleve=eleve,annee=1)
+        if note.exists():
+            somme1 = note[0].note
+            if annee == 1:
+                return somme1
+        else:
+            somme1 = NoteECTS.objects.filter(eleve=eleve,semestre=1,matiere__classe__annee=1).annotate(notepond=F('note')*F('matiere__semestre1')).aggregate(sp=Sum('notepond'))['sp'] or -1
+            somme1 += NoteECTS.objects.filter(eleve=eleve,semestre=2,matiere__classe__annee=1).annotate(notepond=F('note')*F('matiere__semestre2')).aggregate(sp=Sum('notepond'))['sp'] or -1
+            somme1 /= 60
+            if annee == 1:
+                return round(somme1)
+        note = NoteGlobaleECTS.objects.filter(eleve=eleve,annee=2)
+        if note.exists():
+            return note[0].note
+        else:
+            somme2 = NoteECTS.objects.filter(eleve=eleve,semestre=1,matiere__classe__annee=2).annotate(notepond=F('note')*F('matiere__semestre1')).aggregate(sp=Sum('notepond'))['sp'] or 0
+            somme2 += NoteECTS.objects.filter(eleve=eleve,semestre=2,matiere__classe__annee=2).annotate(notepond=F('note')*F('matiere__semestre2')).aggregate(sp=Sum('notepond'))['sp'] or 0
+            somme2 /= 60
+        if somme1 < 0:
+            return round(somme2)
+        return round((somme1+somme2)/2)
 
     def credits(self,classe):
         if BDD == 'mysql': # la double jointure externe sur même table semble bugger avec mysql, donc j'ai mis un SUM(CASE ....) pour y remédier.
-            requete = "SELECT u.first_name prenom, u.last_name nom, e.id, e.ddn, e.ldn, e.ine, SUM(CASE WHEN ne.semestre = 1 THEN m.semestre1 ELSE 0 END) sem1,\
+            requete = "SELECT u.first_name prenom, u.last_name nom, e.id, e.ddn, e.ldn, e.ine, SUM(CASE WHEN ne.semestre = 1 THEN m.semestre1 ELSE 0 END) sem1, ng.note note,\
             SUM(CASE WHEN ne.semestre = 2 THEN m.semestre2 ELSE 0 END) sem2\
             FROM accueil_classe cl\
             INNER JOIN accueil_eleve e\
@@ -268,12 +330,14 @@ class NoteECTSManager(models.Manager):
             LEFT OUTER JOIN accueil_noteects ne\
             ON ne.eleve_id = e.id AND ne.note != 5\
             LEFT OUTER JOIN accueil_matiereects m\
-            ON ne.matiere_id = m.id\
+            ON ne.matiere_id = m.id AND m.classe_id = cl.id\
+            LEFT OUTER JOIN accueil_noteglobaleects ng\
+            On ng.annee = cl.annee AND ng.eleve_id = e.id\
             WHERE cl.id = %s\
-            GROUP BY u.last_name, u.first_name, e.id, e.ddn, e.ldn, e.ine\
+            GROUP BY u.last_name, u.first_name, e.id, e.ddn, e.ldn, e.ine, ng.note\
             ORDER BY u.last_name, u.first_name"
         else: # avec sqlite ou postgresql pas de bug! (probablement avec oracle aussi)
-            requete = "SELECT u.first_name prenom, u.last_name nom, e.id, e.ddn, e.ldn, e.ine, SUM(m1.semestre1) sem1, SUM(m2.semestre2) sem2\
+            requete = "SELECT u.first_name prenom, u.last_name nom, e.id, e.ddn, e.ldn, e.ine, SUM(m1.semestre1) sem1, SUM(m2.semestre2) sem2, ng.note note\
             FROM accueil_classe cl\
             INNER JOIN accueil_eleve e\
             ON e.classe_id=cl.id\
@@ -282,11 +346,13 @@ class NoteECTSManager(models.Manager):
             LEFT OUTER JOIN accueil_noteects ne\
             ON ne.eleve_id = e.id AND ne.note != 5\
             LEFT OUTER JOIN accueil_matiereects m1\
-            ON ne.matiere_id = m1.id AND ne.semestre = 1\
+            ON ne.matiere_id = m1.id AND ne.semestre = 1 AND m1.classe_id = cl.id\
             LEFT OUTER JOIN accueil_matiereects m2\
-            ON ne.matiere_id = m2.id AND ne.semestre = 2\
+            ON ne.matiere_id = m2.id AND ne.semestre = 2 AND m2.classe_id = cl.id\
+            LEFT OUTER JOIN accueil_noteglobaleects ng\
+            On ng.annee = cl.annee AND ng.eleve_id = e.id\
             WHERE cl.id = %s\
-            GROUP BY u.last_name, u.first_name, e.id, e.ddn, e.ldn, e.ine\
+            GROUP BY u.last_name, u.first_name, e.id, e.ddn, e.ldn, e.ine, ng.note\
             ORDER BY u.last_name, u.first_name"
         with connection.cursor() as cursor:
             cursor.execute(requete,(classe.pk,))
@@ -308,11 +374,11 @@ class NoteECTSManager(models.Manager):
                 attest = 0
             if credit['sem1'] == 30:
                 total[3]+=1
-            else:
+            elif credit['note'] is None:
                 attest = 0
             if credit['sem2'] == 30:
                 total[4]+=1
-            else:
+            elif credit['note'] is None:
                 attest = 0
             total[5] += attest
         return credits,total
@@ -327,3 +393,24 @@ class NoteECTS(models.Model):
 
     class Meta:
         unique_together=(('eleve','matiere','semestre'))
+
+class NoteGlobaleECTSManager(models.Manager):
+    def noteEleves(self,classe,annee,listeEleves):
+        requete = "SELECT u.first_name prenom, u.last_name nom, n.note note_globale\
+        FROM accueil_eleve e\
+        INNER JOIN accueil_user u\
+        ON u.eleve_id=e.id\
+        LEFT OUTER JOIN accueil_noteglobaleects n\
+        ON n.eleve_id = e.id AND n.annee=%s \
+        WHERE e.classe_id=%s AND e.id IN %s\
+        ORDER BY u.last_name,u.first_name"
+        with connection.cursor() as cursor:
+            cursor.execute(requete,(annee, classe.pk, tuple([eleve.pk for eleve in listeEleves])))
+            notes = dictfetchall(cursor)
+        return notes
+
+class NoteGlobaleECTS(models.Model):
+    eleve = models.ForeignKey(Eleve,verbose_name="Élève",on_delete=models.CASCADE)
+    annee = models.PositiveSmallIntegerField(verbose_name="année",choices=((1,'1ère année'),(2,'2ème année'))) 
+    note = models.PositiveSmallIntegerField(choices=enumerate("ABCDEF"))
+    objects=NoteGlobaleECTSManager()

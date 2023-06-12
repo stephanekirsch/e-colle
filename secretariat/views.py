@@ -705,11 +705,11 @@ def ectsnotes(request,id_classe):
     classe = get_object_or_404(Classe,pk=id_classe)
     matieres = MatiereECTS.objects.filter(classe=classe).order_by('nom','precision')
     listNotes = list("ABCDEF")
-    listeNotes = NoteECTS.objects.note(classe,matieres)
+    nomat, listeNotes = NoteECTS.objects.note(classe,matieres)
     nbsemestres=[]
     for matiere in matieres:
         nbsemestres.append(int(matiere.semestre1 is not None)+int(matiere.semestre2 is not None))
-    return render(request,'secretariat/ectsnotes.html',{'eleves':Eleve.objects.filter(classe=classe) ,'classe':classe,'matieres':matieres,'listeNotes':listeNotes,'listNotes':listNotes,'nbsemestres':nbsemestres})
+    return render(request,'secretariat/ectsnotes.html',{'eleves':Eleve.objects.filter(classe=classe),'nomat': nomat,'classe':classe, 'annee2':classe.annee == 2,'matieres':matieres,'listeNotes':listeNotes,'listNotes':listNotes,'nbsemestres':nbsemestres})
 
 @user_passes_test(is_secret_ects, login_url='login_secret')
 def ectscredits(request,id_classe,form=None):
@@ -718,7 +718,6 @@ def ectscredits(request,id_classe,form=None):
     if not form:
         form=ECTSForm(classe,request.POST or None)
     credits,total = NoteECTS.objects.credits(classe)
-    print(is_secret_modif_ects(request.user))
     return render(request,'mixte/ectscredits.html',{'modif':is_secret_modif_ects(request.user),'classe':classe,'credits':credits,'form':form,'total':total,"nbeleves":eleves.order_by().count()})
 
 @user_passes_test(is_secret_ects, login_url='login_secret')

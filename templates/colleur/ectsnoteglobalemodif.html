@@ -1,0 +1,42 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+{% if user.colleur.classeprofprincipal.all and modif %}
+{% include "colleur/navects.html" %}
+{% endif %}
+<table class="accueil"><tr><td>Modification de la note globale de {% if annee == 1 %}1ère{% else %}2ème{% endif %} année en {{classe}}</td></tr></table>
+<table class="tableausimple">
+	<tr>
+		<td>A: Très Bien</td>
+		<td>B: Bien</td>
+		<td>C: Assez Bien</td>
+		<td>D: Convenable</td>
+		<td>E: Passable</td>
+		<td>F: Insuffisant (invalide tous les crédits)</td>		
+	</tr>
+</table>
+<form method="post">
+	{% csrf_token %}
+	{{ formset.management_form }}
+	<table class="tableausimple">
+	{% if formset.non_form_errors %}
+	<tr>
+		<td class="error">{{formset.non_form_errors}}</td>
+	</tr>
+	{% endif %}
+	<tr class="entete">
+		<td>Élève</td>
+		<td>Note globale</td>
+	</tr>
+		{% for form,eleve in formset|tzip:formset.chaine_eleves %}
+		{{form.non_field_errors}}
+		<tr>
+			<td>{{eleve}}</td>
+			<td>{{form.note_globale.errors}}{{form.note_globale}}</td>
+		</tr>
+		{% endfor %}
+	<tr class="plusclair"><td colspan="2"><input type="submit"/></td></tr>
+	</table>
+	</form>
+{% endblock %}

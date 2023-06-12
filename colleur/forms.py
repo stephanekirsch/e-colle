@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Colleur, Colle, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS, Devoir, DevoirCorrige, DevoirRendu, TD, Cours, Document, Config
+from accueil.models import Colleur, Colle, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS, NoteGlobaleECTS, Devoir, DevoirCorrige, DevoirRendu, TD, Cours, Document, Config
 from django.db.models import Q, Count, Value
 from django.db.models.functions import Coalesce
 from datetime import date, timedelta
@@ -284,6 +284,24 @@ class NoteEleveFormSet(forms.BaseFormSet):
                 elif form.cleaned_data['semestre2'] in "012345":
                     NoteECTS.objects.update_or_create(defaults={'eleve':eleve,'matiere':self.matiere,'semestre':2,'note':form.cleaned_data['semestre2']},semestre=2,matiere=self.matiere,eleve=eleve)
 
+class NoteGlobaleEleveForm(forms.Form):
+        note_globale = forms.ChoiceField(choices=[(None,'---')]+list(enumerate("ABCDEF")),required=False)
+
+class NoteGlobaleEleveFormSet(forms.BaseFormSet):
+    def __init__(self,annee,chaine_eleves=[],*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.chaine_eleves=chaine_eleves
+        self.annee = annee
+                
+    def save(self):
+        """Sauvegarde (mise à jour) en BDD les notes ECTS du formulaire"""
+        for form,eleve in zip(self,self.chaine_eleves):
+            if 'note_globale' in form.cleaned_data:
+                if form.cleaned_data['note_globale'] == "":
+                    NoteGlobaleECTS.objects.filter(annee=self.annee,eleve=eleve).delete()
+                elif form.cleaned_data['note_globale'] in "012345":
+                    NoteGlobaleECTS.objects.update_or_create(defaults={'eleve':eleve,'annee':self.annee,'note':form.cleaned_data['note_globale']},eleve=eleve,annee=self.annee)
+
 class ECTSForm(forms.Form):
     def __init__(self,classe,*args,**kwargs):
         super().__init__(*args,**kwargs)
@@ -305,7 +323,10 @@ class ECTSForm(forms.Form):
         self.fields['date'] = forms.DateField(label="Date d'édition",input_formats=['%d/%m/%Y','%j/%m/%Y','%d/%n/%Y','%j/%n/%Y'],widget=forms.TextInput(attrs={'placeholder': 'jj/mm/aaaa'}),initial=date.today().strftime('%d/%m/%Y'))
         self.fields['signature'] = forms.ChoiceField(label="signature/tampon par:",choices=(['Proviseur']*2,['Proviseur adjoint']*2))
         self.fields['anneescolaire'] = forms.ChoiceField(label="année scolaire",choices=[(x+1,"{}-{}".format(x,x+1)) for x in range(date.today().year-10,date.today().year+10)],initial=date.today().year)
-        self.fields['etoile'] = forms.BooleanField(label="classe étoile",required=False)
+        if classe.annee == 2 and "*" in classe.nom:
+            self.fields['etoile'] = forms.BooleanField(label="classe étoile",required=False,initial=True)
+        else:
+            self.fields['etoile'] = forms.BooleanField(label="classe étoile",required=False)
         if any(isfile(x) for x in imagesProviseur+imagesProviseurAdjoint): # si au moins un des tampons est présent
             self.fields['tampon'] = forms.BooleanField(label='incruster le tampon/la signature',required=False)
 

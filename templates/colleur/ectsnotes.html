@@ -24,6 +24,14 @@
 		{% for matiere,nbsem in matieres|tzip:nbsemestres %}
 		<td colspan="{{nbsem}}">{{matiere}}</td>
 		{% endfor %}
+		{% if pp %}
+		{% if annee2 %}
+		<td rowspan="2">Note Globale sur les 2 ans<br/>(facultatif, écrase la note moyenne calculée)</td>
+		<td rowspan="2">Rappel 1ère annee</td>
+		{% else %}
+		<td rowspan="2">Note Globale de l'année<br/>(facultatif, écrase la note moyenne calculée)</td>
+		{% endif %}
+		{% endif %}
 	</tr>
 	<tr class="entete">
 	{% for matiere in matieres %}
@@ -33,12 +41,38 @@
 		{% if matiere.semestre2 != None %}
 		<td>Semestre 2</td>
 		{% endif %}
-	{% endfor %}	
+	{% endfor %}
 	</tr>
+	{% if pp and nomat %}
+	{% for note,widget in listeNotes|tzip:form.eleve %}
+	<tr>
+		<td>{{widget}}</td>
+		<td>{% if note != None %}{{listNotes|lookup:note.note}}{% endif %}</td>
+	</tr>
+	{% endfor %}
+	{% else %} {% if pp %}
 	{% for notes,widget in listeNotes|tzip:form.eleve %}
 	<tr>
 		<td>{{widget}}</td>
-		{% for note,matiere in notes|tzip:matieres %}
+		{% for note,matiere in notes.0|tzip:matieres %}
+		{% if matiere.semestre1 != None %}
+		<td>{% if note.note1 != None %}{{listNotes|lookup:note.note1}}{% endif %}</td>
+		{% endif %}
+		{% if matiere.semestre2 != None %}
+		<td>{% if note.note2 != None %}{{listNotes|lookup:note.note2}}{% endif %}</td>
+		{% endif %}
+		{% endfor %}
+		<td>{% if notes.1.note != None %}{{listNotes|lookup:notes.1.note}}{% endif %}</td>
+		{% if annee2 %}
+		<td>{% if notes.2.note != None %}{{listNotes|lookup:notes.2.note}}{% endif %}</td>
+		{% endif %}
+	</tr>
+	{% endfor %}
+	{% else %}
+	{% for notes,widget in listeNotes|tzip:form.eleve %}
+	<tr>
+		<td>{{widget}}</td>
+		{% for note,matiere in notes.0|tzip:matieres %}
 		{% if matiere.semestre1 != None %}
 		<td>{% if note.note1 != None %}{{listNotes|lookup:note.note1}}{% endif %}</td>
 		{% endif %}
@@ -48,11 +82,19 @@
 		{% endfor %}
 	</tr>
 	{% endfor %}
+	{% endif %}
+	{% endif %}
 	<tr class="plusclair">
 		<td><label for ="check_{{matiere.pk}}">Tout cocher</label><br/><input type="checkbox" id="check"/></td>
 		{% for matiere,nbsem in matieres|tzip:nbsemestres %}
 		<td colspan="{{nbsem}}"><input type="submit" value="Modifier la sélection" name="{{matiere.pk}}"/></td>
 		{% endfor %}
+		{% if pp %}
+		<td><input type="submit" value="Modifier la sélection" name="global"/></td>
+		{% if annee2 %}
+		<td><input type="submit" value="Modifier la sélection" name="global2"/></td>
+		{% endif %}
+		{% endif %}
 	</tr>
 </table>
 </form>
