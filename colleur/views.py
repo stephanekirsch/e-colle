@@ -737,7 +737,7 @@ def ectsnoteglobalemodif(request,id_classe,annee,chaine_eleves):
     else:
         initial = NoteGlobaleECTS.objects.noteEleves(classe,annee,listeEleves)
         formset = NoteGlobaleEleveformset(annee,listeEleves,initial=initial)
-    return render(request,'colleur/ectsnoteglobalemodif.html',{'modif':is_colleur_modif_ects(request.user),'formset':formset,"annee": annee, 'classe': classe})
+    return render(request,'colleur/ectsnoteglobalemodif.html',{'modif':is_colleur_modif_ects(request.user),'formset':formset,"annee": int(annee), 'classe': classe})
 
 @user_passes_test(is_colleur_modif_ects, login_url='accueil')
 def ectscredits(request,id_classe,form=None):
