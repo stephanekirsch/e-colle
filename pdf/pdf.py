@@ -705,9 +705,9 @@ def creditsects(form,elev,classe):
 				if ng2 is not None:
 					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[ng2]))
 				elif coeff2 == 60 and coeff == 60:
-					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round(sp1+sp2)/120]))
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round((sp1+sp2)/120)]))
 				elif coeff2 == 60:
-					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round(sp2)/60]))
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round(sp2/60)]))
 				else:
 					pdf.setFillColor((1,0,0))
 					pdf.drawString(pdf.x,pdf.y,"Pas de mention, il manque {} crédits".format(60-coeff2))
