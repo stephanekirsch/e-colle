@@ -28,8 +28,8 @@
 		<td>{{matiere.nom|title}}</td>
 		<td>{% if matiere.precision %}{{matiere.precision}}{% endif %}</td>
 		<td>{% for colleur in matiere.profs.all %}{{colleur}}<br/>{% endfor%}</td>
-		<td>{% if matiere.semestre1 %}{{matiere.semestre1}}{% endif %}</td>
-		<td>{% if matiere.semestre2 %}{{matiere.semestre2}}{% endif %}</td>
+		<td>{% if matiere.semestre1 != None %}{{matiere.semestre1}}{% endif %}</td>
+		<td>{% if matiere.semestre2 != None %}{{matiere.semestre2}}{% endif %}</td>
 		<td><a class="bouton" href="{% url user.colleur|yesno:'ects_matiere_modif,secret_ects_matiere_modif' matiere.pk %}">Modifier</a></td>
 		<td><a class="bouton" href="{% url user.colleur|yesno:'ects_matiere_suppr,secret_ects_matiere_suppr' matiere.pk %}">Supprimer</a></td>
 	</tr>
