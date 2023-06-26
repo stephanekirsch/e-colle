@@ -159,7 +159,7 @@ def main():
     if platform.system().lower() != 'linux':
         print("cette commande ne fonctionne que sous linux")
         return
-    if sys.version[:3] < '3.8':
+    if [int(x) for x in sys.version[:3].split(".")] < [3,8]:
         print("Il vous faut une version de de Python >= 3.8")
         return
     p = subprocess.Popen("command -v apt",shell=True,stdout=subprocess.PIPE)

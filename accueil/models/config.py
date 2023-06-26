@@ -18,7 +18,7 @@ class ConfigManager(models.Manager):
                             message_eleves=False,
                             mathjax=True,
                             ects=False,
-                            modif_ects=PROF, # 1 = prof, 2 = secrétariat, 3 = les 2.
+                            ects_modif=PROF, # 1 = prof, 2 = secrétariat, 3 = les 2.
                             nom_adresse_etablissement="",
                             academie="",
                             ville="",
