@@ -339,7 +339,7 @@ def recapitulatif(request):
 @user_passes_test(is_secret, login_url='login_secret')
 def compta(request):
     LISTE_NOTES = list(range(21)) + ["n.n","Abs"]
-    notes = Note.objects.select_related("colleur__user","eleve__user", "semaine","classe").order_by('colleur__user__last_name', 'colleur__user_firstname', 'date_colle')
+    notes = Note.objects.select_related("colleur__user","eleve__user", "semaine","classe").order_by('colleur__user__last_name', 'colleur__user__first_name', 'date_colle')
     nomfichier="compta.csv"
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
