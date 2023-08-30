@@ -158,7 +158,7 @@ def classesuppr(request, id_classe):
     else:
         try:
             with transaction.atomic():
-                Groupe.objects.filter(classe__pk==id_classe).delete()
+                Groupe.objects.filter(classe__pk = id_classe).delete()
                 get_object_or_404(Classe,pk=id_classe).delete()
         except Exception as e:
             messages.error(request,"Impossible d'effacer la classe: " + str(e))
