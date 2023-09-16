@@ -184,7 +184,7 @@ def Pdf(classe,semin,semax):
 					data[3+isem-indsemaine][0]="S"+str(semaines[isem])
 					colle=colles[isem][icren]
 					if colle['nbcolles']:
-						if colle['groupe']:
+						if colle['groupe'] != '0':
 							data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(classe.dictColleurs(semin,semax)[colle['id_colleur']],colle['groupe'])
 						elif colle['id_eleve']:
 							data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(classe.dictColleurs(semin,semax)[colle['id_colleur']],classe.dictEleves()[colle['id_eleve']])
