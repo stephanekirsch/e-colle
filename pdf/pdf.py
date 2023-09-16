@@ -184,12 +184,12 @@ def Pdf(classe,semin,semax):
 					data[3+isem-indsemaine][0]="S"+str(semaines[isem])
 					colle=colles[isem][icren]
 					if colle['nbcolles']:
-						if colle['temps']==20:
+						if colle['groupe']:
 							data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(classe.dictColleurs(semin,semax)[colle['id_colleur']],colle['groupe'])
-						elif colle['temps']==60:
-							data[3+isem-indsemaine][1+icren-indcreneau]="{}".format(classe.dictColleurs(semin,semax)[colle['id_colleur']])
-						else:
+						elif colle['id_eleve']:
 							data[3+isem-indsemaine][1+icren-indcreneau]="{}:{}".format(classe.dictColleurs(semin,semax)[colle['id_colleur']],classe.dictEleves()[colle['id_eleve']])
+						else:
+							data[3+isem-indsemaine][1+icren-indcreneau]="{}".format(classe.dictColleurs(semin,semax)[colle['id_colleur']])
 						LIST_STYLE.add('BACKGROUND',(1+icren-indcreneau,3+isem-indsemaine),(1+icren-indcreneau,3+isem-indsemaine),couleurs[colle['id_matiere']])
 			t=Table(data,colWidths=[70]+nbCreneauxLoc*[largeurcel],rowHeights=(3+nbSemainesLoc)*[hauteurcel])
 			t.setStyle(LIST_STYLE)
