@@ -18,6 +18,7 @@
 		<td>Numéro</td>
 		<td>Détails</td>
 		<td>Fichier</td>
+		<td>Corrigé</td>
 		<td>Modifier</td>
 		<td>Supprimer</td>
 	</tr>
@@ -27,6 +28,11 @@
 		<td>{{td.detail|linebreaksbr}}</td>
 		{% if td.fichier %}
 		<td><a href="{{td.fichier.url}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a></td>
+		{% else %}
+		<td></td>
+		{% endif %}
+		{% if td.corrige %}
+		<td><a href="{{td.corrige.url}}"><img src="{% static 'images/iconePDF.png' %}" alt="icone pdf"/></a></td>
 		{% else %}
 		<td></td>
 		{% endif %}

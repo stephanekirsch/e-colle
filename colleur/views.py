@@ -940,10 +940,14 @@ def tdModif(request,id_td):
         raise Http404
     form=TDForm(td.matiere, td.classe, request.POST or None,request.FILES or None, instance=td)
     oldfile=os.path.join(MEDIA_ROOT,td.fichier.name) if td.fichier else False
+    oldfilecorrige=os.path.join(MEDIA_ROOT,td.corrige.name) if td.corrige else False
     if form.is_valid():
         if (request.FILES and 'fichier' in request.FILES or form.cleaned_data['fichier'] is False) and oldfile:
             if os.path.isfile(oldfile):
                 os.remove(oldfile)
+        if (request.FILES and 'corrige' in request.FILES or form.cleaned_data['corrige'] is False) and oldfilecorrige:
+            if os.path.isfile(oldfilecorrige):
+                os.remove(oldfilecorrige)
         form.save()
         return redirect('colleur_td', td.classe.pk)
     return render(request,"colleur/tdModif.html",{'td':td,'form':form})

@@ -681,7 +681,7 @@ class ColloscopeImportForm(forms.Form):
 class TDForm(forms.ModelForm):
     class Meta:
         model = TD
-        fields=['numero','detail','fichier']
+        fields=['numero','detail','fichier','corrige']
 
     def __init__(self, matiere, classe, *args, **kwargs):
         super().__init__(*args, **kwargs)

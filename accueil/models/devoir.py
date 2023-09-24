@@ -124,12 +124,15 @@ class DevoirCorrige(models.Model):
 class TD(models.Model):
     def update_name(instance, filename):
         return os.path.join("td", "td" + texte_aleatoire(20) + ".pdf")
+    def update_name_corrige(instance, filename):
+        return os.path.join("td", "corrige_" + texte_aleatoire(20) + ".pdf")
     classe = models.ForeignKey("Classe",related_name="classetd",on_delete=models.PROTECT)
     matiere = models.ForeignKey("Matiere",related_name="matieretd",on_delete=models.PROTECT)
     numero = models.PositiveSmallIntegerField(verbose_name="Numéro", choices = list(zip(range(1,101),range(1,101))))
     detail = models.TextField(verbose_name="Détails",null=True,blank=True)
     date_affichage = models.DateTimeField(auto_now_add = True)
-    fichier = ContentTypeRestrictedFileField(verbose_name="Fichier(pdf)",upload_to=update_name,null=True,blank=True,content_types=["application/pdf"], max_upload_size=2000000)
+    fichier = ContentTypeRestrictedFileField(verbose_name="Fichier(pdf)",upload_to=update_name,null=True,blank=True,content_types=["application/pdf"], max_upload_size=5000000)
+    corrige = ContentTypeRestrictedFileField(verbose_name="Corrigé(pdf)",upload_to=update_name_corrige,null=True,blank=True,content_types=["application/pdf"], max_upload_size=5000000)
 
     class Meta:
         ordering = ['-numero']
