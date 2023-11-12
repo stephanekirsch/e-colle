@@ -5,6 +5,7 @@ from django.db.models import Avg, Min, Max, StdDev, Count
 from .autre import dictfetchall
 from .semaine import Semaine
 from .eleve import Eleve
+from .matiere import Matiere
 from ecolle.settings import HEURE_DEBUT, HEURE_FIN, INTERVALLE
 
 def array2tree(tableau, profondeurs = None, funcs = None, x = 0, y = 0, taille = False):
@@ -129,7 +130,8 @@ class NoteManager(models.Manager):
             matieres=matieres.filter(semaine__lundi__lte=semax.lundi)
         elif semax:
             matieres=matieres.filter(semaine__lundi__lt=semax.lundi)
-        matieres=matieres.values_list('matiere__pk').order_by('matiere__nom').distinct()
+        matieres=matieres.values_list('matiere__pk').order_by('matiere__nom','matiere__lv','matiere__temps').distinct()
+        matieresObj = {x.pk: x.nom.title() + ("(lv{})".format(x.lv) if x.lv else "") for x in Matiere.objects.filter(pk__in=matieres).all()}
         moyenne = self.filter(eleve=eleve,matiere__pk__in=matieres).exclude(note__gt=20)
         moyenne_classe = self.filter(matiere__pk__in=matieres,classe=eleve.classe,eleve__isnull=False).exclude(note__gt=20) 
         if semin:
@@ -141,8 +143,8 @@ class NoteManager(models.Manager):
         elif semax:
             moyenne=moyenne.filter(semaine__lundi__lt=semax.lundi)
             moyenne_classe = moyenne_classe.filter(semaine__lundi__lt=semax.lundi)
-        moyenne = list(moyenne.values('matiere__nom','matiere__couleur').annotate(Avg('note'),Min('note'),Max('note'),Count('note'),StdDev('note')).order_by('matiere__nom'))
-        moyenne_classe = moyenne_classe.values('matiere__pk').annotate(Avg('note')).order_by('matiere__nom')
+        moyenne = list(moyenne.values('matiere__pk','matiere__couleur').annotate(Avg('note'),Min('note'),Max('note'),Count('note'),StdDev('note')).order_by('matiere__nom','matiere__lv','matiere__temps'))
+        moyenne_classe = moyenne_classe.values('matiere__pk').annotate(Avg('note')).order_by('matiere__nom','matiere__lv','matiere__temps')
         rangs=[]
         for i,matiere in enumerate(matieres):
             rang=self.exclude(note__gt=20).filter(classe=eleve.classe,eleve__isnull=False,matiere__pk=matiere[0])
@@ -158,7 +160,7 @@ class NoteManager(models.Manager):
                 rang=0
             rangs.append(rang)
         return [{"note__max": x["note__max"], "matiere__couleur": x["matiere__couleur"], "note__stddev": x["note__stddev"], "note__min": x["note__min"], 
-        "matiere__nom": x["matiere__nom"], "note__count": x["note__count"], "note__avg": x["note__avg"], "noteclasse__avg":y["note__avg"],"rang":z} for x,y,z in zip(moyenne,moyenne_classe,rangs)]
+        "matiere__nom": matieresObj[x["matiere__pk"]], "note__count": x["note__count"], "note__avg": x["note__avg"], "noteclasse__avg":y["note__avg"],"rang":z} for x,y,z in zip(moyenne,moyenne_classe,rangs)]
 
 class Note(models.Model):
     LISTE_JOUR=enumerate(["lundi","mardi","mercredi","jeudi","vendredi","samedi"])
