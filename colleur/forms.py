@@ -469,6 +469,11 @@ class DevoirForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.matiere = matiere
         self.classe = classe
+        query = Devoir.objects.filter(classe = classe,matiere = matiere)
+        if self.instance:
+            query = query.exclude(pk = self.instance.pk)
+        query = query.values_list('numero',flat=True)
+        self.fields['numero'].choices = [(i,i) for i in sorted(set(range(1,101))-set(query))]
 
     def clean(self):
         """Vérifie la condition d'unicité de numéro/classe/matière"""
@@ -687,6 +692,12 @@ class TDForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.matiere = matiere
         self.classe = classe
+        query = TD.objects.filter(classe = classe,matiere = matiere)
+        if self.instance:
+            query = query.exclude(pk = self.instance.pk)
+        query = query.values_list('numero',flat=True)
+        self.fields['numero'].choices = [(i,i) for i in sorted(set(range(1,101))-set(query))]
+
 
     def clean(self):
         """Vérifie la condition d'unicité de numéro/classe/matière"""
@@ -705,6 +716,11 @@ class CoursForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.matiere = matiere
         self.classe = classe
+        query = Cours.objects.filter(classe = classe,matiere = matiere)
+        if self.instance:
+            query = query.exclude(pk = self.instance.pk)
+        query = query.values_list('numero',flat=True)
+        self.fields['numero'].choices = [(i,i) for i in sorted(set(range(1,101))-set(query))]
 
     def clean(self):
         """Vérifie la condition d'unicité de numéro/classe/matière"""
@@ -723,6 +739,11 @@ class DocumentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.matiere = matiere
         self.classe = classe
+        query = Document.objects.filter(classe = classe,matiere = matiere)
+        if self.instance:
+            query = query.exclude(pk = self.instance.pk)
+        query = query.values_list('numero',flat=True)
+        self.fields['numero'].choices = [(i,i) for i in sorted(set(range(1,101))-set(query))]
 
     def clean(self):
         """Vérifie la condition d'unicité de numéro/classe/matière"""
