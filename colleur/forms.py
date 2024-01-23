@@ -582,12 +582,12 @@ class ColloscopeImportForm(forms.Form):
                         colle = [matieres[mat]]
                     else:
                         raise ValidationError("{} n'est pas une matière de la classe de {}".format(mat,self.classe.nom))
-                    colleur = (unidecode(row[1].lower()),unidecode(row[2].lower()))
+                    colleur = (unidecode(row[1].strip().lower()),unidecode(row[2].strip().lower()))
                     if colleur in colleurs and colle[0].pk in colleurs[colleur][1]:
                         colle.append(colleurs[colleur][0])
                     else:
                         raise ValidationError("{} n'est pas colleur de {} dans la matière {}".format(" ".join(colleur), self.classe.nom, mat))
-                    creneau = row[3].split(" ")
+                    creneau = row[3].strip().lower().split(" ")
                     if creneau[0] not in jours:
                         raise ValidationError("{} ne correspond à aucun jour de la semaine".format(creneau[0]))
                     else:

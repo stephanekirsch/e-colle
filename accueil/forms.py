@@ -154,6 +154,8 @@ class EcrireForm(forms.ModelForm):
         self.adminsecret = 0
         self.user = user
         if user.colleur and user.is_active:
+            self.fields['secret'] = forms.BooleanField(label="Secrétariat",required=False)
+            self.fields['admin'] = forms.BooleanField(label="administrateur",required=False)
             classes = user.colleur.classes.all()
             classesprof = user.colleur.colleurprof.all()
             matieres = user.colleur.matieres.all()
@@ -254,7 +256,7 @@ class EcrireForm(forms.ModelForm):
             nb = 1
         else:
             nb = classes.count()
-        self.rowspan, self.reste = self.adminsecret + (nb+1)//2, nb&1
+        self.rowspan, self.reste = self.adminsecret + (self.user.colleur is not None) + (nb+1)//2, nb&1
         self.fields['titre'].widget.attrs={'size':50}
         self.fields['titre'].required = True
         self.fields['corps'].widget.attrs={'cols':60,'rows':15}
@@ -264,6 +266,7 @@ class EcrireForm(forms.ModelForm):
         self.destinataires = set()
         touscolleurs = tousprofs = touseleves = False
         for key,value in self.cleaned_data.items():
+            print(key,value)
             if self.user.username=="Secrétariat" or self.user.username=="admin":
                 if key == "touscolleurs" and value is True:
                     touscolleurs = True
@@ -274,6 +277,11 @@ class EcrireForm(forms.ModelForm):
                 if key == "touseleves" and value is True:
                     touseleves = True
                     self.destinataires |= {eleve.user for eleve in Eleve.objects.all()}
+            elif self.user.colleur is not None:
+                if key == "admin" and value is True and self.user.colleur is not None:
+                    self.destinataires |= {x for x in User.objects.filter(username="admin")}
+                if key == "secret" and value is True and self.user.colleur is not None:
+                    self.destinataires |= {x for x in User.objects.filter(username="Secrétariat")}
             cle = key.split('_')[0]
             if cle == 'classematiere' or cle == 'classeprof' and not touscolleurs:
                 self.destinataires |= {colleur.user for colleur in value}
