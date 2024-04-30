@@ -245,12 +245,11 @@ def programme(request,id_classe):
     if classe not in request.user.colleur.classes.all() or matiere.pk not in classe.matierespk():
         raise Http404
     programmes=Programme.objects.filter(classe=classe,matiere=matiere).prefetch_related('semaine').annotate(smax = Max('semaine__numero')).order_by('-smax')
-    print(programmes)
     isprof=False
     if is_prof(request.user,matiere,classe):
         isprof=True
         programme=Programme(matiere=matiere,classe=classe)
-        form = ProgrammeForm(request.POST or None,request.FILES or None,instance=programme)
+        form = ProgrammeForm(matiere,classe,request.POST or None,request.FILES or None,instance=programme)
         if form.is_valid():
             form.save()
             return redirect('programme_colleur',classe.pk)
@@ -273,7 +272,7 @@ def programmeModif(request,id_programme):
     programme=get_object_or_404(Programme,pk=id_programme)
     if not is_prof(request.user,programme.matiere,programme.classe):
         raise Http404
-    form=ProgrammeForm(request.POST or None,request.FILES or None, instance=programme)
+    form=ProgrammeForm(programme.matiere,programme.classe,request.POST or None,request.FILES or None, instance=programme)
     oldfile=os.path.join(MEDIA_ROOT,programme.fichier.name) if programme.fichier else False
     if form.is_valid():
         if request.FILES and oldfile:
@@ -837,6 +836,7 @@ def devoirModif(request,id_devoir):
     devoir=get_object_or_404(Devoir,pk=id_devoir)
     if not is_prof(request.user,devoir.matiere,devoir.classe):
         raise Http404
+    print(devoir.a_rendre_jour)
     form=DevoirForm(devoir.matiere, devoir.classe, request.POST or None,request.FILES or None, instance=devoir)
     oldfile=os.path.join(MEDIA_ROOT,devoir.fichier.name) if devoir.fichier else False
     oldfilecorrige=os.path.join(MEDIA_ROOT,devoir.corrige.name) if devoir.corrige else False

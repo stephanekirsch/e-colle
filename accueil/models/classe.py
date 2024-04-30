@@ -102,7 +102,7 @@ class Colleur(models.Model):
         ordering = ['user__last_name', 'user__first_name']
 
     def allprofs(self):
-        return self.colleurprof.prefetch_related('classe')
+        return self.colleurprof.prefetch_related('classe').order_by('classe__annee','classe__nom')
 
     def allprofsmatieres(self):
         return [prof.matiere.pk for prof in self.colleurprof.all()]

@@ -28,6 +28,16 @@ class ProgrammeForm(forms.ModelForm):
         fields=['semaine','titre','detail','fichier']
         widgets = {'semaine':forms.CheckboxSelectMultiple}
 
+    def __init__(self, matiere, classe, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.matiere = matiere
+        self.classe = classe
+        query = Programme.objects.filter(classe = classe,matiere = matiere)
+        if self.instance:
+            query = query.exclude(pk = self.instance.pk)
+        query = list(query.values_list("semaine",flat=True).distinct())
+        query2 = Semaine.objects.exclude(numero__in=query)
+        self.fields['semaine'].queryset = query2
 
     def clean_semaine(self):# on vérifie que les semaines choisies ne chevauchent pas de semaines d'un programme existant.
         semaines = self.cleaned_data['semaine']
@@ -739,11 +749,6 @@ class DocumentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.matiere = matiere
         self.classe = classe
-        query = Document.objects.filter(classe = classe,matiere = matiere)
-        if self.instance:
-            query = query.exclude(pk = self.instance.pk)
-        query = query.values_list('numero',flat=True)
-        self.fields['numero'].choices = [(i,i) for i in sorted(set(range(1,101))-set(query))]
 
     def clean(self):
         """Vérifie la condition d'unicité de numéro/classe/matière"""

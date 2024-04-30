@@ -33,7 +33,7 @@ class DevoirManager(models.Manager):
             LEFT JOIN accueil_devoircorrige dc\
             ON dc.devoir_id = dv.id AND dc.eleve_id = %s\
             WHERE dv.classe_id = %s\
-            ORDER BY dv.a_rendre_jour DESC, dv.a_rendre_heure DESC"
+            ORDER BY dv.numero DESC"
             with connection.cursor() as cursor:
                 cursor.execute(requete,(eleve.pk, eleve.pk, eleve.classe.pk))
                 devoirs = dictfetchall(cursor)
@@ -46,7 +46,7 @@ class DevoirManager(models.Manager):
             LEFT JOIN accueil_devoircorrige dc\
             ON dc.devoir_id = dv.id AND dc.eleve_id = %s\
             WHERE dv.classe_id = %s AND dv.matiere_id = %s\
-            ORDER BY dv.a_rendre_jour DESC, dv.a_rendre_heure DESC"
+            ORDER BY dv.numero DESC"
             with connection.cursor() as cursor:
                 cursor.execute(requete,(eleve.pk, eleve.pk, eleve.classe.pk, matiere.pk))
                 devoirs = dictfetchall(cursor)
