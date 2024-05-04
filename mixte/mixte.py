@@ -614,7 +614,7 @@ def mixteRamassagePdfParColleur(ramassage,parmois,full):
 											,('ALIGN',(0,0),(-1,-1),'CENTRE')
 											,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
 											,('SIZE',(0,0),(-1,-1),8)])
-		data = [["Matière","Classe"] + (["mois"] if parmois else []) + ["heures"]]+[[""]*(3+parmois) for i in range(min(22,nbMatieres))] # on créé un tableau de la bonne taille, rempli de chaînes vides
+		data = [["Matière","Classe"] + (["mois"] if parmois else []) + ["heures"]]+[[""]*(3+parmois) for i in range(min(22,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
 		ligneMat=ligneClasse=ligneMois=1
 		for matiere, listeClasse, nbClasses in listeMatieres:
 			totalmatiere = 0
@@ -650,7 +650,7 @@ def mixteRamassagePdfParColleur(ramassage,parmois,full):
 											,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
 											,('SIZE',(0,0),(-1,-1),8)])
 							nbKolleurs-=22
-							data = [["Matière","Classe","mois"] + ["heures"]]+[[""]*(3+parmois) for i in range(min(22,nbMatieres))] # on créé un tableau de la bonne taille, rempli de chaînes vides
+							data = [["Matière","Classe","mois"] + ["heures"]]+[[""]*(3+parmois) for i in range(min(22,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
 							ligneMat-=22
 							ligneClasse-=22
 							ligneMois = 1
@@ -683,7 +683,7 @@ def mixteRamassagePdfParColleur(ramassage,parmois,full):
 										,('FACE',(0,0),(-1,-1),"Helvetica-Bold")
 										,('SIZE',(0,0),(-1,-1),8)])
 						nbKolleurs-=22
-						data = [["Matière","Classe"] + ["heures"]]+[[""]*(3+parmois) for i in range(min(22,nbMatieres))] # on créé un tableau de la bonne taille, rempli de chaînes vides
+						data = [["Matière","Classe"] + ["heures"]]+[[""]*(3+parmois) for i in range(min(22,nbKolleurs))] # on créé un tableau de la bonne taille, rempli de chaînes vides
 						ligneMat-=22
 						ligneClasse=1
 						if ligneMat>1:
