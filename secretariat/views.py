@@ -6,7 +6,7 @@ from administrateur.forms import AdminConnexionForm, InformationForm
 from colleur.forms import ECTSForm, MatiereECTSForm
 from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelectForm, ColleurSelectForm
 from accueil.models import Config, Note, Semaine, Matiere, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, mois, MatiereECTS, NoteECTS, Information
-from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupeSwap, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV, mixtegroupeCreer, mixtegroupecsv, mixteColloscopeImport
+from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupeSwap, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteRamassagePdfParColleur, mixteCSV, mixtegroupeCreer, mixtegroupecsv, mixteColloscopeImport
 from django.http import Http404, HttpResponse,  HttpResponseForbidden
 from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
 from reportlab.platypus import Table, TableStyle
@@ -614,6 +614,15 @@ def ramassagePdfParClasse(request,id_ramassage,totalParmois,full=0):
     parmois, total = divmod(int(totalParmois),2)
     ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
     return mixteRamassagePdfParClasse(ramassage,total,parmois,full,colleur=False)
+
+@user_passes_test(is_secret, login_url='login_secret')
+def ramassagePdfParColleur(request,id_ramassage,parmois,full=0):
+    """Renvoie le fichier PDF du ramassage par classe correspondant au ramassage dont l'id est id_ramassage
+    si total vaut 1, les totaux par classe et matière sont calculés"""
+    full = int(full)
+    parmois = int(parmois) // 2
+    ramassage=get_object_or_404(Ramassage,pk=id_ramassage)
+    return mixteRamassagePdfParColleur(ramassage,parmois,full)
 
 @user_passes_test(is_secret, login_url='accueil')
 def groupe(request,id_classe):

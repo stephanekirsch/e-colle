@@ -16,6 +16,7 @@
 		<td>Jusqu'au</td>
 		<td>Effectué le </td>
 		<td>Supprimer</td>
+		<td>PDF par colleur</td>
 		<td>PDF par année/effectif</td>
 		<td>PDF par classe</td>
 		<td>PDF par classe avec totaux</td>
@@ -30,6 +31,7 @@
 		<td>{{ramassage.moisFin|date:"d/m/Y"}}</td>
 		<td>{{ramassage.date|date:"d/m/Y à H\hi"}}</td>
 		<td>{% if forloop.last %}<a href="{% url 'ramassagesuppr' ramassage.pk %}">Supprimer</a>{% endif %}</td>
+		<td><a href="{% url 'ramassagepdfcolleur' ramassage.pk 0 0 %}"><img src="{% static 'images/iconePDF.png' %}"/></a></td>
 		<td><a href="{% url 'ramassagepdf' ramassage.pk 0 0 %}"><img src="{% static 'images/iconePDF.png' %}"/></a></td>
 		<td><a href="{% url 'ramassagepdfparclasse' ramassage.pk 0 0 %}"><img src="{% static 'images/iconePDF.png' %}"/></a></td>
 		<td><a href="{% url 'ramassagepdfparclasse' ramassage.pk 1 0 %}"><img src="{% static 'images/iconePDF.png' %}"/></a></td>

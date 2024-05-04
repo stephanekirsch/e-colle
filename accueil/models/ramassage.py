@@ -62,7 +62,7 @@ class RamassageManager(models.Manager):
                 for row in cursor.fetchall(): # on -re-crée le décompte
                     Decompte.objects.create(colleur_id=row[0],matiere_id=row[1],classe_id=row[2],ramassage_id=ramassage.pk, mois=row[3] ,temps=row[4])
 
-    def decompteRamassage(self, ramassage, csv = True, parClasse = True, parMois = False, full = False, colleur = False):
+    def decompteRamassage(self, ramassage, csv = True, parClasse = True, parMois = False, full = False, colleur = False, parColleur = False):
         """Renvoie, pour chaque classe, la liste des colleurs avec leur nombre d'heures de colle ramassées au ramassage 'ramassage', s'ils en ont effectué
         Si colleur ne vaut pas False, on ne ramasse que les colles du colleur en question"""
         if Ramassage.objects.filter(moisFin__lt=ramassage.moisFin).exists() and not full: # s'il existe un ramassage antérieur et qu'on ne ramasse pas depuis le début
@@ -107,15 +107,24 @@ class RamassageManager(models.Manager):
         LEFT OUTER JOIN accueil_etablissement et\
         ON col.etablissement_id = et.id\
         WHERE dec2.id IS NULL AND dec1.ramassage_id = %s{}\
-        GROUP BY ma.nom, u.last_name, u.first_name, col.id, cl.id, et.nom, dec1.mois".format("" if not colleur else " AND col.id = %s", "" if not colleur else " AND col.id = %s")
+        GROUP BY ma.nom, u.last_name, u.first_name, col.id, cl.id, et.nom, dec1.mois".format("" if not colleur else " AND col.id = %s", "" if not colleur else " AND col.id = %s",)
         if parMois:
-            requete = "SELECT * FROM ({}) as req\
-            ORDER BY {} req.matiere_nom, req.etab, req.grade, req.nom, req.prenom, req.mois".format(requete, "req.annee, req.classe_nom, " if parClasse else "")
+            if parColleur:
+                requete = "SELECT req.nom, req.prenom, req.colleur_id, req.etab, req.grade, req.matiere_nom, req.classe_id, req.classe_nom, req.annee, req.mois, req.heures FROM ({}) as req\
+                ORDER BY req.nom, req.prenom, req.annee, req.matiere_nom, req.classe_nom, req.etab, req.grade, req.mois, req.colleur_id".format(requete)
+            else:
+                requete = "SELECT * FROM ({}) as req\
+                ORDER BY {}req.matiere_nom, req.etab, req.grade, req.nom, req.prenom, req.mois".format(requete, "req.annee, req.classe_nom, " if parClasse else "")
         else:
-            requete = "SELECT  req.classe_id, req.classe_nom, req.annee, req.matiere_nom, req.etab, req.grade, req.nom, req.prenom, req.colleur_id, \
-            SUM(req.heures) heures FROM ({}) as req\
-            GROUP BY req.classe_id, req.classe_nom, req.annee, req.matiere_nom, req.etab, req.grade, req.nom, req.prenom, req.colleur_id\
-            ORDER BY {}req.matiere_nom, req.etab, req.grade, req.nom, req.prenom".format(requete, "req.annee, req.classe_nom, " if parClasse else "")
+            if parColleur:
+                requete = "SELECT req.nom, req.prenom, req.colleur_id, req.etab, req.grade, req.matiere_nom, req.classe_id, req.classe_nom, req.annee, SUM(req.heures) heures FROM ({}) as req\
+                GROUP BY req.nom, req.prenom, req.annee, req.matiere_nom, req.classe_nom, req.classe_id, req.etab, req.grade, req.colleur_id\
+                ORDER BY req.nom, req.prenom, req.annee, req.matiere_nom, req.classe_nom, req.etab, req.grade, req.colleur_id".format(requete)
+            else:
+                requete = "SELECT  req.classe_id, req.classe_nom, req.annee, req.matiere_nom, req.etab, req.grade, req.nom, req.prenom, req.colleur_id, \
+                SUM(req.heures) heures FROM ({}) as req\
+                GROUP BY req.classe_id, req.classe_nom, req.annee, req.matiere_nom, req.etab, req.grade, req.nom, req.prenom, req.colleur_id\
+                ORDER BY {}req.matiere_nom, req.etab, req.grade, req.nom, req.prenom".format(requete, "req.annee, req.classe_nom, " if parClasse else "")
         with connection.cursor() as cursor:
             cursor.execute(requete,(ramassage_precedent_pk,ramassage.pk,ramassage.pk,ramassage_precedent_pk) if not colleur else  (ramassage_precedent_pk,ramassage.pk,colleur.pk,ramassage.pk,ramassage_precedent_pk,colleur.pk))
             decomptes = cursor.fetchall()
@@ -166,11 +175,19 @@ class RamassageManager(models.Manager):
                 return decomptes
             # si on note par classe pour un pdf
             if parMois:
-                profondeurs = [3,1,1,1,3,2]
-                funcs = [lambda x:(x[1],), lambda t:t, lambda t:t,lambda x:(LISTE_GRADES[x[0]],),lambda x:("{} {}".format(x[1].title(),x[0].upper()),), lambda t:t]
+                if parColleur:
+                    profondeurs = [5,1,3,2]
+                    funcs = [lambda x:("{} {}".format(x[1].title(),x[0].upper()),), lambda t:t, lambda x:(x[1],), lambda t:t]
+                else:
+                    profondeurs = [3,1,1,1,3,2]
+                    funcs = [lambda x:(x[1],), lambda t:t, lambda t:t,lambda x:(LISTE_GRADES[x[0]],),lambda x:("{} {}".format(x[1].title(),x[0].upper()),), lambda t:t]
             else:
-                profondeurs = [3,1,1,1,4]
-                funcs = [lambda x:(x[1],), lambda t:t, lambda t:t,lambda x:(LISTE_GRADES[x[0]],),lambda x:("{} {}".format(x[1].title(),x[0].upper()),x[3]), lambda t:t[0]]
+                if parColleur:
+                    profondeurs = [5,1,4]
+                    funcs = [lambda x:("{} {}".format(x[1].title(),x[0].upper()),), lambda t:t, lambda x:(x[1],x[3])]
+                else:
+                    profondeurs = [3,1,1,1,4]
+                    funcs = [lambda x:(x[1],), lambda t:t, lambda t:t,lambda x:(LISTE_GRADES[x[0]],),lambda x:("{} {}".format(x[1].title(),x[0].upper()),x[3]), lambda t:t[0]]
             return array2tree(decomptes,profondeurs,funcs)
 
     def decompte(self,moisMin,moisMax):
