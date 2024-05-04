@@ -604,6 +604,7 @@ def mixteRamassagePdfParColleur(ramassage,parmois,full):
 	pdf = easyPdf(titre="Ramassage des colles de {} {} à {} {}".format(LISTE_MOIS[debut.month],debut.year,LISTE_MOIS[fin.month],fin.year),marge_x=30,marge_y=30)
 	largeurcel=(pdf.format[0]-2*pdf.marge_x)/10
 	hauteurcel=30
+	print(decomptes)
 	for colleur, listeMatieres, nbMatieres in decomptes:
 		totalColleur = 0
 		nbKolleurs = nbMatieres
@@ -627,7 +628,7 @@ def mixteRamassagePdfParColleur(ramassage,parmois,full):
 					data[ligneClasse][1]=classe
 					if nbMois>1:
 						LIST_STYLE.add('SPAN',(1,ligneClasse),(1,min(ligneClasse+nbMois-1,22)))
-						ligneClasse+=nbMois
+					ligneClasse+=nbMois
 					for moi,  heures in listeMois:
 						totalColleur += heures
 						if moi<moisdebut:
