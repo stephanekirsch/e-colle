@@ -396,7 +396,7 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
     return HttpResponse(json.dumps(creneaux))
     
 
-def mixteRamassagePdfParClasse(ramassage,total,parmois,full,colleur=False,parColleur=0):
+def mixteRamassagePdfParClasse(ramassage,total,parmois,full):
 	"""Renvoie le fichier PDF du ramassage par classe correspondant au ramassage dont l'id est id_ramassage
 	si total vaut 1, les totaux par classe et matière sont calculés"""
 	LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
@@ -410,7 +410,7 @@ def mixteRamassagePdfParClasse(ramassage,total,parmois,full,colleur=False,parCol
 	decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = True, parMois=bool(parmois), full = full, colleur = colleur, parColleur = parColleur)
 	nomfichier="ramassagePdfParClasse{}-{}-{}_{}-{}-{}.pdf".format(debut.year,debut.month,debut.day,fin.year,fin.month,fin.day)
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
-	pdf = easyPdf(titre="Ramassage des colles de {} {} à {} {}".format(LISTE_MOIS[debut.month],debut.year,LISTE_MOIS[fin.month],fin.year),marge_x=30,marge_y=30)
+	pdf = easyPdf(titre="Ramassage des colles du {} au {}".format(debut.strftime("%d/%m/%Y"),fin.strftime("%d/%m/%Y")),marge_x=30,marge_y=30)
 	largeurcel=(pdf.format[0]-2*pdf.marge_x)/(10+parmois)
 	hauteurcel=30
 	total=int(total)
@@ -588,7 +588,7 @@ def mixteRamassagePdfParClasse(ramassage,total,parmois,full,colleur=False,parCol
 	response.write(fichier)
 	return response
 
-def mixteRamassagePdfParColleur(ramassage,parmois,full):
+def mixteRamassagePdfParColleur(ramassage,parmois,full,colleur = False):
 	"""Renvoie le fichier PDF du ramassage par classe correspondant au ramassage dont l'id est id_ramassage"""
 	LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
 	response = HttpResponse(content_type='application/pdf')
@@ -598,17 +598,24 @@ def mixteRamassagePdfParColleur(ramassage,parmois,full):
 		debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
 	fin = ramassage.moisFin
 	moisdebut = 12*debut.year+debut.month-1
-	decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = True, parMois=bool(parmois), full = full, parColleur = 1)
+	decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = True, parMois=bool(parmois), full = full, colleur = colleur, parColleur = 1)
 	nomfichier="ramassagePdfParColleur{}-{}-{}_{}-{}-{}.pdf".format(debut.year,debut.month,debut.day,fin.year,fin.month,fin.day)
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
-	pdf = easyPdf(titre="Ramassage des colles de {} {} à {} {}".format(LISTE_MOIS[debut.month],debut.year,LISTE_MOIS[fin.month],fin.year),marge_x=30,marge_y=30)
+	pdf = easyPdf(titre="Ramassage des colles du {} au {}".format(debut.strftime("%d/%m/%Y"),fin.strftime("%d/%m/%Y")),marge_x=30,marge_y=30)
 	largeurcel=(pdf.format[0]-2*pdf.marge_x)/10
 	hauteurcel=30
-	print(decomptes)
-	for colleur, listeMatieres, nbMatieres in decomptes:
+	for colleur, etablissement, grade, listeMatieres, nbMatieres in decomptes:
 		totalColleur = 0
 		nbKolleurs = nbMatieres
 		pdf.debutDePage(soustitre = colleur)
+		pdf.setFillColorRGB(0,0,0)
+		pdf.y -= 10
+		pdf.x = pdf.marge_x
+		pdf.setFont("Helvetica-Bold",10)
+		pdf.drawString(pdf.x,pdf.y,"Établissement d'exercice: {}".format(etablissement))
+		pdf.x = pdf.format[0]-pdf.marge_x
+		pdf.drawRightString(pdf.x,pdf.y,"Grade: {}".format(grade))
+		pdf.y += 10
 		LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),1,(0,0,0))
 											,('BACKGROUND',(0,0),(-1,0),(.6,.6,.6))
 											,('VALIGN',(0,0),(-1,-1),'MIDDLE')

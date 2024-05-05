@@ -70,7 +70,6 @@ class easyPdf(Canvas):
 		self.showPage()
 
 def trombinoscopePdf(id_classe):
-	print(A4)
 	classe = get_object_or_404(Classe,pk=id_classe)
 	eleves = Eleve.objects.filter(classe=classe).select_related('user').all()
 	response = HttpResponse(content_type='application/pdf')

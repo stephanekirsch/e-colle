@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from colleur.forms import ColleurConnexionForm, ProgrammeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteGlobaleEleveForm, NoteEleveFormSet, NoteGlobaleEleveFormSet, ECTSForm, SelectEleveNoteForm, NoteElevesHeadForm, NoteElevesTailForm, NoteElevesFormset, DevoirForm, CopieForm, CopiesForm, TDForm, CoursForm, DocumentForm
 from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, MatiereECTS, NoteECTS, NoteGlobaleECTS, Devoir, DevoirCorrige, DevoirRendu, Ramassage, Decompte, TD, Cours, Document
-from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteCSV, mixtegroupeSwap, mixtegroupeCreer, mixtegroupecsv, mixteColloscopeImport
+from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParColleur, mixteCSV, mixtegroupeSwap, mixtegroupeCreer, mixtegroupecsv, mixteColloscopeImport
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Avg, Min, Max, StdDev, Sum, Count, F
@@ -560,7 +560,7 @@ def decompte(request):
 @user_passes_test(is_colleur, login_url='accueil')
 def ramassage(request,id_ramassage):
     ramassage = get_object_or_404(Ramassage, pk=id_ramassage)
-    return mixteRamassagePdfParClasse(ramassage, False, True, False, colleur = request.user.colleur)
+    return mixteRamassagePdfParColleur(ramassage, False, False, colleur = request.user.colleur)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def colloscopePdf(request,id_classe,id_semin,id_semax):

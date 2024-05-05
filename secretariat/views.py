@@ -419,7 +419,7 @@ def ramassagePdf(request, id_ramassage, parMois = 0, full = 0):
     listeDecompte, effectifs = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = False, parMois=parMois, full = full)
     nomfichier="ramassage{}-{}-{}_{}-{}-{}.pdf".format(debut.year,debut.month,debut.day,fin.year,fin.month,fin.day)
     response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
-    pdf = easyPdf(titre="Ramassage des colles de {} {} à {} {}".format(LISTE_MOIS[debut.month],debut.year,LISTE_MOIS[fin.month],fin.year),marge_x=30,marge_y=30)
+    pdf = easyPdf(titre="Ramassage des colles du {} au {}".format(debut.strftime("%d/%m/%Y"),fin.strftime("%d/%m/%Y")),marge_x=30,marge_y=30)
     largeurcel=(pdf.format[0]-2*pdf.marge_x)/(9+parMois+len(effectifs))
     hauteurcel=30
     nbKolleurs=sum([z for x,y,z in listeDecompte])

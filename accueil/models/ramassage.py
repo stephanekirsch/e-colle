@@ -177,14 +177,14 @@ class RamassageManager(models.Manager):
             if parMois:
                 if parColleur:
                     profondeurs = [5,1,3,2]
-                    funcs = [lambda x:("{} {}".format(x[1].title(),x[0].upper()),), lambda t:t, lambda x:(x[1],), lambda t:t]
+                    funcs = [lambda x:("{} {}".format(x[1].title(),x[0].upper()), x[3], LISTE_GRADES[x[4]]), lambda t:t, lambda x:(x[1],), lambda t:t]
                 else:
                     profondeurs = [3,1,1,1,3,2]
                     funcs = [lambda x:(x[1],), lambda t:t, lambda t:t,lambda x:(LISTE_GRADES[x[0]],),lambda x:("{} {}".format(x[1].title(),x[0].upper()),), lambda t:t]
             else:
                 if parColleur:
                     profondeurs = [5,1,4]
-                    funcs = [lambda x:("{} {}".format(x[1].title(),x[0].upper()),), lambda t:t, lambda x:(x[1],x[3])]
+                    funcs = [lambda x:("{} {}".format(x[1].title(),x[0].upper()), x[3], LISTE_GRADES[x[4]]), lambda t:t, lambda x:(x[1],x[3])]
                 else:
                     profondeurs = [3,1,1,1,4]
                     funcs = [lambda x:(x[1],), lambda t:t, lambda t:t,lambda x:(LISTE_GRADES[x[0]],),lambda x:("{} {}".format(x[1].title(),x[0].upper()),x[3]), lambda t:t[0]]
