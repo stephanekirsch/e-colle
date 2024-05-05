@@ -584,6 +584,11 @@ def addmessage(request):
                 destinataires |= {eleve.user for eleve in Eleve.objects.filter(groupe__pk = pk)}
             except Exception as e:
                 return HttpResponse(str(e))
+        elif genre == 7: # groupe
+            try:
+                destinataires |= {eleve.user for eleve in Eleve.objects.filter(groupe2__pk = pk)}
+            except Exception as e:
+                return HttpResponse(str(e))
         elif genre == 4: # tous les élèves d'une classe
             try:
                 destinataires |= {eleve.user for eleve in Eleve.objects.filter(classe__pk = pk)}
