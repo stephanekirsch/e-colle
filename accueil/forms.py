@@ -12,8 +12,15 @@ class ConnexionForm(forms.Form):
                                widget=forms.PasswordInput)
 
 class GroupeMultipleChoiceField(forms.ModelMultipleChoiceField):
+    def __init__(self,semestre = 1,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.semestre = semestre
+
     def label_from_instance(self,groupe,*args,**kwargs):
-        return "{}: ".format(groupe.nom)+"/".join([str(eleve.user.last_name.upper()) for eleve in groupe.groupeeleve.all()])
+        if self.semestre == 1:
+            return "{}: ".format(groupe.nom)+"/".join([str(eleve.user.last_name.upper()) for eleve in groupe.groupeeleve.all()])
+        else:
+            return "{}: ".format(groupe.nom)+"/".join([str(eleve.user.last_name.upper()) for eleve in groupe.groupe2eleve.all()])
 
 class ColleurForm(forms.Form):
     def __init__(self,*args,**kwargs):
@@ -181,14 +188,29 @@ class EcrireForm(forms.ModelForm):
                     query = Colleur.objects.filter(classes=classe,matieres=matiere,user__is_active=True).exclude(pk=user.colleur.pk).select_related('user').order_by('user__last_name')
                     self.fields['classematiere_{}_{}'.format(classe.pk,matiere.pk)] = ColleurMultipleChoiceField(classe,True,queryset=query,widget=forms.CheckboxSelectMultiple,required=False)
                     listematieres.append(self['classematiere_{}_{}'.format(classe.pk,matiere.pk)])
-                self.fields['matieregroupe_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(groupe)",required=False)
-                query2 = Groupe.objects.filter(groupeeleve__classe=classe).prefetch_related('groupeeleve__user').distinct()
-                self.fields['classegroupe_{}'.format(classe.pk)] = GroupeMultipleChoiceField(queryset=query2,widget=forms.CheckboxSelectMultiple,required=False)
+                if classe.semestres:
+                    self.fields['matieregroupeS1_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(groupe/S1)",required=False)
+                    query2 = Groupe.objects.filter(groupeeleve__classe=classe).prefetch_related('groupeeleve__user').distinct()
+                    self.fields['classegroupeS1_{}'.format(classe.pk)] = GroupeMultipleChoiceField(1,queryset=query2,widget=forms.CheckboxSelectMultiple,required=False)
+                    self.fields['matieregroupeS2_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(groupe/S2)",required=False)
+                    query2bis = Groupe.objects.filter(groupe2eleve__classe=classe).prefetch_related('groupe2eleve__user').distinct()
+                    self.fields['classegroupeS2_{}'.format(classe.pk)] = GroupeMultipleChoiceField(2,queryset=query2bis,widget=forms.CheckboxSelectMultiple,required=False)
+                    self.fields['matieregroupe_{}'.format(classe.pk)] = self.fields['matieregroupeS1_{}'.format(classe.pk)]
+                    self.fields['classegroupe_{}'.format(classe.pk)] = self.fields['classegroupeS1_{}'.format(classe.pk)]
+                else:
+                    self.fields['matieregroupe_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(groupe)",required=False)
+                    query2 = Groupe.objects.filter(groupeeleve__classe=classe).prefetch_related('groupeeleve__user').distinct()
+                    self.fields['classegroupe_{}'.format(classe.pk)] = GroupeMultipleChoiceField(1,queryset=query2,widget=forms.CheckboxSelectMultiple,required=False)
+                    self.fields['matieregroupeS1_{}'.format(classe.pk)] = self.fields['matieregroupe_{}'.format(classe.pk)]
+                    self.fields['classegroupeS1_{}'.format(classe.pk)] = self.fields['classegroupe_{}'.format(classe.pk)]
+                    self.fields['matieregroupeS2_{}'.format(classe.pk)] = self.fields['matieregroupe_{}'.format(classe.pk)]
+                    self.fields['classegroupeS2_{}'.format(classe.pk)] = self.fields['classegroupe_{}'.format(classe.pk)]
                 self.fields['matiereeleve_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(solo)",required=False)
                 query3 = Eleve.objects.filter(classe=classe).select_related('user')
                 self.fields['classeeleve_{}'.format(classe.pk)] = forms.ModelMultipleChoiceField(queryset=query3,widget=forms.CheckboxSelectMultiple,required=False)
                 colleurs = zip(listecolleurs,listematieres) if listecolleurs else False
-                self.champs.append((classe,prof,listeprofs,colleur,colleurs,self['matieregroupe_{}'.format(classe.pk)],self['classegroupe_{}'.format(classe.pk)],self['matiereeleve_{}'.format(classe.pk)],self['classeeleve_{}'.format(classe.pk)]))
+                self.champs.append((classe,prof,listeprofs,colleur,colleurs,self['matieregroupe_{}'.format(classe.pk)],self['classegroupe_{}'.format(classe.pk)],self['matieregroupeS1_{}'.format(classe.pk)],self['classegroupeS1_{}'.format(classe.pk)],
+                    self['matieregroupeS2_{}'.format(classe.pk)],self['classegroupeS2_{}'.format(classe.pk)],self['matiereeleve_{}'.format(classe.pk)],self['classeeleve_{}'.format(classe.pk)]))
         elif user.eleve and user.eleve.classe:
             classe = user.eleve.classe
             matieres = classe.matieres.all()
@@ -210,14 +232,29 @@ class EcrireForm(forms.ModelForm):
                 query = Colleur.objects.filter(classes=classe,matieres=matiere,user__is_active=True).select_related('user').order_by('user__last_name')
                 self.fields['classematiere_{}_{}'.format(classe.pk,matiere.pk)] = ColleurMultipleChoiceField(classe,True,queryset=query,widget=forms.CheckboxSelectMultiple,required=False)
                 listematieres.append(self['classematiere_{}_{}'.format(classe.pk,matiere.pk)])
-            self.fields['matieregroupe_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(groupe)",required=False)
-            query2 = Groupe.objects.filter(groupeeleve__classe=classe).prefetch_related('groupeeleve__user').distinct()
-            self.fields['classegroupe_{}'.format(classe.pk)] = GroupeMultipleChoiceField(queryset=query2,widget=forms.CheckboxSelectMultiple,required=False)
+            if classe.semestres:
+                self.fields['matieregroupeS1_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(groupe/S1)",required=False)
+                query2 = Groupe.objects.filter(groupeeleve__classe=classe).prefetch_related('groupeeleve__user').distinct()
+                self.fields['classegroupeS1_{}'.format(classe.pk)] = GroupeMultipleChoiceField(1,queryset=query2,widget=forms.CheckboxSelectMultiple,required=False)
+                self.fields['matieregroupeS2_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(groupe/S2)",required=False)
+                query2bis = Groupe.objects.filter(groupe2eleve__classe=classe).prefetch_related('groupe2eleve__user').distinct()
+                self.fields['classegroupeS2_{}'.format(classe.pk)] = GroupeMultipleChoiceField(2,queryset=query2bis,widget=forms.CheckboxSelectMultiple,required=False)
+                self.fields['matieregroupe_{}'.format(classe.pk)] = self.fields['matieregroupeS1_{}'.format(classe.pk)]
+                self.fields['classegroupe_{}'.format(classe.pk)] = self.fields['classegroupeS1_{}'.format(classe.pk)]
+            else:
+                self.fields['matieregroupe_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(groupe)",required=False)
+                query2 = Groupe.objects.filter(groupeeleve__classe=classe).prefetch_related('groupeeleve__user').distinct()
+                self.fields['classegroupe_{}'.format(classe.pk)] = GroupeMultipleChoiceField(1,queryset=query2,widget=forms.CheckboxSelectMultiple,required=False)
+                self.fields['matieregroupeS1_{}'.format(classe.pk)] = self.fields['matieregroupe_{}'.format(classe.pk)]
+                self.fields['classegroupeS1_{}'.format(classe.pk)] = self.fields['classegroupe_{}'.format(classe.pk)]
+                self.fields['matieregroupeS2_{}'.format(classe.pk)] = self.fields['matieregroupe_{}'.format(classe.pk)]
+                self.fields['classegroupeS2_{}'.format(classe.pk)] = self.fields['classegroupe_{}'.format(classe.pk)]
             self.fields['matiereeleve_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(solo)",required=False)
             query3 = Eleve.objects.filter(classe=classe).select_related('user')
             self.fields['classeeleve_{}'.format(classe.pk)] = forms.ModelMultipleChoiceField(queryset=query3,widget=forms.CheckboxSelectMultiple,required=False)
             colleurs = zip(listecolleurs,listematieres) if listecolleurs else False
-            self.champs.append((classe,prof,listeprofs,colleur,colleurs,self['matieregroupe_{}'.format(classe.pk)],self['classegroupe_{}'.format(classe.pk)],self['matiereeleve_{}'.format(classe.pk)],self['classeeleve_{}'.format(classe.pk)]))
+            self.champs.append((classe,prof,listeprofs,colleur,colleurs,self['matieregroupe_{}'.format(classe.pk)],self['classegroupe_{}'.format(classe.pk)],self['matieregroupeS1_{}'.format(classe.pk)],self['classegroupeS1_{}'.format(classe.pk)],
+                    self['matieregroupeS2_{}'.format(classe.pk)],self['classegroupeS2_{}'.format(classe.pk)],self['matiereeleve_{}'.format(classe.pk)],self['classeeleve_{}'.format(classe.pk)]))
         elif user.username=="Secrétariat" or user.username=="admin":
             self.adminsecret = 1
             self.fields['touscolleurs'] = forms.BooleanField(label="Tous les colleurs",required=False)
@@ -242,14 +279,29 @@ class EcrireForm(forms.ModelForm):
                     query = Colleur.objects.filter(classes=classe,matieres=matiere,user__is_active=True).select_related('user').order_by('user__last_name')
                     self.fields['classematiere_{}_{}'.format(classe.pk,matiere.pk)] = ColleurMultipleChoiceField(classe,True,queryset=query,widget=forms.CheckboxSelectMultiple,required=False)
                     listematieres.append(self['classematiere_{}_{}'.format(classe.pk,matiere.pk)])
-                self.fields['matieregroupe_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(groupe)",required=False)
-                query2 = Groupe.objects.filter(groupeeleve__classe=classe).prefetch_related('groupeeleve__user').distinct()
-                self.fields['classegroupe_{}'.format(classe.pk)] = GroupeMultipleChoiceField(queryset=query2,widget=forms.CheckboxSelectMultiple,required=False)
+                if classe.semestres:
+                    self.fields['matieregroupeS1_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(groupe/S1)",required=False)
+                    query2 = Groupe.objects.filter(groupeeleve__classe=classe).prefetch_related('groupeeleve__user').distinct()
+                    self.fields['classegroupeS1_{}'.format(classe.pk)] = GroupeMultipleChoiceField(1,queryset=query2,widget=forms.CheckboxSelectMultiple,required=False)
+                    self.fields['matieregroupeS2_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(groupe/S2)",required=False)
+                    query2bis = Groupe.objects.filter(groupe2eleve__classe=classe).prefetch_related('groupe2eleve__user').distinct()
+                    self.fields['classegroupeS2_{}'.format(classe.pk)] = GroupeMultipleChoiceField(2,queryset=query2bis,widget=forms.CheckboxSelectMultiple,required=False)
+                    self.fields['matieregroupe_{}'.format(classe.pk)] = self.fields['matieregroupeS1_{}'.format(classe.pk)]
+                    self.fields['classegroupe_{}'.format(classe.pk)] = self.fields['classegroupeS1_{}'.format(classe.pk)]
+                else:
+                    self.fields['matieregroupe_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(groupe)",required=False)
+                    query2 = Groupe.objects.filter(groupeeleve__classe=classe).prefetch_related('groupeeleve__user').distinct()
+                    self.fields['classegroupe_{}'.format(classe.pk)] = GroupeMultipleChoiceField(1,queryset=query2,widget=forms.CheckboxSelectMultiple,required=False)
+                    self.fields['matieregroupeS1_{}'.format(classe.pk)] = self.fields['matieregroupe_{}'.format(classe.pk)]
+                    self.fields['classegroupeS1_{}'.format(classe.pk)] = self.fields['classegroupe_{}'.format(classe.pk)]
+                    self.fields['matieregroupeS2_{}'.format(classe.pk)] = self.fields['matieregroupe_{}'.format(classe.pk)]
+                    self.fields['classegroupeS2_{}'.format(classe.pk)] = self.fields['classegroupe_{}'.format(classe.pk)]
                 self.fields['matiereeleve_{}'.format(classe.pk)]=forms.BooleanField(label="Élèves(solo)",required=False)
                 query3 = Eleve.objects.filter(classe=classe).select_related('user')
                 self.fields['classeeleve_{}'.format(classe.pk)] = forms.ModelMultipleChoiceField(queryset=query3,widget=forms.CheckboxSelectMultiple,required=False)
                 colleurs = zip(listecolleurs,listematieres) if listecolleurs else False
-                self.champs.append((classe,prof,listeprofs,colleur,colleurs,self['matieregroupe_{}'.format(classe.pk)],self['classegroupe_{}'.format(classe.pk)],self['matiereeleve_{}'.format(classe.pk)],self['classeeleve_{}'.format(classe.pk)]))
+                self.champs.append((classe,prof,listeprofs,colleur,colleurs,self['matieregroupe_{}'.format(classe.pk)],self['classegroupe_{}'.format(classe.pk)],self['matieregroupeS1_{}'.format(classe.pk)],self['classegroupeS1_{}'.format(classe.pk)],
+                    self['matieregroupeS2_{}'.format(classe.pk)],self['classegroupeS2_{}'.format(classe.pk)],self['matiereeleve_{}'.format(classe.pk)],self['classeeleve_{}'.format(classe.pk)]))
         self.colspan = len(self.champs)
         self.colspansubmit = self.colspan+1
         if user.eleve:
@@ -266,7 +318,6 @@ class EcrireForm(forms.ModelForm):
         self.destinataires = set()
         touscolleurs = tousprofs = touseleves = False
         for key,value in self.cleaned_data.items():
-            print(key,value)
             if self.user.username=="Secrétariat" or self.user.username=="admin":
                 if key == "touscolleurs" and value is True:
                     touscolleurs = True
@@ -285,8 +336,10 @@ class EcrireForm(forms.ModelForm):
             cle = key.split('_')[0]
             if cle == 'classematiere' or cle == 'classeprof' and not touscolleurs:
                 self.destinataires |= {colleur.user for colleur in value}
-            elif cle == 'classegroupe' and not touseleves:
+            elif (cle == 'classegroupe' or cle == "classegroupeS1") and not touseleves:
                 self.destinataires |= {eleve.user for eleve in Eleve.objects.filter(groupe__in=value)}
+            elif cle == "classegroupeS2" and not touseleves:
+                self.destinataires |= {eleve.user for eleve in Eleve.objects.filter(groupe2__in=value)}
             elif cle == 'classeeleve' and not touseleves:
                 self.destinataires |= {eleve.user for eleve in value}
         if not self.destinataires:

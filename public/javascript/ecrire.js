@@ -1,7 +1,9 @@
 //--------------------------------------------------------------------RÉCUPÉRATION DES CHECKBOX ---------------------------------------------------------
 
-var objUser = document.querySelectorAll("ul[id^=id_classe]"); // on met toutes les listes d'utilisateurs (profs,colleur,groupe) dans listeUser
+var objUserUl = document.querySelectorAll("ul[id^=id_classe]");
+var objUser = document.querySelectorAll("div[id^=id_classe]"); // on met toutes les listes d'utilisateurs (profs,colleur,groupe) dans listeUser
 var listeUser = new Array();
+for(var i=-1,l=objUserUl.length;++i!==l;listeUser[i]=objUserUl[i]);
 for(var i=-1,l=objUser.length;++i!==l;listeUser[i]=objUser[i]);
 
 var objmatieres = document.querySelectorAll("input[id^=id_matiere]"); // on met tous les checkbox: "Profs"/"Élève"/ "nom de matière" dans listeNiveau1

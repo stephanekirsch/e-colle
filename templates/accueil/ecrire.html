@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load customfilter %}
 {% block body %}
 
 <table class="accueil"><tr><td>Nouveau message</td></tr></table>
@@ -19,7 +20,7 @@
 			<td colspan="{{form.colspan}}"> {{form.admin.label_tag}} {{form.admin}}&nbsp;{{form.secret.label_tag}}  {{form.secret}} </td>
 		</tr>
 			{% endif %}
-			{% for classe, prof, profs, colleur, colleurs, groupe, groupes, eleve, eleves in form.champs %}
+			{% for classe, prof, profs, colleur, colleurs, groupe, groupes, groupeS1, groupesS1, groupeS2, groupesS2, eleve, eleves in form.champs %}
 			<td {% if forloop.last and form.reste %} colspan="2" {% endif %}>
 			<b>Classe de {{classe.nom}}</b><br/><br/>
 			{% with prof as formprof %}
@@ -42,10 +43,21 @@
 			{% endfor %}
 			</div>
 			{% endif %}
+			{% if classe.semestres == True %}
+			<div>{{ groupeS1.errors}}
+			{{ groupeS1 }} <b>{{groupeS1.label_tag}}</b></div>
+			{{ groupesS1.errors }}
+			{{ groupesS1 }}
+			<div>{{ groupeS2.errors}}
+			{{ groupeS2 }} <b>{{groupeS2.label_tag}}</b></div>
+			{{ groupesS2.errors }}
+			{{ groupesS2 }}
+			{% else %}
 			<div>{{ groupe.errors}}
 			{{ groupe }} <b>{{groupe.label_tag}}</b></div>
 			{{ groupes.errors }}
 			{{ groupes }}
+			{% endif %}
 			<div>{{ eleve.errors}}
 			{{ eleve }} <b>{{eleve.label_tag}}</b></div>
 			{{ eleves.errors }}
