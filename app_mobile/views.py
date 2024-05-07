@@ -225,7 +225,7 @@ def messages(request):
         groupes = list(Groupe.objects.filter(classe=classe).values('pk', 'nom'))
         matieres = list(Matiere.objects.filter(matieresclasse=classe).values('pk', 'nom', 'couleur', 'lv'))
         eleves = [{"id": eleve.pk, "nom": eleve.user.first_name.title() + " " + eleve.user.last_name.upper(), "login": login, "groupe": 0 if not eleve.groupe else eleve.groupe.pk,
-                   "lv1": 0 if not eleve.lv1 else eleve.lv1.pk, "lv2": 0 if not eleve.lv2 else eleve.lv2.pk} for eleve, login in classe.loginsEleves()]
+                   "lv1": 0 if not eleve.lv1 else eleve.lv1.pk, "lv2": 0 if not eleve.lv2 else eleve.lv2.pk, "option": 0 it not eleve.option else eleve.option.pk, "groupe2": 0 if not eleve.groupe2 else eleve.groupe2.pk} for eleve, login in classe.loginsEleves()]
         colleurs = [{"id": colleur.pk, "nom": colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), "login": login}
                     for colleur, login in classe.loginsColleurs()]
         profs = list(Prof.objects.filter(classe = classe).values('colleur__pk','matiere__pk'))
