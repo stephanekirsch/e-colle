@@ -9,6 +9,9 @@
 		<li><a href="{% url 'colloscope_eleve' %}">Colloscope</a></li>
 		<li><a href="{% url 'agenda_eleve' %}">Agenda</a></li>
 		<li><a href="{% url 'eleve_devoirs' %}">Documents</a></li>
+		{% if request.user.eleve.classe.hasPlanches %}
+		<li><a href="{% url 'eleve_planches' %}">Planches</a></li>
+		{% endif %}
 	</ul>
 </div>
 {% endblock %}

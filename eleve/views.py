@@ -1,10 +1,11 @@
 #-*- coding: utf-8 -*-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from eleve.forms import EleveConnexionForm, MatiereForm, CopieForm
+from eleve.forms import EleveConnexionForm, MatiereForm, CopieForm, PlancheForm
 from colleur.forms import SemaineForm
-from accueil.models import Note, Programme, Colle, Semaine, Groupe, Devoir, DevoirRendu, TD, Cours, Document, Config
+from accueil.models import Note, Programme, Colle, Semaine, Groupe, Devoir, DevoirRendu, TD, Cours, Document, Config, Planche
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib import messages
 from django.db.models import Max
 from datetime import date, datetime
 from pdf.pdf import Pdf
@@ -205,3 +206,68 @@ def autre(request):
 		docs = docs.filter(matiere = matiere)
 	docs = docs.order_by('-date_affichage')
 	return render(request,"eleve/autre.html", {'form': form, 'classe':classe, 'docs':docs, 'matiere': matiere})
+
+@user_passes_test(is_eleve, login_url='accueil')
+def planches(request):
+	"""renvoie la page des planches disponibles dans la classe et des planches planifiées de l'élève"""
+	if not request.user.eleve.classe or not request.user.eleve.classe.hasPlanches():
+		raise Http404
+	classe=request.user.eleve.classe
+	form=MatiereForm(classe,request.POST or None,planches=True)
+	matiere=False
+	if form.is_valid():
+		matiere=form.cleaned_data['matiere']
+	planches = Planche.objects.filter(classes=classe)
+	if matiere:
+		planches = planches.filter(matiere=matiere)
+	planchesEleve = Planche.objects.filter(eleve = request.user.eleve)
+	return render(request,"eleve/planches.html",{'form':form,"jours":['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],'planches':planches,'planchesEleve':planchesEleve,'classe':classe, 'matiere':matiere})
+
+
+@user_passes_test(is_eleve, login_url='accueil')
+def plancheAjout(request,id_planche):
+	if not request.user.eleve.classe or not request.user.eleve.classe.hasPlanches():
+		raise Http404
+	classe=request.user.eleve.classe
+	planche=get_object_or_404(Planche,pk=id_planche,classes=classe)
+	if planche.eleve is None:
+		dejaplanche = Planche.objects.filter(eleve=request.user.eleve,jour=planche.jour,semaine=planche.semaine,heure=planche.heure).exists()
+		if dejaplanche:
+			messages.error(request,"Vous avez déjà une planche sur ce créneau")
+			return redirect('eleve_planches')
+		planches = Planche.objects.filter(eleve=request.user.eleve,jour=planche.jour,colleur=planche.colleur,semaine=planche.semaine)
+		if planches.count() > 1:
+			messages.error(request,"Vous avec trop de créneaux avec ce colleur sur ce jour")
+			return redirect('eleve_planches')
+		else:
+			form = PlancheForm(request.user.eleve,request.POST or None, instance = planche)
+			if form.is_valid():
+				form.save()
+				return redirect('eleve_planches')
+			return render(request,"eleve/plancheAjout.html",{'planche': planche,'jours':['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],'form':form, 'modif':False})
+	else:
+		messages.error(request,"Ce créneau n'est pas libre")
+	return redirect('eleve_planches')
+
+@user_passes_test(is_eleve, login_url='accueil')
+def plancheSuppr(request,id_planche):
+	if not request.user.eleve.classe or not request.user.eleve.classe.hasPlanches():
+		raise Http404
+	classe=request.user.eleve.classe
+	planche=get_object_or_404(Planche,pk=id_planche,classes=classe,eleve=request.user.eleve)
+	planche.eleve = None
+	planche.commentaire = None
+	planche.save()
+	return redirect('eleve_planches')
+
+@user_passes_test(is_eleve, login_url='accueil')
+def plancheModif(request,id_planche):
+	if not request.user.eleve.classe or not request.user.eleve.classe.hasPlanches():
+		raise Http404
+	classe=request.user.eleve.classe
+	planche=get_object_or_404(Planche,pk=id_planche,classes=classe,eleve=request.user.eleve)
+	form = PlancheForm(request.user.eleve,request.POST or None, instance = planche)
+	if form.is_valid():
+		form.save()
+		return redirect('eleve_planches')
+	return render(request,"eleve/plancheAjout.html",{'planche': planche,'jours':['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],'form':form, 'modif':True})

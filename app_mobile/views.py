@@ -2,7 +2,7 @@ from django.shortcuts import HttpResponse, get_object_or_404
 from django.http import HttpResponseForbidden, Http404
 from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
-from accueil.models import Config, Note, Programme, Colle, Message, Destinataire, Creneau, Semaine, Groupe, Matiere, Classe, Eleve, User, Prof, Colleur, Devoir, DevoirRendu, DevoirCorrige, TD, Cours, Document
+from accueil.models import Config, Note, Programme, Colle, Message, Destinataire, Creneau, Semaine, Groupe, Matiere, Classe, Eleve, User, Prof, Colleur, Devoir, DevoirRendu, DevoirCorrige, TD, Cours, Document, Planche
 from django.utils import timezone
 import json
 from datetime import date, datetime, time, timedelta
@@ -164,6 +164,7 @@ def documents(request):
         matieresclasse=classe).values('pk', 'nom', 'couleur', 'lv'))
     return HttpResponse(json.dumps([matieres,devoirs,devoirsrendus,devoirscorriges,cours,tds,documents], default=date_serial))
 
+
 def colles(request):
     user = request.user
     if not checkeleve(user):
@@ -185,8 +186,39 @@ def colles(request):
                0 if not eleve.lv1 else eleve.lv1.pk, 0 if not eleve.lv2 else eleve.lv2.pk, 0 if not eleve.option else eleve.option.pk, 0 if not eleve.groupe2 else eleve.groupe2.pk] for eleve, login in classe.loginsEleves()]
     colleurs = [[colleur.pk, colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), login]
                 for colleur, login in classe.loginsColleurs()]
+    planches = Planche.objects.filter(classes=classe)
     return HttpResponse(json.dumps({'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
-                                    'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs}, default=date_serial))
+                                    'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'planches':planches}, default=date_serial))
+
+def inscriptionPlanche(request,id_planche,commentaire):
+    user = request.user
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
+    classe = request.user.eleve.classe
+    if classe is None:
+        return HttpResponseForbidden("no class")
+    planche = get_object_or_404(Planche,pk=id_planche,classes=classe)
+    if planche.eleve is not None:
+        return HttpResponseForbidden("not free")
+    planche.eleve = request.user.eleve
+    planche.commentaire = commentaire[:100]
+    planche.save()
+    return HttpResponse(json.dumps(planche.commentaire))
+
+
+def desinscriptionPlanche(request, id_planche):
+    user = request.user
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
+    classe = request.user.eleve.classe
+    if classe is None:
+        return HttpResponseForbidden("no class")
+    planche = get_object_or_404(Planche,pk=id_planche,classes=classe,eleve=request.user.eleve)
+    planche.eleve = None
+    planche.commentaire = ""
+    planche.save()
+    return HttpResponse("deleted")
+    
 
 # ------------------------- PARTIE MESSAGES ----------------------------
 
@@ -328,6 +360,7 @@ def colleurDonnees(request):
         classe__in=classes).values_list('pk', 'nom','classe__pk'))
     matieres = list(Matiere.objects.filter(
         matieresclasse__in=classes).distinct().values_list('pk', 'nom', 'couleur', 'lv'))
+    planches = Planche.objects.filter(colleur=colleur)
     eleves = []
     for classe in classes:
         eleves_classe = [[eleve[0].pk, eleve[0].user.first_name.title() + " " + eleve[0].user.last_name.upper(), eleve[1], 0 if not eleve[0].groupe else eleve[0].groupe.pk,
@@ -342,7 +375,7 @@ def colleurDonnees(request):
     return HttpResponse(json.dumps({'colleurmatieres': colleurmatieres, 'colleurclasses': colleurclasses,'classes': list(classes.values_list('id','nom','annee','semestres','option1','option2')),'pp': list(pp.values_list('id')), 'profs': list(profs | profspp), 'notes': Note.objects.listeNotesApp(user.colleur),
         'programmes': list(Programme.objects.filter(classe__in=user.colleur.classes.all()).order_by('-semaine__lundi').values_list('matiere__pk',
         'classe__pk', 'semaine__numero', 'semaine__lundi', 'titre', 'detail', 'fichier')), 'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
-                                    'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'semestre2': [[Config.objects.get_config().semestre2]]}, default=date_serial))
+                                    'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'semestre2': [[Config.objects.get_config().semestre2]], 'planches':planches}, default=date_serial))
 
 def deletegrade(request, note_id):
     """efface la note dont l'identifiant est note_id"""

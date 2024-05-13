@@ -85,7 +85,14 @@
 		{% endif %}
 		{% endwith %}
 		{% endif %}
-		<li><a href="#">Trombinoscope</a>
+		{% with user.colleur.allMatieresPlanches as matieresplanches %}
+		{% for matiere in matieresplanches %}
+		{% if request.session.matiere == matiere.pk %}
+		<li><a href="{% url 'colleur_planches' %}">Planches</a></li>
+		{% endif %}
+		{% endfor%}
+		{% endwith %}
+		<li><a href="#">Trombi</a>
 			<ul>
 		{% for classe in user.colleur.classes.all %}
 			{% if request.session.matiere in classe.matierespk %}

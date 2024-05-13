@@ -30,7 +30,13 @@
 	<td>{{colle.nom_classe}}</td>
 	{% endif %}
 	<td>{% if colle.salle %}{{colle.salle}}{% endif %}</td>
-	<td>{% if colle.jour <= jour %}{% if colle.nbnotes == 0 %}{% if colle.nom_groupe != '0' %}<a href="{% url 'collenote_colleur' colle.id_colles %}">{% elif colle.eleve%}<a href="{% url 'collenoteeleve_colleur' colle.id_colles %}">{% else %}<a href="{% url 'collenoteeleve_colleur' colle.id_colles %}">{% endif %}Noter</a>{% endif %}{% endif %}</td>
+	<td>{% if colle.is_planche %}
+	{% if colle.jour <= jour%}{% if colle.nbnotes == 0 %}
+	<a href="{% url 'planchenote_colleur' colle.id_planche %}">Noter</a>
+	{% endif %}{% endif %}
+	{% else %}
+	{% if colle.jour <= jour %}{% if colle.nbnotes == 0 %}{% if colle.nom_groupe != '0' %}<a href="{% url 'collenote_colleur' colle.id_colles %}">{% elif colle.eleve%}<a href="{% url 'collenoteeleve_colleur' colle.id_colles %}">{% else %}<a href="{% url 'collenoteeleve_colleur' colle.id_colles %}">{% endif %}Noter</a>{% endif %}{% endif %}</td>
+	{% endif %}
 </tr>
 {% endfor %}
 </table>

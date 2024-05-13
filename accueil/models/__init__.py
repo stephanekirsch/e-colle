@@ -10,6 +10,7 @@ from .semaine import Semaine
 from .note import Note
 from .colle import Colle
 from .eleve import Eleve
+from .planche import Planche
 from .ramassage import Ramassage, mois, Decompte
 from .contenttype import RestrictedImageField
 from .devoir import Devoir, DevoirRendu, DevoirCorrige, Cours, TD, Document

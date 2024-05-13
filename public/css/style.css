@@ -155,7 +155,7 @@ ul.accueil
 	background: -ms-linear-gradient(top,  #323232,  #5bbeff);
 	color:white; /* couleur du texte */
 	text-shadow: 2px 2px 2px black; /* quelques ombres sur le texte  */
-	width:79px;
+	width:72px;
 	font-weight : bold; /* on met le texte en gras */
 	font-size : 11px; /* taille du texte : 11 pixels */
 	line-height : 25px; /* on définit une hauteur pour chaque élément */

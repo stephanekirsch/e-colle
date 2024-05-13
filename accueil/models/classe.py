@@ -3,7 +3,9 @@ from django.db.models import Q
 from .groupe import Groupe
 from .eleve import Eleve
 from .config import Config
+from .matiere import Matiere
 from .autre import dictfetchall
+from .planche import Planche
 from django.db.models.functions import Lower, Upper, Concat, Substr
 from ecolle.settings import BDD
 
@@ -103,6 +105,12 @@ class Colleur(models.Model):
 
     def allprofs(self):
         return self.colleurprof.prefetch_related('classe').order_by('classe__annee','classe__nom')
+
+    def allMatieresPlanches(self):
+        return Matiere.objects.filter(planche=True,colleur=self)
+
+    def allProfPlanches(self):
+        return [(prof.matiere.pk,prof.classe.pk) for prof in self.colleurprof.all() if prof.matiere.planche == True]
 
     def allprofsmatieres(self):
         return [prof.matiere.pk for prof in self.colleurprof.all()]
@@ -344,3 +352,6 @@ class Classe(models.Model):
         with connection.cursor() as cursor:
             cursor.execute(requete, [self.id])
             return dictfetchall(cursor)
+
+    def hasPlanches(self):
+        return Planche.objects.filter(classes=self).exists()

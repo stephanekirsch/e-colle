@@ -1,0 +1,42 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<form method="POST">
+{% csrf_token %}
+<table class="tableausimple">
+{{ form.as_table }}
+<tr><td colspan="2"><input type = "submit", name ="td" value = "Valider"/></td></tr>
+</table>
+</form>
+<table class="accueil"><tr><td>Créneaux de planches en {{matiere}}</td></tr></table>
+{% for classe, planches in classesplanches %}
+<table class="accueil"><tr><td>{{classe}}</td></tr></table>
+<table class="tableausimple">
+	<tr class="entete">
+		<td>Date</td>
+		<td>Semaine</td>
+		<td>jour</td>
+		<td>Colleur</td>
+		<td>heure</td>
+		<td>Élève</td>
+		<td>Classes</td>
+		<td>Salle</td>
+		<td>Commentaire</td>
+	</tr>
+	{% for planche in planches %}
+	<tr>
+		<td>{{planche.get_date}}</td>
+		<td>S{{planche.semaine.numero}}</td>
+		<td>{{jours|lookup:planche.jour}}</td>
+		<td>{{planche.colleur}}</td>
+		<td>{{planche.heure|heurecolle}}</td>
+		<td>{% if planche.eleve == None %}Aucun{% else %}{{planche.eleve}}{% endif %}</td>
+		<td>{% for classe in planche.classes.all %}{% if forloop.first %}{{classe}}{% else %}/{{classe}}{% endif %}{% endfor %}</td>
+		<td>{% if planche.salle %}{{planche.salle}}{% endif %}</td>
+		<td>{% if planche.commentaire %}{{planche.commentaire}}{% endif %}</td>
+	</tr>
+	{% endfor %}
+</table>
+{% endfor %}
+{% endblock %}

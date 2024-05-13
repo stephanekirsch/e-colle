@@ -275,7 +275,7 @@ class ClasseGabaritForm(forms.ModelForm):
 class MatiereForm(forms.ModelForm):
     class Meta:
         model = Matiere
-        fields=['nom','lv','couleur','temps']
+        fields=['nom','lv','couleur','temps','planche']
 
     def save(self):
         classe = super().save(commit=False)
@@ -940,4 +940,6 @@ class CsvColleurForm(forms.Form):
                     user.colleur = colleur
                     user.set_password(mdp)
                 User.objects.bulk_create(self.users)
+
+
 

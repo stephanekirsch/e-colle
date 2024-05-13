@@ -118,7 +118,7 @@ ul.accueil
 	border: 1px solid black; /* on arrondit les angles */
  	background: #C7D8C6; /* si les dégradés non supportés */
 	color:black; /* couleur du texte */
-	width:80px;
+	width:72px;
 	font-weight : bold; /* on met le texte en gras */
 	font-size : 11px; /* taille du texte : 11 pixels */
 	line-height : 25px; /* on définit une hauteur pour chaque élément */

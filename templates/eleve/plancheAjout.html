@@ -1,0 +1,36 @@
+{% extends 'eleve/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil"><tr><td>{% if modif %}Modification d'une {% else %}Nouvelle {% endif %}planches en {{planche.matiere.nom|title}}</td></tr></table>
+<table class="tableausimple">
+	<tr>
+		<th>Semaine</th>
+		<td>S{{planche.semaine.numero}}</td>
+	</tr>
+	<tr>
+		<th>jour</th>
+		<td>{{jours|lookup:planche.jour}}</td>	
+	</tr>
+	<tr>
+		<th>date</th>
+		<td>{{planche.get_date}}</td>
+	</tr>
+	<tr>
+		<th>heure</th>
+		<td>{{planche.heure|heurecolle}}</td>
+	</tr>
+	<tr>
+		<th>Colleur</th>
+		<td>{{planche.colleur}}</td>
+	</tr>
+</table>
+
+<form method="POST">
+{% csrf_token %}
+<table class="tableausimple">
+{{ form.as_table }}
+<tr><td colspan="2"><input type = "submit", name ="td" value = "Valider"/></td></tr>
+</table>
+</form>
+{% endblock %}

@@ -41,6 +41,7 @@ class Matiere(models.Model):
     nom = models.CharField(max_length=20)
     nomcomplet = models.CharField(max_length=30, default="")
     couleur = models.CharField(max_length=7, choices=LISTE_COULEURS, default='#696969')
+    planche = models.BooleanField(default=False,blank=True)
     CHOIX_TEMPS = [
         (t, "{} min".format(t))
         for t in range(0,125,5)

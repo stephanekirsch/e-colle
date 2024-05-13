@@ -101,6 +101,13 @@ def tnext(iterable):
         return None
 
 @register.filter
+def hasMatiere(l,matiere_pk):
+    try:
+        return any(x == matiere_pk for x,y in l)
+    except Exception:
+        return False
+
+@register.filter
 def getLu(message,user):
     if message.auteur == user:
         return True, False

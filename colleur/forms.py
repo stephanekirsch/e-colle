@@ -1,13 +1,13 @@
 #-*- coding: utf-8 -*-
 from django import forms
-from accueil.models import Colleur, Colle, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS, NoteGlobaleECTS, Devoir, DevoirCorrige, DevoirRendu, TD, Cours, Document, Config
+from accueil.models import Colleur, Colle, Note, Semaine, Programme, Eleve, Creneau, Matiere, Groupe, MatiereECTS, NoteECTS, NoteGlobaleECTS, Devoir, DevoirCorrige, DevoirRendu, TD, Cours, Document, Config, Planche, Classe
 from django.db.models import Q, Count, Value
 from django.db.models.functions import Coalesce
 from datetime import date, timedelta
 from django.forms.widgets import SelectDateWidget
 from django.core.exceptions import ValidationError
 from xml.etree import ElementTree as etree
-from ecolle.settings import RESOURCES_ROOT, MEDIA_ROOT, IMAGEMAGICK
+from ecolle.settings import RESOURCES_ROOT, MEDIA_ROOT, IMAGEMAGICK, HEURE_DEBUT, HEURE_FIN, INTERVALLE
 from os.path import isfile,join
 from os import remove
 from copy import copy
@@ -17,6 +17,10 @@ import re
 from zipfile import ZipFile
 from unidecode import unidecode
 from django.core.files.base import ContentFile
+
+class CustomMultipleChoiceField(forms.ModelMultipleChoiceField):
+    def label_from_instance(*args,**kwargs):
+        return ""
 
 class ColleurConnexionForm(forms.Form):
         username = forms.CharField(label="Identifiant")
@@ -757,6 +761,77 @@ class DocumentForm(forms.ModelForm):
             query = query.exclude(pk = self.instance.pk)
         if query.exists():
             raise ValidationError("il existe déjà un document nommé '{}' dans la classe {} en {}".format(self.cleaned_data['titre'], self.classe, self.matiere))
+
+class PlancheForm(forms.ModelForm):
+    class Meta:
+        model = Planche
+        fields=['classes','semaine','jour','heure','salle']
+
+    def __init__(self,matiere,colleur,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.matiere = matiere
+        self.colleur = colleur
+        query = Classe.objects.filter(matieres=self.matiere,colleur=self.colleur)
+        self.fields['classes'].choices = [(x.pk,str(x)) for x in query]
+
+    def clean(self):
+        """vérifie que le colleur n'a pas déjà une planche sur ce créneau"""
+        query = Planche.objects.filter(semaine=self.cleaned_data['semaine'],jour=self.cleaned_data['jour'],heure=self.cleaned_data['heure'],colleur=self.colleur)
+        if self.instance:
+            query = query.exclude(pk = self.instance.pk)
+        if query.exists():
+            raise ValidationError("Vous avez déjà une planche sur ce créneau")
+
+class MultiPlancheForm(forms.ModelForm):
+    class Meta:
+        model = Planche
+        fields=['classes','semaine','jour','salle']
+
+    def __init__(self,matiere,colleur,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.matiere = matiere
+        self.colleur = colleur
+        query = Classe.objects.filter(matieres=self.matiere,colleur=self.colleur)
+        self.fields['classes'].choices = [(x.pk,str(x)) for x in query]
+        LISTE_HEURE=[(i,"{}h{:02d}".format(i//60,(i%60))) for i in range(HEURE_DEBUT,HEURE_FIN,INTERVALLE)] 
+        self.fields['heuredebut'] = forms.ChoiceField(choices=LISTE_HEURE,label="heure de début")
+        self.fields['heurefin'] = forms.ChoiceField(choices=LISTE_HEURE,label="heure de fin")
+
+    def clean(self):
+        """vérifie que le colleur n'a pas déjà une planche sur ce créneau"""
+        query = Planche.objects.filter(semaine=self.cleaned_data['semaine'],jour=self.cleaned_data['jour'],heure__gte=self.cleaned_data['heuredebut'],heure__lt=self.cleaned_data['heurefin'],colleur=self.colleur)
+        if query.exists():
+            raise ValidationError("Vous avez déjà une planche sur cette plage horaire")
+
+    def save(self):
+        """Sauvegarde des créneaux consécutifs"""
+        heure = int(self.cleaned_data['heuredebut'])
+        heurefin = int(self.cleaned_data['heurefin'])
+        while heure < heurefin:
+            planche = Planche(colleur=self.colleur, matiere=self.matiere, semaine=self.cleaned_data['semaine'], jour=self.cleaned_data['jour'], heure=heure, salle=self.cleaned_data['salle'])
+            planche.save()
+            planche.classes.set(self.cleaned_data['classes'])
+            heure += INTERVALLE
+
+
+class SelectPlancheForm(forms.Form):
+    def __init__(self,matiere=None,colleur=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        query = Planche.objects
+        if matiere:
+            query = query.filter(matiere=matiere)
+        if colleur:
+            query = query.filter(colleur=colleur)
+        self.fields['planche'] = CustomMultipleChoiceField(queryset=query, required=True,widget = forms.CheckboxSelectMultiple)
+        self.fields['planche'].empty_label=None
+        self.fields['salle'] = forms.CharField(label='Salle',max_length=20,required=False)
+
+class PlancheProfForm(forms.Form):
+    def __init__(self,matiere,classes,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        query = Colleur.objects.filter(matieres=matiere,classes__in=classes).order_by('user__last_name','user__first_name')
+        self.fields['colleur'] = forms.ModelChoiceField(label="Colleur",queryset=query,empty_label="Tous les colleurs",required=False)
+
 
    
         

@@ -1,0 +1,60 @@
+{% extends 'colleur/action.html' %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+<table class="accueil">
+	<tr>
+		<td><a href="{% url 'colleur_planche_ajout'%}">Ajouter un créneau</a></td>
+		<td><a href="{% url 'colleur_planches_ajout' %}">Ajouter plusieurs créneaux consécutifs</a></td>
+		{% if request.user.colleur.allProfPlanches|hasMatiere:matiere.pk %}
+		<td><a href="{% url 'prof_planches' %}">Planches des autres colleurs</a></td>
+		{% endif %}
+	</tr>
+</table>
+<table class="accueil"><tr><td>Créneaux de planches en {{matiere}}</td></tr></table>
+<form method="post">
+	{% csrf_token %}
+<table class="tableausimple" id="suppr">
+	<tr class="entete">
+		<td>Sélectionner</td>
+		<td>Date</td>
+		<td>Semaine</td>
+		<td>jour</td>
+		<td>heure</td>
+		<td>Élève</td>
+		<td>Classes</td>
+		<td>Salle</td>
+		<td>Commentaire</td>
+		<td>Modifier</td>
+		<td>Vider</td>
+		<td>Supprimer</td>
+	</tr>
+	{% for planche,widget in planches|tzip:form.planche %}
+	<tr><td>{{widget}}</td>
+		<td>{{planche.get_date}}</td>
+		<td>S{{planche.semaine.numero}}</td>
+		<td>{{jours|lookup:planche.jour}}</td>
+		<td>{{planche.heure|heurecolle}}</td>
+		<td>{% if planche.eleve == None%}aucun{% else %}{{planche.eleve}}{% endif %}</td>
+		<td>{% for classe in planche.classes.all %}{% if forloop.first %}{{classe}}{% else %}/{{classe}}{% endif %}{% endfor %}</td>
+		<td>{% if planche.salle %}{{planche.salle}}{% endif %}</td>
+		<td>{% if planche.commentaire %}{{planche.commentaire}}{% endif %}</td>
+		<td><a href="{% url 'colleur_planche_modif' planche.pk %}">Modifier</a></td>
+		<td><a href="{% url 'colleur_planche_vide' planche.pk %}">Vider</a></td>
+		<td><a href="{% url 'colleur_planche_suppr' planche.pk %}">Supprimer</a></td>
+	</tr>
+	{% endfor %}
+	<tr class="plusclair">
+			<td><label for = "check">Tout cocher</label><br/><input type="checkbox" id="check"/></td>
+			<td colspan="5"><input type="submit" value="passer la sélection en salle:" name="changesalle"/>{{form.salle}}</td>
+			<td colspan="3"><input type="submit" value="Vider la sélection" name="vider"/></td>
+			<td colspan="3"><input type="submit" value="Supprimer la sélection" name="supprimer"/></td>
+		</tr>
+</table>
+</form>
+{% endblock %}
+{% block javascript %}
+<script type="text/javascript" src="{% static 'javascript/suppression.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/vidage.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/selection.js' %}"></script>
+{% endblock %}

@@ -1,8 +1,8 @@
 #-*- coding: utf-8 -*-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from colleur.forms import ColleurConnexionForm, ProgrammeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteGlobaleEleveForm, NoteEleveFormSet, NoteGlobaleEleveFormSet, ECTSForm, SelectEleveNoteForm, NoteElevesHeadForm, NoteElevesTailForm, NoteElevesFormset, DevoirForm, CopieForm, CopiesForm, TDForm, CoursForm, DocumentForm
-from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, MatiereECTS, NoteECTS, NoteGlobaleECTS, Devoir, DevoirCorrige, DevoirRendu, Ramassage, Decompte, TD, Cours, Document
+from colleur.forms import ColleurConnexionForm, ProgrammeForm, SemaineForm, EleveForm, MatiereECTSForm, SelectEleveForm, NoteEleveForm, NoteGlobaleEleveForm, NoteEleveFormSet, NoteGlobaleEleveFormSet, ECTSForm, SelectEleveNoteForm, NoteElevesHeadForm, NoteElevesTailForm, NoteElevesFormset, DevoirForm, CopieForm, CopiesForm, TDForm, CoursForm, DocumentForm, PlancheForm, MultiPlancheForm, SelectPlancheForm, PlancheProfForm
+from accueil.models import Config, Colleur, Matiere, Prof, Classe, Note, Eleve, Semaine, Programme, Groupe, Creneau, Colle, MatiereECTS, NoteECTS, NoteGlobaleECTS, Devoir, DevoirCorrige, DevoirRendu, Ramassage, Decompte, TD, Cours, Document, Planche
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupemodif, mixtecolloscope, mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParColleur, mixteCSV, mixtegroupeSwap, mixtegroupeCreer, mixtegroupecsv, mixteColloscopeImport
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
@@ -76,6 +76,8 @@ def changemat(request,id_mat):
     """La matière courante du colleur devient la matière dont l'id est id_mat, puis redirige vers la page d'accueil des colleurs"""
     matiere=get_object_or_404(Matiere,pk=id_mat,colleur=request.user.colleur)
     request.session['matiere']=matiere.pk
+    if 'colleur' in request.session:
+        del request.session['colleur']
     return redirect('action_colleur')
 
 @user_passes_test(is_colleur, login_url='accueil')
@@ -522,6 +524,14 @@ def colleNote(request,id_colles):
     eleves_str = "-".join([str(x.pk) for x in eleves] + ["0"]*(3-eleves.count()))
     note = Note(semaine = colle.semaine, jour = colle.creneau.jour, heure = colle.creneau.heure)
     return noteEleves(request,classe.pk,eleves_str,note)
+
+@user_passes_test(is_colleur, login_url='accueil')
+def plancheNote(request,id_planche):
+    """Récupère la planche dont l'id est id_planche puis redirige vers la page de notation de l'élève sur la planche concernée"""
+    planche=get_object_or_404(Planche,pk=id_planche,colleur=request.user.colleur,matiere__in=request.user.colleur.matieres.all())
+    request.session['matiere']=planche.matiere.pk # on met à jour la matière courante
+    note = Note(semaine = planche.semaine, jour = planche.jour, heure = planche.heure)
+    return noteEleves(request, planche.eleve.classe.pk, str(planche.eleve.pk), note)
 
 @user_passes_test(is_colleur, login_url='accueil')
 def colleNoteEleve(request,id_colle):
@@ -1042,3 +1052,110 @@ def autreSuppr(request,id_doc):
         raise Http404
     doc.delete()
     return redirect('colleur_autre', doc.classe.pk)
+
+@user_passes_test(is_colleur, login_url='accueil')
+def planches(request):
+    """renvoie la page récapitulative des planches dans la matière dont l'id st id_matiere"""
+    matiere = get_object_or_404(Matiere,pk=request.session['matiere'],planche=True,colleur=request.user.colleur)
+    planches = Planche.objects.filter(colleur=request.user.colleur,matiere=matiere)
+    form = SelectPlancheForm(matiere,request.user.colleur,request.POST or None)
+    if form.is_valid():
+        if 'supprimer' in request.POST:
+            for planche in form.cleaned_data['planche']:
+                planche.delete()
+            return redirect('colleur_planches')
+        if 'vider' in request.POST:
+            for planche in form.cleaned_data['planche']:
+                planche.eleve = None
+                planche.commentaire = None
+                planche.save()
+            return redirect('colleur_planches')
+        if 'changesalle' in request.POST:
+            for planche in form.cleaned_data['planche']:
+                planche.salle = form.cleaned_data['salle']
+                planche.save()
+            return redirect('colleur_planches')
+    return render(request,"colleur/planches.html",{"matiere":matiere,"jours":['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],'planches':planches,'form':form})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def plancheAjout(request):
+    """renvoie la page d'ajout de planches individuelles"""
+    matiere = get_object_or_404(Matiere,pk=request.session['matiere'],planche=True,colleur=request.user.colleur)
+    planche = Planche(colleur=request.user.colleur,matiere=matiere)
+    form=PlancheForm(matiere,request.user.colleur,request.POST or None,instance=planche)
+    if form.is_valid():
+        form.save()
+        return redirect('colleur_planches')
+    return render(request,"colleur/plancheajout.html",{"form":form,"matiere":matiere,"modif":False})
+
+user_passes_test(is_colleur, login_url='accueil')
+def plancheModif(request, id_planche):
+    """renvoie la page de modification de planches individuelle"""
+    matiere = get_object_or_404(Matiere,pk=request.session['matiere'],planche=True,colleur=request.user.colleur)
+    planche = get_object_or_404(Planche,pk=id_planche)
+    form=PlancheForm(matiere,request.user.colleur,request.POST or None,instance=planche)
+    if form.is_valid():
+        form.save()
+        return redirect('colleur_planches')
+    return render(request,"colleur/plancheajout.html",{"form":form,"matiere":matiere,"modif":True})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def plancheSuppr(request,id_planche):
+    """supprime la planche dont l'id est id_planche"""
+    planche = get_object_or_404(Planche,pk=id_planche)
+    planche.delete()
+    return redirect('colleur_planches')
+
+@user_passes_test(is_colleur, login_url='accueil')
+def plancheVide(request,id_planche):
+    """vide la planche dont l'id est id_planche (elève l'élève qui y est inscrit)"""
+    planche = get_object_or_404(Planche,pk=id_planche)
+    planche.eleve = None
+    planche.commentaire = None
+    planche.save()
+    return redirect('colleur_planches')
+
+@user_passes_test(is_colleur, login_url='accueil')
+def planchesAjout(request):
+    """renvoie la page d'ajout de multiples planches consécutives"""
+    matiere = get_object_or_404(Matiere,pk=request.session['matiere'],planche=True,colleur=request.user.colleur)
+    planches = Planche.objects.filter(colleur=request.user.colleur,matiere=matiere)
+    planche = Planche(colleur=request.user.colleur,matiere=matiere)
+    form=MultiPlancheForm(matiere,request.user.colleur,request.POST or None,instance=planche)
+    if form.is_valid():
+        form.save()
+        return redirect('colleur_planches')
+    return render(request,"colleur/planchesajout.html",{"form":form,"matiere":matiere})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def profPlanches(request):
+    """renvoie la page des planches des autres colleurs de la même matières dans la classe où le colleur courant est professeur"""
+    matiere = get_object_or_404(Matiere, pk=request.session['matiere'])
+    profs = Prof.objects.filter(matiere=matiere,colleur=request.user.colleur).order_by('classe__nom')
+    if 'colleur' in request.session:
+        colleur = get_object_or_404(Colleur,pk = request.session['colleur'],matieres=matiere)
+        initial = {'colleur':colleur}
+    else:
+        colleur = None
+        initial = {"colleur":None}
+    if colleur is None:
+        classes = [prof.classe for prof in profs]
+    else:
+        classes = [prof.classe for prof in profs if prof.classe in colleur.classes.all()]
+    planches = []
+    for classe in classes:
+        planchesclasses = Planche.objects.filter(classes=classe,matiere=matiere)
+        if colleur is not None:
+            planchesclasses.filter(colleur=colleur)
+        planchesclasses = planchesclasses.order_by('semaine__lundi','jour','colleur','heure')
+        planches.append(planchesclasses)
+    form = PlancheProfForm(matiere,classes,request.POST or None,initial=initial)
+    if form.is_valid():
+        print(form.cleaned_data)
+        if form.cleaned_data['colleur'] is None:
+            if 'colleur' in request.session:
+                del request.session['colleur']
+        else:
+            request.session['colleur'] = form.cleaned_data['colleur'].pk
+        return redirect('prof_planches')
+    return render(request,"colleur/profplanches.html",{'form':form, 'matiere':matiere, 'jours':['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'], 'classesplanches':zip(classes,planches)})

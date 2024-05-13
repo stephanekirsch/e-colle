@@ -7,6 +7,7 @@
 			<td>Nom</td>
 			<td>Langue</td>
 			<td>Minutes/colle/élève</td>
+			<td>Planche</td>
 			<td>Modifier</td>
 			<td>Supprimer</td>
 		</tr>
@@ -15,6 +16,7 @@
 			<td style="background-color:{{matiere.couleur}}">{{ matiere.nom|title}}</td>
 			<td>{% if matiere.lv %}LV{{matiere.lv}}{% endif %}</td>
 			<td>{{matiere.temps}}</td>
+			<td>{% if matiere.planche %}✓{% endif %}</td>
 			<td><a class="bouton" href="{% url 'modif_matiere' matiere.pk %}">Modifier</a></td>
 			<td><a class="bouton" href="{% url 'suppr_matiere' matiere.pk %}">Supprimer</a></td>
 		</tr>
