@@ -187,6 +187,7 @@ def colles(request):
     colleurs = [[colleur.pk, colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), login]
                 for colleur, login in classe.loginsColleurs()]
     planches = Planche.objects.filter(classes=classe)
+    planches = [{"colleur_id":planche.colleur.pk, "student_id": 0 if not planche.eleve else planche.eleve.pk, "matiere":planche.matiere.pk, "classe": "/".join(classe.nom for classe in planche.classes.all()), "semaine": planche.semaine.numero, "commentaire": "" if planche.commentaire is None else planche.commentaire, "time": planche.get_utc_timestamp(), "salle": "" if planche.salle is None else planche.salle} for planche in planches]
     return HttpResponse(json.dumps({'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
                                     'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'planches':planches}, default=date_serial))
 
@@ -360,7 +361,8 @@ def colleurDonnees(request):
         classe__in=classes).values_list('pk', 'nom','classe__pk'))
     matieres = list(Matiere.objects.filter(
         matieresclasse__in=classes).distinct().values_list('pk', 'nom', 'couleur', 'lv'))
-    planches = Planche.objects.filter(colleur=colleur)
+    planches = Planche.objects.filter(colleur=user.colleur)
+    planches = [{"colleur_id":planche.colleur.pk, "student_id": 0 if not planche.eleve else planche.eleve.pk, "matiere":planche.matiere.pk, "classe": "/".join(classe.nom for classe in planche.classes.all()), "semaine": planche.semaine.numero, "commentaire": "" if planche.commentaire is None else planche.commentaire, "time": planche.get_utc_timestamp(), "salle": "" if planche.salle is None else planche.salle} for planche in planches]
     eleves = []
     for classe in classes:
         eleves_classe = [[eleve[0].pk, eleve[0].user.first_name.title() + " " + eleve[0].user.last_name.upper(), eleve[1], 0 if not eleve[0].groupe else eleve[0].groupe.pk,

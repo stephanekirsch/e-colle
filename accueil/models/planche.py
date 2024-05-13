@@ -1,5 +1,6 @@
 from django.db import models
-from datetime import timedelta, datetime
+from django.utils import timezone
+from datetime import timedelta, datetime, time
 from ecolle.settings import HEURE_DEBUT, HEURE_FIN, INTERVALLE
 
 class Planche(models.Model):
@@ -23,6 +24,10 @@ class Planche(models.Model):
 
     def get_date(self):
         return (self.semaine.lundi + timedelta(days=self.jour,minutes=self.heure)).strftime("%d/%m/%Y")
+
+    def get_utc_timestamp(self):
+        return int(datetime.combine(self.semaine.lundi + timedelta(days=self.jour),
+                time(self.heure // 60, self.heure % 60)).replace(tzinfo=timezone.utc).timestamp())
 
     def __str__(self):
         return "{} {}, S{},{} {}h{:02d}".format(self.colleur.user.first_name.title(),self.colleur.user.last_name.upper(),self.semaine.numero,self.JOURS[self.jour],int(self.heure)//60,int(self.heure)%60)
