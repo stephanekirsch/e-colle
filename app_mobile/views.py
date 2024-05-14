@@ -362,7 +362,7 @@ def colleurDonnees(request):
     matieres = list(Matiere.objects.filter(
         matieresclasse__in=classes).distinct().values_list('pk', 'nom', 'couleur', 'lv'))
     planches = Planche.objects.filter(colleur=user.colleur)
-    planches = [{"colleur_id":planche.colleur.pk, "student_id": 0 if not planche.eleve else planche.eleve.pk, "matiere":planche.matiere.pk, "classe": "/".join(classe.nom for classe in planche.classes.all()), "semaine": planche.semaine.numero, "commentaire": "" if planche.commentaire is None else planche.commentaire, "time": planche.get_utc_timestamp(), "salle": "" if planche.salle is None else planche.salle} for planche in planches]
+    planches = [[planche.pk, 0 if not planche.eleve else planche.eleve.pk, planche.colleur.pk, planche.matiere.pk, "/".join(classe.nom for classe in planche.classes.all()),  planche.semaine.numero, planche.get_utc_timestamp(), "" if planche.commentaire is None else planche.commentaire, "" if planche.salle is None else planche.salle] for planche in planches]
     eleves = []
     for classe in classes:
         eleves_classe = [[eleve[0].pk, eleve[0].user.first_name.title() + " " + eleve[0].user.last_name.upper(), eleve[1], 0 if not eleve[0].groupe else eleve[0].groupe.pk,
