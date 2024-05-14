@@ -187,7 +187,7 @@ def colles(request):
     colleurs = [[colleur.pk, colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), login]
                 for colleur, login in classe.loginsColleurs()]
     planches = Planche.objects.filter(classes=classe)
-    planches = [{"colleur_id":planche.colleur.pk, "student_id": 0 if not planche.eleve else planche.eleve.pk, "matiere":planche.matiere.pk, "classe": "/".join(classe.nom for classe in planche.classes.all()), "semaine": planche.semaine.numero, "commentaire": "" if planche.commentaire is None else planche.commentaire, "time": planche.get_utc_timestamp(), "salle": "" if planche.salle is None else planche.salle} for planche in planches]
+    planches = [[planche.pk, 0 if not planche.eleve else planche.eleve.pk, str(planche.colleur.user), planche.matiere.nom, "/".join(classe.nom for classe in planche.classes.all()),  planche.semaine.numero, planche.get_utc_timestamp(), "" if planche.commentaire is None else planche.commentaire, "" if planche.salle is None else planche.salle] for planche in planches]
     return HttpResponse(json.dumps({'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
                                     'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'planches':planches}, default=date_serial))
 
