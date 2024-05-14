@@ -1141,7 +1141,7 @@ def profPlanches(request):
     if colleur is None:
         classes = [prof.classe for prof in profs]
     else:
-        classes = [prof.classe for prof in profs if prof.classe in colleur.classes.all()]
+        classes = [prof.classe for prof in profs if prof.classe in colleur.classes.all() and matiere in colleur.matiere.all()]
     planches = []
     for classe in classes:
         planchesclasses = Planche.objects.filter(classes=classe,matiere=matiere)
