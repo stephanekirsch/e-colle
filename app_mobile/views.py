@@ -191,20 +191,23 @@ def colles(request):
     return HttpResponse(json.dumps({'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
                                     'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'planches':planches}, default=date_serial))
 
-def inscriptionPlanche(request,id_planche,commentaire):
+@csrf_exempt
+def inscriptionPlanche(request):
     user = request.user
     if not checkeleve(user):
         return HttpResponseForbidden("not authenticated")
     classe = request.user.eleve.classe
     if classe is None:
         return HttpResponseForbidden("no class")
+    id_planche = int(request.POST['id_planche'])
+    commentaire = request.POST['commentaire']
     planche = get_object_or_404(Planche,pk=id_planche,classes=classe)
     if planche.eleve is not None:
         return HttpResponseForbidden("not free")
     planche.eleve = request.user.eleve
     planche.commentaire = commentaire[:100]
     planche.save()
-    return HttpResponse(json.dumps(planche.commentaire))
+    return HttpResponse(json.dumps({"commentaire":planche.commentaire}))
 
 
 def desinscriptionPlanche(request, id_planche):
