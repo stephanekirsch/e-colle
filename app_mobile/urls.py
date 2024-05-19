@@ -24,6 +24,6 @@ urlpatterns = [
     re_path(r'^addmessage$', views.addmessage, name="add_message_app_mobile"),
     re_path(r'^documents$', views.documents, name="documents_app_mobile"),
     re_path(r'^documentsprof$', views.documents_prof, name="documentsprof_app_mobile"),
-    re_path(r'^inscriptionplanche$', views.documents_prof, name="inscriptionplanche_app_mobile"),
-    re_path(r'^deinscriptionplanche/(\d+)$', views.documents_prof, name="deinscriptionplanche_app_mobile"),
+    re_path(r'^inscriptionplanche$', views.inscriptionPlanche, name="inscriptionplanche_app_mobile"),
+    re_path(r'^deinscriptionplanche/(\d+)$', views.desinscriptionPlanche, name="deinscriptionplanche_app_mobile"),
 ]
