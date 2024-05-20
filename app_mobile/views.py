@@ -202,7 +202,7 @@ def inscriptionPlanche(request):
     id_planche = int(request.POST['id_planche'])
     commentaire = request.POST['commentaire']
     planche = get_object_or_404(Planche,pk=id_planche,classes=classe)
-    if planche.eleve is not None:
+    if planche.eleve is not None and planche.eleve != request.user.eleve:
         return HttpResponseForbidden("not free")
     planche.eleve = request.user.eleve
     planche.commentaire = commentaire[:100]
