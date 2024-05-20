@@ -202,8 +202,14 @@ def inscriptionPlanche(request):
     id_planche = int(request.POST['id_planche'])
     commentaire = request.POST['commentaire']
     planche = get_object_or_404(Planche,pk=id_planche,classes=classe)
+    dejaplanche = Planche.objects.filter(eleve=request.user.eleve,jour=planche.jour,semaine=planche.semaine,heure=planche.heure).exists()
+    if dejaplanche:
+        return HttpResponseForbidden("Vous avez déjà une planche sur ce créneau")
+    planches = Planche.objects.filter(eleve=request.user.eleve,jour=planche.jour,colleur=planche.colleur,semaine=planche.semaine)
+    if planches.count() > (1 + int(planche.eleve == request.user.eleve)):
+        return HttpResponseForbidden("Vous avez trop de planches avec ce colleur sur ce créneau")
     if planche.eleve is not None and planche.eleve != request.user.eleve:
-        return HttpResponseForbidden("not free")
+        return HttpResponseForbidden("Ce créneau est déjà occupé par une autre élève")
     planche.eleve = request.user.eleve
     planche.commentaire = commentaire[:100]
     planche.save()
