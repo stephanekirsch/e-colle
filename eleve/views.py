@@ -220,6 +220,7 @@ def planches(request):
 	planches = Planche.objects.filter(classes=classe)
 	if matiere:
 		planches = planches.filter(matiere=matiere)
+	planches = planches.order_by('matiere','semaine__numero','jour','colleur__user__last_name','colleur__user__first_name','heure')
 	planchesEleve = Planche.objects.filter(eleve = request.user.eleve).order_by('matiere','semaine__numero','jour','colleur__user__last_name','colleur__user__first_name','heure')
 	return render(request,"eleve/planches.html",{'form':form,"jours":['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],'planches':planches,'planchesEleve':planchesEleve,'classe':classe, 'matiere':matiere})
 
