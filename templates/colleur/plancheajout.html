@@ -11,3 +11,7 @@
 </table>
 </form>
 {% endblock %}
+{% block javascript %}
+<input type="hidden" id="geturl" value="{% url 'colleur_maj_eleves' 0 %}">
+<script type="text/javascript" src="{% static 'javascript/update_eleve.js' %}"></script>
+{% endblock %}

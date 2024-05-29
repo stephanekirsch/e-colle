@@ -12,6 +12,7 @@ from datetime import date
 from django.http import Http404, HttpResponse, HttpResponseForbidden, FileResponse
 from django.forms.formsets import formset_factory
 from pdf.pdf import Pdf, creditsects, attestationects, trombinoscopePdf
+import json
 import os
 import csv
 from zipfile import ZipFile
@@ -1159,3 +1160,13 @@ def profPlanches(request):
             request.session['colleur'] = form.cleaned_data['colleur'].pk
         return redirect('prof_planches')
     return render(request,"colleur/profplanches.html",{'form':form, 'matiere':matiere, 'jours':['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'], 'classesplanches':zip(classes,planches)})
+
+@user_passes_test(is_colleur, login_url='accueil')
+def majEleves(request,classes_id):
+    """renvoie un fichier json des élèves des classes concernées"""
+    matiere = get_object_or_404(Matiere, pk=request.session['matiere'])
+    classes = classes_id.split("-")
+    classes = [int(x) for x in classes]
+    classes = Classe.objects.filter(matieres = matiere, pk__in = classes)
+    eleves = Eleve.objects.filter(classe__in = classes).order_by("classe__nom","user__last_name","user__first_name").values("pk","classe__nom","user__first_name","user__last_name")
+    return HttpResponse(json.dumps([{'pk':eleve['pk'], 'nom': "{} {} ({})".format(eleve['user__first_name'].title(), eleve['user__last_name'].upper(), eleve['classe__nom'])} for eleve in eleves]))

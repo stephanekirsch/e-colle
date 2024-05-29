@@ -765,7 +765,8 @@ class DocumentForm(forms.ModelForm):
 class PlancheForm(forms.ModelForm):
     class Meta:
         model = Planche
-        fields=['classes','semaine','jour','heure','salle']
+        fields=['classes','semaine','jour','heure','salle','eleve']
+        widgets = {'classes':forms.CheckboxSelectMultiple}
 
     def __init__(self,matiere,colleur,*args,**kwargs):
         super().__init__(*args,**kwargs)
@@ -773,6 +774,10 @@ class PlancheForm(forms.ModelForm):
         self.colleur = colleur
         query = Classe.objects.filter(matieres=self.matiere,colleur=self.colleur)
         self.fields['classes'].choices = [(x.pk,str(x)) for x in query]
+        if self.instance:
+            self.fields['eleve'].choices = [(None, 'personne')] + [(eleve['pk'],"{} {} ({})".format(eleve["user__last_name"].upper(),eleve["user__first_name"].title(),eleve["classe__nom"])) for eleve in Eleve.objects.filter(classe__in=self.instance.classes.all()).order_by("classe__nom","user__last_name","user__first_name").values("pk","classe__nom","user__first_name","user__last_name")]
+        else:
+             self.fields['eleve'].choices = [(None, 'personne')]
 
     def clean(self):
         """vérifie que le colleur n'a pas déjà une planche sur ce créneau"""
@@ -811,7 +816,7 @@ class MultiPlancheForm(forms.ModelForm):
             planche = Planche(colleur=self.colleur, matiere=self.matiere, semaine=self.cleaned_data['semaine'], jour=self.cleaned_data['jour'], heure=heure, salle=self.cleaned_data['salle'])
             planche.save()
             planche.classes.set(self.cleaned_data['classes'])
-            heure += INTERVALLE
+            heure += self.matiere.temps
 
 
 class SelectPlancheForm(forms.Form):

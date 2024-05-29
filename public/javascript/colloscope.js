@@ -7,7 +7,6 @@ deroul.parentNode.removeChild(deroul);
 var grise=document.getElementById('grise');
 var colleurs=document.getElementById('id_colleur');
 var matcolleur=document.getElementById('id_matiere');
-console.log(matcolleur);
 var opt=document.createElement('option');
 var semestre2=parseInt(document.getElementById('semestre2').value);
 var semestres;

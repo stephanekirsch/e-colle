@@ -81,4 +81,5 @@ re_path(r'^action/planche/modif/(\d+)$', views.plancheModif ,name="colleur_planc
 re_path(r'^action/planche/ajouts$', views.planchesAjout ,name="colleur_planches_ajout"),
 re_path(r'^action/planche/suppr/(\d+)$', views.plancheSuppr ,name="colleur_planche_suppr"),
 re_path(r'^action/planche/vide/(\d+)$', views.plancheVide ,name="colleur_planche_vide"),
+re_path(r'^action/planche/majeleves/(\d+(?:-\d+)*)$', views.majEleves ,name="colleur_maj_eleves"),
 ]
