@@ -774,7 +774,7 @@ class PlancheForm(forms.ModelForm):
         self.colleur = colleur
         query = Classe.objects.filter(matieres=self.matiere,colleur=self.colleur)
         self.fields['classes'].choices = [(x.pk,str(x)) for x in query]
-        if self.instance:
+        if self.instance.pk:
             self.fields['eleve'].choices = [(None, 'personne')] + [(eleve['pk'],"{} {} ({})".format(eleve["user__last_name"].upper(),eleve["user__first_name"].title(),eleve["classe__nom"])) for eleve in Eleve.objects.filter(classe__in=self.instance.classes.all()).order_by("classe__nom","user__last_name","user__first_name").values("pk","classe__nom","user__first_name","user__last_name")]
         else:
              self.fields['eleve'].choices = [(None, 'personne')]
