@@ -683,7 +683,7 @@ def creditsects(form,elev,classe):
 										,('ALIGN',(1,0),(2,-1),'CENTRE')
 										,('ALIGN',(0,0),(2,0),'CENTRE')] + [('SPAN',(0,x),(2,x)) for x in lignes] + [('SIZE',(0,x),(2,x),9) for x in lignes]\
 									 + [('ALIGN',(0,x),(2,x),'CENTRE') for x in lignes] + [('BACKGROUND',(0,x),(2,x),'#DDDDDD') for x in lignes])
-			t=Table(data,colWidths=[13*cm,2.8*cm,2.5*cm],rowHeights=[.8*cm]*(len(data)))
+			t=Table(data,colWidths=[13*cm,2.8*cm,2.5*cm],rowHeights=[.7*cm]*(len(data)))
 			t.setStyle(LIST_STYLE)
 			w,h=t.wrapOn(pdf,0,0)
 			pdf.y-=h+5
