@@ -254,7 +254,7 @@ class NoteECTSManager(models.Manager):
                 return False, list(zip(zip(*[note for note in listeNotes]), notes, notesbis))
         if classe.annee == 1:
             return True, [notes]
-        return True, zip(notes,notesbis)
+        return False, zip(notes,notesbis)
 
     def noteEleves(self,matiere,listeEleves):
         requete = "SELECT u.first_name prenom, u.last_name nom, ne1.note semestre1, ne2.note semestre2\
