@@ -211,11 +211,13 @@ def resultat2(request,id_classe,id_semin,id_semax):
     nbSemaines = Note.objects.nbSemaines(matiere,classe,semin,semax)
     semaines = next(generateur)
     isprof = is_prof(request.user,matiere,classe)
-    stat_colleurs = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).exclude(note__gt=20).values('colleur__user__first_name','colleur__user__last_name').distinct().order_by('colleur__user__last_name','colleur__user__first_name').annotate(moy=Avg('note'),minimum=Min('note'),maximum=Max('note'),ecarttype=StdDev('note')) if isprof else False
-    heures_colleurs = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).values('colleur').order_by('colleur__user__last_name','colleur__user__first_name').annotate(nb=Count('pk')).annotate(heures = matiere.temps*F('nb')) if isprof else False
+    stat_colleurs = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).exclude(note__gt=20).values('colleur').distinct().order_by('colleur__user__last_name','colleur__user__first_name').annotate(moy=Avg('note'),minimum=Min('note'),maximum=Max('note'),ecarttype=StdDev('note')) if isprof else False
+    heures_colleurs = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).values('colleur','colleur__user__first_name','colleur__user__last_name').order_by('colleur__user__last_name','colleur__user__first_name').annotate(nb=Count('pk')).annotate(heures = matiere.temps*F('nb')) if isprof else False
     stat_global = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).exclude(note__gt=20).aggregate(moy=Avg('note'),minimum=Min('note'),maximum=Max('note'),ecarttype=StdDev('note')) if isprof else False
     heures_global = Note.objects.filter(classe=classe,matiere=matiere,semaine__lundi__range=(semin.lundi,semax.lundi)).aggregate(nb=Count('pk'))['nb']*matiere.temps if isprof else False
-    return render(request,"colleur/resultat.html",{'largeur': 450+41*nbSemaines,'form':form,'classe':classe,'semaines':semaines,'matiere':matiere,'notes':generateur,'isprof':isprof,'semin':semin,'semax':semax,'stats':zip(stat_colleurs,heures_colleurs) if isprof else False, 'stat_global':stat_global, 'heures_global': heures_global })
+    stat_colleurs = {x['colleur']:("{:.1f}".format(x['moy']),x['minimum'],x['maximum'],"{:.1f}".format(x['ecarttype'])) for x in stat_colleurs}
+    stat_colleurs = [(x['colleur__user__first_name'],x['colleur__user__last_name']) + ( ("-","-","-","-") if x['colleur'] not in stat_colleurs else stat_colleurs[x['colleur']] ) + (x['heures'],) for x in heures_colleurs]
+    return render(request,"colleur/resultat.html",{'largeur': 450+41*nbSemaines,'form':form,'classe':classe,'semaines':semaines,'matiere':matiere,'notes':generateur,'isprof':isprof,'semin':semin,'semax':semax,'stats':stat_colleurs if isprof else False, 'stat_global':stat_global, 'heures_global': heures_global })
 
 @user_passes_test(is_colleur, login_url='accueil')
 def resultatcsv(request,id_classe,id_semin,id_semax):
@@ -847,7 +849,6 @@ def devoirModif(request,id_devoir):
     devoir=get_object_or_404(Devoir,pk=id_devoir)
     if not is_prof(request.user,devoir.matiere,devoir.classe):
         raise Http404
-    print(devoir.a_rendre_jour)
     form=DevoirForm(devoir.matiere, devoir.classe, request.POST or None,request.FILES or None, instance=devoir)
     oldfile=os.path.join(MEDIA_ROOT,devoir.fichier.name) if devoir.fichier else False
     oldfilecorrige=os.path.join(MEDIA_ROOT,devoir.corrige.name) if devoir.corrige else False
@@ -1152,7 +1153,6 @@ def profPlanches(request):
         planches.append(planchesclasses)
     form = PlancheProfForm(matiere,classes,request.POST or None,initial=initial)
     if form.is_valid():
-        print(form.cleaned_data)
         if form.cleaned_data['colleur'] is None:
             if 'colleur' in request.session:
                 del request.session['colleur']

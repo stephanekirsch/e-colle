@@ -61,14 +61,14 @@
 	<td>{{stat_global.ecarttype|floatformat:1}}</td>
 	<td>{{heures_global|heurecolle}}</td>
 </tr>
-{% for value, heures in stats %}
+{% for value in stats %}
 <tr {% cycle '' 'class="plusclair"'%} >
-	<td>{{value.colleur__user__first_name|title}} {{value.colleur__user__last_name|upper}}</td>
-	<td>{{value.moy|floatformat:1}}</td>
-	<td>{{value.minimum}}</td>
-	<td>{{value.maximum}}</td>
-	<td>{{value.ecarttype|floatformat:1}}</td>
-	<td>{{heures.heures|heurecolle}}</td>
+	<td>{{value.0|title}} {{value.1|upper}}</td>
+	<td>{{value.2}}</td>
+	<td>{{value.3}}</td>
+	<td>{{value.4}}</td>
+	<td>{{value.5}}</td>
+	<td>{{value.6|heurecolle}}</td>
 </tr>
 {% endfor %}
 </table>
