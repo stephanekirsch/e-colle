@@ -240,6 +240,7 @@ class ColleManager(models.Manager):
             with connection.cursor() as cursor:
                 cursor.execute(requete,(semestre2,semestre2,eleve.classe.pk,eleve.pk,date.today()+timedelta(days=-28)))
                 colles = dictfetchall(cursor)
+            return colles
         else:
             requete = "SELECT s.lundi lundi, s.numero, {} jour, cr.heure heure, cr.salle salle, m.nom nom_matiere, m.couleur couleur, u.first_name prenom, u.last_name nom, p.titre titre, p.detail detail, p.fichier fichier\
                        FROM accueil_colle co\
@@ -284,7 +285,7 @@ class ColleManager(models.Manager):
             with connection.cursor() as cursor:
                 cursor.execute(requete2,(eleve.pk,))
                 colles2 = dictfetchall(cursor)
-        return sorted(colles + colles2, key = lambda x:(x['numero'], x['jour'],x['heure']))
+            return sorted(colles + colles2, key = lambda x:(x['numero'], x['jour'],x['heure']))
 
     def agendaEleveApp(self,eleve):
         if eleve.classe.semestres:
