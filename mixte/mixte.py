@@ -396,7 +396,7 @@ def mixteajaxcolloscopemulticonfirm(matiere,colleur,id_groupe,id_eleve,semaine,c
     return HttpResponse(json.dumps(creneaux))
     
 
-def mixteRamassagePdfParClasse(ramassage,total,parmois,full):
+def mixteRamassagePdfParClasse(ramassage,total,parmois,full,colleur=False):
 	"""Renvoie le fichier PDF du ramassage par classe correspondant au ramassage dont l'id est id_ramassage
 	si total vaut 1, les totaux par classe et matière sont calculés"""
 	LISTE_MOIS=["","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
@@ -407,7 +407,7 @@ def mixteRamassagePdfParClasse(ramassage,total,parmois,full):
 		debut = Semaine.objects.aggregate(Min('lundi'))['lundi__min']
 	fin = ramassage.moisFin
 	moisdebut = 12*debut.year+debut.month-1
-	decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = True, parMois=bool(parmois), full = full, colleur = colleur, parColleur = parColleur)
+	decomptes = Ramassage.objects.decompteRamassage(ramassage, csv = False, parClasse = True, parMois=bool(parmois), full = full, colleur = colleur, parColleur = 0)
 	nomfichier="ramassagePdfParClasse{}-{}-{}_{}-{}-{}.pdf".format(debut.year,debut.month,debut.day,fin.year,fin.month,fin.day)
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
 	pdf = easyPdf(titre="Ramassage des colles du {} au {}".format(debut.strftime("%d/%m/%Y"),fin.strftime("%d/%m/%Y")),marge_x=30,marge_y=30)
