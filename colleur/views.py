@@ -11,7 +11,7 @@ from django.db.models.functions import Lower
 from datetime import date
 from django.http import Http404, HttpResponse, HttpResponseForbidden, FileResponse
 from django.forms.formsets import formset_factory
-from pdf.pdf import Pdf, creditsects, attestationects, trombinoscopePdf
+from pdf.pdf import Pdf, creditsects, attestationects, trombinoscopePdf, publipostage
 import json
 import os
 import csv
@@ -695,7 +695,7 @@ def ectsmatieresuppr(request,id_matiere):
 
 @user_passes_test(is_colleur_ects, login_url='accueil')
 def ectsnotes(request,id_classe):
-    """Renvoie la vue de la page de gestion des matières ects de la classe"""
+    """Renvoie la vue de la page de gestion des notes ects de la classe"""
     classe = get_object_or_404(Classe,pk=id_classe)
     pp = is_profprincipal(request.user,classe)
     matieres = MatiereECTS.objects.filter(classe=classe,profs=request.user.colleur).order_by('nom','precision')
@@ -709,6 +709,8 @@ def ectsnotes(request,id_classe):
             return redirect('ects_noteglobale_modif',classe.pk,classe.annee,"-".join([str(eleve.pk) for eleve in form.cleaned_data['eleve']]))
         if 'global2' in request.POST:
             return redirect('ects_noteglobale_modif',classe.pk,1,"-".join([str(eleve.pk) for eleve in form.cleaned_data['eleve']]))
+        if 'global3' in request.POST:
+            return redirect('ects_noteglobale_modif',classe.pk,3,"-".join([str(eleve.pk) for eleve in form.cleaned_data['eleve']]))
         for matiere in matieres:
             if str(matiere.pk) in request.POST:
                 return redirect('ects_notes_modif',matiere.pk,"-".join([str(eleve.pk) for eleve in form.cleaned_data['eleve']]))
@@ -738,9 +740,13 @@ def ectsnotesmodif(request,id_matiere,chaine_eleves):
 def ectsnoteglobalemodif(request,id_classe,annee,chaine_eleves):
     """Renvoie la vue de la page de modification de la note globale ECTS des élèves sélectionnés, dont l'id fait partie de chaine_eleves, dans la classe indiquée et pour l'année indiquée"""
     classe = get_object_or_404(Classe,pk=id_classe)
+    annee = int(annee)
     if not is_profprincipal(request.user,classe):
         return HttpResponseForbidden("Accès non autorisé")
-    listeEleves = Eleve.objects.filter(pk__in=[int(i) for i in chaine_eleves.split("-")],classe=classe).order_by('user__last_name','user__first_name').select_related('user')
+    listeEleves = Eleve.objects.filter(pk__in=[int(i) for i in chaine_eleves.split("-")],classe=classe)
+    if annee == 3:
+        listeEleves = listeEleves.filter(cube = True)
+    listeEleves = listeEleves.order_by('user__last_name','user__first_name').select_related('user')
     NoteGlobaleEleveformset = formset_factory(NoteGlobaleEleveForm,extra=0,max_num=listeEleves.count(),formset=NoteGlobaleEleveFormSet)
     if request.method == 'POST':
         formset = NoteGlobaleEleveformset(annee,listeEleves,request.POST)
@@ -750,7 +756,7 @@ def ectsnoteglobalemodif(request,id_classe,annee,chaine_eleves):
     else:
         initial = NoteGlobaleECTS.objects.noteEleves(classe,annee,listeEleves)
         formset = NoteGlobaleEleveformset(annee,listeEleves,initial=initial)
-    return render(request,'colleur/ectsnoteglobalemodif.html',{'modif':is_colleur_modif_ects(request.user),'formset':formset,"annee": int(annee), 'classe': classe})
+    return render(request,'colleur/ectsnoteglobalemodif.html',{'modif':is_colleur_modif_ects(request.user),'formset':formset,"annee": annee, 'classe': classe})
 
 @user_passes_test(is_colleur_modif_ects, login_url='accueil')
 def ectscredits(request,id_classe,form=None):
@@ -791,7 +797,7 @@ def attestationectspdf(request,id_eleve):
     else:
         raise Http404
 
-@user_passes_test(is_colleur_ects, login_url='accueil')
+@user_passes_test(is_colleur_modif_ects, login_url='accueil')
 def ficheectsclassepdf(request,id_classe):
     classe = get_object_or_404(Classe,pk=id_classe)
     if not is_profprincipal(request.user,classe):
@@ -817,7 +823,21 @@ def attestationectsclassepdf(request,id_classe):
         else:
             return ectscredits(request,classe.pk,form)
     else:
-        raise 
+        raise Http404
+
+@user_passes_test(is_colleur_modif_ects, login_url='accueil')
+def publipostageects(request,id_classe):
+    classe = get_object_or_404(Classe,pk=id_classe)
+    if not is_profprincipal(request.user,classe):
+        return HttpResponseForbidden("Accès non autorisé")
+    form = ECTSForm(classe, request.POST)
+    if request.method=="POST":
+        if form.is_valid():
+            return publipostage(form,classe)
+        else:
+            return ectscredits(request,classe.pk,form)
+    else:
+        raise Http404
 
 @user_passes_test(is_colleur, login_url='accueil')
 def devoirs(request,id_classe):

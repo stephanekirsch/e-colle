@@ -161,6 +161,10 @@ class EleveFormSet(forms.BaseFormSet):
                 eleve.lv1=form.cleaned_data['lv1']
                 eleve.lv2=form.cleaned_data['lv2']
                 eleve.option=form.cleaned_data['option']
+                if eleve.classe.annee == 1:
+                    eleve.cube = False
+                else:
+                    eleve.cube = form.cleaned_data['cube']
                 user.save()
                 eleve.save()
 
@@ -178,7 +182,7 @@ class EleveFormSetMdp(forms.BaseFormSet):
             for form in self.forms:
                 user = User(first_name=form.cleaned_data['first_name'].lower(),last_name=form.cleaned_data['last_name'].lower(),email=form.cleaned_data['email'], username = form.cleaned_data['username'])
                 user.set_password(form.cleaned_data['password'])
-                eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'],ddn=form.cleaned_data['ddn'],ldn=form.cleaned_data['ldn'],ine=form.cleaned_data['ine'],lv1=form.cleaned_data['lv1'],lv2=form.cleaned_data['lv2'], option = form.cleaned_data['option'])
+                eleve = Eleve(classe=form.cleaned_data['classe'],photo=form.cleaned_data['photo'],ddn=form.cleaned_data['ddn'],ldn=form.cleaned_data['ldn'],ine=form.cleaned_data['ine'],lv1=form.cleaned_data['lv1'],lv2=form.cleaned_data['lv2'], option = form.cleaned_data['option'], cube = False if form.cleaned_data['classe'].annee == 1 else form.cleaned_data['cube'])
                 eleve.save()
                 user.eleve=eleve
                 user.save()
@@ -422,6 +426,7 @@ class EleveForm(forms.Form):
         self.fields['lv1'] = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=1).order_by('nom'),empty_label='----',required=False)
         self.fields['lv2'] = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=2).order_by('nom'),empty_label='----',required=False)
         self.fields['option'] = forms.ModelChoiceField(queryset=Matiere.objects.order_by('nom'),empty_label='----',required=False)
+        self.fields['cube'] = forms.BooleanField(label="redoublant",required=False)
 
     def clean_username(self):
         data = self.cleaned_data['username']
@@ -486,6 +491,7 @@ class EleveFormMdp(forms.ModelForm):
     lv1 = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=1).order_by('nom'),empty_label='----',required=False)
     lv2 = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=2).order_by('nom'),empty_label='----',required=False)
     option = forms.ModelChoiceField(queryset=Matiere.objects.order_by('nom'),empty_label='----',required=False)
+    cube = forms.BooleanField(label="redoublant",required=False)
     class Meta:
         model = User
         fields=['first_name','last_name','username','password','email']
@@ -535,6 +541,7 @@ class EleveFormMdp(forms.ModelForm):
             if not (65 <= ord(data[-1]) <= 90):
                 raise ValidationError("le dernier caractère est une lettre ASCII majuscule")
         return data
+        
 
 class ProfForm(forms.Form):
     def __init__(self,classe, *args, **kwargs):
@@ -616,6 +623,7 @@ class SelectEleveForm(forms.Form):
         self.fields['eleve'].empty_label=None
         self.fields['klasse'] = forms.ModelChoiceField(queryset=Classe.objects.order_by('annee','nom'),required=False)
         self.fields['klasse'].empty_label=None
+        self.fields['cube'] = forms.ChoiceField(label="classe",choices=[(True,"redoublant"),(False,"non redoublant")])
         self.fields['lv1'] = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=1).order_by('nom'),required=False)
         self.fields['lv2'] = forms.ModelChoiceField(queryset=Matiere.objects.filter(lv=2).order_by('nom'),required=False)
         self.fields['option'] = forms.ModelChoiceField(queryset=query2.order_by('nom'),required=False)

@@ -291,12 +291,12 @@ class NoteEleveFormSet(forms.BaseFormSet):
                 if form.cleaned_data['semestre1'] == "":
                     NoteECTS.objects.filter(semestre=1,matiere=self.matiere,eleve=eleve).delete()
                 elif form.cleaned_data['semestre1'] in "012345":
-                    NoteECTS.objects.update_or_create(defaults={'eleve':eleve,'matiere':self.matiere,'semestre':1,'note':form.cleaned_data['semestre1']},semestre=1,matiere=self.matiere,eleve=eleve)
+                    NoteECTS.objects.update_or_create(defaults={'eleve':eleve,'matiere':self.matiere,'semestre':1,'note':form.cleaned_data['semestre1']},semestre=1,matiere=self.matiere,eleve=eleve,cube=eleve.cube)
             if 'semestre2' in form.cleaned_data:
                 if form.cleaned_data['semestre2'] == "":
                     NoteECTS.objects.filter(semestre=2,matiere=self.matiere,eleve=eleve).delete()
                 elif form.cleaned_data['semestre2'] in "012345":
-                    NoteECTS.objects.update_or_create(defaults={'eleve':eleve,'matiere':self.matiere,'semestre':2,'note':form.cleaned_data['semestre2']},semestre=2,matiere=self.matiere,eleve=eleve)
+                    NoteECTS.objects.update_or_create(defaults={'eleve':eleve,'matiere':self.matiere,'semestre':2,'note':form.cleaned_data['semestre2']},semestre=2,matiere=self.matiere,eleve=eleve,cube=eleve.cube)
 
 class NoteGlobaleEleveForm(forms.Form):
         note_globale = forms.ChoiceField(choices=[(None,'---')]+list(enumerate("ABCDEF")),required=False)
@@ -343,6 +343,8 @@ class ECTSForm(forms.Form):
             self.fields['etoile'] = forms.BooleanField(label="classe étoile",required=False)
         if any(isfile(x) for x in imagesProviseur+imagesProviseurAdjoint): # si au moins un des tampons est présent
             self.fields['tampon'] = forms.BooleanField(label='incruster le tampon/la signature',required=False)
+        if classe.annee == 2:
+            self.fields['cube'] = forms.BooleanField(label="180 crédits pours les redoublants",required = False)
 
 class SelectEleveNoteForm(forms.Form):
     def __init__(self,classe,groupeeleve,*args,**kwargs):

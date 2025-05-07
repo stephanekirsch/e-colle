@@ -35,7 +35,9 @@
 	<td> {{ form.classe.errors }} {{form.classe}}</td>
 </tr>
 <tr>
+	<th> {{ form.cube.label_tag }} </th>
+	<td> {{ form.cube.errors }} {{form.cube}}</td>
 	<th> {{ form.photo.label_tag }} </th>
-	<td  colspan="3"> {{ form.photo.errors }} {{form.photo}}</td>
+	<td> {{ form.photo.errors }} {{form.photo}}</td>
 </tr>
 <input type="hidden" value={{ form.pk }} />

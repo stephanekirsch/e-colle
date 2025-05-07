@@ -18,6 +18,7 @@ class Eleve(models.Model):
     lv1 = models.ForeignKey("Matiere",related_name='elevelv1',null=True,blank=True, on_delete = models.SET_NULL)
     lv2 = models.ForeignKey("Matiere",related_name='elevelv2',null=True,blank=True, on_delete = models.SET_NULL)
     option = models.ForeignKey("Matiere",related_name='eleveoption',null=True,blank=True, on_delete = models.SET_NULL)
+    cube = models.BooleanField(verbose_name="redoublant",default=False)
 
     class Meta:
         ordering = ['user__last_name', 'user__first_name']

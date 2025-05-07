@@ -8,7 +8,7 @@ from secretariat.forms import MoisForm, RamassageForm, MatiereClasseSemaineSelec
 from accueil.models import Config, Note, Semaine, Matiere, Colleur, Ramassage, Classe, Eleve, Groupe, Creneau, mois, MatiereECTS, NoteECTS, Information
 from mixte.mixte import mixtegroupe, mixtegroupesuppr, mixtegroupeSwap, mixtegroupemodif, mixtecolloscope,mixtecolloscopemodif, mixtecreneaudupli, mixtecreneausuppr, mixteajaxcompat, mixteajaxcolloscope, mixteajaxcolloscopeeleve, mixteajaxmajcolleur, mixteajaxcolloscopeeffacer, mixteajaxcolloscopemulti, mixteajaxcolloscopemulticonfirm, mixteRamassagePdfParClasse, mixteRamassagePdfParColleur, mixteCSV, mixtegroupeCreer, mixtegroupecsv, mixteColloscopeImport
 from django.http import Http404, HttpResponse,  HttpResponseForbidden
-from pdf.pdf import Pdf, easyPdf, creditsects, attestationects
+from pdf.pdf import Pdf, easyPdf, creditsects, attestationects, publipostage
 from reportlab.platypus import Table, TableStyle
 from datetime import timedelta
 from django.db.models import Max, Min
@@ -772,6 +772,18 @@ def attestationectsclassepdf(request,id_classe):
     if request.method=="POST":
         if form.is_valid():
             return attestationects(form,None,classe)
+        else:
+            return ectscredits(request,classe.pk,form)
+    else:
+        raise Http404
+
+@user_passes_test(is_secret_ects, login_url='login_secret')
+def publipostageects(request,id_classe):
+    classe = get_object_or_404(Classe,pk=id_classe)
+    form = ECTSForm(classe, request.POST)
+    if request.method=="POST":
+        if form.is_valid():
+            return publipostage(form,classe)
         else:
             return ectscredits(request,classe.pk,form)
     else:

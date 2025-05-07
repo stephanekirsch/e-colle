@@ -26,7 +26,8 @@
 		{% endfor %}
 		{% if pp %}
 		{% if annee2 %}
-		<td rowspan="2">Note Globale sur les 2 ans<br/>(facultatif, écrase la note moyenne calculée)</td>
+		<td rowspan="2">Note Globale sur les 2 ans<br/>(facultatif, écrase la note moyenne calculée pour les 2 premières années)</td>
+		<td rowspan="2">Note Globale sur les 3 ans<br/>(facultatif, écrase la note moyenne calculée pour les 3 ans des redoublants, si 180 ECTS)</td>
 		<td rowspan="2">Rappel 1ère annee</td>
 		{% else %}
 		<td rowspan="2">Note Globale de l'année<br/>(facultatif, écrase la note moyenne calculée)</td>
@@ -64,6 +65,7 @@
 		{% endfor %}
 		<td>{% if notes.1.note != None %}{{listNotes|lookup:notes.1.note}}{% endif %}</td>
 		{% if annee2 %}
+		<td>{% if notes.3.note != None %}{{listNotes|lookup:notes.3.note}}{% endif %}</td>
 		<td>{% if notes.2.note != None %}{{listNotes|lookup:notes.2.note}}{% endif %}</td>
 		{% endif %}
 	</tr>
@@ -92,6 +94,7 @@
 		{% if pp %}
 		<td><input type="submit" value="Modifier la sélection" name="global"/></td>
 		{% if annee2 %}
+		<td><input type="submit" value="Modifier la sélection" name="global3"/></td>
 		<td><input type="submit" value="Modifier la sélection" name="global2"/></td>
 		{% endif %}
 		{% endif %}

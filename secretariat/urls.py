@@ -49,5 +49,6 @@ re_path(r'^action/ects/notes/(\d+)$', views.ectsnotes,name="secret_ects_notes"),
 re_path(r'^action/ects/credits/(\d+)$', views.ectscredits,name="secret_ects_credits"),
 re_path(r'^action/ects/fiche/(\d+)$', views.ficheectspdf,name="secret_ects_fiche"),
 re_path(r'^action/ects/attestation/(\d+)$', views.attestationectspdf,name="secret_ects_attestation"),
+re_path(r'^action/ects/publipostage/classe/(\d+)$', views.publipostageects,name="secret_ects_publipostage_classe"),
 re_path(r'^action/ects/fiche/classe/(\d+)$', views.ficheectsclassepdf,name="secret_ects_fiche_classe"),
 re_path(r'^action/ects/attestation/classe/(\d+)$', views.attestationectsclassepdf,name="secret_ects_attestation_classe")]

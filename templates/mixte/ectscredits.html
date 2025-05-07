@@ -27,6 +27,7 @@
 		<td>Crédits semestre 2</td>
 		<td>Fiche de crédits</td>
 		<td>Attestation</td>
+		<td>Publipostage</td>
 	</tr>
 	<tr class="plusclair">
 		<td>Tous</td>
@@ -37,6 +38,7 @@
 		<td>{{total.4}}/{{nbeleves}}</td>
 		<td>{{total.5}}/{{nbeleves}}<a href="{% url user.colleur|yesno:'ects_fiche_classe,secret_ects_fiche_classe' classe.pk %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
 		<td>{{total.5}}/{{nbeleves}}<a href="{% url user.colleur|yesno:'ects_attestation_classe,secret_ects_attestation_classe' classe.pk %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
+		<td>{{total.5}}/{{nbeleves}}<a href="{% url user.colleur|yesno:'ects_publipostage_classe,secret_ects_publipostage_classe' classe.pk %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
 	</tr>
 	{% for credit in credits %}
 	<tr>
@@ -55,6 +57,7 @@
 		{% else %}
 		<td></td>
 		{% endif %}
+		<td></td>
 	</tr>
 	{% endfor %}
 </table>

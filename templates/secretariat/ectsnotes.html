@@ -22,6 +22,7 @@
 		{% endfor %}
 		{% if annee2 %}
 		<td rowspan="2">Note Globale sur les 2 ans</td>
+		<td rowspan="2">Note Globale sur les 3 ans (redoublants)</td>
 		<td rowspan="2">Rappel 1ère annee</td>
 		{% else %}
 		<td rowspan="2">Note Globale de l'année</td>
@@ -50,6 +51,7 @@
 		{% endfor %}
 		<td>{% if notes.1.note != None %}{{listNotes|lookup:notes.1.note}}{% endif %}</td>
 		{% if annee2 %}
+		<td>{% if notes.3.note != None %}{{listNotes|lookup:notes.3.note}}{% endif %}</td>
 		<td>{% if notes.2.note != None %}{{listNotes|lookup:notes.2.note}}{% endif %}</td>
 		{% endif %}
 	</tr>

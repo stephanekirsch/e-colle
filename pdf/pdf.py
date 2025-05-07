@@ -12,6 +12,7 @@ from reportlab.lib.units import cm
 from unidecode import unidecode
 from os.path import join
 from xml.etree import ElementTree as etree
+import zipfile
 
 class easyPdf(Canvas):
 	"""classe fille de canvas avec des méthodes supplémentaires pour créer le titre et la fin de page"""
@@ -285,55 +286,10 @@ def Pdf(classe,semin,semax):
 	response.write(fichier)
 	return response
 
-def attestationects(form,elev,classe):
-	"""renvoie l'attestation ects pdf de l'élève elev, ou si elev vaut None renvoie les attestations ects pdf de toute la classe classe en un seul fichier"""
-	datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
-	filiere = form.cleaned_data['classe'].split("_")[0]
-	signataire = form.cleaned_data['signature']
-	annee = form.cleaned_data['anneescolaire']
-	etoile = form.cleaned_data['etoile']
-	signature = False
-	if 'tampon' in form.cleaned_data:
-		signature = form.cleaned_data['tampon']
-	config=Config.objects.get_config()
-	annee = "{}-{}".format(int(annee)-1,annee)
-	response = HttpResponse(content_type='application/pdf')
-	if elev is None:
-		eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name').select_related('user')
-		nomfichier="ATTESTATIONS_{}.pdf".format(unidecode(classe.nom)).replace(" ","-")
-		credits = NoteECTS.objects.credits(classe)[0]
-	else:
-		eleves=[elev]
-		credits=[False]
-		nomfichier=unidecode("ATTESTATION_{}_{}_{}.pdf".format(elev.classe.nom.upper(),elev.user.first_name,elev.user.last_name.upper())).replace(" ","-")
-	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
+def attestationfichier(elev,eleves,credits,I,I2,datedujour,filiere,annee,etoile,signataire,cube,config,classe):
 	pdf = easyPdf()
 	pdf.marge_x = cm # 1cm de marge gauche/droite
 	pdf.marge_y = 1.5*cm # 1,5cm de marge haut/bas
-	I = Image(join(RESOURCES_ROOT,'marianne.jpg'))
-	I.drawHeight = 1.8*cm
-	I.drawWidth = 3*cm
-	if signature and signataire == 'Proviseur':
-		try:
-			I2 = Image(join(RESOURCES_ROOT,'proviseur.png'))
-		except Exception:
-			try:
-				I2 = Image(join(RESOURCES_ROOT,'proviseur.png'))
-			except Exception:
-				I2 = False
-	elif signature and signataire == 'Proviseur adjoint':
-		try:
-			I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.png'))
-		except Exception:
-			try:
-				I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.png'))
-			except Exception:
-				I2 = False
-	else:
-		I2 = False
-	if I2:
-		I2.drawHeight = 3*cm
-		I2.drawWidth = 3*cm
 	newpage = False
 	for eleve,credit in zip(eleves,credits):
 		if elev or credit and credit['ddn'] and credit['ine'] and (credit['sem1']==30 and credit['sem2']==30 or credit['note'] is not None): # si l'élève a bien toutes les infos/crédits
@@ -372,13 +328,13 @@ def attestationects(form,elev,classe):
 			pdf.y -= 50
 			pdf.drawCentredString(pdf.format[0]/2,pdf.y, "Valeur du parcours en crédits du système ECTS :")
 			pdf.setFont("Helvetica-Bold",16)
-			pdf.drawString(15*cm,pdf.y,str(60*classe.annee))
+			pdf.drawString(15*cm,pdf.y,str(60*(classe.annee+cube)))
 			pdf.y -= 50
 			pdf.setFont("Helvetica-Oblique",11)
 			pdf.drawCentredString(pdf.format[0]/2,pdf.y, "Mention globale obtenue :")
 			pdf.setFillColor((1,0,0))
 			pdf.setFont("Helvetica-Bold",13)
-			pdf.drawCentredString(13*cm,pdf.y, "ABCDEF"[NoteECTS.objects.moyenneECTS(eleve)])
+			pdf.drawCentredString(13*cm,pdf.y, "ABCDEF"[NoteECTS.objects.moyenneECTS(eleve,cube)])
 			pdf.y -= 50
 			pdf.setFillColor((0,0,0))
 			pdf.setFont("Helvetica",11)
@@ -408,38 +364,33 @@ def attestationects(form,elev,classe):
 	pdf.save()
 	fichier = pdf.buffer.getvalue()
 	pdf.buffer.close()
-	response.write(fichier)
-	return response
+	return fichier
 
-def creditsects(form,elev,classe):
-	"""renvoie les crédits ects pdf de l'élève elev, ou si elev vaut None renvoie les crédits ects pdf de toute la classe en un seul fichier"""
+def attestationects(form,elev,classe):
+	"""renvoie l'attestation ects pdf de l'élève elev, ou si elev vaut None renvoie les attestations ects pdf de toute la classe classe en un seul fichier"""
 	datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
-	filiere,annee = form.cleaned_data['classe'].split("_")
+	filiere = form.cleaned_data['classe'].split("_")[0]
 	signataire = form.cleaned_data['signature']
+	annee = form.cleaned_data['anneescolaire']
 	etoile = form.cleaned_data['etoile']
-	tree=etree.parse(join(RESOURCES_ROOT,'classes.xml')).getroot()
-	classexml=tree.findall("classe[@nom='{}'][@annee='{}']".format(filiere,annee)).pop()
-	domaine = classexml.get("domaine")
-	branche = classexml.get("type").lower()
-	precision = classexml.get("precision")
 	signature = False
+	cube = False
 	if 'tampon' in form.cleaned_data:
 		signature = form.cleaned_data['tampon']
-	LIST_NOTES="ABCDEF"
+	if 'cube' in form.cleaned_data:
+		cube = form.cleaned_data['cube']
+	config=Config.objects.get_config()
+	annee = "{}-{}".format(int(annee)-1,annee)
 	response = HttpResponse(content_type='application/pdf')
 	if elev is None:
 		eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name').select_related('user')
-		nomfichier="ECTS_{}.pdf".format(unidecode(classe.nom)).replace(" ","-").replace('*','etoile')
+		nomfichier="ATTESTATIONS_{}.pdf".format(unidecode(classe.nom)).replace(" ","-")
 		credits = NoteECTS.objects.credits(classe)[0]
 	else:
 		eleves=[elev]
 		credits=[False]
-		nomfichier=unidecode("ECTS_{}_{}_{}.pdf".format(classe.nom.upper(),elev.user.first_name,elev.user.last_name.upper())).replace(" ","-")
+		nomfichier=unidecode("ATTESTATION_{}_{}_{}.pdf".format(elev.classe.nom.upper(),elev.user.first_name,elev.user.last_name.upper())).replace(" ","-")
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
-	pdf = easyPdf()
-	cm = pdf.format[0]/21
-	pdf.marge_x = cm # 1cm de marge gauche/droite
-	pdf.marge_y = 1.5*cm # 1,5cm de marge haut/bas
 	I = Image(join(RESOURCES_ROOT,'marianne.jpg'))
 	I.drawHeight = 1.8*cm
 	I.drawWidth = 3*cm
@@ -448,7 +399,7 @@ def creditsects(form,elev,classe):
 			I2 = Image(join(RESOURCES_ROOT,'proviseur.png'))
 		except Exception:
 			try:
-				I2 = Image(join(RESOURCES_ROOT,'proviseur.png'))
+				I2 = Image(join(RESOURCES_ROOT,'proviseur.jpg'))
 			except Exception:
 				I2 = False
 	elif signature and signataire == 'Proviseur adjoint':
@@ -456,7 +407,7 @@ def creditsects(form,elev,classe):
 			I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.png'))
 		except Exception:
 			try:
-				I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.png'))
+				I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.jpg'))
 			except Exception:
 				I2 = False
 	else:
@@ -464,6 +415,16 @@ def creditsects(form,elev,classe):
 	if I2:
 		I2.drawHeight = 3*cm
 		I2.drawWidth = 3*cm
+	fichier=attestationfichier(elev,eleves,credits,I,I2,datedujour,filiere,annee,etoile,signataire,cube,config,classe)
+	response.write(fichier)
+	return response
+
+def creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,filiere,annee,etoile,signataire,cube,classe):
+	LIST_NOTES="ABCDEF"
+	pdf = easyPdf()
+	cm = pdf.format[0]/21
+	pdf.marge_x = cm # 1cm de marge gauche/droite
+	pdf.marge_y = 1.5*cm # 1,5cm de marge haut/bas
 	newpage = False
 	style=ParagraphStyle(name='normal',fontSize=9,leading=11,spaceAfter=5)
 	styleResume=ParagraphStyle(name='resume',fontSize=9,leading=11,spaceAfter=0)
@@ -609,10 +570,14 @@ def creditsects(form,elev,classe):
 			pdf.setFont('Helvetica-Bold',12)
 			pdf.drawCentredString(10.5*cm,pdf.y,"RELEVÉ DE RÉSULTATS (classe {})".format(filiere + ('*' if etoile and classe.annee == 2 else '')))
 			annee1 = eleve.classe.annee == 1
+			annee2 = eleve.classe.annee == 2 and not eleve.cube
+			annee3 = eleve.classe.annee == 2 and eleve.cube
 			if annee1:
 				sem1,sem2,ng1 = NoteECTS.objects.notePDF(eleve)
-			else:
+			elif annee2:
 				sem1,sem2,ng1,sem3,sem4,ng2 = NoteECTS.objects.notePDF(eleve)
+			else:
+				sem1,sem2,ng1,sem3,sem4,ng2, sem5,sem6,ng3 = NoteECTS.objects.notePDF(eleve)
 			data=[["ENSEIGNEMENTS","Crédits ECTS","Mention"]]
 			sp=0 # variable qui va contenir la somme pondérée des notes en vue du calcul de la mention globale
 			coeff = 0 # somme des coeffs pour vérifier si on en a 60 au total
@@ -643,10 +608,10 @@ def creditsects(form,elev,classe):
 				data.append(["Mention Globale première année","60","ABCDEF"[ng1]])
 				lignes+=[pos]
 				pos+=2
-			if ng1 is not None: # si note globale pour le premier semestre, on écrase le reste pour le calcul de la moyenne
+			if ng1 is not None: # si note globale pour la première année, on écrase le reste pour le calcul de la moyenne
 				coeff = 60
 				sp = 60*ng1
-			if not annee1:
+			if annee2 or annee3 and cube:
 				coeff2 = 0
 				sp2 = 0
 				if sem3:
@@ -674,16 +639,108 @@ def creditsects(form,elev,classe):
 					data.append(["Mention Globale Deuxième année","60" if coeff == 60 else "120","ABCDEF"[ng2]])
 					lignes+=[pos]
 					pos+=2
-			LIST_STYLE = TableStyle([('GRID',(0,0),(-1,-1),.8,(0,0,0))
+			if annee3 and not cube:
+				coeff2 = 0
+				sp2 = 0
+				if sem5:
+					data.append(["Troisième semestre","",""])
+					lignes.append(pos)
+					pos+=1
+					for note in sem5:
+						pos+=1
+						data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[2],LIST_NOTES[note[4]]])
+						sp2+=note[2]*note[4]
+						if note[4] !=5:
+							coeff2+=note[2]
+				if sem6:
+					data.append(["Quatrième semestre","",""])
+					lignes.append(pos)
+					pos+=1
+					for note in sem6:
+						pos+=1
+						data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[3],LIST_NOTES[note[4]]])
+						sp2+=note[3]*note[4]
+						if note[4] !=5:
+							coeff2+=note[3]
+				if not sem5 and not sem6 and ng2 is not None:
+					data.append(["Deuxième année","",""])
+					data.append(["Mention Globale Deuxième année","60" if coeff == 60 else "120","ABCDEF"[ng2]])
+					lignes+=[pos]
+					pos+=2
+			if ng2 is not None: # si note globale pour la deuxième année, on écrase le reste pour le calcul de la moyenne
+				coeff2 = 60
+				sp2 = 60*ng2
+			if annee3 and cube:
+				coeff3 = 0
+				sp3 = 0
+				if sem5:
+					data.append(["Cinquième semestre","",""])
+					lignes.append(pos)
+					pos+=1
+					for note in sem5:
+						pos+=1
+						data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[2],LIST_NOTES[note[4]]])
+						sp3+=note[2]*note[4]
+						if note[4] !=5:
+							coeff3+=note[2]
+				if sem6:
+					data.append(["Sixième semestre","",""])
+					lignes.append(pos)
+					pos+=1
+					for note in sem6:
+						pos+=1
+						data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[3],LIST_NOTES[note[4]]])
+						sp3+=note[3]*note[4]
+						if note[4] !=5:
+							coeff3+=note[3]
+				if not sem5 and not sem6 and ng3 is not None:
+					data.append(["Troisème année","",""])
+					data.append(["Mention Globale Troisième année","60" if coeff == 60 else "180","ABCDEF"[ng3]])
+					lignes+=[pos]
+					pos+=2
+			if ng3 is not None: # si note globale pour la deuxième année, on écrase le reste pour le calcul de la moyenne
+				coeff3 = 60
+				sp3 = 60*ng3
+			hauteurcel = .70*cm
+			nbcel = int((pdf.format[1] - 2*pdf.marge_y - 4*cm) / hauteurcel)
+			tabStyle = [('GRID',(0,0),(-1,-1),.8,(0,0,0))
 										,('FACE',(0,0),(-1,-1),'Helvetica-Bold')
 										,('SIZE',(0,0),(-1,-1),8)
 										,('SIZE',(0,0),(2,0),10)
 										,('VALIGN',(0,0),(-1,-1),'MIDDLE')
 										,('ALIGN',(0,2),(0,-1),'LEFT')
 										,('ALIGN',(1,0),(2,-1),'CENTRE')
-										,('ALIGN',(0,0),(2,0),'CENTRE')] + [('SPAN',(0,x),(2,x)) for x in lignes] + [('SIZE',(0,x),(2,x),9) for x in lignes]\
-									 + [('ALIGN',(0,x),(2,x),'CENTRE') for x in lignes] + [('BACKGROUND',(0,x),(2,x),'#DDDDDD') for x in lignes])
-			t=Table(data,colWidths=[13*cm,2.8*cm,2.5*cm],rowHeights=[.65*cm]*(len(data)))
+										,('ALIGN',(0,0),(2,0),'CENTRE')]
+			coupe = True
+			while coupe:
+				for x in lignes:
+					if x >= nbcel:
+						lignes = [y - nbcel for y in lignes if y >= nbcel]
+						LIST_STYLE = TableStyle(tabStyle)
+						t=Table(data[:nbcel],colWidths=[13*cm,2.8*cm,2.5*cm],rowHeights=[hauteurcel]*nbcel)
+						t.setStyle(LIST_STYLE)
+						w,h=t.wrapOn(pdf,0,0)
+						pdf.y-=h+5
+						pdf.x=(pdf.format[0]-w)/2
+						t.drawOn(pdf,pdf.x,pdf.y)
+						pdf.showPage()
+						pdf.y = pdf.format[1]-pdf.marge_y-12
+						data = data[nbcel:]
+						tabStyle = [('GRID',(0,0),(-1,-1),.8,(0,0,0))
+											,('FACE',(0,0),(-1,-1),'Helvetica-Bold')
+											,('SIZE',(0,0),(-1,-1),8)
+											,('VALIGN',(0,0),(-1,-1),'MIDDLE')
+											,('ALIGN',(0,2),(0,-1),'LEFT')
+											,('ALIGN',(1,0),(2,-1),'CENTRE')]
+						break
+					tabStyle.append(('SPAN',(0,x),(2,x)))
+					tabStyle.append(('SIZE',(0,x),(2,x),9))
+					tabStyle.append(('ALIGN',(0,x),(2,x),'CENTRE'))
+					tabStyle.append(('BACKGROUND',(0,x),(2,x),'#DDDDDD'))
+				else:
+					coupe = False
+			LIST_STYLE = TableStyle(tabStyle)
+			t=Table(data,colWidths=[13*cm,2.8*cm,2.5*cm],rowHeights=[hauteurcel]*(len(data)))
 			t.setStyle(LIST_STYLE)
 			w,h=t.wrapOn(pdf,0,0)
 			pdf.y-=h+5
@@ -700,7 +757,7 @@ def creditsects(form,elev,classe):
 					pdf.setFillColor((1,0,0))
 					pdf.drawString(pdf.x,pdf.y,"Pas de mention, il manque {} crédits".format(60-coeff))
 					pdf.setFillColor((0,0,0))
-			else:
+			elif annee2 or annee3 and not cube:
 				if ng2 is not None:
 					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[ng2]))
 				elif coeff2 == 60 and coeff == 60:
@@ -711,6 +768,19 @@ def creditsects(form,elev,classe):
 					pdf.setFillColor((1,0,0))
 					pdf.drawString(pdf.x,pdf.y,"Pas de mention, il manque {} crédits".format(60-coeff2))
 					pdf.setFillColor((0,0,0))
+			else:
+				if ng3 is not None:
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[ng3]))
+				elif coeff3 == 60 and ng2 is not None:
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round((sp3+2*sp2)/180)]))
+				elif coeff3 == 60 and coeff2 == 60 and coeff == 60:
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round((sp3+sp2+sp)/180)]))
+				elif coeff3 == 60:
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round(sp3/60)]))
+				else:
+					pdf.setFillColor((1,0,0))
+					pdf.drawString(pdf.x,pdf.y,"Pas de mention, il manque {} crédits".format(60-coeff3))
+					pdf.setFillColor((0,0,0))
 			pdf.drawRightString(pdf.format[0]-pdf.x-15,pdf.y,"Cachet et signature")
 			pdf.y-= 3.2*cm
 			if I2:
@@ -719,5 +789,133 @@ def creditsects(form,elev,classe):
 	pdf.save()
 	fichier = pdf.buffer.getvalue()
 	pdf.buffer.close()
+	return fichier
+
+
+def creditsects(form,elev,classe):
+	"""renvoie les crédits ects pdf de l'élève elev, ou si elev vaut None renvoie les crédits ects pdf de toute la classe en un seul fichier"""
+	datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
+	filiere,annee = form.cleaned_data['classe'].split("_")
+	signataire = form.cleaned_data['signature']
+	etoile = form.cleaned_data['etoile']
+	tree=etree.parse(join(RESOURCES_ROOT,'classes.xml')).getroot()
+	classexml=tree.findall("classe[@nom='{}'][@annee='{}']".format(filiere,annee)).pop()
+	domaine = classexml.get("domaine")
+	branche = classexml.get("type").lower()
+	precision = classexml.get("precision")
+	signature = False
+	cube = False
+	if 'tampon' in form.cleaned_data:
+		signature = form.cleaned_data['tampon']
+	if 'cube' in form.cleaned_data:
+		cube = form.cleaned_data['cube']
+	response = HttpResponse(content_type='application/pdf')
+	if elev is None:
+		eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name').select_related('user')
+		nomfichier="ECTS_{}.pdf".format(unidecode(classe.nom)).replace(" ","-").replace('*','etoile')
+		credits = NoteECTS.objects.credits(classe)[0]
+	else:
+		eleves=[elev]
+		credits=[False]
+		nomfichier=unidecode("ECTS_{}_{}_{}.pdf".format(classe.nom.upper(),elev.user.first_name,elev.user.last_name.upper())).replace(" ","-").replace('*','etoile')
+	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
+	I = Image(join(RESOURCES_ROOT,'marianne.jpg'))
+	I.drawHeight = 1.8*cm
+	I.drawWidth = 3*cm
+	if signature and signataire == 'Proviseur':
+		try:
+			I2 = Image(join(RESOURCES_ROOT,'proviseur.png'))
+		except Exception:
+			try:
+				I2 = Image(join(RESOURCES_ROOT,'proviseur.jpg'))
+			except Exception:
+				I2 = False
+	elif signature and signataire == 'Proviseur adjoint':
+		try:
+			I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.png'))
+		except Exception:
+			try:
+				I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.jpg'))
+			except Exception:
+				I2 = False
+	else:
+		I2 = False
+	if I2:
+		I2.drawHeight = 3*cm
+		I2.drawWidth = 3*cm
+	fichier = creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,filiere,annee,etoile,signataire,cube,classe)
 	response.write(fichier)
 	return response
+
+def publipostage(form,classe):
+	"""renvoie une archive zip contenant les fichiers à envoyer par mail pour les crédits ECCTS: un csv avec les infos pour le publipostage
+	un répertoire avec les crédits et un avec les attestations"""
+	datedujour = form.cleaned_data['date'].strftime('%d/%m/%Y')
+	filiere,annee = form.cleaned_data['classe'].split("_")
+	signataire = form.cleaned_data['signature']
+	etoile = form.cleaned_data['etoile']
+	tree=etree.parse(join(RESOURCES_ROOT,'classes.xml')).getroot()
+	classexml=tree.findall("classe[@nom='{}'][@annee='{}']".format(filiere,annee)).pop()
+	domaine = classexml.get("domaine")
+	branche = classexml.get("type").lower()
+	precision = classexml.get("precision")
+	signature = False
+	cube = False
+	if 'tampon' in form.cleaned_data:
+		signature = form.cleaned_data['tampon']
+	if 'cube' in form.cleaned_data:
+		cube = form.cleaned_data['cube']
+	response = HttpResponse(content_type='application/pdf')
+	eleves = Eleve.objects.filter(classe=classe).order_by('user__last_name','user__first_name').select_related('user')
+	nomfichier="ECTS_{}.pdf".format(unidecode(classe.nom)).replace(" ","-").replace('*','etoile')
+	credits = NoteECTS.objects.credits(classe)[0]
+	I = Image(join(RESOURCES_ROOT,'marianne.jpg'))
+	I.drawHeight = 1.8*cm
+	I.drawWidth = 3*cm
+	if signature and signataire == 'Proviseur':
+		try:
+			I2 = Image(join(RESOURCES_ROOT,'proviseur.png'))
+		except Exception:
+			try:
+				I2 = Image(join(RESOURCES_ROOT,'proviseur.jpg'))
+			except Exception:
+				I2 = False
+	elif signature and signataire == 'Proviseur adjoint':
+		try:
+			I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.png'))
+		except Exception:
+			try:
+				I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.jpg'))
+			except Exception:
+				I2 = False
+	else:
+		I2 = False
+	if I2:
+		I2.drawHeight = 3*cm
+		I2.drawWidth = 3*cm
+	fichiers = []
+	csv = "nom,prenom,email,credits,attestation\n"
+	config = Config.objects.get_config()
+	nomclasse = unidecode(classe.nom).replace(" ","-").replace('*','etoile')
+	for eleve,credit in zip(eleves,credits):
+		if credit and credit['ddn'] and credit['ine'] and (credit['sem1']==30 and credit['sem2']==30 or credit['note'] is not None):
+			pdf1 = creditfichier(None,eleves,credits,domaine,branche,precision,I,I2,datedujour,filiere,annee,etoile,signataire,cube,classe)
+			pdf2 = attestationfichier(None,eleves,credits,I,I2,datedujour,filiere,annee,etoile,signataire,cube,config,classe)
+			nomfichier1 = unidecode("ECTS_{}_{}_{}.pdf".format(classe.nom.upper(),eleve.user.first_name,eleve.user.last_name.upper())).replace(" ","-").replace('*','etoile')
+			nomfichier2 = unidecode("ATTESTATION_{}_{}_{}.pdf".format(classe.nom.upper(),eleve.user.first_name,eleve.user.last_name.upper())).replace(" ","-").replace('*','etoile')
+			fichiers.append((join("ECTS_{}".format(nomclasse),nomfichier1),pdf1))
+			fichiers.append((join("ECTS_{}".format(nomclasse),nomfichier2),pdf2))
+			csv += "{},{},{},{},{}\n".format(eleve.user.last_name.upper(),eleve.user.first_name.title(),eleve.user.email or "",nomfichier1,nomfichier2)
+	fichiers.append(("publipostage_{}.csv".format(unidecode(classe.nom).replace(" ","-").replace('*','etoile')),bytes(csv,encoding="utf8")))
+	fullzip = generate_zip(fichiers)
+	response = HttpResponse(fullzip, content_type='application/force-download')
+	nomfichier = "ECTS_{}.zip".format(nomclasse)
+	response['Content-Disposition'] = 'attachment; filename="{}"'.format(nomfichier)
+	return response
+
+def generate_zip(files):
+    mem_zip = BytesIO()
+    with zipfile.ZipFile(mem_zip, mode="w",compression=zipfile.ZIP_DEFLATED) as zf:
+        for f in files:
+            zf.writestr(f[0], f[1])
+    return mem_zip.getvalue()
