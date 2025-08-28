@@ -200,18 +200,23 @@ def inscriptionPlanche(request):
     if classe is None:
         return HttpResponseForbidden("no class")
     id_planche = int(request.POST['id_planche'])
-    commentaire = request.POST['commentaire']
+    commentaire = request.POST['commentaire'][:100]
+    modif = request.POST['modif'] == 'true'
     planche = get_object_or_404(Planche,pk=id_planche,classes=classe)
-    dejaplanche = Planche.objects.filter(eleve=request.user.eleve,jour=planche.jour,semaine=planche.semaine,heure=planche.heure).exists()
-    if dejaplanche:
-        return HttpResponseForbidden("Vous avez déjà une planche sur ce créneau")
-    planches = Planche.objects.filter(eleve=request.user.eleve,jour=planche.jour,colleur=planche.colleur,semaine=planche.semaine)
-    if planches.count() > (1 + int(planche.eleve == request.user.eleve)):
-        return HttpResponseForbidden("Vous avez trop de planches avec ce colleur sur ce créneau")
-    if planche.eleve is not None and planche.eleve != request.user.eleve:
-        return HttpResponseForbidden("Ce créneau est déjà occupé par une autre élève")
+    if modif:
+        if planche.eleve != user.eleve:
+            return HttpResponseForbidden("Vous ne pouvez pas modifier le créneau d'un(e) autre étudiant(e)")
+    else:
+        dejaplanche = Planche.objects.filter(eleve=request.user.eleve,jour=planche.jour,semaine=planche.semaine,heure=planche.heure).exists()
+        if dejaplanche:
+            return HttpResponseForbidden("Vous avez déjà une planche sur ce créneau")
+        planches = Planche.objects.filter(eleve=request.user.eleve,jour=planche.jour,colleur=planche.colleur,semaine=planche.semaine)
+        if planches.count() > (1 + int(planche.eleve == request.user.eleve)):
+            return HttpResponseForbidden("Vous avez trop de planches avec ce colleur sur ce créneau")
+        if planche.eleve is not None and planche.eleve != request.user.eleve:
+            return HttpResponseForbidden("Ce créneau est déjà occupé par un(e) autre étudiant(e)")
     planche.eleve = request.user.eleve
-    planche.commentaire = commentaire[:100]
+    planche.commentaire = commentaire
     planche.save()
     return HttpResponse(json.dumps({"commentaire":planche.commentaire}))
 
@@ -391,7 +396,7 @@ def colleurDonnees(request):
 def deletegrade(request, note_id):
     """efface la note dont l'identifiant est note_id"""
     user = request.user
-    if not checkcolleur(user):
+    if not checkcolleur(user):truc
         return HttpResponseForbidden("not authenticated")
     note = get_object_or_404(Note, pk=note_id)
     if note.colleur != user.colleur:
