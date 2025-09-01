@@ -396,7 +396,7 @@ def colleurDonnees(request):
 def deletegrade(request, note_id):
     """efface la note dont l'identifiant est note_id"""
     user = request.user
-    if not checkcolleur(user):truc
+    if not checkcolleur(user):
         return HttpResponseForbidden("not authenticated")
     note = get_object_or_404(Note, pk=note_id)
     if note.colleur != user.colleur:
