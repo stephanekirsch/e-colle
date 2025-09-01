@@ -442,6 +442,7 @@ def eleve(request):
     if classe is not None:
         tri = None
     form2 = SelectEleveForm(classe, tri, terme_recherche, request.POST if ("supprimer" in request.POST or "modifier" in request.POST or "transferer" in request.POST or "lv1" in request.POST or "lv2" in request.POST or "option" in request.POST or "cube" in request.POST) else None)
+    nb = form2.fields['eleve'].queryset.count()
     if form2.is_valid():
         if "supprimer" in request.POST:
             elevesPasSuppr = []
@@ -492,7 +493,7 @@ def eleve(request):
             else: # dans le cas contraire c'est qu'on remet à zéro la lv1
                 form2.cleaned_data['eleve'].update(lv2=None)
             return redirect('gestion_eleve')
-    return render (request,'administrateur/eleve.html',{'form':form,'form2':form2, 'form3': form3, 'tri':tri})
+    return render (request,'administrateur/eleve.html',{'classe':classe,'nb':nb,'form':form,'form2':form2, 'form3': form3, 'tri':tri})
 
 @ip_filter
 def elevecsv(request):
