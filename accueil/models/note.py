@@ -1,6 +1,5 @@
 from django.db import models, connection
-from datetime import date, timedelta, datetime, time
-from django.utils import timezone
+from datetime import date, timedelta, datetime, time, timezone
 from django.db.models import Avg, Min, Max, StdDev, Count
 from .autre import dictfetchall
 from .semaine import Semaine
