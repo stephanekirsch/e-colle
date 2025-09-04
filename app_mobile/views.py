@@ -3,7 +3,7 @@ from django.http import HttpResponseForbidden, Http404
 from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
 from accueil.models import Config, Note, Programme, Colle, Message, Destinataire, Creneau, Semaine, Groupe, Matiere, Classe, Eleve, User, Prof, Colleur, Devoir, DevoirRendu, DevoirCorrige, TD, Cours, Document
-from django.utils import timezone
+from datetime import timezone
 import json
 from datetime import date, datetime, time, timedelta
 from django.db.models import Count, Q
