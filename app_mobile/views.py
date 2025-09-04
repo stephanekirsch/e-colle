@@ -2,10 +2,9 @@ from django.shortcuts import HttpResponse, get_object_or_404
 from django.http import HttpResponseForbidden, Http404
 from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
-from accueil.models import Config, Note, Programme, Colle, Message, Destinataire, Creneau, Semaine, Groupe, Matiere, Classe, Eleve, User, Prof, Colleur, Devoir, DevoirRendu, DevoirCorrige, TD, Cours, Document
-from datetime import timezone
+from accueil.models import Config, Note, Programme, Colle, Message, Destinataire, Creneau, Semaine, Groupe, Matiere, Classe, Eleve, User, Prof, Colleur, Devoir, DevoirRendu, DevoirCorrige, TD, Cours, Document, Planche
 import json
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 from django.db.models import Count, Q
 from ecolle.settings import HEURE_DEBUT, HEURE_FIN, INTERVALLE
 
@@ -164,6 +163,7 @@ def documents(request):
         matieresclasse=classe).values('pk', 'nom', 'couleur', 'lv'))
     return HttpResponse(json.dumps([matieres,devoirs,devoirsrendus,devoirscorriges,cours,tds,documents], default=date_serial))
 
+
 def colles(request):
     user = request.user
     if not checkeleve(user):
@@ -185,8 +185,54 @@ def colles(request):
                0 if not eleve.lv1 else eleve.lv1.pk, 0 if not eleve.lv2 else eleve.lv2.pk, 0 if not eleve.option else eleve.option.pk, 0 if not eleve.groupe2 else eleve.groupe2.pk] for eleve, login in classe.loginsEleves()]
     colleurs = [[colleur.pk, colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), login]
                 for colleur, login in classe.loginsColleurs()]
+    planches = Planche.objects.filter(classes=classe)
+    planches = [[planche.pk, 0 if not planche.eleve else planche.eleve.pk, str(planche.colleur.user), planche.matiere.pk, "/".join(classe.nom for classe in planche.classes.all()),  planche.semaine.numero, planche.get_utc_timestamp(), "" if planche.commentaire is None else planche.commentaire, "" if planche.salle is None else planche.salle] for planche in planches]
     return HttpResponse(json.dumps({'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
-                                    'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs}, default=date_serial))
+                                    'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'planches':planches}, default=date_serial))
+
+@csrf_exempt
+def inscriptionPlanche(request):
+    user = request.user
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
+    classe = request.user.eleve.classe
+    if classe is None:
+        return HttpResponseForbidden("no class")
+    id_planche = int(request.POST['id_planche'])
+    commentaire = request.POST['commentaire'][:100]
+    modif = request.POST['modif'] == 'true'
+    planche = get_object_or_404(Planche,pk=id_planche,classes=classe)
+    if modif:
+        if planche.eleve != user.eleve:
+            return HttpResponseForbidden("Vous ne pouvez pas modifier le créneau d'un(e) autre étudiant(e)")
+    else:
+        dejaplanche = Planche.objects.filter(eleve=request.user.eleve,jour=planche.jour,semaine=planche.semaine,heure=planche.heure).exists()
+        if dejaplanche:
+            return HttpResponseForbidden("Vous avez déjà une planche sur ce créneau")
+        planches = Planche.objects.filter(eleve=request.user.eleve,jour=planche.jour,colleur=planche.colleur,semaine=planche.semaine)
+        if planches.count() > (1 + int(planche.eleve == request.user.eleve)):
+            return HttpResponseForbidden("Vous avez trop de planches avec ce colleur sur ce créneau")
+        if planche.eleve is not None and planche.eleve != request.user.eleve:
+            return HttpResponseForbidden("Ce créneau est déjà occupé par un(e) autre étudiant(e)")
+    planche.eleve = request.user.eleve
+    planche.commentaire = commentaire
+    planche.save()
+    return HttpResponse(json.dumps({"commentaire":planche.commentaire}))
+
+
+def desinscriptionPlanche(request, id_planche):
+    user = request.user
+    if not checkeleve(user):
+        return HttpResponseForbidden("not authenticated")
+    classe = request.user.eleve.classe
+    if classe is None:
+        return HttpResponseForbidden("no class")
+    planche = get_object_or_404(Planche,pk=id_planche,classes=classe,eleve=request.user.eleve)
+    planche.eleve = None
+    planche.commentaire = ""
+    planche.save()
+    return HttpResponse("deleted")
+    
 
 # ------------------------- PARTIE MESSAGES ----------------------------
 
@@ -225,7 +271,7 @@ def messages(request):
         groupes = list(Groupe.objects.filter(classe=classe).values('pk', 'nom'))
         matieres = list(Matiere.objects.filter(matieresclasse=classe).values('pk', 'nom', 'couleur', 'lv'))
         eleves = [{"id": eleve.pk, "nom": eleve.user.first_name.title() + " " + eleve.user.last_name.upper(), "login": login, "groupe": 0 if not eleve.groupe else eleve.groupe.pk,
-                   "lv1": 0 if not eleve.lv1 else eleve.lv1.pk, "lv2": 0 if not eleve.lv2 else eleve.lv2.pk} for eleve, login in classe.loginsEleves()]
+                   "lv1": 0 if not eleve.lv1 else eleve.lv1.pk, "lv2": 0 if not eleve.lv2 else eleve.lv2.pk, "option": 0 if not eleve.option else eleve.option.pk, "groupe2": 0 if not eleve.groupe2 else eleve.groupe2.pk} for eleve, login in classe.loginsEleves()]
         colleurs = [{"id": colleur.pk, "nom": colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), "login": login}
                     for colleur, login in classe.loginsColleurs()]
         profs = list(Prof.objects.filter(classe = classe).values('colleur__pk','matiere__pk'))
@@ -328,6 +374,8 @@ def colleurDonnees(request):
         classe__in=classes).values_list('pk', 'nom','classe__pk'))
     matieres = list(Matiere.objects.filter(
         matieresclasse__in=classes).distinct().values_list('pk', 'nom', 'couleur', 'lv'))
+    planches = Planche.objects.filter(colleur=user.colleur)
+    planches = [[planche.pk, 0 if not planche.eleve else planche.eleve.pk, planche.colleur.pk, planche.matiere.pk, "/".join(classe.nom for classe in planche.classes.all()),  planche.semaine.numero, planche.get_utc_timestamp(), "" if planche.commentaire is None else planche.commentaire, "" if planche.salle is None else planche.salle] for planche in planches]
     eleves = []
     for classe in classes:
         eleves_classe = [[eleve[0].pk, eleve[0].user.first_name.title() + " " + eleve[0].user.last_name.upper(), eleve[1], 0 if not eleve[0].groupe else eleve[0].groupe.pk,
@@ -342,7 +390,7 @@ def colleurDonnees(request):
     return HttpResponse(json.dumps({'colleurmatieres': colleurmatieres, 'colleurclasses': colleurclasses,'classes': list(classes.values_list('id','nom','annee','semestres','option1','option2')),'pp': list(pp.values_list('id')), 'profs': list(profs | profspp), 'notes': Note.objects.listeNotesApp(user.colleur),
         'programmes': list(Programme.objects.filter(classe__in=user.colleur.classes.all()).order_by('-semaine__lundi').values_list('matiere__pk',
         'classe__pk', 'semaine__numero', 'semaine__lundi', 'titre', 'detail', 'fichier')), 'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
-                                    'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'semestre2': [[Config.objects.get_config().semestre2]]}, default=date_serial))
+                                    'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'semestre2': [[Config.objects.get_config().semestre2]], 'planches':planches}, default=date_serial))
 
 def deletegrade(request, note_id):
     """efface la note dont l'identifiant est note_id"""
@@ -582,6 +630,11 @@ def addmessage(request):
         elif genre == 3: # groupe
             try:
                 destinataires |= {eleve.user for eleve in Eleve.objects.filter(groupe__pk = pk)}
+            except Exception as e:
+                return HttpResponse(str(e))
+        elif genre == 7: # groupe
+            try:
+                destinataires |= {eleve.user for eleve in Eleve.objects.filter(groupe2__pk = pk)}
             except Exception as e:
                 return HttpResponse(str(e))
         elif genre == 4: # tous les élèves d'une classe
