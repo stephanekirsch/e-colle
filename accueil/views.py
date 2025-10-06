@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from accueil.models import Classe, Matiere, Colleur, Message, Destinataire, Eleve, Config, Prof
-from accueil.forms import UserForm, UserProfprincipalForm, SelectMessageForm, EcrireForm, ReponseForm
+from accueil.forms import UserForm, UserProfprincipalForm, UserProfForm, SelectMessageForm, EcrireForm, ReponseForm
 from django.contrib import messages as messagees
 from ecolle.settings import IP_FILTRE_ADMIN, IP_FILTRE_ADRESSES
 import re
@@ -59,6 +59,11 @@ def profil(request):
 			initial["{}_groupe".format(classe.pk)] = Colleur.objects.filter(colleurprof__classe=classe,colleurprof__modifgroupe=True)
 			initial["{}_colloscope".format(classe.pk)] = Colleur.objects.filter(colleurprof__classe=classe,colleurprof__modifcolloscope=True)
 		form = UserProfprincipalForm(user.colleur,classes,request.POST or None,instance = user, initial = initial)
+		if form.is_valid():
+			form.save()
+			return redirect('accueil')
+	elif Prof.objects.filter(colleur=user.colleur).exists():
+		form = UserProfForm(user.colleur,request.POST or None,instance = user,initial = {'email':user.email})
 		if form.is_valid():
 			form.save()
 			return redirect('accueil')

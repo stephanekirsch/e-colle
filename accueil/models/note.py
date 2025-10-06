@@ -4,6 +4,7 @@ from django.db.models import Avg, Min, Max, StdDev, Count
 from .autre import dictfetchall
 from .semaine import Semaine
 from .eleve import Eleve
+from .prof import Prof
 from .matiere import Matiere
 from ecolle.settings import HEURE_DEBUT, HEURE_FIN, INTERVALLE
 
@@ -146,17 +147,21 @@ class NoteManager(models.Manager):
         moyenne_classe = moyenne_classe.values('matiere__pk').annotate(Avg('note')).order_by('matiere__nom','matiere__lv','matiere__temps')
         rangs=[]
         for i,matiere in enumerate(matieres):
-            rang=self.exclude(note__gt=20).filter(classe=eleve.classe,eleve__isnull=False,matiere__pk=matiere[0])
-            if semin:
-                rang=rang.filter(semaine__lundi__gte=semin.lundi)
-            if semax and not strict:
-                rang=rang.filter(semaine__lundi__lte=semax.lundi)
-            elif semax:
-                rang=rang.filter(semaine__lundi__lt=semax.lundi)
-            if moyenne[i]['note__avg']:
-                rang=rang.values('eleve').annotate(Avg('note')).filter(note__avg__gt=moyenne[i]['note__avg']+0.0001).count()+1
+            prof = Prof.objects.filter(matiere=matirere,classe=eleve.classe)
+            if prof.exists() and prof.first()['cacherang']:
+                rang = 0
             else:
-                rang=0
+                rang=self.exclude(note__gt=20).filter(classe=eleve.classe,eleve__isnull=False,matiere__pk=matiere[0])
+                if semin:
+                    rang=rang.filter(semaine__lundi__gte=semin.lundi)
+                if semax and not strict:
+                    rang=rang.filter(semaine__lundi__lte=semax.lundi)
+                elif semax:
+                    rang=rang.filter(semaine__lundi__lt=semax.lundi)
+                if moyenne[i]['note__avg']:
+                    rang=rang.values('eleve').annotate(Avg('note')).filter(note__avg__gt=moyenne[i]['note__avg']+0.0001).count()+1
+                else:
+                    rang=0
             rangs.append(rang)
         return [{"note__max": x["note__max"], "matiere__couleur": x["matiere__couleur"], "note__stddev": x["note__stddev"], "note__min": x["note__min"], 
         "matiere__nom": matieresObj[x["matiere__pk"]], "note__count": x["note__count"], "note__avg": x["note__avg"], "noteclasse__avg":y["note__avg"],"rang":z} for x,y,z in zip(moyenne,moyenne_classe,rangs)]

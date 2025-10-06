@@ -38,5 +38,5 @@ class Prof(models.Model):
     matiere= models.ForeignKey("Matiere",verbose_name="Matière", related_name="matiereprof",on_delete =models.CASCADE)
     modifgroupe = models.BooleanField(verbose_name="Droits de modification des groupes de colle")
     modifcolloscope = models.BooleanField(verbose_name="Droits de modification du colloscope")
+    cacherang = models.BooleanField(verbose_name = "masquer les rangs des étudiants",default=False)
     objects = ProfManager()
-

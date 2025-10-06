@@ -561,12 +561,14 @@ class ProfForm(forms.Form):
 
     def save(self):
         """Sauvegarde en base de données les données du formulaire"""
+        for matiere in self.classe.matieres.all():  # on efface les profs correspondants à la classe courante pour lesquels les colleurs ne sont plus prof
+            Prof.objects.filter(classe=self.classe,matiere=matiere).exclude(colleur__in=self.cleaned_data[str(matiere.pk)]).delete() 
         matieres_avec_prof=[(matiere,colleur) for matiere in self.classe.matieres.all() for colleur in self.cleaned_data[str(matiere.pk)]] # liste des matieres/colleur
-        # on efface les profs correspondants à la classe courante
-        Prof.objects.filter(classe=self.classe).delete()
-        # on crée les nouvelles entités profs
+        # on crée / met à jour les nouvelles entités profs
         config=Config.objects.get_config()
-        Prof.objects.bulk_create([Prof(classe=self.classe,matiere=matiere,modifgroupe=config.default_modif_groupe,modifcolloscope=config.default_modif_col,colleur=colleur) for matiere,colleur in matieres_avec_prof])
+        for matiere, colleur in matieres_avec_prof:
+            if not Prof.objects.filter(classe=self.classe,matiere=matiere,colleur=colleur).exists():
+                Prof.objects.create(classe=self.classe,matiere=matiere,defaults = {"modifgroupe":config.default_modif_groupe,"modifcolloscope":config.default_modif_col,"colleur":colleur})
         # mise à jour du prof principal
         if self.cleaned_data['profprincipal']:
             self.classe.profprincipal=self.cleaned_data['profprincipal']
