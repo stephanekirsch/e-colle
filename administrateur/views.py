@@ -370,6 +370,7 @@ def colleurmodif(request, chaine_colleurs):
         formset = Colleurformset(listeColleurs,initial=[{'last_name':colleur.user.last_name,'first_name':colleur.user.first_name,'username':colleur.user.username,'email':colleur.user.email,'is_active':colleur.user.is_active,'grade':colleur.grade,'etablissement':colleur.etablissement,'matiere':colleur.matieres.all(),'classe':colleur.classes.all()} for colleur in listeColleurs]) 
     return render(request,'administrateur/colleurmodif.html',{'pwdmin':PASSWORDMIN, 'pwdspec':PASSWORDSPEC,'formset':formset})
 
+@ip_filter
 def colleurajout(request, initial = None):
     """Renvoie la vue de la page d'ajout de colleurs"""
     if request.method=="POST":
@@ -526,6 +527,7 @@ def colleurcsv(request):
             return colleurajout(request, initial = initial)
     return render(request,'administrateur/colleurcsv.html',{'form':form})
 
+@ip_filter
 def elevemodif(request, chaine_eleves):
     """Renvoie la vue de la page de modification des élèves dont l'id fait partie de chaine_eleves"""
     listeEleves = Eleve.objects.filter(pk__in=[int(i) for i in chaine_eleves.split("-")]).order_by('user__last_name','user__first_name')
