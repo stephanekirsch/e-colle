@@ -147,8 +147,8 @@ class NoteManager(models.Manager):
         moyenne_classe = moyenne_classe.values('matiere__pk').annotate(Avg('note')).order_by('matiere__nom','matiere__lv','matiere__temps')
         rangs=[]
         for i,matiere in enumerate(matieres):
-            prof = Prof.objects.filter(matiere=matirere,classe=eleve.classe)
-            if prof.exists() and prof.first()['cacherang']:
+            prof = Prof.objects.filter(matiere=matiere,classe=eleve.classe)
+            if prof.exists() and prof.first().cacherang:
                 rang = 0
             else:
                 rang=self.exclude(note__gt=20).filter(classe=eleve.classe,eleve__isnull=False,matiere__pk=matiere[0])

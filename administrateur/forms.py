@@ -568,7 +568,7 @@ class ProfForm(forms.Form):
         config=Config.objects.get_config()
         for matiere, colleur in matieres_avec_prof:
             if not Prof.objects.filter(classe=self.classe,matiere=matiere,colleur=colleur).exists():
-                Prof.objects.create(classe=self.classe,matiere=matiere,defaults = {"modifgroupe":config.default_modif_groupe,"modifcolloscope":config.default_modif_col,"colleur":colleur})
+                Prof.objects.create(classe=self.classe,matiere=matiere,modifgroupe=config.default_modif_groupe,modifcolloscope=config.default_modif_col,colleur=colleur)
         # mise à jour du prof principal
         if self.cleaned_data['profprincipal']:
             self.classe.profprincipal=self.cleaned_data['profprincipal']
