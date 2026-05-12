@@ -186,7 +186,7 @@ def colles(request):
     colleurs = [[colleur.pk, colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), login]
                 for colleur, login in classe.loginsColleurs()]
     planches = Planche.objects.filter(classes=classe)
-    planches = [[planche.pk, 0 if not planche.eleve else planche.eleve.pk, str(planche.colleur.user), planche.matiere.pk, "/".join(classe.nom for classe in planche.classes.all()),  planche.semaine.numero, planche.get_utc_timestamp(), "" if planche.commentaire is None else planche.commentaire, "" if planche.salle is None else planche.salle] for planche in planches]
+    planches = [[planche.pk, 0 if not planche.eleve else planche.eleve.pk, str(planche.colleur.user), planche.matiere.pk, "/".join(classe.nom for classe in planche.classes.all()),  planche.semaine.numero, planche.get_utc_timestamp(), "" if planche.commentaire is None else planche.commentaire, "" if planche.salle is None else planche.salle, "" if planche.commentaire_colleur is None else planche.commentaire_colleur] for planche in planches]
     return HttpResponse(json.dumps({'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
                                     'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'planches':planches}, default=date_serial))
 
@@ -375,7 +375,7 @@ def colleurDonnees(request):
     matieres = list(Matiere.objects.filter(
         matieresclasse__in=classes).distinct().values_list('pk', 'nom', 'couleur', 'lv'))
     planches = Planche.objects.filter(colleur=user.colleur)
-    planches = [[planche.pk, 0 if not planche.eleve else planche.eleve.pk, planche.colleur.pk, planche.matiere.pk, "/".join(classe.nom for classe in planche.classes.all()),  planche.semaine.numero, planche.get_utc_timestamp(), "" if planche.commentaire is None else planche.commentaire, "" if planche.salle is None else planche.salle] for planche in planches]
+    planches = [[planche.pk, 0 if not planche.eleve else planche.eleve.pk, planche.colleur.pk, planche.matiere.pk, "/".join(classe.nom for classe in planche.classes.all()),  planche.semaine.numero, planche.get_utc_timestamp(), "" if planche.commentaire is None else planche.commentaire, "" if planche.salle is None else planche.salle, "" if planche.commentaire_colleur is None else planche.commentaire_colleur] for planche in planches]
     eleves = []
     for classe in classes:
         eleves_classe = [[eleve[0].pk, eleve[0].user.first_name.title() + " " + eleve[0].user.last_name.upper(), eleve[1], 0 if not eleve[0].groupe else eleve[0].groupe.pk,

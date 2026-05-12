@@ -767,7 +767,7 @@ class DocumentForm(forms.ModelForm):
 class PlancheForm(forms.ModelForm):
     class Meta:
         model = Planche
-        fields=['classes','semaine','jour','heure','salle','eleve']
+        fields=['classes','semaine','jour','heure','salle','eleve','commentaire_colleur']
         widgets = {'classes':forms.CheckboxSelectMultiple}
 
     def __init__(self,matiere,colleur,*args,**kwargs):
@@ -792,7 +792,7 @@ class PlancheForm(forms.ModelForm):
 class MultiPlancheForm(forms.ModelForm):
     class Meta:
         model = Planche
-        fields=['classes','semaine','jour','salle']
+        fields=['classes','semaine','jour','salle','commentaire_colleur']
 
     def __init__(self,matiere,colleur,*args,**kwargs):
         super().__init__(*args,**kwargs)
@@ -806,7 +806,7 @@ class MultiPlancheForm(forms.ModelForm):
 
     def clean(self):
         """vérifie que le colleur n'a pas déjà une planche sur ce créneau"""
-        query = Planche.objects.filter(semaine=self.cleaned_data['semaine'],jour=self.cleaned_data['jour'],heure__gte=self.cleaned_data['heuredebut'],heure__lt=self.cleaned_data['heurefin'],colleur=self.colleur)
+        query = Planche.objects.filter(semaine=self.cleaned_data['semaine'],jour=self.cleaned_data['jour'],heure__gte=self.cleaned_data['heuredebut'],heure__lt=self.cleaned_data['heurefin'],colleur=self.colleur,commentaire_colleur=self.cleaned_data['commentaire_colleur'])
         if query.exists():
             raise ValidationError("Vous avez déjà une planche sur cette plage horaire")
 
@@ -815,7 +815,7 @@ class MultiPlancheForm(forms.ModelForm):
         heure = int(self.cleaned_data['heuredebut'])
         heurefin = int(self.cleaned_data['heurefin'])
         while heure < heurefin:
-            planche = Planche(colleur=self.colleur, matiere=self.matiere, semaine=self.cleaned_data['semaine'], jour=self.cleaned_data['jour'], heure=heure, salle=self.cleaned_data['salle'])
+            planche = Planche(colleur=self.colleur, matiere=self.matiere, semaine=self.cleaned_data['semaine'], jour=self.cleaned_data['jour'], heure=heure, salle=self.cleaned_data['salle'],commentaire_colleur=self.cleaned_data['commentaire_colleur'])
             planche.save()
             planche.classes.set(self.cleaned_data['classes'])
             heure += self.matiere.temps
