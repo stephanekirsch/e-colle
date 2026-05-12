@@ -151,6 +151,7 @@ class Command(BaseCommand):
             except Exception:
                 self.stdout.write("réponse invalide")
         self.stdout.write("-"*20)
+        loop = True
         while loop:
             passwordmin = input("taille minimale des mots de passe: ".format(PASSWORDMIN))
             try:
@@ -159,6 +160,7 @@ class Command(BaseCommand):
             except Exception:
                 self.stdout.write("réponse invalide")
         self.stdout.write("-"*20)
+        loop = True
         while loop:
             passwordspec = input("nombre minimal de minuscules, majuscules, chiffres, ponctuation dans les mots de passe (sous forme d'une liste de 4 entiers) : ".format(PASSWORDSPEC))
             try:

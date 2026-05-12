@@ -76,6 +76,8 @@ class UserProfprincipalForm(forms.ModelForm):
         for classe in classes:
             self.fields["{}_groupe".format(classe.pk)] = ColleurMultipleChoiceField(classe,label="Droits de modifier les groupes de {}".format(classe.nom.upper()),queryset=Colleur.objects.filter(colleurprof__classe=classe,user__is_active=True).select_related('user').exclude(pk=colleur.pk),widget=forms.CheckboxSelectMultiple,required=False)
             self.fields["{}_colloscope".format(classe.pk)] = ColleurMultipleChoiceField(classe,label="Droits de modifier le colloscope de {}".format(classe.nom.upper()),queryset=Colleur.objects.filter(colleurprof__classe=classe,user__is_active=True).select_related('user').exclude(pk=colleur.pk),widget=forms.CheckboxSelectMultiple,required=False)
+        self.fields["cacherang"] = forms.MultipleChoiceField(label="Masquer les rangs des élèves",choices = [(x.pk,"{}/{}".format(x.classe,x.matiere)) for x in Prof.objects.filter(colleur=colleur).all()],widget=forms.CheckboxSelectMultiple,required=False,
+            initial = list(Prof.objects.filter(colleur=colleur,cacherang=True).values_list("pk",flat=True)))
 
     def clean_motdepasse(self):
         data = self.cleaned_data['motdepasse']
@@ -99,6 +101,38 @@ class UserProfprincipalForm(forms.ModelForm):
                     prof.update(modifcolloscope=True)
                 else:
                     prof.update(modifcolloscope=False)
+        for prof in self.cleaned_data['cacherang']:
+            Prof.objects.filter(colleur=user.colleur,pk=prof).update(cacherang=True)
+        for prof in set(Prof.objects.filter(colleur=user.colleur).values_list('pk',flat=True)) - set(int(x) for x in self.cleaned_data['cacherang']):
+            Prof.objects.filter(colleur=user.colleur,pk=prof).update(cacherang=False)
+
+class UserProfForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields=['email','css']
+
+    def __init__(self,colleur,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.fields['motdepasse']=forms.CharField(label="Mot de passe",widget=forms.PasswordInput,required=False)
+        self.fields["cacherang"] = forms.MultipleChoiceField(label="Masquer les rangs des élèves",choices = [(x.pk,"{}/{}".format(x.classe,x.matiere)) for x in Prof.objects.filter(colleur=colleur).all()],widget=forms.CheckboxSelectMultiple,required=False,
+            initial = list(Prof.objects.filter(colleur=colleur,cacherang=True).values_list("pk",flat=True)))
+
+    def clean_motdepasse(self):
+        data = self.cleaned_data['motdepasse']
+        if data:
+            validate_password(data)
+        return data
+
+    def save(self):
+        user = self.instance
+        if self.cleaned_data['motdepasse']:
+            user.set_password(self.cleaned_data['motdepasse'])
+        user.save()
+        for prof in self.cleaned_data['cacherang']:
+            Prof.objects.filter(colleur=user.colleur,pk=prof).update(cacherang=True)
+        for prof in set(Prof.objects.filter(colleur=user.colleur).values_list('pk',flat=True)) - set(int(x) for x in self.cleaned_data['cacherang']):
+            Prof.objects.filter(colleur=user.colleur,pk=prof).update(cacherang=False)
+
         
 class SelectMessageForm(forms.Form):
     def __init__(self,user,*args, **kwargs):

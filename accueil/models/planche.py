@@ -10,6 +10,7 @@ class Planche(models.Model):
     semaine = models.ForeignKey("semaine",related_name="planchesemaine",on_delete=models.PROTECT)
     eleve = models.ForeignKey("Eleve",related_name="plancheeleve",null=True,blank=True,on_delete=models.SET_NULL)
     commentaire = models.CharField(max_length=100,null=True,blank=True)
+    commentaire_colleur = models.CharField(max_length=100,null=True,blank=True)
     LISTE_HEURE=[(i,"{}h{:02d}".format(i//60,(i%60))) for i in range(HEURE_DEBUT,HEURE_FIN,INTERVALLE)] 
         # une heure est représentée par le nombre de minutes depuis
         # minuit

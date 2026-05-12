@@ -24,6 +24,7 @@
 		<td>Élève</td>
 		<td>Classes</td>
 		<td>Salle</td>
+		<td>Commentaire colleur</td>
 		<td>Commentaire</td>
 		<td>Modifier</td>
 		<td>Vider</td>
@@ -38,6 +39,7 @@
 		<td>{% if planche.eleve == None%}aucun{% else %}{{planche.eleve}}{% endif %}</td>
 		<td>{% for classe in planche.classes.all %}{% if forloop.first %}{{classe}}{% else %}/{{classe}}{% endif %}{% endfor %}</td>
 		<td>{% if planche.salle %}{{planche.salle}}{% endif %}</td>
+		<td>{% if planche.commentaire_colleur %}{{planche.commentaire_colleur}}{% endif %}</td>
 		<td>{% if planche.commentaire %}{{planche.commentaire}}{% endif %}</td>
 		<td><a href="{% url 'colleur_planche_modif' planche.pk %}">Modifier</a></td>
 		<td><a href="{% url 'colleur_planche_vide' planche.pk %}">Vider</a></td>

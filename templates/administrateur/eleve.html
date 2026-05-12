@@ -25,7 +25,7 @@
 	</table>
 
 	<table class="accueil">
-	<tr><td>Liste des élèves</td></tr>
+	<tr><td>{% if classe != None %}{{classe}}: {% endif %}{{nb}} élèves</td></tr>
 	</table>
 	<form method="post">
 	{% csrf_token %}

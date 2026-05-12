@@ -22,6 +22,7 @@
 		<td>Élève</td>
 		<td>Classes</td>
 		<td>Salle</td>
+		<td>Commentaire colleur</td>
 		<td>Commentaire</td>
 	</tr>
 	{% for planche in planches %}
@@ -34,6 +35,7 @@
 		<td>{% if planche.eleve == None %}Aucun{% else %}{{planche.eleve}}{% endif %}</td>
 		<td>{% for classe in planche.classes.all %}{% if forloop.first %}{{classe}}{% else %}/{{classe}}{% endif %}{% endfor %}</td>
 		<td>{% if planche.salle %}{{planche.salle}}{% endif %}</td>
+		<td>{% if planche.commentaire_colleur %}{{planche.commentaire_colleur}}{% endif %}</td>
 		<td>{% if planche.commentaire %}{{planche.commentaire}}{% endif %}</td>
 	</tr>
 	{% endfor %}

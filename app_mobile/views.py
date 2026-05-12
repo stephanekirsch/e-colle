@@ -3,9 +3,8 @@ from django.http import HttpResponseForbidden, Http404
 from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
 from accueil.models import Config, Note, Programme, Colle, Message, Destinataire, Creneau, Semaine, Groupe, Matiere, Classe, Eleve, User, Prof, Colleur, Devoir, DevoirRendu, DevoirCorrige, TD, Cours, Document, Planche
-from django.utils import timezone
 import json
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 from django.db.models import Count, Q
 from ecolle.settings import HEURE_DEBUT, HEURE_FIN, INTERVALLE
 
@@ -187,7 +186,7 @@ def colles(request):
     colleurs = [[colleur.pk, colleur.user.first_name.title() + " " + colleur.user.last_name.upper(), login]
                 for colleur, login in classe.loginsColleurs()]
     planches = Planche.objects.filter(classes=classe)
-    planches = [[planche.pk, 0 if not planche.eleve else planche.eleve.pk, str(planche.colleur.user), planche.matiere.pk, "/".join(classe.nom for classe in planche.classes.all()),  planche.semaine.numero, planche.get_utc_timestamp(), "" if planche.commentaire is None else planche.commentaire, "" if planche.salle is None else planche.salle] for planche in planches]
+    planches = [[planche.pk, 0 if not planche.eleve else planche.eleve.pk, str(planche.colleur.user), planche.matiere.pk, "/".join(classe.nom for classe in planche.classes.all()),  planche.semaine.numero, planche.get_utc_timestamp(), "" if planche.commentaire is None else planche.commentaire, "" if planche.salle is None else planche.salle, "" if planche.commentaire_colleur is None else planche.commentaire_colleur] for planche in planches]
     return HttpResponse(json.dumps({'creneaux': creneaux, 'semaines': semaines, 'colles': colles,
                                     'groupes': groupes, 'matieres': matieres, 'eleves': eleves, 'colleurs': colleurs, 'planches':planches}, default=date_serial))
 
@@ -200,18 +199,23 @@ def inscriptionPlanche(request):
     if classe is None:
         return HttpResponseForbidden("no class")
     id_planche = int(request.POST['id_planche'])
-    commentaire = request.POST['commentaire']
+    commentaire = request.POST['commentaire'][:100]
+    modif = request.POST['modif'] == 'true'
     planche = get_object_or_404(Planche,pk=id_planche,classes=classe)
-    dejaplanche = Planche.objects.filter(eleve=request.user.eleve,jour=planche.jour,semaine=planche.semaine,heure=planche.heure).exists()
-    if dejaplanche:
-        return HttpResponseForbidden("Vous avez déjà une planche sur ce créneau")
-    planches = Planche.objects.filter(eleve=request.user.eleve,jour=planche.jour,colleur=planche.colleur,semaine=planche.semaine)
-    if planches.count() > (1 + int(planche.eleve == request.user.eleve)):
-        return HttpResponseForbidden("Vous avez trop de planches avec ce colleur sur ce créneau")
-    if planche.eleve is not None and planche.eleve != request.user.eleve:
-        return HttpResponseForbidden("Ce créneau est déjà occupé par une autre élève")
+    if modif:
+        if planche.eleve != user.eleve:
+            return HttpResponseForbidden("Vous ne pouvez pas modifier le créneau d'un(e) autre étudiant(e)")
+    else:
+        dejaplanche = Planche.objects.filter(eleve=request.user.eleve,jour=planche.jour,semaine=planche.semaine,heure=planche.heure).exists()
+        if dejaplanche:
+            return HttpResponseForbidden("Vous avez déjà une planche sur ce créneau")
+        planches = Planche.objects.filter(eleve=request.user.eleve,jour=planche.jour,colleur=planche.colleur,semaine=planche.semaine)
+        if planches.count() > (1 + int(planche.eleve == request.user.eleve)):
+            return HttpResponseForbidden("Vous avez trop de planches avec ce colleur sur ce créneau")
+        if planche.eleve is not None and planche.eleve != request.user.eleve:
+            return HttpResponseForbidden("Ce créneau est déjà occupé par un(e) autre étudiant(e)")
     planche.eleve = request.user.eleve
-    planche.commentaire = commentaire[:100]
+    planche.commentaire = commentaire
     planche.save()
     return HttpResponse(json.dumps({"commentaire":planche.commentaire}))
 
@@ -371,7 +375,7 @@ def colleurDonnees(request):
     matieres = list(Matiere.objects.filter(
         matieresclasse__in=classes).distinct().values_list('pk', 'nom', 'couleur', 'lv'))
     planches = Planche.objects.filter(colleur=user.colleur)
-    planches = [[planche.pk, 0 if not planche.eleve else planche.eleve.pk, planche.colleur.pk, planche.matiere.pk, "/".join(classe.nom for classe in planche.classes.all()),  planche.semaine.numero, planche.get_utc_timestamp(), "" if planche.commentaire is None else planche.commentaire, "" if planche.salle is None else planche.salle] for planche in planches]
+    planches = [[planche.pk, 0 if not planche.eleve else planche.eleve.pk, planche.colleur.pk, planche.matiere.pk, "/".join(classe.nom for classe in planche.classes.all()),  planche.semaine.numero, planche.get_utc_timestamp(), "" if planche.commentaire is None else planche.commentaire, "" if planche.salle is None else planche.salle, "" if planche.commentaire_colleur is None else planche.commentaire_colleur] for planche in planches]
     eleves = []
     for classe in classes:
         eleves_classe = [[eleve[0].pk, eleve[0].user.first_name.title() + " " + eleve[0].user.last_name.upper(), eleve[1], 0 if not eleve[0].groupe else eleve[0].groupe.pk,
