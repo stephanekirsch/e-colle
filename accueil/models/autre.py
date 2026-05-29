@@ -318,83 +318,151 @@ class NoteECTSManager(models.Manager):
 
 
     def moyenneECTS(self,eleve,cube=False):
+        """
+        remvoie le triplet (m,l) où
+        - m est la moyenne pondérée dess crédits ECTS
+        - l une liste d'entiers indiquant les semestres validés
+        """
         if not eleve.classe: return 0
         annee = eleve.classe.annee + eleve.cube
-        sem1,sem2,ng1,sem3,sem4,ng2,sem5,sem6,ng3 = self.notePDF(eleve)
-        sp=0 # variable qui va contenir la somme pondérée des notes en vue du calcul de la mention globale
-        coeff = 0 # somme des coeffs pour vérifier si on en a 60 au total
-        if ng1 is not None: # si note globale pour la première année, on écrase le reste pour le calcul de la moyenne
-            coeff = 60
-            sp = 60*ng1
+        annee1 = eleve.classe.annee == 1
+        annee2 = eleve.classe.annee == 2 and not eleve.cube
+        annee3 = eleve.classe.annee == 2 and eleve.cube
+        if annee1:
+            sem1,sem2,ng1 = NoteECTS.objects.notePDF(eleve)
+        elif annee2:
+            sem1,sem2,ng1,sem3,sem4,ng2 = NoteECTS.objects.notePDF(eleve)
         else:
+            sem1,sem2,ng1,sem3,sem4,ng2, sem5,sem6,ng3 = NoteECTS.objects.notePDF(eleve)
+        sp1=0 # variable qui va contenir la somme pondérée des notes en vue du calcul de la mention globale
+        coeff1 = coeff = 0 # somme des coeffs pour vérifier si on en a 60 au total
+        l = []
+        if ng1 is not None: # si note globale pour la première année, on écrase le reste pour le calcul de la moyenne
+            coeff1 = 60
+            sp1 = 60*ng1
+        else:
+            sp1 = 0
             if sem1:
                 for note in sem1:
-                    sp+=note[2]*note[4]
+                    sp1+=note[2]*note[4]
                     if note[4] !=5:
-                        coeff+=note[2]
+                        coeff1+=note[2]
+                if coeff1 != 30:
+                    sp1 = 0
+                    coeff1 = 0
+                else:
+                    l += [1]
             if sem2:
+                sp=0
                 for note in sem2:
                     sp+=note[3]*note[4]
                     if note[4] !=5:
                         coeff+=note[3]
+                if coeff == 30:
+                    sp1 += sp
+                    coeff1 += coeff
+                    l += [2]
         if annee == 1:
-            return round(sp1/60)
+            if coeff1 == 0: # si aucun semestre validé -> note = F
+                return 5,[]
+            else:
+                return round(sp1/coeff1),l
         if ng2 is not None: # si note globale pour la deuxième année, on écrase le reste pour le calcul de la moyenne
             coeff2 = 60
             sp2 = 60*ng2
         elif annee == 2 or annee == 3 and cube:
-                coeff2 = 0
-                sp2 = 0
-                if sem3:
-                    for note in sem3:
-                        sp2+=note[2]*note[4]
-                        if note[4] !=5:
-                            coeff2+=note[2]
-                if sem4:
-                    for note in sem4:
-                        sp2+=note[3]*note[4]
-                        if note[4] !=5:
-                            coeff2+=note[3]
-        elif annee == 3 and not cube:
+            l = [1,2]
             coeff2 = 0
+            coeff = 0
             sp2 = 0
+            sp = 0
+            if sem3:
+                for note in sem3:
+                    sp2+=note[2]*note[4]
+                    if note[4] !=5:
+                        coeff2+=note[2]
+                if coeff2 != 30:
+                    sp2 = 0
+                    coeff2 = 0
+                else:
+                    l += [3]
+            if sem4:
+                for note in sem4:
+                    sp+=note[3]*note[4]
+                    if note[4] !=5:
+                        coeff+=note[3]
+                if coeff == 30:
+                    sp2 += sp
+                    coeff2 += coeff
+                    l += [4]
+        elif annee == 3 and not cube:
+            l = [1,2]
+            coeff2 = 0
+            coeff = 0
+            sp2 = 0
+            sp = 0
             if sem5:
                 for note in sem5:
                     sp2+=note[2]*note[4]
                     if note[4] !=5:
                         coeff2+=note[2]
+                if coeff2 != 30:
+                    sp2 = 0
+                    coeff2 = 0
+                else:
+                    l += [3]
             if sem6:
                 for note in sem6:
-                    sp2+=note[3]*note[4]
+                    sp+=note[3]*note[4]
                     if note[4] !=5:
-                        coeff2+=note[3]
+                        coeff+=note[3]
+                if coeff == 30:
+                    sp2 += sp
+                    coeff2 += coeff
+                    l += [4]
         if annee == 2 or annee == 3 and not cube:
             if ng2 is not None:
-                return ng2
+                return ng2, [1,2,3,4]
             else:
-                return round((sp2+sp)/120)
+                if coeff1 + coeff2 == 0:
+                    return 5,[]
+                else:
+                    return round((sp2+sp1)/(coeff1 + coeff2)),l
         else:
             if ng3 is not None: # si note globale pour la deuxième année, on écrase le reste pour le calcul de la moyenne
-                return ng3
+                return ng3,[1,2,3,4,5,6]
             coeff3 = 0
+            coeff = 0
             sp3 = 0
+            sp = 0
+            l = [1,2,3,4]
             if sem5:
                 for note in sem5:
                     sp3+=note[2]*note[4]
                     if note[4] !=5:
                         coeff3+=note[2]
+                if coeff3 != 30:
+                    coeff3 = 0
+                    sp3 = 0
+                else:
+                    l += [5]
             if sem6:
                 for note in sem6:
-                    sp3+=note[3]*note[4]
+                    sp+=note[3]*note[4]
                     if note[4] !=5:
-                        coeff3+=note[3]
-       
+                        coeff+=note[3]
+                if coeff == 30:
+                    sp3 += sp
+                    coeff3 += coeff
+                    l += [6]
             if ng2 is not None:
-                return round((sp3+120*ng2)/180)
-            elif coeff3 == coeff2 == coeff1 == 60:
-                return round((sp3+sp2+sp)/180)
+                return round((sp3+120*ng2)/(120 + coeff3)),l
+            elif coeff2 == coeff1 == 60:
+                return round((sp3+sp2+sp1)/(120 + coeff3)),l
+            elif coeff3 == 0:
+                return 5,l
             else:
-                return round(sp3/60)
+                return (sp3/coeff3),l
 
 
     def credits(self,classe):
@@ -451,15 +519,14 @@ class NoteECTSManager(models.Manager):
                 total[2]+=1
             else:
                 attest = 0
+            sem1 = sem2 = False
             if credit['sem1'] == 30:
                 total[3]+=1
-            elif credit['note'] is None:
-                attest = 0
+                sem1 = True
             if credit['sem2'] == 30:
                 total[4]+=1
-            elif credit['note'] is None:
-                attest = 0
-            total[5] += attest
+                sem2 = True
+            total[5] += attest * (sem1 or sem2)
         return credits,total
 
 

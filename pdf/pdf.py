@@ -292,7 +292,7 @@ def attestationfichier(elev,eleves,credits,I,I2,datedujour,filiere,annee,etoile,
 	pdf.marge_y = 1.5*cm # 1,5cm de marge haut/bas
 	newpage = False
 	for eleve,credit in zip(eleves,credits):
-		if elev or credit and credit['ddn'] and credit['ine'] and (credit['sem1']==30 and credit['sem2']==30 or credit['note'] is not None): # si l'élève a bien toutes les infos/crédits
+		if elev or credit and credit['ddn'] and credit['ine'] and (credit['sem1']==30 or credit['sem2']==30 or credit['note'] is not None): # si l'élève a bien toutes les infos/crédits
 			if newpage:# si ce n'est pas la première page, on change de page
 				pdf.showPage()
 			pdf.y = pdf.format[1]-pdf.marge_y-1.8*cm
@@ -326,15 +326,18 @@ def attestationfichier(elev,eleves,credits,I,I2,datedujour,filiere,annee,etoile,
 			pdf.setFont("Helvetica-Oblique",11)
 			pdf.drawCentredString(pdf.format[0]/2,pdf.y, "a accompli un parcours de formation dans la filière {}".format(filiere + ('*' if etoile and eleve.classe.annee==2 else '')))
 			pdf.y -= 50
+			moyenne, semestres = NoteECTS.objects.moyenneECTS(eleve,cube)
+			moyenne = round(moyenne)
 			pdf.drawCentredString(pdf.format[0]/2,pdf.y, "Valeur du parcours en crédits du système ECTS :")
 			pdf.setFont("Helvetica-Bold",16)
-			pdf.drawString(15*cm,pdf.y,str(60*(classe.annee+cube)))
+			valeur = 30*len(semestres)
+			pdf.drawString(15*cm,pdf.y,str(valeur))
 			pdf.y -= 50
 			pdf.setFont("Helvetica-Oblique",11)
 			pdf.drawCentredString(pdf.format[0]/2,pdf.y, "Mention globale obtenue :")
 			pdf.setFillColor((1,0,0))
 			pdf.setFont("Helvetica-Bold",13)
-			pdf.drawCentredString(13*cm,pdf.y, "ABCDEF"[NoteECTS.objects.moyenneECTS(eleve,cube)])
+			pdf.drawCentredString(13*cm,pdf.y, "ABCDEF"[moyenne])
 			pdf.y -= 50
 			pdf.setFillColor((0,0,0))
 			pdf.setFont("Helvetica",11)
@@ -389,7 +392,7 @@ def attestationects(form,elev,classe):
 	else:
 		eleves=[elev]
 		credits=[False]
-		nomfichier=unidecode("ATTESTATION_{}_{}_{}.pdf".format(elev.classe.nom.upper(),elev.user.first_name,elev.user.last_name.upper())).replace(" ","-")
+		nomfichier=unidecode("ATTESTATION_{}_{}_{}.pdf".format(elev.classe.nom.upper(),elev.user.last_name.upper(),elev.user.first_name.title())).replace(" ","-").replace('*','etoile')
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
 	I = Image(join(RESOURCES_ROOT,'marianne.jpg'))
 	I.drawHeight = 1.8*cm
@@ -579,8 +582,8 @@ def creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,
 			else:
 				sem1,sem2,ng1,sem3,sem4,ng2, sem5,sem6,ng3 = NoteECTS.objects.notePDF(eleve)
 			data=[["ENSEIGNEMENTS","Crédits ECTS","Mention"]]
-			sp=0 # variable qui va contenir la somme pondérée des notes en vue du calcul de la mention globale
-			coeff = 0 # somme des coeffs pour vérifier si on en a 60 au total
+			sp=sp1=0 # variable qui va contenir la somme pondérée des notes en vue du calcul de la mention globale
+			coeff1 = 0 # somme des coeffs pour vérifier si on en a 60 au total
 			lignes = []
 			pos=1
 			if sem1:
@@ -592,7 +595,8 @@ def creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,
 					data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[2],LIST_NOTES[note[4]]])
 					sp+=note[2]*note[4]
 					if note[4] !=5:
-						coeff+=note[2]
+						coeff1+=note[2]
+				coeff1a = coeff1 # somme des coeffs du premier semestre
 			if sem2:
 				data.append(["Deuxième semestre","",""])
 				lignes.append(pos)
@@ -602,17 +606,18 @@ def creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,
 					data.append([note[0] + ("" if not note[1] else " ({})".format(note[1])),note[3],LIST_NOTES[note[4]]])
 					sp+=note[3]*note[4]
 					if note[4] !=5:
-						coeff+=note[3]
+						coeff1+=note[3]
 			if not sem1 and not sem2 and ng1 is not None:
 				data.append(["Première année","",""])
 				data.append(["Mention Globale première année","60","ABCDEF"[ng1]])
 				lignes+=[pos]
 				pos+=2
 			if ng1 is not None: # si note globale pour la première année, on écrase le reste pour le calcul de la moyenne
-				coeff = 60
+				coeff1 = 60
 				sp = 60*ng1
 			if annee2 or annee3 and cube:
 				coeff2 = 0
+				coeff2a = 0
 				sp2 = 0
 				if sem3:
 					data.append(["Troisième semestre","",""])
@@ -624,6 +629,7 @@ def creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,
 						sp2+=note[2]*note[4]
 						if note[4] !=5:
 							coeff2+=note[2]
+					coeff2a = coeff2
 				if sem4:
 					data.append(["Quatrième semestre","",""])
 					lignes.append(pos)
@@ -636,11 +642,12 @@ def creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,
 							coeff2+=note[3]
 				if not sem3 and not sem4 and ng2 is not None:
 					data.append(["Deuxième année","",""])
-					data.append(["Mention Globale Deuxième année","60" if coeff == 60 else "120","ABCDEF"[ng2]])
+					data.append(["Mention Globale Deuxième année","60" if coeff1 == 60 else "120","ABCDEF"[ng2]])
 					lignes+=[pos]
 					pos+=2
 			if annee3 and not cube:
 				coeff2 = 0
+				coeff2a = 0
 				sp2 = 0
 				if sem5:
 					data.append(["Troisième semestre","",""])
@@ -652,6 +659,7 @@ def creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,
 						sp2+=note[2]*note[4]
 						if note[4] !=5:
 							coeff2+=note[2]
+					coeff2a = coeff2
 				if sem6:
 					data.append(["Quatrième semestre","",""])
 					lignes.append(pos)
@@ -664,7 +672,7 @@ def creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,
 							coeff2+=note[3]
 				if not sem5 and not sem6 and ng2 is not None:
 					data.append(["Deuxième année","",""])
-					data.append(["Mention Globale Deuxième année","60" if coeff == 60 else "120","ABCDEF"[ng2]])
+					data.append(["Mention Globale Deuxième année","60" if coeff1 == 60 else "120","ABCDEF"[ng2]])
 					lignes+=[pos]
 					pos+=2
 			if ng2 is not None: # si note globale pour la deuxième année, on écrase le reste pour le calcul de la moyenne
@@ -683,6 +691,7 @@ def creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,
 						sp3+=note[2]*note[4]
 						if note[4] !=5:
 							coeff3+=note[2]
+					coeff3a = coeff3
 				if sem6:
 					data.append(["Sixième semestre","",""])
 					lignes.append(pos)
@@ -695,12 +704,12 @@ def creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,
 							coeff3+=note[3]
 				if not sem5 and not sem6 and ng3 is not None:
 					data.append(["Troisème année","",""])
-					data.append(["Mention Globale Troisième année","60" if coeff == 60 else "180","ABCDEF"[ng3]])
+					data.append(["Mention Globale Troisième année","60" if coeff1 == 60 else "180","ABCDEF"[ng3]])
 					lignes+=[pos]
 					pos+=2
-			if ng3 is not None: # si note globale pour la deuxième année, on écrase le reste pour le calcul de la moyenne
-				coeff3 = 60
-				sp3 = 60*ng3
+				if ng3 is not None: # si note globale pour la deuxième année, on écrase le reste pour le calcul de la moyenne
+					coeff3 = 60
+					sp3 = 60*ng3
 			hauteurcel = .70*cm
 			nbcel = int((pdf.format[1] - 2*pdf.marge_y - 4*cm) / hauteurcel)
 			tabStyle = [('GRID',(0,0),(-1,-1),.8,(0,0,0))
@@ -748,35 +757,39 @@ def creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,
 			t.drawOn(pdf,pdf.x,pdf.y)
 			pdf.y-=20
 			pdf.setFont('Helvetica-Bold',10)
+			moyenne, semestres = NoteECTS.objects.moyenneECTS(eleve,cube)
+			moyenne=round(moyenne)
 			if annee1:
 				if ng1 is not None:
-					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[ng1]))
-				elif coeff == 60:
-					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round(sp/60)]))
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[moyenne]))
+				elif semestres[:2] == [1,2]:
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[moyenne]))
+				elif semestres[:1] == [1]:
+					pdf.drawString(pdf.x,pdf.y,"30 crédits validés au premier semestre, Mention globale: {}".format(LIST_NOTES[moyenne]))
+				elif semestres[:1] == [2]:
+					pdf.drawString(pdf.x,pdf.y,"30 crédits validés au second semestre, Mention globale: {}".format(LIST_NOTES[moyenne]))
 				else:
 					pdf.setFillColor((1,0,0))
-					pdf.drawString(pdf.x,pdf.y,"Pas de mention, il manque {} crédits".format(60-coeff))
+					pdf.drawString(pdf.x,pdf.y,"Pas de mention, il manque {} crédits".format(60-coeff1))
 					pdf.setFillColor((0,0,0))
 			elif annee2 or annee3 and not cube:
-				if ng2 is not None:
-					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[ng2]))
-				elif coeff2 == 60 and coeff == 60:
-					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round((sp+sp2)/120)]))
-				elif coeff2 == 60:
-					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round(sp2/60)]))
+				if 3 in semestres and 4 in semestres:
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[moyenne]))
+				elif 3 in semestres:
+					pdf.drawString(pdf.x,pdf.y,"90 crédits validés aux semestres 1,2,3, Mention globale: {}".format(LIST_NOTES[moyenne]))
+				elif 4 in semestres:
+					pdf.drawString(pdf.x,pdf.y,"90 crédits validés aux semestres 1,2,4, Mention globale: {}".format(LIST_NOTES[moyenne]))
 				else:
 					pdf.setFillColor((1,0,0))
 					pdf.drawString(pdf.x,pdf.y,"Pas de mention, il manque {} crédits".format(60-coeff2))
 					pdf.setFillColor((0,0,0))
 			else:
-				if ng3 is not None:
-					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[ng3]))
-				elif coeff3 == 60 and ng2 is not None:
-					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round((sp3+2*sp2)/180)]))
-				elif coeff3 == 60 and coeff2 == 60 and coeff == 60:
-					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round((sp3+sp2+sp)/180)]))
-				elif coeff3 == 60:
-					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[round(sp3/60)]))
+				if 5 in semestres and 6 in semestres:
+					pdf.drawString(pdf.x,pdf.y,"Mention globale: {}".format(LIST_NOTES[moyenne]))
+				elif 5 in semestres:
+					pdf.drawString(pdf.x,pdf.y,"90 crédits validés aux semestres 1,2,3,4,5, Mention globale: {}".format(LIST_NOTES[moyenne]))
+				elif 6 in semestres:
+					pdf.drawString(pdf.x,pdf.y,"90 crédits validés aux semestres 1,2,3,4,6 Mention globale: {}".format(LIST_NOTES[moyenne]))
 				else:
 					pdf.setFillColor((1,0,0))
 					pdf.drawString(pdf.x,pdf.y,"Pas de mention, il manque {} crédits".format(60-coeff3))
@@ -817,7 +830,7 @@ def creditsects(form,elev,classe):
 	else:
 		eleves=[elev]
 		credits=[False]
-		nomfichier=unidecode("ECTS_{}_{}_{}.pdf".format(classe.nom.upper(),elev.user.first_name,elev.user.last_name.upper())).replace(" ","-").replace('*','etoile')
+		nomfichier=unidecode("ECTS_{}_{}_{}.pdf".format(classe.nom.upper(),elev.user.last_name.upper(),elev.user.first_name.title())).replace(" ","-").replace('*','etoile')
 	response['Content-Disposition'] = "attachment; filename={}".format(nomfichier)
 	I = Image(join(RESOURCES_ROOT,'marianne.jpg'))
 	I.drawHeight = 1.8*cm
@@ -901,8 +914,8 @@ def publipostage(form,classe):
 		if credit and credit['ddn'] and credit['ine'] and (credit['sem1']==30 and credit['sem2']==30 or credit['note'] is not None):
 			pdf1 = creditfichier(None,eleves,credits,domaine,branche,precision,I,I2,datedujour,filiere,annee,etoile,signataire,cube,classe)
 			pdf2 = attestationfichier(None,eleves,credits,I,I2,datedujour,filiere,annee,etoile,signataire,cube,config,classe)
-			nomfichier1 = unidecode("ECTS_{}_{}_{}.pdf".format(classe.nom.upper(),eleve.user.first_name,eleve.user.last_name.upper())).replace(" ","-").replace('*','etoile')
-			nomfichier2 = unidecode("ATTESTATION_{}_{}_{}.pdf".format(classe.nom.upper(),eleve.user.first_name,eleve.user.last_name.upper())).replace(" ","-").replace('*','etoile')
+			nomfichier1 = unidecode("ECTS_{}_{}_{}.pdf".format(classe.nom.upper(),eleve.user.last_name.upper(),eleve.user.first_name.title())).replace(" ","-").replace('*','etoile')
+			nomfichier2 = unidecode("ATTESTATION_{}_{}_{}.pdf".format(classe.nom.upper(),eleve.user.last_name.upper(),eleve.user.first_name.title())).replace(" ","-").replace('*','etoile')
 			fichiers.append((join("ECTS_{}".format(nomclasse),nomfichier1),pdf1))
 			fichiers.append((join("ECTS_{}".format(nomclasse),nomfichier2),pdf2))
 			csv += "{},{},{},{},{}\n".format(eleve.user.last_name.upper(),eleve.user.first_name.title(),eleve.user.email or "",nomfichier1,nomfichier2)
