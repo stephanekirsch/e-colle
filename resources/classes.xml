@@ -22,7 +22,7 @@
 		<matiere nom="S.I.I." temps="20"></matiere>
 	</classe>
 
-	<classe nom="TSI" precision="Technologie, Sciences de l'ingénieur" annee="1" type="Scientifique" domaine="Mathématiques, physique, sciences de l'ingénieur" >
+	<classe nom="TSI(1)" precision="Technologie, Sciences de l'ingénieur" annee="1" type="Scientifique" domaine="Mathématiques, physique, sciences de l'ingénieur" >
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
@@ -30,7 +30,7 @@
 		<matiere nom="S.I.I." temps="20"></matiere>
 	</classe>
 
-	<classe nom="TPC" precision="Technologie, Physique, Chimie" annee="1" type="Scientifique" domaine="Mathématiques, physique, chimie">
+	<classe nom="TPC(1)" precision="Technologie, Physique, Chimie" annee="1" type="Scientifique" domaine="Mathématiques, physique, chimie">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
@@ -63,7 +63,7 @@
 		<matiere nom="Chinois" temps="20" lv="1"></matiere>
 	</classe>
 
-	<classe nom="BCPST" precision="Biologie, Chimie, Physique, Sciences de la Terre" annee="1" type="Scientifique" domaine="Mathématiques, sciences de la vie et de la terre, physique, chimie ">
+	<classe nom="BCPST(1)" precision="Biologie, Chimie, Physique, Sciences de la Terre" annee="1" type="Scientifique" domaine="Mathématiques, sciences de la vie et de la terre, physique, chimie ">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Chimie" temps="20"></matiere>
@@ -77,7 +77,7 @@
 		<matiere nom="Informatique" temps="60"></matiere>
 	</classe>
 
-	<classe nom="TB" precision="Technologie, Biologie" annee="1" type="Scientifique" domaine="Mathématiques, physique, sciences de la vie et de la terre">
+	<classe nom="TB(1)" precision="Technologie, Biologie" annee="1" type="Scientifique" domaine="Mathématiques, physique, sciences de la vie et de la terre">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Biotechnologies" temps="20"></matiere>
@@ -109,7 +109,7 @@
 		<matiere nom="S.I.I." temps="20"></matiere>
 	</classe>
 
-	<classe nom="TSI" precision="Technologie, Sciences de l'ingénieur" annee="2" type="Scientifique" domaine="Mathématiques, physique, sciences de l'ingénieur">
+	<classe nom="TSI(2)" precision="Technologie, Sciences de l'ingénieur" annee="2" type="Scientifique" domaine="Mathématiques, physique, sciences de l'ingénieur">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
@@ -165,7 +165,7 @@
 	</classe>
 
 
-	<classe nom="TPC" precision="Technologie, Physique, Chimie" annee="2" type="Scientifique" domaine="Mathématiques, physique, chimie">
+	<classe nom="TPC(2)" precision="Technologie, Physique, Chimie" annee="2" type="Scientifique" domaine="Mathématiques, physique, chimie">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Français/Philo" temps="30"></matiere>
@@ -188,7 +188,7 @@
 		<matiere nom="Chinois" temps="20" lv="1"></matiere>
 	</classe>
 
-	<classe nom="TB" precision="Technologie, Biologie" annee="2" type="Scientifique" domaine="Mathématiques, physique, sciences de la vie et de la terre">
+	<classe nom="TB(2)" precision="Technologie, Biologie" annee="2" type="Scientifique" domaine="Mathématiques, physique, sciences de la vie et de la terre">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Biotechnologies" temps="20"></matiere>
@@ -198,7 +198,7 @@
 		<matiere nom="Informatique" temps="60"></matiere>
 	</classe>
 
-	<classe nom="ECG" precision="Économique et Commerciale, voie Générale" annee="1" type="Économique" domaine="Mathématiques, économie">
+	<classe nom="ECG(1)" precision="Économique et Commerciale, voie Générale" annee="1" type="Économique" domaine="Mathématiques, économie">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
@@ -218,7 +218,7 @@
 		<matiere nom="Informatique" temps="60"></matiere>
 	</classe>
 
-	<classe nom="ECG" precision="Économique et Commerciale, voie Générale" annee="2" type="Économique" domaine="Mathématiques, économie">
+	<classe nom="ECG(2)" precision="Économique et Commerciale, voie Générale" annee="2" type="Économique" domaine="Mathématiques, économie">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
@@ -290,7 +290,7 @@
 		<matiere nom="A.E.H.S.C." temps="20"></matiere>
 	</classe> -->
 
-	<classe nom="ECT" precision="Économique et Commerciale, option Technologique" annee="1" type="Économique" domaine="Mathématiques, économie">
+	<classe nom="ECT(1)" precision="Économique et Commerciale, option Technologique" annee="1" type="Économique" domaine="Mathématiques, économie">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
@@ -300,7 +300,7 @@
 		<matiere nom="Droit" temps="20"></matiere>
 	</classe>
 
-	<classe nom="ECT" precision="Économique et Commerciale, option Technologique" annee="2" type="Économique" domaine="Mathématiques, économie">
+	<classe nom="ECT(2)" precision="Économique et Commerciale, option Technologique" annee="2" type="Économique" domaine="Mathématiques, économie">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Culture gé." temps="20"></matiere>
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
