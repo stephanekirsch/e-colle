@@ -173,7 +173,7 @@
 		<matiere nom="Anglais" temps="20" lv="1"></matiere>
 	</classe>
 
-	<classe nom="BCPST" precision="Biologie, Chimie, Physique, Sciences de la Terre" annee="2" type="Scientifique" domaine="Mathématiques, sciences de la vie et de la terre, physique, chimie ">
+	<classe nom="BCPST(2)" precision="Biologie, Chimie, Physique, Sciences de la Terre" annee="2" type="Scientifique" domaine="Mathématiques, sciences de la vie et de la terre, physique, chimie ">
 		<matiere nom="Mathématiques" temps="20"></matiere>
 		<matiere nom="Physique" temps="20"></matiere>
 		<matiere nom="Chimie" temps="20"></matiere>
