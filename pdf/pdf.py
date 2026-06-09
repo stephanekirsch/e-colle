@@ -417,7 +417,7 @@ def attestationects(form,elev,classe):
 		I2 = False
 	if I2:
 		I2.drawHeight = 3*cm
-		I2.drawWidth = 3*cm
+		# I2.drawWidth = 3*cm
 	fichier=attestationfichier(elev,eleves,credits,I,I2,datedujour,filiere,annee,etoile,signataire,cube,config,classe)
 	response.write(fichier)
 	return response
@@ -855,7 +855,7 @@ def creditsects(form,elev,classe):
 		I2 = False
 	if I2:
 		I2.drawHeight = 3*cm
-		I2.drawWidth = 3*cm
+		# I2.drawWidth = 3*cm
 	fichier = creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,filiere,annee,etoile,signataire,cube,classe)
 	response.write(fichier)
 	return response
@@ -905,7 +905,7 @@ def publipostage(form,classe):
 		I2 = False
 	if I2:
 		I2.drawHeight = 3*cm
-		I2.drawWidth = 3*cm
+		# I2.drawWidth = 3*cm
 	fichiers = []
 	csv = "nom,prenom,email,credits,attestation\n"
 	config = Config.objects.get_config()
