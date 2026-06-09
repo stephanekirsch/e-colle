@@ -9,6 +9,7 @@ from django.http import HttpResponse
 from ecolle.settings import RESOURCES_ROOT, MEDIA_ROOT
 from accueil.models import Groupe, Colle, Matiere, Colleur, NoteECTS, Eleve, Config, Classe
 from reportlab.lib.units import cm
+from reportlab.lib import utils
 from unidecode import unidecode
 from os.path import join
 from xml.etree import ElementTree as etree
@@ -399,24 +400,32 @@ def attestationects(form,elev,classe):
 	I.drawWidth = 3*cm
 	if signature and signataire == 'Proviseur':
 		try:
-			I2 = Image(join(RESOURCES_ROOT,'proviseur.png'))
+			path = join(RESOURCES_ROOT,'proviseur.png')
+			I2 = Image(path)
+			img = utils.ImageReader(path)
 		except Exception:
 			try:
-				I2 = Image(join(RESOURCES_ROOT,'proviseur.jpg'))
+				path = join(RESOURCES_ROOT,'proviseur.jpg')
+				I2 = Image(path)
+				img = utils.ImageReader(path)
 			except Exception:
 				I2 = False
 	elif signature and signataire == 'Proviseur adjoint':
 		try:
-			I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.png'))
+			path = join(RESOURCES_ROOT,'proviseuradjoint.png')
+			I2 = Image(path)
+			img = utils.ImageReader(path)
 		except Exception:
 			try:
-				I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.jpg'))
+				path = join(RESOURCES_ROOT,'proviseuradjoint.jpg')
+				I2 = Image(path)
+				img = utils.ImageReader(path)
 			except Exception:
 				I2 = False
 	else:
 		I2 = False
 	if I2:
-		l, h = I2.getSize()
+		l, h = img.getSize()
 		ratio = l/h
 		I2.drawHeight = 3*cm
 		I2.drawWidth = 3*ratio*cm
@@ -839,24 +848,32 @@ def creditsects(form,elev,classe):
 	I.drawWidth = 3*cm
 	if signature and signataire == 'Proviseur':
 		try:
-			I2 = Image(join(RESOURCES_ROOT,'proviseur.png'))
+			path = join(RESOURCES_ROOT,'proviseur.png')
+			I2 = Image(path)
+			img = utils.ImageReader(path)
 		except Exception:
 			try:
-				I2 = Image(join(RESOURCES_ROOT,'proviseur.jpg'))
+				path = join(RESOURCES_ROOT,'proviseur.jpg')
+				I2 = Image(path)
+				img = utils.ImageReader(path)
 			except Exception:
 				I2 = False
 	elif signature and signataire == 'Proviseur adjoint':
 		try:
-			I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.png'))
+			path = join(RESOURCES_ROOT,'proviseuradjoint.png')
+			I2 = Image(path)
+			img = utils.ImageReader(path)
 		except Exception:
 			try:
-				I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.jpg'))
+				path = join(RESOURCES_ROOT,'proviseuradjoint.jpg')
+				I2 = Image(path)
+				img = utils.ImageReader(path)
 			except Exception:
 				I2 = False
 	else:
 		I2 = False
 	if I2:
-		l, h = I2.getSize()
+		l, h = img.getSize()
 		ratio = l/h
 		I2.drawHeight = 3*cm
 		I2.drawWidth = 3*ratio*cm
@@ -891,24 +908,32 @@ def publipostage(form,classe):
 	I.drawWidth = 3*cm
 	if signature and signataire == 'Proviseur':
 		try:
-			I2 = Image(join(RESOURCES_ROOT,'proviseur.png'))
+			path = join(RESOURCES_ROOT,'proviseur.png')
+			I2 = Image(path)
+			img = utils.ImageReader(path)
 		except Exception:
 			try:
-				I2 = Image(join(RESOURCES_ROOT,'proviseur.jpg'))
+				path = join(RESOURCES_ROOT,'proviseur.jpg')
+				I2 = Image(path)
+				img = utils.ImageReader(path)
 			except Exception:
 				I2 = False
 	elif signature and signataire == 'Proviseur adjoint':
 		try:
-			I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.png'))
+			path = join(RESOURCES_ROOT,'proviseuradjoint.png')
+			I2 = Image(path)
+			img = utils.ImageReader(path)
 		except Exception:
 			try:
-				I2 = Image(join(RESOURCES_ROOT,'proviseuradjoint.jpg'))
+				path = join(RESOURCES_ROOT,'proviseuradjoint.jpg')
+				I2 = Image(path)
+				img = utils.ImageReader(path)
 			except Exception:
 				I2 = False
 	else:
 		I2 = False
 	if I2:
-		l, h = I2.getSize()
+		l, h = img.getSize()
 		ratio = l/h
 		I2.drawHeight = 3*cm
 		I2.drawWidth = 3*ratio*cm
