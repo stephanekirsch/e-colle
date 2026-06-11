@@ -808,7 +808,7 @@ def creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,
 			pdf.drawRightString(pdf.format[0]-pdf.x-15,pdf.y,"Cachet et signature")
 			pdf.y-= 3.2*cm
 			if I2:
-				I2.drawOn(pdf,pdf.format[0]-2*pdf.marge_x-3*cm,max(pdf.y,pdf.format[1]-pdf.marge_y))
+				I2.drawOn(pdf,pdf.format[0]-2*pdf.marge_x-3*cm,min(pdf.y,0.5*cm))
 			newpage=True
 	pdf.save()
 	fichier = pdf.buffer.getvalue()
