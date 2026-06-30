@@ -586,6 +586,7 @@ def creditfichier(elev,eleves,credits,domaine,branche,precision,I,I2,datedujour,
 			annee1 = eleve.classe.annee == 1
 			annee2 = eleve.classe.annee == 2 and not eleve.cube
 			annee3 = eleve.classe.annee == 2 and eleve.cube
+			ng2 = None
 			if annee1:
 				sem1,sem2,ng1 = NoteECTS.objects.notePDF(eleve)
 			elif annee2:
