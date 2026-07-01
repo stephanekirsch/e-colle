@@ -330,6 +330,9 @@ class NoteECTSManager(models.Manager):
         annee3 = eleve.classe.annee == 2 and eleve.cube
         if annee1:
             sem1,sem2,ng1 = NoteECTS.objects.notePDF(eleve)
+            print(sem1)
+            print(sem2)
+            print(ng1)
         elif annee2:
             sem1,sem2,ng1,sem3,sem4,ng2 = NoteECTS.objects.notePDF(eleve)
         else:
@@ -340,6 +343,7 @@ class NoteECTSManager(models.Manager):
         if ng1 is not None: # si note globale pour la première année, on écrase le reste pour le calcul de la moyenne
             coeff1 = 60
             sp1 = 60*ng1
+            l=[1,2]
         else:
             sp1 = 0
             if sem1:
