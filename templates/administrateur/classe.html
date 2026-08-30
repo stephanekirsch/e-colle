@@ -8,6 +8,7 @@
 			<td>Nom</td>
 			<td>Année</td>
 			<td>Matières</td>
+			<td>Importer photos</td>
 			<td>Modifier</td>
 			<td>Supprimer</td>
 		</tr>
@@ -16,6 +17,7 @@
 			<td>{{ classe}}</td>
 			<td>{{ classe.annee }}<sup>&egrave;{{classe.annee|pluralize:"r,m"}}e</sup></td>
 			<td>{% for matiere in classe.matieres.all %}{{ matiere|option:classe }}<br />{% endfor %}</td>
+			<td><a class="bouton" href="{% url 'photo_classe' classe.pk %}">Importer photos</a></td>
 			<td><a class="bouton" href="{% url 'modif_classe' classe.pk %}">Modifier</a></td>
 			<td><a class="bouton" href="{% url 'suppr_classe' classe.pk %}">Supprimer</a></td>
 		</tr>

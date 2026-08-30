@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 from django.http import HttpResponseForbidden, Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from administrateur.forms import ChercheUserForm, ConfigForm, EleveFormSet, EleveFormSetMdp, ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, SemestreForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm, CsvColleurForm, GenereSemainesForm, InformationForm
+from administrateur.forms import ChercheUserForm, ConfigForm, EleveFormSet, EleveFormSetMdp, ColleurFormSet, ColleurFormSetMdp, MatiereClasseSelectForm, AdminConnexionForm, ClasseForm, ClasseGabaritForm, ClasseSelectForm, MatiereForm, EtabForm, SemaineForm, SemestreForm, ColleurForm, ColleurFormMdp, SelectColleurForm, EleveForm, EleveFormMdp, SelectEleveForm, ProfForm, JourFerieForm, CsvForm, CsvColleurForm, GenereSemainesForm, InformationForm, PhotoImportForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
@@ -128,6 +128,19 @@ def informationModif(request, id_info):
         form.save()
         return redirect('information_admin')
     return render(request, 'mixte/informationmodif.html', {'form':form, 'isadmin': True, "modif": id_info != "0"})
+
+@ip_filter
+def photoimport(request, id_classe):
+    """Renvoie la page d'import global des photos d'une classe"""
+    classe = get_object_or_404(Classe,pk=id_classe)
+    form = PhotoImportForm(classe,request.POST or None, request.FILES or None)
+    if form.is_valid():
+        form.save()
+        if form.eleves_non_reconnus:
+            messages.error(request,"les nom suivants n'ont pas été identifés dans la classe: " + " ".join(form.eleves_non_reconnus))
+        return redirect('gestion_eleve')
+    return render(request,"administrateur/photoimport.html", {'classe':classe, 'form':form})
+
 
 @ip_filter
 def classe(request):

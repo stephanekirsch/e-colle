@@ -14,6 +14,9 @@ from datetime import date, timedelta, datetime
 import csv
 from _io import TextIOWrapper
 from functools import reduce
+from unidecode import unidecode
+from zipfile import ZipFile
+from django.core.files.base import ContentFile
 
 
 class ConfigForm(forms.ModelForm):
@@ -950,6 +953,53 @@ class CsvColleurForm(forms.Form):
                     user.colleur = colleur
                     user.set_password(mdp)
                 User.objects.bulk_create(self.users)
+
+class PhotoImportForm(forms.Form):
+    def __init__(self,classe,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.classe = classe
+        self.eleves_non_reconnus = []
+        self.fields['fichier'] = forms.FileField(label="fichier zip", help_text="""Le fichier au format zip doit contenir les photos des élèves de la classe, nommés selon la convention NOM_Prenom.*, sans accent ni cédille, où * est à remplacer par png,jpg ou jpeg selon le type de fichier.
+        Dans le cas où une photo existe déjà pour un(e) étudiant(e), elle sera écrasée sans avertissement par la nouvelle photo""", required=True)
+
+
+    def clean(self):
+        super().clean()
+        print(self.cleaned_data)
+        fich = self.cleaned_data['fichier']
+        if fich.name.split(".")[-1] != "zip":
+            raise ValidationError("il faut téléverser une archise zip avec une extension .zip")
+            
+    def save(self):
+        fich = self.cleaned_data['fichier']
+        self.eleves_non_reconnus = []
+        liste_photos = []
+        dico_eleve = {(unidecode(eleve.user.last_name.lower()),unidecode(eleve.user.first_name.lower())):eleve for eleve in Eleve.objects.filter(classe = self.classe)}
+        print(dico_eleve)
+        with ZipFile(fich, 'r') as myzip:
+            for nomfichier in myzip.namelist():
+                eleve, extension = nomfichier.split(".")
+                if extension not in ["png","jpg","jpeg"]:
+                    raise ValidationError("le fichier {} de l'archive zip n'a pas la bonne extension".format(nomfichier))
+                cle = tuple(unidecode(eleve).lower().split("_"))
+                if cle not in dico_eleve:
+                    self.eleves_non_reconnus.append(eleve)
+                else:
+                    eleve = dico_eleve[cle]
+                    with myzip.open(nomfichier) as myfile:
+                        fichier=path.join(MEDIA_ROOT,eleve.photo.name)
+                        if path.isfile(fichier):
+                            remove(fichier)
+                        eleve.photo.save(eleve.update_photo(nomfichier),ContentFile(myfile.read()),save=False)
+                        eleve.save()
+
+        print("non reconnus", self.eleves_non_reconnus)
+
+
+
+
+
+
 
 
 

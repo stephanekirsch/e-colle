@@ -1,0 +1,14 @@
+{% extends 'administrateur/action.html' %}{% load static %}
+{% load static %}
+{% load customfilter %}
+{% block body %}
+	<table class="accueil"><tr><td>Import de photos des étudiants de {{classe}}</td></tr></table>
+	<form method="POST" enctype="multipart/form-data">
+	{% csrf_token %}
+	<table class="tableausimple">
+	{{ form.as_table }}
+	<tr><td colspan="2"><input type="submit" value="Envoyer" name = "photoimport"/></td></tr>
+	</table>
+	</form>
+{% endblock %}
+	
