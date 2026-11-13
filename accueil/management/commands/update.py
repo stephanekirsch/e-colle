@@ -109,6 +109,11 @@ class Command(BaseCommand):
                 target = os.path.join("..",cwd_new,"backup")
                 for file in os.listdir(source):
                     filecopy(os.path.join(source,file),target)
+                source = "resources"
+                target = os.path.join("..",cwd_new,"resources")
+                for file in os.listdir(source):
+                    if file != "classes.xml"
+                    filecopy(os.path.join(source,file),target)
                 # on renomme e-colle-bak l'ancien réperoire et e-colle le nouveau
                 os.rename(os.path.join("..",cwd),os.path.join("..",cwd_bak))
                 os.rename(os.path.join("..",cwd_new),os.path.join("..",cwd))
