@@ -22,7 +22,7 @@ def array2tree(tableau, profondeurs = None, funcs = None, x = 0, y = 0, taille =
     positions = [x]
     longueur = 1
     for i in range(taille-1):
-        if tableau[x+i][y] == tableau[x+i+1][y]:
+        if func(tableau[x+i][y:y+prof]) == func(tableau[x+i+1][y:y+prof]):
             longueur +=1
         else:
             longueurs.append(longueur)

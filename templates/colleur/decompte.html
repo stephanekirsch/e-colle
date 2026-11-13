@@ -29,7 +29,7 @@
 <table class="tableausimple">
 	<tr class="entete">
 {% for ramassage in ramassages %}
-<td>{{ramassage.moisFin|date:"E Y"}}</br>
+<td>{{ramassage.moisFin|date:"d E Y"}}</br>
 <a href="{% url 'ramassage_colleur' ramassage.pk %}"><img src="{% static 'images/iconePDF.png' %}"></a></td>
 {% endfor %}
 	</tr>

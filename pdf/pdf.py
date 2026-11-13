@@ -63,12 +63,13 @@ class easyPdf(Canvas):
 			self.drawCentredString(self.x,self.y,soustitre)
 			self.y-=6
 
-	def finDePage(self):
+	def finDePage(self,number=True):
 		"""termine la page en inscrivant le numéro de page en bas """
-		self.x=self.format[0]/2
-		self.y=self.marge_y
-		self.setFont("Helvetica-Oblique",8)
-		self.drawCentredString(self.x,self.y,"page n°{}".format(self.getPageNumber()))
+		if number:
+			self.x=self.format[0]/2
+			self.y=self.marge_y
+			self.setFont("Helvetica-Oblique",8)
+			self.drawCentredString(self.x,self.y,"page n°{}".format(self.getPageNumber()))
 		self.showPage()
 
 def trombinoscopePdf(id_classe):

@@ -31,9 +31,9 @@ class RamassageForm(forms.Form):
         """Vérifie qu'il n'existe pas de ramassage d'un mois identique ou postérieur"""
         if self.cleaned_data:
             if Ramassage.objects.filter(moisFin=self.cleaned_data['moisFin']).exists():
-                raise ValidationError('Il existe déjà un ramassage pour ce mois.')
+                raise ValidationError('Il existe déjà un ramassage pour cette date.')
             if Ramassage.objects.filter(moisFin__gt=self.cleaned_data['moisFin']).exists():
-                raise ValidationError('Il existe déjà un ramassage postérieur à ce mois')
+                raise ValidationError('Il existe déjà un ramassage postérieur à cette datte')
 
     def save(self):
         """Sauvegarde du ramassage (avec création du décompte associé)"""
